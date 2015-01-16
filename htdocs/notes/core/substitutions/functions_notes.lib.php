@@ -54,16 +54,20 @@ function notes_completesubstitutionarray(&$substitutionarray,$langs,$object)
     if ($object->element == 'facture')
     {
     	$note=new Note($db);
-    	//$note->
-	    $substitutionarray['NotesNbTeclib']=$langs->trans("Notes");
+    	$nbofnotes = $note->countNb($object->element, $object->id);
+	    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
     }
     if ($object->element == 'propal')
     {
-	    $substitutionarray['NotesNbTeclib']=$langs->trans("Notes");
+    	$note=new Note($db);
+    	$nbofnotes = $note->countNb($object->element, $object->id);
+	    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
     }
     if ($object->element == 'order')
     {
-	    $substitutionarray['NotesNbTeclib']=$langs->trans("Notes");
+    	$note=new Note($db);
+    	$nbofnotes = $note->countNb($object->element, $object->id);
+	    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
     }
 
 }

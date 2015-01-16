@@ -240,7 +240,7 @@ class modForceProject extends DolibarrModules
 	 */
 	function load_tables()
 	{
-		return $this->_load_tables();
+		return $this->_load_tables('');
 	}
 }
 
