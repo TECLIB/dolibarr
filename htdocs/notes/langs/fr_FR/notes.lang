@@ -1,8 +1,16 @@
-ProposalMustBeLinkedToProject=Un projet doit être renseigné pour valider une proposition commerciale.
-OrderMustBeLinkedToProject=Un projet doit être renseigné pour valider une commande client.
-ForceProject=Forçage Projet
-ForceProjectSetup=Configuration du module Forçage Projet
-ForceProjectNoSetup=Il n'y a pas de configuration particulière à faire sur ce module. Ce dernier est effectif immédiatement à son activation.
+# Dolibarr language file - fr_FR - notes
+CHARSET= UTF-8
+SUBSTITUTION_NotesNbTeclib=Notes
+NoNotes=Aucune note n'a été déclarée pour l'instant
+NoteId=n°
+NoteDate=Date
+NoteUser=Auteur
+NoteContent=Contenu
+AreYouSureYouWantToDeleteThisNote=Etes-vous sur de vouloir supprimer cette note ?
+AddNote=Ajouter une note
+AreYouSure=Etes-vous sur
+NotesSetup=Configuration du module Notes horodatage
+NotesNoSetup=Il n'y a pas de configuration particulière à faire sur ce module. Ce dernier est effectif immédiatement à son activation.
 AboutInfoTecLib=Ce module est développé et diffusé par Laurent Destailleur pour TecLib, <a target="_blank" href="http://www.teclib.com">www.teclib.com</a> (société labellisé Dolibarr Prefered Partner).
 MoreModules=D'autres modules du même auteur sont disponibles sur la place de marché officielle DoliStore...
 MoreModulesLink=<a target="_blank" href="http://www.dolistore.com/search.php?search_query=teclib">Cliquez ici pour voir la liste</a>
