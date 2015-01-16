@@ -1,0 +1,11 @@
+ProposalMustBeLinkedToProject=Un projet doit être renseigné pour valider une proposition commerciale.
+OrderMustBeLinkedToProject=Un projet doit être renseigné pour valider une commande client.
+ForceProject=Forçage Projet
+ForceProjectSetup=Configuration du module Forçage Projet
+ForceProjectNoSetup=Il n'y a pas de configuration particulière à faire sur ce module. Ce dernier est effectif immédiatement à son activation.
+AboutInfoTecLib=This module is developped and distributed by Laurent Destailleur for TecLib, <a href="http://www.teclib.com">www.teclib.com</a> (A Dolibarr Preferred Partner company).
+MoreModules=Other modules of same author are available on the official DoliStore market place...
+MoreModulesLink=<a target="_blank" href="http://www.dolistore.com/search.php?search_query=teclib">Click here to see full list</a>  
+MoreCloudHosting=To use online Dolibarr, choose the secured hosting DoliCloud.
+MoreCloudHostingLink=<a target="_blank" href="http://www.dolicloud.com">Click here for more information</a>
+CompatibleWithDoliDroid=This modules is also compatible with DoliDroid, the Android application for Dolibarr.    

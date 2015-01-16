@@ -42,7 +42,7 @@ if (!$user->admin) accessforbidden();
 
 $langs->load("admin");
 $langs->load("other");
-$langs->load("autoattachfile@autoattachfile");
+$langs->load("forceproject@forceproject");
 
 
 /**
@@ -53,11 +53,11 @@ $help_url='';
 llxHeader('','',$help_url);
 
 $linkback='<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
-print_fiche_titre($langs->trans("AutoAttachFileSetup"),$linkback,'setup');
+print_fiche_titre($langs->trans("ForceProjectSetup"),$linkback,'setup');
 print '<br>';
 
 $h=0;
-$head[$h][0] = 'autoattachfile.php';
+$head[$h][0] = 'forceproject.php';
 $head[$h][1] = $langs->trans("Setup");
 $head[$h][2] = 'tabsetup';
 $h++;

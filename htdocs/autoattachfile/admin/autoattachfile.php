@@ -25,6 +25,7 @@
 define('NOCSRFCHECK',1);
 
 $res=0;
+if (! $res && ! empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])) $res=@include($_SERVER["CONTEXT_DOCUMENT_ROOT"]."/main.inc.php");
 if (! $res && file_exists("../main.inc.php")) $res=@include("../main.inc.php");
 if (! $res && file_exists("../../main.inc.php")) $res=@include("../../main.inc.php");
 if (! $res && file_exists("../../../main.inc.php")) $res=@include("../../../main.inc.php");
@@ -275,4 +276,3 @@ foreach ($modules as $module => $moduletrans)
 llxFooter();
 // Close database handler
 $db->close();
-?>

@@ -1,5 +1,6 @@
 <?php
-/* Copyright (C) 2013 Laurent Destailleur  <eldy@users.sourceforge.net>
+/* Copyright (C) 2008-2013	Laurent Destailleur  <eldy@users.sourceforge.net>
+ * Copyright (C) 2012		Regis Houssin        <regis.houssin@capnetworks.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,13 +14,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * or see http://www.gnu.org/
  */
 
 /**
- *	    \file       htdocs/autoattachfile/admin/about.php
+ *	    \file       htdocs/autoattachfile/admin/autoattachfile.php
  *      \ingroup    autoattachfile
- *      \brief      Page about
+ *      \brief      Page to setup module AutoAttachFile
  */
 
 define('NOCSRFCHECK',1);
@@ -35,67 +35,97 @@ if (! $res && preg_match('/\/nltechno([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $r
 if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res) die("Include of main fails");
 require_once(DOL_DOCUMENT_ROOT."/core/lib/admin.lib.php");
+require_once(DOL_DOCUMENT_ROOT."/core/lib/files.lib.php");
+require_once(DOL_DOCUMENT_ROOT.'/core/class/html.formadmin.class.php');
+require_once(DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php');
 
 
 if (!$user->admin) accessforbidden();
 
-
 $langs->load("admin");
 $langs->load("other");
-$langs->load("autoattachfile@autoattachfile");
+$langs->load("forceproject@forceproject");
+
+$def = array();
+$action=GETPOST('action', 'alpha');
+$confirm=GETPOST('confirm', 'alpha');
+$actionsave=GETPOST('save', 'alpha');
+
+$modules = array();
+//if ($conf->fournisseur->enabled) $modules['supplier_orders']='SuppliersOrders';
+//if ($conf->fournisseur->enabled) $modules['supplier_invoices']='SuppliersInvoices';
 
 
-/**
+/*
+ * Actions
+ */
+
+if (preg_match('/set_(.*)/',$action,$reg))
+{
+	$code=$reg[1];
+	if (dolibarr_set_const($db, $code, 1, 'chaine', 0, '', 0) > 0)
+	{
+		Header("Location: ".$_SERVER["PHP_SELF"]);
+		exit;
+	}
+	else
+	{
+		dol_print_error($db);
+	}
+}
+
+if (preg_match('/del_(.*)/',$action,$reg))
+{
+	$code=$reg[1];
+	if (dolibarr_del_const($db, $code, 0) > 0)
+	{
+		Header("Location: ".$_SERVER["PHP_SELF"]);
+		exit;
+	}
+	else
+	{
+		dol_print_error($db);
+	}
+}
+
+
+/*
  * View
  */
 
-$help_url='';
-llxHeader('','',$help_url);
+$form=new Form($db);
+$formfile=new FormFile($db);
+
+llxHeader('','ForceProject',$linktohelp);
 
 $linkback='<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
-print_fiche_titre($langs->trans("AutoAttachFileSetup"),$linkback,'setup');
+print_fiche_titre($langs->trans("ForceProjectSetup"),$linkback,'setup');
 print '<br>';
 
+clearstatcache();
+
+
 $h=0;
-$head[$h][0] = 'autoattachfile.php';
+$head[$h][0] = $_SERVER["PHP_SELF"];
 $head[$h][1] = $langs->trans("Setup");
 $head[$h][2] = 'tabsetup';
 $h++;
 
-$head[$h][0] = $_SERVER["PHP_SELF"];
+$head[$h][0] = 'about.php';
 $head[$h][1] = $langs->trans("About");
 $head[$h][2] = 'tababout';
 $h++;
 
-dol_fiche_head($head, 'tababout', '');
+dol_fiche_head($head, 'tabsetup', '');
 
-print $langs->trans("AboutInfoTecLib").'<br>';
-print '<br>';
-$url='http://www.teclib.com';
-print '<a href="'.$url.'" target="_blank"><img border="0" width="180" src="../img/logo_teclib.png"></a><br><br>';
-print '<br>';
-
-print $langs->trans("MoreModules").'<br>';
-print '&nbsp; &nbsp; &nbsp; '.$langs->trans("MoreModulesLink").'<br>';
-$url='http://www.dolistore.com/search.php?search_query=teclib';
-print '<a href="'.$url.'" target="_blank"><img border="0" width="180" src="'.DOL_URL_ROOT.'/theme/dolistore_logo.png"></a><br><br><br>';
-
-/*print '<br>';
-print $langs->trans("MoreCloudHosting").'<br>';
-print '&nbsp; &nbsp; &nbsp; '.$langs->trans("MoreCloudHostingLink").'<br>';
-$url='http://www.dolicloud.com';
-print '<a href="'.$url.'" target="_blank"><img border="0" width="180" src="../img/dolicloud_logo.png"></a><br><br><br>';
-
-print '<br>';
-print $langs->trans("CompatibleWithDoliDroid").'<br>';
-$url='https://play.google.com/store/apps/details?id=com.nltechno.dolidroidpro';
-print '<a href="'.$url.'" target="_blank"><img border="0" width="180" src="../img/dolidroid_512x512_en.png"></a><br><br>';
-*/
-print '<br>';
+print $langs->trans("ForceProjectNoSetup");
 
 dol_fiche_end();
 
 
-llxFooter();
 
+// Footer
+llxFooter();
+// Close database handler
 $db->close();
+
