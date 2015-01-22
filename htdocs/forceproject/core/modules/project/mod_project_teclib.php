@@ -33,7 +33,7 @@ class mod_project_teclib extends ModeleNumRefProjects
 {
 	var $version='dolibarr';		// 'development', 'experimental', 'dolibarr'
 	var $error = '';
-	var $nom = 'Teclib';
+	var $name = 'Teclib';
 
 
     /**
@@ -51,7 +51,7 @@ class mod_project_teclib extends ModeleNumRefProjects
      */
     function getExample()
     {
-		return "CCCC-01";
+		return "CCCC-001";
     }
 
    /**
@@ -65,8 +65,20 @@ class mod_project_teclib extends ModeleNumRefProjects
     {
 		global $db,$conf;
 
+		require_once DOL_DOCUMENT_ROOT .'/core/lib/functions2.lib.php';
+
 		if (is_object($objsoc) && $objsoc->id > 0)
 		{
+			$conf->global->MAIN_COUNTER_WITH_LESS_3_DIGITS = 1;
+
+			$oldmask='{cccc}-{00}';
+			$customercode=$objsoc->code_client;
+			$numFinalOld=get_next_value($db,$oldmask,'projet','ref','',$customercode,'');
+
+			$mask='{cccc}-{000}';
+			$customercode=$objsoc->code_client;
+			$numFinalNew=get_next_value($db,$mask,'projet','ref','',$customercode,'');
+/*
 			$sql = " SELECT ref FROM llx_projet WHERE fk_soc = ".$objsoc->id." ORDER BY ref DESC";
 
 			dol_syslog("mod_project_teclib::getNextValue sql=".$sql);
@@ -81,17 +93,34 @@ class mod_project_teclib extends ModeleNumRefProjects
 
 					$nextRef = explode("-",$obj->ref);
 					$nextRef = $nextRef[1]+1;
-					$nextRef = (strlen($nextRef)==1)?"0".$nextRef:$nextRef;
+					$nextRef = sprintf("%03d",$nextRef);
 					return $objsoc->code_client."-".$nextRef;
 				} elseif(!empty($objsoc->code_client)) {
-					return $objsoc->code_client."-01";
+					return $objsoc->code_client."-001";
 				} else {
-					return "####-01";	// Happened if customer code not defined
+					return "####-001";	// Happened if customer code not defined
 				}
 			}
 			else dol_print_error($db);
       	}
-      	else return "####-00";
+      	else return "####-000";
+*/
+		}
+
+		//$numFinalNew="0210-100";
+		//var_dump($numFinalOld);
+		//var_dump($numFinalNew);
+		$tmpold=preg_replace('/^\d+\-/','',$numFinalOld);
+		$tmpnew=preg_replace('/^\d+\-/','',$numFinalNew);
+		//var_dump($tmpold);
+		//var_dump($tmpnew);
+		$numFinal = $numFinalNew;
+		if (((int) $tmpold) > ((int) $tmpnew))
+		{
+			$numFinal=preg_replace('/\-\d+$/','-0'.$tmpold,$numFinal);
+		}
+		//var_dump($numFinal);
+	    return $numFinal;
 	}
 
 
