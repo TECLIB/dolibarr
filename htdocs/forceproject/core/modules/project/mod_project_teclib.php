@@ -44,6 +44,8 @@ class mod_project_teclib extends ModeleNumRefProjects
     {
     	global $langs;
 
+    	$langs->load("forceproject@forceproject");
+
 		return $langs->trans("NumberingProjectTeclib");
     }
 
