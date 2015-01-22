@@ -118,7 +118,43 @@ $h++;
 
 dol_fiche_head($head, 'tabsetup', '');
 
-print $langs->trans("ForceProjectNoSetup");
+print_titre($langs->trans("Options"));
+print '<table class="noborder" width="100%">';
+print '<tr class="liste_titre">';
+print '<td>'.$langs->trans("Parameter").'</td>';
+print "<td>&nbsp;</td>\n";
+print '<td align="center" width="60">'.$langs->trans("Value").'</td>';
+print "</tr>\n";
+$var=true;
+
+
+// Vars
+$listofparams=array('FORCEPROJECT_ON_PROPOSAL','FORCEPROJECT_ON_ORDER','FORCEPROJECT_ON_ORDER_SUPPLIER','FORCEPROJECT_ON_INVOICE_SUPPLIER','FORCEPROJECT_ON_INVOICE');
+foreach($listofparams as $paramname)
+{
+	$var=!$var;
+	print '<tr '.$bc[$var].'><td>';
+	print $langs->trans($paramname).'</td><td>&nbsp</td><td align="center">';
+	if (! empty($conf->use_javascript_ajax))
+	{
+		print ajax_constantonoff($paramname);
+	}
+	else
+	{
+		if (empty($conf->global->$paramname))
+		{
+			print '<a href="'.$_SERVER['PHP_SELF'].'?action=set_'.$paramname.'&amp;value=1">'.img_picto($langs->trans("Disabled"),'switch_off').'</a>';
+		}
+		else
+		{
+			print '<a href="'.$_SERVER['PHP_SELF'].'?action=set_'.$paramname.'&amp;value=0">'.img_picto($langs->trans("Enabled"),'switch_on').'</a>';
+		}
+	}
+	print '</td></tr>';
+}
+
+print '</table>';
+
 
 dol_fiche_end();
 

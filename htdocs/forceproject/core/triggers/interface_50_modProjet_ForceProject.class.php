@@ -114,7 +114,7 @@ class InterfaceForceProject
 		$ok=0;
 
 		// Actions
-        if ($action == 'PROPAL_VALIDATE')
+        if ($action == 'PROPAL_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_PROPOSAL) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
         {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
@@ -138,15 +138,18 @@ class InterfaceForceProject
 	            	$newref=$obj->ref;
 	            	$newref=preg_replace('/projectref/',$projectref,$newref);
 
-	            	$savmask=$conf->global->PROPALE_SAPHIR_MASK;
-	            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/projectref/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);	// For proposal, counter is started to 1 for each project
-					//var_dump($conf->global->PROPALE_SAPHIR_MASK);
-	            	$newref=$object->getNextNumRef($object->thirdparty);
-	            	//var_dump($newref);
-	            	//$newref=$projectref.substr($newref,7);
-	            	$conf->global->PROPALE_SAPHIR_MASK=$savmask;
-	            	//var_dump($newref); exit;
-
+	            	// If we want counter is started to 1 for each project
+	            	if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
+	            	{
+		            	$savmask=$conf->global->PROPALE_SAPHIR_MASK;
+		            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/projectref/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);	// For proposal, counter is started to 1 for each project
+						//var_dump($conf->global->PROPALE_SAPHIR_MASK);
+		            	$newref=$object->getNextNumRef($object->thirdparty);
+		            	//var_dump($newref);
+		            	//$newref=$projectref.substr($newref,7);
+		            	$conf->global->PROPALE_SAPHIR_MASK=$savmask;
+				       	//var_dump($newref); exit;
+	            	}
 	            	dol_syslog("We validate proposal ".$object->id." oldref=".$object->ref." newref=".$newref." projectid=".$projectid." projectref=".$projectref);
 
 		            $sql="UPDATE ".MAIN_DB_PREFIX."propal SET ref = '".$this->db->escape($newref)."' WHERE rowid=".$object->id;
@@ -173,7 +176,7 @@ class InterfaceForceProject
         }
 
     	// Actions
-        if ($action == 'ORDER_VALIDATE')
+        if ($action == 'ORDER_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_ORDER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
         {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
@@ -197,13 +200,16 @@ class InterfaceForceProject
 	            	$newref=$obj->ref;
 	            	$newref=preg_replace('/projectref/',$projectref,$newref);
 
-	            	$savmask=$conf->global->COMMANDE_SAPHIR_MASK;
-	            	$conf->global->COMMANDE_SAPHIR_MASK=preg_replace('/projectref/',$projectref,$conf->global->COMMANDE_SAPHIR_MASK);
-	            	$newref=$object->getNextNumRef($object->thirdparty);
-	            	//$newref=$projectref.substr($newref,7);
-	            	$conf->global->COMMANDE_SAPHIR_MASK=$savmask;
-	            	//var_dump($newref); exit;
-
+	            	// If we want counter is started to 1 for each project
+	            	if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
+	            	{
+		            	$savmask=$conf->global->COMMANDE_SAPHIR_MASK;
+		            	$conf->global->COMMANDE_SAPHIR_MASK=preg_replace('/projectref/',$projectref,$conf->global->COMMANDE_SAPHIR_MASK);
+		            	$newref=$object->getNextNumRef($object->thirdparty);
+		            	//$newref=$projectref.substr($newref,7);
+		            	$conf->global->COMMANDE_SAPHIR_MASK=$savmask;
+		            	//var_dump($newref); exit;
+	            	}
 	            	dol_syslog("We validate order ".$object->id." oldref=".$object->ref." newref=".$newref." projectid=".$projectid." projectref=".$projectref);
 
 		            $sql="UPDATE ".MAIN_DB_PREFIX."commande SET ref = '".$this->db->escape($newref)."' WHERE rowid=".$object->id;
@@ -229,7 +235,45 @@ class InterfaceForceProject
 			}
         }
 
-		return $ok;
+        if ($action == 'BILL_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_INVOICE) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
+        {
+            dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
+
+            if (empty($object->fk_project))
+            {
+				$langs->load("templatesteclib@templatesteclib");	// So files is loaded for function to show error message
+            	$this->errors[]="InvoiceMustBeLinkedToProject";
+            	return -1;
+            }
+        }
+
+        // Suppliers
+
+        if ($action == 'ORDER_SUPPLIER_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_ORDER_SUPPLIER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
+        {
+            dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
+
+            if (empty($object->fk_project))
+            {
+				$langs->load("templatesteclib@templatesteclib");	// So files is loaded for function to show error message
+            	$this->errors[]="OrderMustBeLinkedToProject";
+            	return -1;
+            }
+        }
+
+        if ($action == 'BILL_SUPPLIER_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_INVOICE_SUPPLIER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
+        {
+            dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
+
+            if (empty($object->fk_project))
+            {
+				$langs->load("templatesteclib@templatesteclib");	// So files is loaded for function to show error message
+            	$this->errors[]="InvoiceMustBeLinkedToProject";
+            	return -1;
+            }
+        }
+
+        return $ok;
     }
 
 }
