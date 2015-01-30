@@ -182,7 +182,7 @@ class InterfaceForceProject
 
             if (empty($object->fk_project))
             {
-				$langs->load("templatesteclib@templatesteclib");	// So files is loaded for function to show error message
+				$langs->load("forceproject@forceproject");	// So files is loaded for function to show error message
             	$this->errors[]="OrderMustBeLinkedToProject";
             	return -1;
             }
@@ -241,7 +241,7 @@ class InterfaceForceProject
 
             if (empty($object->fk_project))
             {
-				$langs->load("templatesteclib@templatesteclib");	// So files is loaded for function to show error message
+				$langs->load("forceproject@forceproject");	// So files is loaded for function to show error message
             	$this->errors[]="InvoiceMustBeLinkedToProject";
             	return -1;
             }
@@ -255,7 +255,7 @@ class InterfaceForceProject
 
             if (empty($object->fk_project))
             {
-				$langs->load("templatesteclib@templatesteclib");	// So files is loaded for function to show error message
+				$langs->load("forceproject@forceproject");	// So files is loaded for function to show error message
             	$this->errors[]="OrderMustBeLinkedToProject";
             	return -1;
             }
@@ -267,7 +267,7 @@ class InterfaceForceProject
 
             if (empty($object->fk_project))
             {
-				$langs->load("templatesteclib@templatesteclib");	// So files is loaded for function to show error message
+				$langs->load("forceproject@forceproject");	// So files is loaded for function to show error message
             	$this->errors[]="InvoiceMustBeLinkedToProject";
             	return -1;
             }
