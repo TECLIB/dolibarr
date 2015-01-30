@@ -1,5 +1,6 @@
 ProposalMustBeLinkedToProject=Un projet doit être renseigné pour valider une proposition commerciale.
-OrderMustBeLinkedToProject=Un projet doit être renseigné pour valider une commande client.
+OrderMustBeLinkedToProject=Un projet doit être renseigné pour valider une commande.
+InvoiceMustBeLinkedToProject=Un projet doit être renseigné pour valider une facture.
 ForceProject=Forçage Projet
 ForceProjectSetup=Configuration du module Forçage Projet
 ForceProjectNoSetup=Il n'y a pas de configuration particulière à faire sur ce module. Ce dernier est effectif immédiatement à son activation.

@@ -121,7 +121,7 @@ class InterfaceForceProject
             if (empty($object->fk_project))
             {
 				$langs->load("forceproject@forceproject");	// So files is loaded for function to show error message
-            	$this->errors[]="ProposalMustBeLinkedToProject";
+            	$this->errors[]=$langs->trans("ProposalMustBeLinkedToProject");
             	return -1;
             }
             else
@@ -183,7 +183,7 @@ class InterfaceForceProject
             if (empty($object->fk_project))
             {
 				$langs->load("forceproject@forceproject");	// So files is loaded for function to show error message
-            	$this->errors[]="OrderMustBeLinkedToProject";
+            	$this->errors[]=$langs->trans("OrderMustBeLinkedToProject");
             	return -1;
             }
             else
@@ -242,7 +242,7 @@ class InterfaceForceProject
             if (empty($object->fk_project))
             {
 				$langs->load("forceproject@forceproject");	// So files is loaded for function to show error message
-            	$this->errors[]="InvoiceMustBeLinkedToProject";
+            	$this->errors[]=$langs->trans("InvoiceMustBeLinkedToProject");
             	return -1;
             }
         }
@@ -256,7 +256,7 @@ class InterfaceForceProject
             if (empty($object->fk_project))
             {
 				$langs->load("forceproject@forceproject");	// So files is loaded for function to show error message
-            	$this->errors[]="OrderMustBeLinkedToProject";
+				$this->errors[]=$langs->trans("OrderMustBeLinkedToProject");
             	return -1;
             }
         }
@@ -268,7 +268,7 @@ class InterfaceForceProject
             if (empty($object->fk_project))
             {
 				$langs->load("forceproject@forceproject");	// So files is loaded for function to show error message
-            	$this->errors[]="InvoiceMustBeLinkedToProject";
+            	$this->errors[]=$langs->trans("InvoiceMustBeLinkedToProject");
             	return -1;
             }
         }

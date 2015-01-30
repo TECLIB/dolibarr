@@ -1,5 +1,6 @@
 ProposalMustBeLinkedToProject=A project must be defined on proposal to validate it.
 OrderMustBeLinkedToProject=A project must be defined on order to validate it.
+InvoiceMustBeLinkedToProject=A project must be defined on invoice to validate it.
 ForceProject=Force Project
 ForceProjectNoSetup=There is no specific things to setup. This module is immediatly available at activation.
 AboutInfoTecLib=This module is developped and distributed by Laurent Destailleur for TecLib, <a href="http://www.teclib.com">www.teclib.com</a> (A Dolibarr Preferred Partner company).
