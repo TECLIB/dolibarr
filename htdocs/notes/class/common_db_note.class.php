@@ -331,7 +331,7 @@ class Common_DB_Note
                $query .= " = ".$this->fields[$field];
 
             } else {
-               $query .= " = '".$this->fields[$field]."'";
+               $query .= " = '".$db->escape($this->fields[$field])."'";
             }
 
             $query .= " WHERE `".$indexName."` = '".$this->fields[$indexName]."'";
