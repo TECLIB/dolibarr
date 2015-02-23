@@ -89,7 +89,7 @@ class Common_DB_Note
             if ($values[$i]=='NULL') {
                $query .= $values[$i];
             } else {
-               $query .= "'".$values[$i]."'";
+               $query .= "'".$db->escape($values[$i])."'";
             }
 
             if ($i!=$nb_fields-1) {
@@ -101,7 +101,8 @@ class Common_DB_Note
 
          dol_syslog("Common_DB::addToDB::".$query, LOG_INFO);
 
-         if ($result=$db->query($query)) {
+         if ($result=$db->query($query))
+         {
             $this->fields['rowid'] = $db->last_insert_id($this->getTable());
             return $this->fields['rowid'];
          }
