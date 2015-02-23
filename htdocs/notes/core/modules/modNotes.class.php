@@ -30,6 +30,8 @@ class modNotes extends DolibarrModules
 	 */
 	function __construct($DB)
 	{
+		global $conf;
+
 		$this->db = $DB;
 
 		// Id for module (must be unique).
