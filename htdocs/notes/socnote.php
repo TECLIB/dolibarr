@@ -35,6 +35,7 @@ if (! $res && file_exists("../../../../../main.inc.php")) $res=@include("../../.
 if (! $res && preg_match('/\/nltechno([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res) die("Include of main fails");
+require_once(DOL_DOCUMENT_ROOT."/core/class/doleditor.class.php");
 require_once(DOL_DOCUMENT_ROOT."/core/lib/company.lib.php");
 dol_include_once("/notes/class/note.class.php");
 
@@ -163,9 +164,13 @@ JS;
 	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
 	print '<input type="hidden" name="socid" value="'.$socid.'" />';
 	print '<input type="hidden" name="action" value="add_note" />';
-	print '<p>Titre : <input type="text" name="note_title" size="90" /></p>';
-	print '<p><textarea name="note_value" rows="20" cols="100"></textarea></p>';
-	print '<p><input type="submit" value="Enregistrer" class="button" /></p>';
+	print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" /></p>';
+	print '<p>';
+	//$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',180,'dolibarr_notes');
+	//print $doleditor->Create();
+	print '<textarea name="note_value" rows="20" cols="100"></textarea>';
+	print '</p>';
+	print '<p><input type="submit" value="'.$langs->trans("Save").'" class="button" /></p>';
 	print '</form>';
 	print '</div>'."\n";
 
@@ -185,12 +190,14 @@ JS;
 
 		print '<input type="hidden" name="action" value="edit_note_go" />';
 
-		print '<p>Titre : <input type="text" name="note_title" size="90"
+		print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90"
 		value="' . $notes->fields['note_title'] . '" /></p>';
 
-		print '<p><textarea name="note_value" rows="20" cols="100">'
-		. dol_htmlentitiesbr($notes->fields['note_value']) . '</textarea></p>';
-		print '<p><input type="submit" value="Enregistrer" class="button" /></p>';
+		print '<p>';
+		$doleditor=new DolEditor('note_value',$notes->fields['note_value'],'',180,'dolibarr_notes');
+		print $doleditor->Create();
+		//print '<textarea name="note_value" rows="20" cols="100"></textarea></p>';
+		print '<p><input type="submit" value="'.$langs->trans("Save").'" class="button" /></p>';
 		print '</form>';
 		print '</div>';
 	}
@@ -224,7 +231,7 @@ JS;
 			 	Note::showDelete($socid,$note_infos['rowid']);
 			 	print '</p>';
 
-			 	print $note_infos['note_value'];
+			 	print dol_htmlentitiesbr($note_infos['note_value']);
 			 	print '</div>';
 			}
 		}

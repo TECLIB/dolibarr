@@ -1,6 +1,6 @@
 <?php
 /* Copyright (C) 2001-2003,2005 Rodolphe Quiedeville <rodolphe@quiedeville.org>
- * Copyright (C) 2004-2014      Laurent Destailleur  <eldy@users.sourceforge.net>
+ * Copyright (C) 2004-2015      Laurent Destailleur  <eldy@users.sourceforge.net>
  * Copyright (C) 2005-2006      Regis Houssin        <regis@dolibarr.fr>
  * Copyright (C) 2010           Juanjo Menent        <jmenent@2byte.es>
  *
@@ -203,13 +203,18 @@ JS;
 	echo $JS;
 	echo "</script>";
 
-	print '<div id="dialog" title="'.dol_escape_htmltag($langs->trans("Ajouter une note")).'">';
+	// area to add a note
+	print '<div id="dialog" title="'.dol_escape_htmltag($langs->trans("AddNote")).'">';
 	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
 	print '<input type="hidden" name="id" value="'.$id.'" />';
 	print '<input type="hidden" name="action" value="add_note" />';
 	print '<input type="hidden" name="mode" value="'.$item_type.'" />';
 	print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" /></p>';
-	print '<p><textarea name="note_value" rows="20" cols="100"></textarea></p>';
+	print '<p>';
+	//$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',180,'dolibarr_notes');
+	//print $doleditor->Create();
+	print '<textarea name="note_value" rows="20" cols="100"></textarea>';
+	print '</p>';
 	print '<p><input type="submit" value="'.$langs->trans("Save").'" class="button" /></p>';
 	print '</form>';
 	print '</div>'."\n";
@@ -231,10 +236,10 @@ JS;
 
 		print '<input type="hidden" name="action" value="edit_note_go" />';
 
-		print '<p>Titre : <input type="text" name="note_title" size="90" value="' . $notes->fields['note_title'] . '" /></p>';
+		print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" value="' . $notes->fields['note_title'] . '" /></p>';
 
 		print '<p>';
-		$doleditor=new DolEditor('note_value',$notes->fields['note_value']);
+		$doleditor=new DolEditor('note_value',$notes->fields['note_value'],'',180,'dolibarr_notes','In',true, false, true, 90, 50);
 		print $doleditor->Create();
 		//print '<textarea name="note_value" rows="20" cols="100">'. $notes->fields['note_value'] . '</textarea>';
 		print '</p>';
@@ -273,7 +278,7 @@ JS;
 				Note::showDelete($id,$note_infos['rowid'],'id',$item_type);
 				print '</p>';
 
-				print $note_infos['note_value'];
+				print dol_htmlentitiesbr($note_infos['note_value']);
 				print '</div>';
 			}
 		}
