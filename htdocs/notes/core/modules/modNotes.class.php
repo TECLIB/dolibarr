@@ -92,13 +92,22 @@ class modNotes extends DolibarrModules
 		$this->const = array();			// List of particular constants to add when module is enabled (key, 'chaine', value, desc, visible, 0 or 'allentities')
 
 		// Array to add new pages in new tabs
-		$this->tabs = array(
-			'thirdparty:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/socnote.php?socid=__ID__',	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
-			'thirdparty:-note:NU:1',
-			'order:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=order&id=__ID__',	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
-			'order:-note:NU:1',
-			'invoice:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=invoice&id=__ID__',	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
-			'invoice:-note:NU:1');
+		$this->tabs = array();
+		if (empty($conf->global->TECLIB_NOTES_NOT_ON_THIRDPARTY))
+		{
+			$this->tabs[]='thirdparty:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/socnote.php?socid=__ID__';	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
+			$this->tabs[]='thirdparty:-note:NU:1';
+		}
+		if (empty($conf->global->TECLIB_NOTES_NOT_ON_ORDER))
+		{
+			$this->tabs[]='order:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=order&id=__ID__';	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
+			$this->tabs[]='order:-note:NU:1';
+		}
+		if (empty($conf->global->TECLIB_NOTES_NOT_ON_INVOICE))
+		{
+			$this->tabs[]='invoice:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=invoice&id=__ID__';	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
+			$this->tabs[]='invoice:-note:NU:1';
+		}
 		if (empty($conf->global->TECLIB_NOTES_NOT_ON_PROPAL))
 		{
 			$this->tabs[]='propal:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=propal&id=__ID__';	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
