@@ -19,7 +19,7 @@
 
 CREATE TABLE llx_notes
 (
-   rowid integer PRIMARY KEY NOT NULL,
+   rowid integer AUTO_INCREMENT PRIMARY KEY,
    item_type varchar(50) NOT NULL,
    item_id integer NOT NULL,
    user_id integer NOT NULL,
