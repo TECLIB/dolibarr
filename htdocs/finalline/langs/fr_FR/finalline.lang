@@ -1,0 +1,29 @@
+# Dolibarr language file - fr_FR - Gestion de stock
+CHARSET=UTF-8
+FinalLineSettingsDescription=Configuration des services de ligne finale
+SetNewServiceData=Définir un service comme de ligne finale
+ChooseAService=Sélectionnez un service à utiliser comme service de ligne finale
+ChooseType=Associé aux produits/service comme
+DefineValue=Valeur à appliquer
+Affect=Affecter
+RateOnPrice=Taux sur le prix (en pourcentage)
+SelectAFinalService=Sélectionnez un service de ligne finale
+ServiceDataDetails=Détails et paramétrage d'un service de ligne finale
+NoServiceAvailable=Pas de service correspondant
+NoProductAvailable=Pas de produit correspondant
+FinalLineSettingsDetails=Détails d'un service de ligne finale
+SeeDetails=Afficher
+FinalDetails=Détails du service de ligne final
+ServiceRef=Référence du service
+ServiceLabel=Libellé du service
+ServiceType=Type du service
+ServiceValue=Valeur du service
+LinkedServices=Produit associés
+TargetServices=Produits associables
+Apply=Appliquer
+AboutInfoTecLib=Ce module est développé et diffusé par Laurent Destailleur pour TecLib, <a target="_blank" href="http://www.teclib.com">www.teclib.com</a> (société labellisé Dolibarr Prefered Partner).
+MoreModules=D'autres modules du même auteur sont disponibles sur la place de marché officielle DoliStore...
+MoreModulesLink=<a target="_blank" href="http://www.dolistore.com/search.php?search_query=teclib">Cliquez ici pour voir la liste</a>
+MoreCloudHosting=Pour une utilisation en ligne de Dolibarr, optez pour l'hébergement sécurisé DoliCloud.
+MoreCloudHostingLink=<a target="_blank" href="http://www.dolicloud.com">Cliquez ici pour plus d'information</a>
+CompatibleWithDoliDroid=Ce module est aussi compatible avec DoliDroid, l'application Android pour Dolibarr.
