@@ -17,9 +17,9 @@
  */
 
 /**
- *	    \file       htdocs/autoattachfile/admin/autoattachfile.php
- *      \ingroup    autoattachfile
- *      \brief      Page to setup module AutoAttachFile
+ *	    \file       htdocs/forceproject/admin/autoattachfile.php
+ *      \ingroup    forceproject
+ *      \brief      Page to setup module ForceProject
  */
 
 define('NOCSRFCHECK',1);

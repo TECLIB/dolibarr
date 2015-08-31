@@ -17,8 +17,8 @@
  */
 
 /**
- *	    \file       htdocs/autoattachfile/admin/about.php
- *      \ingroup    autoattachfile
+ *	    \file       htdocs/forceproject/admin/about.php
+ *      \ingroup    forceproject
  *      \brief      Page about
  */
 
