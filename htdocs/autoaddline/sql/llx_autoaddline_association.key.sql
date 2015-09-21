@@ -16,9 +16,7 @@
 --
 -- ========================================================================
 
-create table llx_finalline
-(  
-  fk_product_base          integer NOT NULL PRIMARY KEY,
-  final_service_type       smallint DEFAULT 0,
-  final_service_value      double DEFAULT 0  
-)ENGINE=innodb;
+ALTER TABLE llx_autoaddline_association ADD UNIQUE uk_autoaddline_association_base_target ( fk_product_base , fk_product_target );
+ALTER TABLE llx_autoaddline_association ADD CONSTRAINT fk_base_fk_product_base FOREIGN KEY (fk_product_base) REFERENCES llx_autoaddline (fk_product_base) ON DELETE CASCADE;
+ALTER TABLE llx_autoaddline_association ADD CONSTRAINT fk_product_fk_product_target FOREIGN KEY (fk_product_target) REFERENCES llx_product (rowid) ON DELETE CASCADE;
+

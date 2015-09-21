@@ -19,22 +19,19 @@
  */
 
 /**
- * 		\defgroup   mymodule     Module StockManager
- *      \brief      
- */
-/**
+ * 		\defgroup   mymodule     Module AutoAddLine
+ *      \brief      Module AutoAddLine      
  *      \file       htdocs/includes/modules/modStockManager.class.php
  *      \ingroup    mymodule
  *      \brief      Description and activation file for module MyModule
- * 		\version	$Id: modMyModule.class.php,v 1.67 2011/08/01 13:26:21 hregis Exp $
  */
 include_once(DOL_DOCUMENT_ROOT . "/core/modules/DolibarrModules.class.php");
 
+
 /**
- * 		\class      modMyModule
- *      \brief      Description and activation class for module MyModule
+ *      Description and activation class for module MyModule
  */
-class modFinalLine extends DolibarrModules
+class modAutoAddLine extends DolibarrModules
 {
 
     /**
@@ -49,7 +46,7 @@ class modFinalLine extends DolibarrModules
         $this->numero = 1380;
         // Key text used to identify module (for permissions, menus, etc...)
 
-        $this->family = "financial";
+        $this->family = "other";
         $this->name = preg_replace('/^mod/i', '', get_class($this));
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr' or version
@@ -62,7 +59,7 @@ class modFinalLine extends DolibarrModules
         // Name of image file used for this module.
         // If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
         // If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
-        $this->picto = 'finalline@finalline';
+        $this->picto = 'teclib@autoaddline';
 
         // Defined if the directory /mymodule/includes/triggers/ contains triggers or not
         $this->triggers = 0;
@@ -80,17 +77,17 @@ class modFinalLine extends DolibarrModules
         $r = 0;
 
         // Relative path to module style sheet if exists. Example: '/mymodule/css/mycss.css'.
-//        $this->style_sheet = '/finalline/css/finalline.css.php';
+//        $this->style_sheet = '/autoaddline/css/autoaddline.css.php';
 
         // Config pages. Put here list of php page names stored in admmin directory used to setup module.
-        $this->config_page_url = array('settings.php@finalline');
+        $this->config_page_url = array('settings.php@autoaddline');
 
         // Dependencies
         $this->depends = array('modService', 'modFacture');  // List of modules id that must be enabled if this module is enabled
         $this->requiredby = array(); // List of modules id to disable if this one is disabled
         $this->phpmin = array(5, 0);     // Minimum version of PHP required by module
         $this->need_dolibarr_version = array(3, 0); // Minimum version of Dolibarr required by module
-        $this->langfiles = array('finalline@finalline');
+        $this->langfiles = array('autoaddline@autoaddline');
         $this->description = 'Calcul et ajout automatique de lignes finales aux facture en fonction de services définis pour les produits associés (taxe carbone, réduction...)';
 
         // Constants
@@ -163,7 +160,7 @@ class modFinalLine extends DolibarrModules
 
         // Permissions
         $this->rights = array();  // Permission array used by this module
-        $this->rights_class = 'finalline';
+        $this->rights_class = 'autoaddline';
         $this->const = array();
 
         // Add here list of permission defined by an id, a label, a boolean and two constant strings.
@@ -242,8 +239,7 @@ class modFinalLine extends DolibarrModules
 	 */
 	function load_tables()
 	{
-		return $this->_load_tables('/notes/sql/');
+		return $this->_load_tables('/autoaddline/sql/');
 	}  
 }
 
-?>

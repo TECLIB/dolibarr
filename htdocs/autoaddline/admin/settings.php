@@ -23,7 +23,12 @@
  * 	\file       htdocs/admin/societe.php
  * 	\ingroup    company
  * 	\brief      Third party module setup page
- * 	\version    $Id: societe.php,v 1.61 2011/07/31 22:23:23 eldy Exp $
+ * 
+ *  To enable module into a dolibarr git instance, you can do into htdocs dir:
+ *  ln -fs ../../teclib_dolibarr_modules/htdocs teclib_3.8
+ *  Then complete the htdocs/conf.php file with 
+ *  $dolibarr_main_url_root_alt='/custom,/teclib_3.8';
+ *  $dolibarr_main_document_root_alt='/home/login/git/dolibarr_3.8/htdocs/custom,/home/login/git/dolibarr_3.8/htdocs/teclib_3.8';
  */
 $res=0;
 if (! $res && ! empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])) $res=@include($_SERVER["CONTEXT_DOCUMENT_ROOT"]."/main.inc.php");
@@ -37,12 +42,12 @@ if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res
 if (! $res) die("Include of main fails");
 require_once(DOL_DOCUMENT_ROOT."/core/lib/admin.lib.php");
 require_once(DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php');
-dol_include_once('/finalline/class/finalLine.class.php');
+dol_include_once('/autoaddline/class/autoaddline.class.php');
 
 global $conf, $langs;
 
 $langs->load("admin");
-$langs->load("finalline@finalline");
+$langs->load("autoaddline@autoaddline");
 
 if (!$user->admin)
     accessforbidden();
@@ -50,7 +55,7 @@ if (!$user->admin)
 $action = GETPOST('action', 'alpha');
 $seeDetail = false;
 
-$finalLine = new FinalLine($db);
+$autoAddLine = new AutoAddLine($db);
 
 
 $db->begin();
@@ -62,35 +67,35 @@ $id = GETPOST('id', 'int');
 
 if (isset($_POST['submit_affect']))
 {
-    $serviceId = GETPOST('finalline_service', 'int', 2);
-    $serviceType = GETPOST('finalline_type', 'int', 2);
-    $serviceValue = GETPOST('finalline_value', '', 2);
+    $serviceId = GETPOST('autoaddline_service', 'int', 2);
+    $serviceType = GETPOST('autoaddline_type', 'int', 2);
+    $serviceValue = GETPOST('autoaddline_value', '', 2);
     $serviceValue = str_replace(',', '.', $serviceValue);
     $serviceValue = is_numeric($serviceValue) ? $serviceValue : '';
 
     if ($serviceId > 0 && !empty($serviceValue))
     {
-        $finalLine->id = $serviceId;
-        $finalLine->type = $serviceType;
-        $finalLine->value = $serviceValue;
+        $autoAddLine->id = $serviceId;
+        $autoAddLine->type = $serviceType;
+        $autoAddLine->value = $serviceValue;
 
-        if (!($finalLine->create($user) > 0))
+        if (!($autoAddLine->create($user) > 0))
             $error++;
         
         // Delete any line where this service is target
-        if (!($finalLine->delete_lines(array(), $finalLine->id)))
+        if (!($autoAddLine->delete_lines(array(), $autoAddLine->id)))
             $error++;
         
         if(!$error)
-            $id = $finalLine->id;
+            $id = $autoAddLine->id;
     }
 }
 
 if ($id > 0)
 {
 
-    $finalLine->fetch($id);
-    $finalLine->fetch_lines();
+    $autoAddLine->fetch($id);
+    $autoAddLine->fetch_lines();
 }
 
 if (isset($_POST['submit_see_details']) && $id > 0)
@@ -103,15 +108,15 @@ if (isset($_POST['submit_update']))
     // remove lines
     $idsToRemoveJson = GETPOST('target_json', '', 2);
     if (!empty($idsToRemoveJson))
-        if (!($finalLine->delete_lines(json_decode($idsToRemoveJson)) > 0))
+        if (!($autoAddLine->delete_lines(json_decode($idsToRemoveJson)) > 0))
             $error++;
 
     // diff to add
     $idsToAddJson = GETPOST('linked_json', '', 2);
-    $idsToAddJson = array_diff(json_decode($idsToAddJson), $finalLine->lines);
+    $idsToAddJson = array_diff(json_decode($idsToAddJson), $autoAddLine->lines);
 
     if (!empty($idsToAddJson))
-        if (!($finalLine->create_lines($idsToAddJson, $user) > 0))
+        if (!($autoAddLine->create_lines($idsToAddJson, $user) > 0))
             $error++;
 
     // add diffs
@@ -121,7 +126,7 @@ if (isset($_POST['submit_update']))
 
 if ($action == 'delete')
 {
-    if (!($finalLine->delete($user)))
+    if (!($autoAddLine->delete($user)))
         $error++;
 }
 
@@ -140,23 +145,23 @@ else
  * View
  */
  
-$allProductsAndServices = $finalLine->getProducts();
+$allProductsAndServices = $autoAddLine->getProducts();
 $finals = $allProductsAndServices['final_services'];
 $usables = $allProductsAndServices['usable_services'];
 $products = $allProductsAndServices['products'];
-$finalsTypes = $finalLine->getTypes();
+$finalsTypes = $autoAddLine->getTypes();
 
 
 $form = new Form($db);
 
 
 $help_url = '';
-llxHeader($head, $langs->trans("Configuration"), $help_url, '', '', '', array('/finalline/js/settings.js'), '', 0, 0);
+llxHeader($head, $langs->trans("Configuration"), $help_url, '', '', '', array('/autoaddline/js/settings.js'), '', 0, 0);
 
 
 
 $linkback='<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
-print_fiche_titre($langs->trans('FinalLineSettingsDescription'),$linkback,'setup');
+print_fiche_titre($langs->trans('AutoAddLineSettingsDescription'),$linkback,'setup');
 
 print '<br>';
 
@@ -209,7 +214,7 @@ $fieldset['tables'][] = array(
                                         'options' => 'width="40%"'
                                 ),
                                 array(
-                                        'html' => $form->selectarray('finalline_service', $usables['labels'], -1, 0),
+                                        'html' => $form->selectarray('autoaddline_service', $usables['labels'], -1, 0),
                                         'options' => ''
                                 )
                         )
@@ -222,7 +227,7 @@ $fieldset['tables'][] = array(
                                         'options' => 'width="40%"'
                                 ),
                                 array(
-                                        'html' => $form->selectarray('finalline_type', $finalsTypes, 0, 0),
+                                        'html' => $form->selectarray('autoaddline_type', $finalsTypes, 0, 0),
                                         'options' => ''
                                 )
                         )
@@ -235,7 +240,7 @@ $fieldset['tables'][] = array(
                                         'options' => 'width="40%"'
                                 ),
                                 array(
-                                        'html' => '<input type="text" name="finalline_value" value="" />',
+                                        'html' => '<input type="text" name="autoaddline_value" value="" />',
                                         'options' => ''
                                 )
                         )
@@ -244,7 +249,7 @@ $fieldset['tables'][] = array(
                         'options' => '',
                         'cells' => array(
                                 array(
-                                        'html' => '<input type="submit" class="button" name="submit_affect" value="' . $langs->trans('Affect') . '" />',
+                                        'html' => '<input type="submit" class="button" name="submit_affect" value="' . $langs->trans('Add') . '" />',
                                         'options' => 'align="right" colspan="2"'
                                 )
                         )
@@ -254,7 +259,7 @@ $fieldset['tables'][] = array(
 include ('tpl/fieldset.tpl.php');
 
 //---- Details and param of a final service ----//
-print_fiche_titre('2 - '.$langs->trans('FinalLineSettingsDetails'), '', '');
+print_fiche_titre('2 - '.$langs->trans('AutoAddLineSettingsDetails'), '', '');
 
 $fieldset = array();
 $fieldset['formname'] = 'show_form';
@@ -303,20 +308,20 @@ include ('tpl/fieldset.tpl.php');
 
 if ($seeDetail)
 {
-    $finalLine->fetch($id);
-    $finalLine->fetch_lines();
+    $autoAddLine->fetch($id);
+    $autoAddLine->fetch_lines();
     // Prepare target/linked options html
     $targetServicesOptions = '';
     $linkedServicesOptions = '';
 
     $linkedHiddenArray = array();
     $targetHiddenArray = array();
-    foreach (array_diff_key($finalLine->lines, array(-1 => '')) as $linkedId)
+    foreach (array_diff_key($autoAddLine->lines, array(-1 => '')) as $linkedId)
     {
         $linkedServicesOptions.= '<option value="' . $linkedId . '">' . $products['labels'][$linkedId] . '</option>';
         $linkedHiddenArray[] = $linkedId;
     }
-    foreach (array_diff_key($products['labels'], array_flip($finalLine->lines), array(-1 => '')) as $targetId => $targetLabel)
+    foreach (array_diff_key($products['labels'], array_flip($autoAddLine->lines), array(-1 => '')) as $targetId => $targetLabel)
     {
         $targetServicesOptions.= '<option value="' . $targetId . '">' . $targetLabel . '</option>';
         $targetHiddenArray[] = $targetId;
@@ -334,7 +339,7 @@ if ($seeDetail)
     $fieldset['hiddens'] = array(
             array(
                     'name' => 'id',
-                    'value' => $finalLine->id
+                    'value' => $autoAddLine->id
             ),
             array(
                     'name' => 'linked_json',
@@ -366,7 +371,7 @@ if ($seeDetail)
                                             'options' => 'height="60px" width="60%"'
                                     ),
                                     array(
-                                            'html' => $finals['references'][$finalLine->id],
+                                            'html' => $finals['references'][$autoAddLine->id],
                                             'options' => 'align="right"'
                                     )
                             )
@@ -379,7 +384,7 @@ if ($seeDetail)
                                             'options' => 'height="60px width="60%"'
                                     ),
                                     array(
-                                            'html' => $finals['labels'][$finalLine->id],
+                                            'html' => $finals['labels'][$autoAddLine->id],
                                             'options' => 'align="right"'
                                     )
                             )
@@ -392,7 +397,7 @@ if ($seeDetail)
                                             'options' => 'height="60px width="60%"'
                                     ),
                                     array(
-                                            'html' => $finalsTypes[$finalLine->type],
+                                            'html' => $finalsTypes[$autoAddLine->type],
                                             'options' => 'align="right"'
                                     )
                             )
@@ -405,7 +410,7 @@ if ($seeDetail)
                                             'options' => 'height="60px width="60%"'
                                     ),
                                     array(
-                                            'html' => $finalLine->value,
+                                            'html' => $autoAddLine->value,
                                             'options' => 'align="right"'
                                     )
                             )
@@ -504,7 +509,7 @@ if ($seeDetail)
                             'options' => '',
                             'cells' => array(
                                     array(
-                                            'html' => '<input class="button" type="submit" name="submit_update" value="' . $langs->trans('Apply') . '" /> &nbsp; ' . '<a class="butActionDelete" href="' . $_SERVER["PHP_SELF"] . '?id=' . $finalLine->id . '&amp;action=delete">' . $langs->trans('Delete') . '</a>' ,
+                                            'html' => '<input class="button" type="submit" name="submit_update" value="' . $langs->trans('Apply') . '" /> &nbsp; ' . '<a class="butActionDelete" href="' . $_SERVER["PHP_SELF"] . '?id=' . $autoAddLine->id . '&amp;action=delete">' . $langs->trans('Delete') . '</a>' ,
                                             'options' => 'align="center"'
                                     )
                             )
@@ -518,8 +523,8 @@ if ($seeDetail)
 }
 dol_fiche_end();
 //var_dump('<pre>');
-//var_dump($finalLine->getFinalsByTargets());
-//var_dump($finalLine->getFinalsData());
+//var_dump($autoAddLine->getFinalsByTargets());
+//var_dump($autoAddLine->getFinalsData());
 //var_dump($db);
 //var_dump('</pre>');
 

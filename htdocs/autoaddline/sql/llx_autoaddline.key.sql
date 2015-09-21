@@ -16,5 +16,5 @@
 --
 -- ========================================================================
 
-ALTER TABLE llx_finalline ADD INDEX idx_finalline_fk_product_base (fk_product_base);
-ALTER TABLE llx_finalline ADD CONSTRAINT fk_product_base_id_product FOREIGN KEY (fk_product_base) REFERENCES llx_product (rowid) ON DELETE CASCADE;
+ALTER TABLE llx_autoaddline ADD INDEX idx_autoaddline_fk_product_base (fk_product_base);
+ALTER TABLE llx_autoaddline ADD CONSTRAINT fk_product_base_id_product FOREIGN KEY (fk_product_base) REFERENCES llx_product(rowid);

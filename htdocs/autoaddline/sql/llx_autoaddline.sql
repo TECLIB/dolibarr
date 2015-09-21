@@ -16,9 +16,10 @@
 --
 -- ========================================================================
 
-create table llx_finalline_association
-(
-  rowid                    integer AUTO_INCREMENT PRIMARY KEY,  
-  fk_product_base          integer NOT NULL,
-  fk_product_target        integer NOT NULL
+create table llx_autoaddline
+(  
+  rowid					   integer NOT NULL PRIMARY KEY,
+  fk_product_base          integer,
+  final_service_type       smallint DEFAULT 0,
+  final_service_value      double DEFAULT 0  
 )ENGINE=innodb;

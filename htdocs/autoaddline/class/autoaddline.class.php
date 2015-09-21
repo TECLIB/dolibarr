@@ -30,7 +30,7 @@
  *      \class      destruction
  *      \brief      Class to manage destructions in logistic hubs
  */
-class FinalLine // extends CommonObject
+class AutoAddLine // extends CommonObject
 {
 
     const SERVICE_TYPE_RATEONPRICE = 0;
@@ -42,7 +42,7 @@ class FinalLine // extends CommonObject
     var $error;       //!< To return error code (or message)
     var $errors = array();    //!< To return several error codes (or messages)
     //var $element='stockmanager_destruction_list';			//!< Id that identify managed objects
-    var $table_element = 'finalline'; //!< Name of table without prefix where object is stored
+    var $table_element = 'autoaddline'; //!< Name of table without prefix where object is stored
     var $id;
     var $type;
     var $value;
@@ -52,7 +52,7 @@ class FinalLine // extends CommonObject
      *      Constructor
      *      @param      DB      Database handler
      */
-    function FinalLine($DB)
+    function AutoAddLine($DB)
     {
         $this->db = $DB;
         return 1;
@@ -73,7 +73,7 @@ class FinalLine // extends CommonObject
         // Check parameters
         // Put here code to add control on parameters values		        
         // Insert request
-        $sql = "INSERT INTO " . MAIN_DB_PREFIX . "finalline(";
+        $sql = "INSERT INTO " . MAIN_DB_PREFIX . "autoaddline(";
         $sql.= " fk_product_base";
         if (isset($this->type))
             $sql.= ", final_service_type";
@@ -142,7 +142,7 @@ class FinalLine // extends CommonObject
         foreach ($servicesIdsToAdd as $serviceId)
             $insertValues[] = '(' . $this->id . ',' . $serviceId . ')';
         // Insert request
-        $sql = "INSERT INTO " . MAIN_DB_PREFIX . "finalline_association(";
+        $sql = "INSERT INTO " . MAIN_DB_PREFIX . "autoaddline_association(";
         $sql.= " fk_product_base";
         $sql.= ", fk_product_target";
         $sql.= ") VALUES " . implode(',', $insertValues);
@@ -161,7 +161,7 @@ class FinalLine // extends CommonObject
         if (!$error)
         {
 
-            $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX . 'finalline');
+            $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX . 'autoaddline');
 
             if (!$notrigger)
             {
@@ -206,7 +206,7 @@ class FinalLine // extends CommonObject
         $sql.= ", final_service_type";
         $sql.= ", final_service_value";
 
-        $sql.= " FROM " . MAIN_DB_PREFIX . "finalline";
+        $sql.= " FROM " . MAIN_DB_PREFIX . "autoaddline";
         $sql.= " WHERE fk_product_base = " . $idService;
 
         dol_syslog(get_class($this) . "::fetch sql=" . $sql, LOG_DEBUG);
@@ -239,7 +239,7 @@ class FinalLine // extends CommonObject
         $sql = "SELECT ";
         $sql.= " fk_product_target";
 
-        $sql.= " FROM " . MAIN_DB_PREFIX . "finalline_association";
+        $sql.= " FROM " . MAIN_DB_PREFIX . "autoaddline_association";
 
         $sql.= " WHERE fk_product_base = " . $this->id;
 
@@ -290,7 +290,7 @@ class FinalLine // extends CommonObject
         // Check parameters
         // Put here code to add control on parameters values
         // Update request        
-        $sql = "UPDATE " . MAIN_DB_PREFIX . "finalline SET";
+        $sql = "UPDATE " . MAIN_DB_PREFIX . "autoaddline SET";
         $sql.= " final_service_type = " . $this->type;
         $sql.= ", final_service_value = " . $this->value;
 
@@ -351,7 +351,7 @@ class FinalLine // extends CommonObject
 
         $this->db->begin();
 
-        $sql = "DELETE FROM " . MAIN_DB_PREFIX . "finalline";
+        $sql = "DELETE FROM " . MAIN_DB_PREFIX . "autoaddline";
         $sql.= " WHERE fk_product_base =" . $this->id;
 
         if (!$this->delete_lines())
@@ -404,7 +404,7 @@ class FinalLine // extends CommonObject
 
         $this->db->begin();
 
-        $sql = "DELETE FROM " . MAIN_DB_PREFIX . "finalline_association";
+        $sql = "DELETE FROM " . MAIN_DB_PREFIX . "autoaddline_association";
         if (!$targetId)
         {
             $sql.= " WHERE fk_product_base =" . $this->id;
@@ -518,7 +518,7 @@ class FinalLine // extends CommonObject
         $sql.= ", final_service_type";
         $sql.= ", final_service_value";
 
-        $sql.= " FROM " . MAIN_DB_PREFIX . "finalline";
+        $sql.= " FROM " . MAIN_DB_PREFIX . "autoaddline";
 
 
         dol_syslog(get_class($this) . "::getPallets sql=" . $sql, LOG_DEBUG);
@@ -561,9 +561,9 @@ class FinalLine // extends CommonObject
         $sql.= "  fl.fk_product_base";
         $sql.= ", fla.fk_product_target";
 
-        $sql.= " FROM " . MAIN_DB_PREFIX . "finalline as fl";
+        $sql.= " FROM " . MAIN_DB_PREFIX . "autoaddline as fl";
 
-        $sql.= " LEFT JOIN " . MAIN_DB_PREFIX . "finalline_association as fla";
+        $sql.= " LEFT JOIN " . MAIN_DB_PREFIX . "autoaddline_association as fla";
         $sql.= " ON fl.fk_product_base = fla.fk_product_base";
 
         dol_syslog(get_class($this) . "::getPallets sql=" . $sql, LOG_DEBUG);
@@ -610,15 +610,11 @@ class FinalLine // extends CommonObject
         $sql.= ", pt.ref";
         $sql.= ", pt.fk_product_type";
         $sql.= ", fl.fk_product_base";
-
-
         $sql.= " FROM " . MAIN_DB_PREFIX . "product as pt";
-
-        $sql.= " LEFT JOIN " . MAIN_DB_PREFIX . "finalline as fl";
+        $sql.= " LEFT JOIN " . MAIN_DB_PREFIX . "autoaddline as fl";
         $sql.= " ON pt.rowid = fl.fk_product_base";
 
         dol_syslog(get_class($this) . "::getPallets sql=" . $sql, LOG_DEBUG);
-
         $resql = $this->db->query($sql);
         if ($resql)
         {
@@ -639,7 +635,8 @@ class FinalLine // extends CommonObject
                         {
                             $finalServices['labels'][$obj->rowid] = $obj->label;
                             $finalServices['references'][$obj->rowid] = $obj->ref;
-                        } else
+                        } 
+                        else
                         {
                             $usableServices['labels'][$obj->rowid] = $obj->label;
                             $usableServices['references'][$obj->rowid] = $obj->ref;

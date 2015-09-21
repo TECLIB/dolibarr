@@ -35,7 +35,7 @@
  *      \class      InterfaceDemo
  *      \brief      Class of triggers for demo module
  */
-class InterfaceFinalLine
+class InterfaceAutoAddLine
 {
 
     var $db;
@@ -44,7 +44,7 @@ class InterfaceFinalLine
      *   Constructor.
      *   @param      Database   db      Database handler
      */
-    function InterfaceFinalLine($db)
+    function InterfaceAutoAddLine($db)
     {
         $this->db = $db;
 
@@ -116,12 +116,12 @@ class InterfaceFinalLine
             case 'LINEBILL_UPDATE':
             case 'LINEBILL_INSERT':
             case 'LINEBILL_DELETE':
-                dol_include_once('/finalline/class/finalLine.class.php');
+                dol_include_once('/autoaddline/class/autoAddLine.class.php');
 
-                // Prepare some data arrays: existing finallines ids and products linked to
-                $staticFinalLine = new FinalLine($this->db);
-                $finalsData = $staticFinalLine->getFinalsData();
-                $finalsByTargets = $staticFinalLine->getFinalsByTargets();
+                // Prepare some data arrays: existing autoaddlines ids and products linked to
+                $staticAutoAddLine = new AutoAddLine($this->db);
+                $finalsData = $staticAutoAddLine->getFinalsData();
+                $finalsByTargets = $staticAutoAddLine->getFinalsByTargets();
                 $finalsIds = array_keys($finalsData);
 
                 // Final lines data to add array
@@ -162,15 +162,15 @@ class InterfaceFinalLine
                                     $finalsLines[$finalsToApply] = 0;
 
                                 // Prepare line when service is a rate on price
-                                if ($finalsData[$finalsToApply]['type'] == FinalLine::SERVICE_TYPE_RATEONPRICE)
+                                if ($finalsData[$finalsToApply]['type'] == AutoAddLine::SERVICE_TYPE_RATEONPRICE)
                                     $finalsLines[$finalsToApply] += ($finalsData[$finalsToApply]['value'] / 100) * $invoiceLine->total_ht;
                             }
                         }
                     }
                 }
 
-                foreach ($finalsLines as $finalLineServiceId => $amount)
-                    if (!($invoice->addline($invoice->id, $lineDesc, price2num($amount), 1, 0, '', '', $finalLineServiceId) > 0))
+                foreach ($finalsLines as $autoAddLineServiceId => $amount)
+                    if (!($invoice->addline($invoice->id, $lineDesc, price2num($amount), 1, 0, '', '', $autoAddLineServiceId) > 0))
                         $error++;
 
                 break;

@@ -16,7 +16,9 @@
 --
 -- ========================================================================
 
-ALTER TABLE llx_finalline_association ADD UNIQUE unique_finalline_association_base_target ( fk_product_base , fk_product_target );
-ALTER TABLE llx_finalline_association ADD CONSTRAINT fk_base_fk_product_base FOREIGN KEY (fk_product_base) REFERENCES llx_finalline (fk_product_base) ON DELETE CASCADE;
-ALTER TABLE llx_finalline_association ADD CONSTRAINT fk_product_fk_product_target FOREIGN KEY (fk_product_target) REFERENCES llx_product (rowid) ON DELETE CASCADE;
-
+create table llx_autoaddline_association
+(
+  rowid                    integer AUTO_INCREMENT PRIMARY KEY,  
+  fk_product_base          integer NOT NULL,
+  fk_product_target        integer NOT NULL
+)ENGINE=innodb;
