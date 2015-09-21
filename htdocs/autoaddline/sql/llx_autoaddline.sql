@@ -18,7 +18,8 @@
 
 create table llx_autoaddline
 (  
-  rowid					   integer NOT NULL PRIMARY KEY,
+  rowid					   integer AUTO_INCREMENT PRIMARY KEY,
+  label                    varchar(255) NOT NULL,
   fk_product_base          integer,
   final_service_type       smallint DEFAULT 0,
   final_service_value      double DEFAULT 0  

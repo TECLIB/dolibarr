@@ -62,7 +62,6 @@ $db->begin();
 
 $error = 0;
 
-
 $id = GETPOST('id', 'int');
 
 if (isset($_POST['submit_affect']))
@@ -72,22 +71,42 @@ if (isset($_POST['submit_affect']))
     $serviceValue = GETPOST('autoaddline_value', '', 2);
     $serviceValue = str_replace(',', '.', $serviceValue);
     $serviceValue = is_numeric($serviceValue) ? $serviceValue : '';
-
-    if ($serviceId > 0 && !empty($serviceValue))
+    $rulename = GETPOST('rulename');
+    
+    if (! $rulename)
     {
-        $autoAddLine->id = $serviceId;
-        $autoAddLine->type = $serviceType;
-        $autoAddLine->value = $serviceValue;
-
-        if (!($autoAddLine->create($user) > 0))
-            $error++;
-        
-        // Delete any line where this service is target
-        if (!($autoAddLine->delete_lines(array(), $autoAddLine->id)))
-            $error++;
-        
-        if(!$error)
-            $id = $autoAddLine->id;
+        setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("RuleName")), null, 'errors');
+        $error++;
+    }
+    if (! ($serviceId > 0))
+    {
+        setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("Product")), null, 'errors');
+        $error++;
+    }
+    if (GETPOST('autoaddline_value') === '')
+    {
+        setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("DefineValue")), null, 'errors');
+        $error++;
+    }
+    
+    if (! $error)
+    {
+        if ($serviceId > 0 && !empty($serviceValue))
+        {
+            $autoAddLine->label = $rulename;
+            $autoAddLine->product_id = $serviceId;
+            $autoAddLine->type = $serviceType;
+            $autoAddLine->value = $serviceValue;
+    
+            if (!($autoAddLine->create($user) > 0))
+            {
+                setEventMessages($autoAddLine->error, $autoAddLine->errors, 'errors');
+                $error++;
+            }
+            
+            if(!$error)
+                $id = $autoAddLine->id;
+        }
     }
 }
 
@@ -210,11 +229,24 @@ $fieldset['tables'][] = array(
                         'options' => '',
                         'cells' => array(
                                 array(
+                                        'html' => $langs->trans('RuleName'),
+                                        'options' => 'width="40%"'
+                                ),
+                                array(
+                                        'html' => '<input type="text" name="rulename" value="'.GETPOST('rulename').'" />',
+                                        'options' => ''
+                                )
+                        )
+                ),
+                array(
+                        'options' => '',
+                        'cells' => array(
+                                array(
                                         'html' => $langs->trans('ChooseAService'),
                                         'options' => 'width="40%"'
                                 ),
                                 array(
-                                        'html' => $form->selectarray('autoaddline_service', $usables['labels'], -1, 0),
+                                        'html' => $form->select_produits_list(GETPOST('autoaddline_service'),'autoaddline_service'),
                                         'options' => ''
                                 )
                         )
@@ -240,7 +272,7 @@ $fieldset['tables'][] = array(
                                         'options' => 'width="40%"'
                                 ),
                                 array(
-                                        'html' => '<input type="text" name="autoaddline_value" value="" />',
+                                        'html' => '<input type="text" name="autoaddline_value" value="'.GETPOST('autoaddline_value').'" />',
                                         'options' => ''
                                 )
                         )

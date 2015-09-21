@@ -74,13 +74,15 @@ class AutoAddLine // extends CommonObject
         // Put here code to add control on parameters values		        
         // Insert request
         $sql = "INSERT INTO " . MAIN_DB_PREFIX . "autoaddline(";
+        $sql.= " label,";
         $sql.= " fk_product_base";
         if (isset($this->type))
             $sql.= ", final_service_type";
         if (isset($this->value))
             $sql.= ", final_service_value";
         $sql.= ") VALUES (";
-        $sql.= $this->id;
+        $sql.= "'".$this->db->escape($this->label)."', ";
+        $sql.= $this->product_id;
         if (isset($this->type))
             $sql.= ", " . $this->type;
         if (isset($this->type))
@@ -91,15 +93,10 @@ class AutoAddLine // extends CommonObject
 
         dol_syslog(get_class($this) . "::create sql=" . $sql, LOG_DEBUG);
         $resql = $this->db->query($sql);
-
-        if (!$resql)
+        if ($resql)
         {
-            $error++;
-            $this->errors[] = "Error " . $this->db->lasterror();
-        }
+            $this->id = $this->db->last_insert_id($resql);
 
-        if (!$error)
-        {
             if (!$notrigger)
             {
                 // Uncomment this and change MYOBJECT to your own tag if you
@@ -112,18 +109,19 @@ class AutoAddLine // extends CommonObject
                 //// End call triggers
             }
         }
+        else
+        {   
+            $error++;
+            $this->errors[] = "Error " . $this->db->lasterror();
+        }
 
         // Commit or rollback
         if ($error)
         {
-            foreach ($this->errors as $errmsg)
-            {
-                dol_syslog(get_class($this) . "::create " . $errmsg, LOG_ERR);
-                $this->error.=($this->error ? ', ' . $errmsg : $errmsg);
-            }
             $this->db->rollback();
             return -1 * $error;
-        } else
+        }
+        else
         {
             $this->db->commit();
             return $this->id;
