@@ -43,7 +43,7 @@ class modAutoAddLine extends DolibarrModules
         global $langs, $conf;
 
         $this->db = $DB;
-        $this->numero = 1380;
+        $this->numero = 107380;
         // Key text used to identify module (for permissions, menus, etc...)
 
         $this->family = "other";

@@ -44,7 +44,7 @@ class modAutoAttachFile extends DolibarrModules
 		$this->db = $db;
 
 		// Id for module (must be unique).
-		$this->numero = 101420;
+		$this->numero = 107420;
 
 		// Family can be 'crm','financial','hr','projects','product','ecm','technic','other'
 		// It is used to sort modules in module setup page
@@ -166,4 +166,3 @@ class modAutoAttachFile extends DolibarrModules
 
 }
 
-?>
