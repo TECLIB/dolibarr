@@ -52,6 +52,7 @@ $sites = $eCommerceSite->listSites();
 /***************************************************
 * Show page
 ****************************************************/
+$var=true;
 
 $urltpl=dol_buildpath('/ecommerce/tpl/index.tpl.php',0);
 include($urltpl);

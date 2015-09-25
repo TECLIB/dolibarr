@@ -27,6 +27,12 @@ $errors = array();
 $success = array();
 $site = null;
 
+$nbCategoriesToUpdate=0;
+$nbProductInDolibarr=0;
+$nbSocieteInDolibarr = 0;
+$nbCommandeInDolibarr = 0;
+$nbFactureInDolibarr = 0;
+		
 $langs->load("admin");
 $langs->load("ecommerce");
 
@@ -55,11 +61,64 @@ if ($id)
 		if (isset($site->timeout))
 			set_time_limit($site->timeout);
 		
-		$synchro = new eCommerceSynchro($db, $site);
-		if (! is_object($synchro) || count($synchro->errors))
+	    $synchro = new eCommerceSynchro($db, $site);
+	    
+		$synchro->connect();
+		if (count($synchro->errors))
 		{
 		    $error++;
 		}
+	    
+	    
+		//synch only with write rights
+		if ($user->rights->ecommerce->write)
+		{
+			if (GETPOST('reset_data'))
+			{
+				$synchro->dropImportedAndSyncData();
+			}
+			
+			if (GETPOST('submit_synchro_category') || GETPOST('submit_synchro_all'))
+			{
+				$synchro->synchCategory();
+			}
+			if (GETPOST('submit_synchro_product') || GETPOST('submit_synchro_all'))
+			{
+				$synchro->synchProduct();
+			}
+			if (GETPOST('submit_synchro_societe') || GETPOST('submit_synchro_all'))
+			{
+				$synchro->synchSociete();
+			}
+			if (GETPOST('submit_synchro_commande') || GETPOST('submit_synchro_all'))
+			{
+				$synchro->synchCommande();
+			}
+			if (GETPOST('submit_synchro_facture') || GETPOST('submit_synchro_all'))
+			{
+				$synchro->synchFacture();
+			}
+		}
+
+	    
+	    
+    	/***************************************************
+    	* Vars to build tpl page
+    	****************************************************/
+        $nbCategoriesInDolibarr = $synchro->getNbCategoriesInDolibarr(true);
+		if ($nbCategoriesInDolibarr < 0) $error++;
+		$nbProductInDolibarr = $synchro->getNbProductInDolibarr(true);
+		if ($nbProductInDolibarr < 0) $error++;
+		$nbSocieteInDolibarr = $synchro->getNbSocieteInDolibarr(true);
+		if ($nbSocieteInDolibarr < 0) $error++;
+		if (! empty($conf->commande->enabled))
+		{
+            $nbCommandeInDolibarr = $synchro->getNbCommandeInDolibarr(true);
+            if ($nbCommandeInDolibarr < 0) $error++;
+		}
+		$nbFactureInDolibarr = $synchro->getNbFactureInDolibarr(true);
+		if ($nbFactureInDolibarr < 0) $error++;
+    	
 		
 		$result=0;
 		
@@ -71,50 +130,32 @@ if ($id)
 		if ($result <= 0)
 		{
 			$errors = $synchro->errors;
-			$error = $synchro->error;
+			$errors[] = $synchro->error;
+			$error++;
 		}
-		else
-		{
-			//synch only with write rights
-			if ($user->rights->ecommerce->write)
-			{
-				if ($_POST['reset_data'])
-				{
-					$synchro->dropImportedAndSyncData();
-				}
-				elseif ($_POST['submit_synchro_societe'])
-				{
-					$synchro->synchSociete();
-				}
-				elseif ($_POST['submit_synchro_commande'])
-				{
-					$synchro->synchCommande();
-				}
-				elseif ($_POST['submit_synchro_product'])
-				{
-					$synchro->synchProduct();
-				}
-				elseif ($_POST['submit_synchro_facture']||$_REQUEST['submit_synchro_all'])
-				{
-					$synchro->synchFacture();
-				}
-			}
 
-			
-        	/***************************************************
-        	* PAGE
-        	*
-        	* Put here all vars to build tpl page
-        	****************************************************/
-			if (! $error) $nbSocieteToUpdate = $synchro->getNbSocieteToUpdate(true);
-			if ($nbSocieteToUpdate < 0) $error++;
+		if (! $error)
+		{
+			if (! $error) $nbCategoriesToUpdate = $synchro->getNbCategoriesToUpdate(true);
+			if ($nbCategoriesToUpdate < 0) $error++;
 			if (! $error) $nbProductToUpdate = $synchro->getNbProductToUpdate(true);
 			if ($nbProductToUpdate < 0) $error++;
-			if (! $error) $nbCommandeToUpdate = $synchro->getNbCommandeToUpdate(true);
-			if ($nbCommandeToUpdate < 0) $error++;
+			if (! $error) $nbSocieteToUpdate = $synchro->getNbSocieteToUpdate(true);
+			if ($nbSocieteToUpdate < 0) $error++;
+			if (! empty($conf->commande->enabled))
+            {
+                if (! $error) $nbCommandeToUpdate = $synchro->getNbCommandeToUpdate(true);
+                if ($nbCommandeToUpdate < 0) $error++;
+            }
 			if (! $error) $nbFactureToUpdate = $synchro->getNbFactureToUpdate(true);
 			if ($nbFactureToUpdate < 0) $error++;
 
+			if ($nbCategoriesToUpdate == 0 && $nbProductToUpdate == 0 && $nbSocieteToUpdate == 0 && $nbCommandeToUpdate == 0 && $nbFactureToUpdate == 0)
+			{
+			    $site->last_update = $synchro->toDate;
+			    $site->update($user);
+			}
+			
 			if ($user->rights->ecommerce->write)
 				$synchRights = true;
 			

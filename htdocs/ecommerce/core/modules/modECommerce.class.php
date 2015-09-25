@@ -72,7 +72,7 @@ class modECommerce extends DolibarrModules
 		//							'workflow' => array('order' => array('WORKFLOW_ORDER_AUTOCREATE_INVOICE')) // Set here all workflow context managed by module
 		//                        );
 		$this->module_parts = array(
-                        'triggers' => 1
+                    'triggers' => 1
                 );
 
 		// Data directories to create when module is enabled.
@@ -87,7 +87,7 @@ class modECommerce extends DolibarrModules
 		$this->config_page_url = array('eCommerceSetup.php@ecommerce');
 
 		// Dependencies
-		$this->depends = array("modExpedition","modFacture","modCommande","modSociete","modProduit","modCategorie","modWebServices");		// List of modules id that must be enabled if this module is enabled
+		$this->depends = array("modFacture","modSociete","modProduit","modCategorie","modWebServices");		// List of modules id that must be enabled if this module is enabled
 		$this->requiredby = array();	// List of modules id to disable if this one is disabled
 		$this->phpmin = array(4,3);					// Minimum version of PHP required by module
 		$this->need_dolibarr_version = array(2,7);	// Minimum version of Dolibarr required by module

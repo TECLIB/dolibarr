@@ -72,7 +72,7 @@ class eCommerceRemoteAccessMagento
         catch (SoapFault $fault) 
         {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog('connect : '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
     }
@@ -91,8 +91,9 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'customer.list', array($filter));
             return $result;
         } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
-            //echo 'get societe to update : '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
         }
     }
 
@@ -114,7 +115,9 @@ class eCommerceRemoteAccessMagento
             
             return $results;            
         } catch (SoapFault $fault) {
-            //echo 'get product to update : '.$fault->getMessage();
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
         }
     }
 
@@ -136,7 +139,9 @@ class eCommerceRemoteAccessMagento
             
             return $result;
         } catch (SoapFault $fault) {
-            //echo 'get commande to update : '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
         }
     }
 
@@ -147,7 +152,9 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'sales_order_invoice.list', array($filter));
             return $result;
         } catch (SoapFault $fault) {
-            //echo 'get facture to update : '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
         }
     }
 
@@ -198,6 +205,7 @@ class eCommerceRemoteAccessMagento
 
     /**
      * Put the remote data into product dolibarr data from instantiated class in the constructor
+     * 
      * @param $remoteObject array
      * @return array product
      */
@@ -205,9 +213,9 @@ class eCommerceRemoteAccessMagento
     {
         $products = array();
         $calls = array();
-        $canvas = 'default@product';
-        if (DOL_CLASS_PATH == null)
-            $canvas = '';
+       
+        $canvas = '';
+        
         $nbsynchro = 0;
         if (count($remoteObject))
         {
@@ -215,7 +223,7 @@ class eCommerceRemoteAccessMagento
             {
                 if ($rproduct['sku'])
                 {
-                    $calls[] = array('auguria_dolibarrapi_catalog_product.info', $rproduct['sku']);
+                    $calls[] = array('catalog_product.info', $rproduct['sku']);
                 }
                 $nbsynchro = $nbsynchro + 1;
             }
@@ -223,27 +231,33 @@ class eCommerceRemoteAccessMagento
             try {
                 $results = $this->client->multiCall($this->session, $calls);
             } catch (SoapFault $fault) {
-                echo 'convertRemoteObjectIntoDolibarrProduct :' . $fault->getMessage() . '-' . $fault->getCode() . '-' . $fault->getTraceAsString();
+                $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+                dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+                return false;
             }
 
             if (count($results))
                 foreach ($results as $product)
                 {
+                    //var_dump($product);exit;
                     $products[] = array(
                             'ref' => dol_sanitizeFileName(stripslashes($product['sku'])),
-                            'label' => addslashes($product['name']),
-                            'description' => addslashes($product['description']),
+                            'label' => $product['name'],
+                            'description' => $product['description'],
                             'weight' => $product['weight'],
                             'last_update' => $product['updated_at'],
                             'price' => (($this->site->magento_use_special_price && $product['special_price'] != NULL ) ? $product['special_price'] : $product['price']),
-                            'envente' => 1,
-                            'remote_id' => $product['product_id'],
+                            'envente' => $product['status'] ? 1 : 0,
+                            'remote_id' => $product['product_id'],  // id in ecommerce magento
                             'fk_product_type' => 0, //$product['fk_product_type'] type de produit (manufacturé ou matiere premiere) dépend d'un attribut dynamique
                             'finished' => 1, //Etat $product['price']
                             'canvas' => $canvas,
                             'categories' => $product['categories'],
-                            'tax_rate' => $product['tax_rate']
+                            'tax_rate' => $product['tax_rate'],
+                            'price_min' => $product['minimal_price'],
+                            'fk_country' => ($product['country_of_manufacture'] ? getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, '') : null)
                     );
+                    // We also get special_price, minimal_price => ?, msrp, 
                 }
         }
         //important - order by last update
@@ -551,33 +565,70 @@ class eCommerceRemoteAccessMagento
             if (count($result == 1))
                 $commande = $this->client->call($this->session, 'sales_order.info', $result[0]['increment_id']);
         } catch (SoapFault $fault) {
-            //echo 'getCommande :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
         }
         return $commande;
     }
 
     /**
-     * 	Return the magento's category tree
+     * Return the magento's category tree
+     * 
+     * @return  array|boolean       Array with categories or false if error
      */
     public function getRemoteCategoryTree()
     {
+        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree session=".$this->session);
         try {
-            $result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
+            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
+            $result = $this->client->call($this->session, 'catalog_category.tree');
         } catch (SoapFault $fault) {
-            //echo 'MagentoCatTree :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
         }
         return $result;
     }
 
+    
+    /**
+     * Return content of one category
+     * 
+     * @param unknown $category_id
+     * @return boolean|unknown
+     */
+    public function getCategoryData($category_id)
+    {
+        dol_syslog("eCommerceRemoteAccessMagento getCategoryData session=".$this->session);
+        try {
+            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
+            $result = $this->client->call($this->session, 'catalog_category.info', array('categoryId'=>$category_id));
+        } catch (SoapFault $fault) {
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }
+        return $result;
+    }
+    
+    
     public function createRemoteLivraison($livraison, $remote_order_id)
     {
         $commande = $this->getCommande($remote_order_id);
-        $result = $this->client->call($this->session, 'sales_order_shipment.create', array($commande['increment_id'], array(), 'Shipment Created', true, true));
+        try {        
+            $result = $this->client->call($this->session, 'sales_order_shipment.create', array($commande['increment_id'], array(), 'Shipment Created', true, true));
+        } catch (SoapFault $fault) {
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }
         return $result;
     }
 
     /**
      * Calcul tax rate and return the closest dolibarr tax rate.
+     * 
      * @param float $priceHT
      * @param float $priceTTC
      */
@@ -624,10 +675,9 @@ class eCommerceRemoteAccessMagento
 
     public function __destruct()
     {
-        $this->client->endSession($this->session);
+        if (is_object($this->client)) $this->client->endSession($this->session);
         ini_set("memory_limit", "528M");
     }
 
 }
 
-?>

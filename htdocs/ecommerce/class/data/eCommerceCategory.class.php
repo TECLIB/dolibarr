@@ -75,8 +75,6 @@ class eCommerceCategory // extends CommonObject
             $this->remote_id = trim($this->remote_id);
         if (isset($this->remote_parent_id))
             $this->remote_parent_id = trim($this->remote_parent_id);
-        if (isset($this->last_update))
-            $this->last_update = trim($this->last_update);
         //...
         // Check parameters
         // Put here code to add control on parameters values
@@ -91,7 +89,7 @@ class eCommerceCategory // extends CommonObject
         $sql.= " '" . $this->fk_site . "',";
         $sql.= " '" . $this->remote_id . "',";
         $sql.= " '" . $this->remote_parent_id . "',";
-        $sql.= " '" . $this->last_update . "'";
+        $sql.= " '" . $this->db->idate($this->last_update) . "'";
         //...
         $sql.= ")";
 
@@ -225,7 +223,7 @@ class eCommerceCategory // extends CommonObject
         $sql.= " fk_site=" . (isset($this->fk_site) ? intval($this->fk_site) : 0) . ",";
         $sql.= " remote_id=" . (isset($this->remote_id) ? intval($this->remote_id) : 0) . ",";
         $sql.= " remote_parent_id=" . (isset($this->remote_parent_id) ? intval($this->remote_parent_id) : $this->fk_site) . ",";
-        $sql.= " last_update=" . (isset($this->last_update) ? "'" . $this->last_update . "'" : "null") . "";
+        $sql.= " last_update=" . (isset($this->last_update) ? "'" . $this->db->idate($this->last_update) . "'" : "null") . "";
 
         $sql.= " WHERE rowid=" . $this->id;
 
@@ -339,7 +337,7 @@ class eCommerceCategory // extends CommonObject
         $sql.= " WHERE t.fk_site = " . $site;
         dol_syslog(get_class($this) . "::getLastUpdate sql=" . $sql, LOG_DEBUG);
 
-        $lastdate = '0000-00-00 00:00:00';
+        $lastdate = null;
 
         $resql = $this->db->query($sql);
         if ($resql)
@@ -348,7 +346,7 @@ class eCommerceCategory // extends CommonObject
             {
                 $obj = $this->db->fetch_object($resql);
                 if ($obj->lastdate != null)
-                    $lastdate = $obj->lastdate;
+                    $lastdate = $this->db->jdate($obj->lastdate);
             }
             $this->db->free($resql);
         }
@@ -374,7 +372,6 @@ class eCommerceCategory // extends CommonObject
 
         $sql = "SELECT t.last_update as lastdate, t.remote_parent_id as parentid FROM " . MAIN_DB_PREFIX . $this->table_element . " as t";
         $sql.= " WHERE t.remote_id=" . $remoteCatToCheck['category_id'] . " AND t.fk_site = " . $siteId;
-        dol_syslog(get_class($this) . "::getLastUpdate sql=" . $sql, LOG_DEBUG);
 
         $resql = $this->db->query($sql);
         if ($resql)
@@ -383,25 +380,30 @@ class eCommerceCategory // extends CommonObject
             {
                 $obj = $this->db->fetch_object($resql);
 
-                $now = strtotime($toDate);  // Dolibarr's category time 
-                $lu = strtotime($obj->lastdate);
+                $now = $toDate;  // Dolibarr's category time 
+                $lu = $this->db->jdate($obj->lastdate);                 // date of last update process
                 $lumage = strtotime($remoteCatToCheck['updated_at']);
-                $updateRequired = $obj->parentid != $remoteCatToCheck['parent_id'] || (($now - strtotime($obj->lastdate)) > ($now - strtotime($remoteCatToCheck['updated_at']))) ? 1 : 0;
+                //var_dump($lu);
+                //var_dump($lumage);
+                $updateRequired = ($obj->parentid != $remoteCatToCheck['parent_id'] || ($lu < $lumage)) ? 1 : 0;
             } else
             {
                 $updateRequired = 1;
             }
             $this->db->free($resql);
-        } else
+        } 
+        else
         {
             $this->error = "Error " . $this->db->lasterror();
             dol_syslog(get_class($this) . "::getLastUpdate " . $this->error, LOG_ERR);
+            return -1;
         }
         return $updateRequired;
     }
 
     /**
      *    Load object in memory from database by remote_id
+     *    
      *    @param	$remoteId string remote_id
      *    @param	$siteId int fk_site
      *    @return	int <0 if KO, >0 if OK
@@ -510,7 +512,7 @@ class eCommerceCategory // extends CommonObject
             // We put the return of this call in a temp array
                 $subRes = array_values(self::cuttingCategoryTreeFromMagentoToDolibarr($subCat));
 
-            array_pop($subCat);   // Now children are useless in $subcat, we can pop it (to relieve array work)   		
+            array_pop($subCat);   // Now children are useless in $subcat, we can pop it (to relieve array work)
             $res[] = $subCat;   // We add the popped $subcat to $res
             // $subres is a one-leveled array, so we iterate over it and put each cat it contains in $res
             if ($subRes)
@@ -523,6 +525,38 @@ class eCommerceCategory // extends CommonObject
         return $res;
     }
 
+    /**
+     * 		\brief		Function to put each category of a tree in a unique array. Children are always after parents.
+     * 		\param		array 		$tree, array containing arrays of the same kind
+     * 		\return		array		array containing each category on a unique level (without the tree root)
+     */
+    public function cuttingCategoryTreeFromMagentoToDolibarrNew($tree, &$resanswer)
+    {
+        $tmp=$tree;
+        if (isset($tmp['level']) && $tmp['level']==0) $tmp=$tree['children'];
+        
+        foreach ($tmp as $subCat)
+        {
+            $savchildren = null;
+            if (isset($subCat['children'])) 
+            {
+                $savchildren=$subCat['children'];
+                unset($subCat['children']);
+            }
+            
+            //var_dump($subCat);
+            
+            $resanswer[] = $subCat;   // We add the popped $subcat to $res
+            
+            // For each child, we check if it has children to, and call this function again in this case
+            if (!empty($savchildren))
+            {
+                // We put the return of this call in a temp array
+                self::cuttingCategoryTreeFromMagentoToDolibarrNew($savchildren, $resanswer);
+            }
+        }
+    }
+    
     /**
      * 		\brief		Function to get DolibarrCategory's ids from remoteCategoriesIds
      * 		\param		object		database
@@ -605,4 +639,3 @@ class eCommerceCategory // extends CommonObject
 
 }
 
-?>

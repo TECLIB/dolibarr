@@ -289,6 +289,12 @@ class eCommerceSociete // extends CommonObject
 	public function getLastUpdate($site)
 	{
 		global $langs;
+		
+        // Clean orphelins entries to have a clean database (having such records should not happen)
+        $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_societe WHERE fk_societe NOT IN (select rowid from ".MAIN_DB_PREFIX."societe)";
+        $this->db->query($sql);
+		
+        
         $sql = "SELECT MAX(t.last_update) as lastdate FROM ".MAIN_DB_PREFIX."ecommerce_societe as t";
         $sql.= " WHERE t.fk_site = ".$site;
     	dol_syslog(get_class($this)."::getLastUpdate sql=".$sql, LOG_DEBUG);

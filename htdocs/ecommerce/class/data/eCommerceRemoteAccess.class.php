@@ -185,8 +185,22 @@ class eCommerceRemoteAccess
 	public function getRemoteCategoryTree()
 	{
 	    $result=$this->class->getRemoteCategoryTree();
-		return $result;
+		$this->error=$this->class->error;
+		$this->errors=$this->class->errors;
+	    return $result;
 	}
+	
+	/**	\brief	Get a remote category tree from magento
+	 * 	\return	array	An array containing magento's categories as arrays
+	 */
+	public function getCategoryData($category_id)
+	{
+	    $result=$this->class->getCategoryData($category_id);
+		$this->error=$this->class->error;
+		$this->errors=$this->class->errors;
+	    return $result;
+	}
+	
 	
     /**
      * Create a remote livraison from instantiated class in the constructor

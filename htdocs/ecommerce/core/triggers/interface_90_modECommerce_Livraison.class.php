@@ -84,6 +84,49 @@ class InterfaceLivraison
      */
 	function run_trigger($action,$object,$user,$langs,$conf)
     {
+        if ($action == 'CATEGORY_DELETE' && ((int) $object->type == 0))     // Product category
+        {
+            $this->db->begin();
+
+            // TODO If product category and oldest parent is category for magento then delete category into magento.
+            
+            $sql = "SELECT remote_id, remote_parent_id FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE label ='".$this->db->escape($object->label)."' AND type = 0";
+            $resql=$this->db->query($sql);
+            if ($resql) 
+            {
+                $obj=$this->db->fetch_object($resql);
+                $remote_parent_id=$obj->remote_parent_id;
+                $remote_id=$obj->remote_id;
+                $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_category SET last_update = NULL, remote_parent_id = ".$remote_parent_id." WHERE remote_parent_id = ".$remote_id;
+                $resql=$this->db->query($sql);
+                if (! $resql)
+                {
+                    $error++;
+                }
+            }
+            if (! $error)
+            {
+                $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE label ='".$this->db->escape($object->label)."' AND type = 0";
+    
+                $resql=$this->db->query($sql);
+                if (! $resql)
+                {
+                    $error++;
+                }
+            }
+            
+            if ($error) 
+            {
+                $this->db->rollback();
+                return -1;
+            }
+            else
+            {
+                $this->db->commit();
+                return 1;
+            }
+        }
+        
         if ($action == 'SHIPPING_VALIDATE')
         {
         	try
