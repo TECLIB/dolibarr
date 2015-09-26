@@ -6,18 +6,13 @@
  * @author		<franck.charpentier@auguria.net>
  * @licence		GNU General Public License
  */
-if (!defined('DOL_CLASS_PATH'))
-	define('DOL_CLASS_PATH', null);
 
-require_once(DOL_DOCUMENT_ROOT .'/core/modules/DolibarrModules.class.php');
+require_once(DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php');
+require_once(DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php');
 
 dol_include_once('/ecommerce/admin/class/gui/eCommerceMenu.class.php');
 dol_include_once('/ecommerce/admin/class/data/eCommerceDict.class.php');
 
-if (DOL_CLASS_PATH == null)
-	require_once(DOL_DOCUMENT_ROOT.'/societe.class.php');
-else
-	require_once(DOL_DOCUMENT_ROOT.'/societe/'.DOL_CLASS_PATH.'societe.class.php');
 
 /**
  *  Description and activation class for module ECommerce

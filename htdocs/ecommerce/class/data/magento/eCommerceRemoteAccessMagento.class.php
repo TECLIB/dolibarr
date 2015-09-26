@@ -10,8 +10,7 @@
 dol_include_once('/ecommerce/admin/class/data/eCommerceDict.class.php');
 dol_include_once('/ecommerce/class/data/eCommerceCategory.class.php');
 dol_include_once('/ecommerce/class/data/eCommerceSociete.class.php');
-if (!defined('DOL_CLASS_PATH'))
-    define('DOL_CLASS_PATH', null);
+
 
 /**
  * Class for access remote sites
@@ -78,7 +77,7 @@ class eCommerceRemoteAccessMagento
     }
 
     /**
-     * Call Magenta API to get last companies
+     * Call Magenta API to get last updated companies
      * 
      * @param   datetime $fromDate      From date
      * @param   datetime $toDate        To date
@@ -97,6 +96,13 @@ class eCommerceRemoteAccessMagento
         }
     }
 
+    /**
+     * Call Magenta API to get last updated products
+     * 
+     * @param   datetime $fromDate      From date
+     * @param   datetime $toDate        To date
+     * @return  void|mixed              Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error         
+     */
     public function getProductToUpdate($fromDate, $toDate)
     {
         try {
@@ -121,6 +127,13 @@ class eCommerceRemoteAccessMagento
         }
     }
 
+    /**
+     * Call Magenta API to get last updated orders
+     * 
+     * @param   datetime $fromDate      From date
+     * @param   datetime $toDate        To date
+     * @return  void|mixed              Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error         
+     */
     public function getCommandeToUpdate($fromDate, $toDate)
     {
         try {
@@ -145,6 +158,13 @@ class eCommerceRemoteAccessMagento
         }
     }
 
+    /**
+     * Call Magenta API to get last updated invoices
+     * 
+     * @param   datetime $fromDate      From date
+     * @param   datetime $toDate        To date
+     * @return  void|mixed              Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error         
+     */
     public function getFactureToUpdate($fromDate, $toDate)
     {
         try {
@@ -160,6 +180,7 @@ class eCommerceRemoteAccessMagento
 
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
+     * 
      * @param $remoteObject array
      * @return array societe
      */
@@ -181,13 +202,15 @@ class eCommerceRemoteAccessMagento
             if (count($results))
                 foreach ($results as $societe)
                 {
-                    $societes[] = array(
+                    $newobj=array(
                             'remote_id' => $societe['customer_id'],
                             'last_update' => $societe['updated_at'],
-                            'name' => addslashes($societe['lastname']) . ' ' . addslashes($societe['firstname']),
+                            'name' =>dolGetFirstLastname($societe['firstname'], $societe['lastname']),
                             'email' => $societe['email'],
-                            'client' => 3//for client/prospect
+                            'client' => 3, //for client/prospect
+                            'vatnumber'=> $societe['taxvat']
                     );
+                    $societes[] = $newobj;
                 }
         }
 
@@ -203,6 +226,65 @@ class eCommerceRemoteAccessMagento
         return $societes;
     }
 
+    
+    /**
+     * Put the remote data into societe dolibarr data from instantiated class in the constructor
+     * 
+     * @param   $listofids      List of object with customer_address_id is id of addresss
+     * @return array societe
+     */
+    public function convertRemoteObjectIntoDolibarrSocpeople($listofids)
+    {
+        $socpeoples = array();
+        $calls = array();
+        if (count($listofids))
+        {
+            foreach ($listofids as $listofid)
+            {
+                $calls[] = array('customer_address.info', $listofid['customer_address_id']);
+            }
+            try {
+                $results = $this->client->multiCall($this->session, $calls);
+            } catch (SoapFault $fault) {
+                //echo 'convertRemoteObjectIntoDolibarrSociete :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
+            }
+            if (count($results))
+                foreach ($results as $socpeople)
+                {
+                    $newobj=array(
+                            'remote_id' => $socpeople['customer_address_id'],
+                            'last_update' => $socpeople['updated_at'],
+                            'name' =>dolGetFirstLastname($socpeople['firstname'], $socpeople['lastname']),
+                            'email' => $socpeople['email'],
+                            'address' => $socpeople['street'],
+                            'town' => $socpeople['city'],
+                            'zip' => $socpeople['postcode'],
+                            'country_code' => $socpeople['country_id'],
+                            'phone' => $socpeople['telephone'],
+                            'fax' => $socpeople['fax'],
+                            'firstname' => $socpeople['firstname'],
+                            'lastname' => $socpeople['lastname'],
+                            'vatnumber'=> $socpeople['taxvat'],
+                            'is_default_billing' => $socpeople['is_default_billing'],
+                            'is_default_shipping' => $socpeople['is_default_shipping']
+                    );
+                    $socpeoples[] = $newobj;
+                }
+        }
+        
+        //important - order by last update
+        if (count($socpeoples))
+        {
+            foreach ($socpeoples as $key => $row)
+            {
+                $last_update[$key] = $row['last_update'];
+            }
+            array_multisort($last_update, SORT_ASC, $socpeoples);
+        }
+        return $socpeoples;
+    }
+    
+    
     /**
      * Put the remote data into product dolibarr data from instantiated class in the constructor
      * 
@@ -481,9 +563,9 @@ class eCommerceRemoteAccessMagento
                             'remote_id' => $shippingAddress['address_id'],
                             'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
                             'last_update' => $shippingAddress['updated_at'],
-                            'name' => addslashes($shippingAddress['lastname']),
-                            'firstname' => addslashes($shippingAddress['firstname']),
-                            'ville' => addslashes($shippingAddress['city']),
+                            'name' => $shippingAddress['lastname'],
+                            'firstname' => $shippingAddress['firstname'],
+                            'ville' => $shippingAddress['city'],
                             //'fk_pays' => $commandeSocpeople['country_id'],
                             'fax' => $shippingAddress['fax'],
                             'cp' => $shippingAddress['postcode'],
@@ -497,20 +579,20 @@ class eCommerceRemoteAccessMagento
                             'remote_id' => $billingAddress['address_id'],
                             'type' => eCommerceSocpeople::CONTACT_TYPE_INVOICE,
                             'last_update' => $billingAddress['updated_at'],
-                            'name' => addslashes($billingAddress['lastname']),
-                            'firstname' => addslashes($billingAddress['firstname']),
+                            'name' => $billingAddress['lastname'],
+                            'firstname' => $billingAddress['firstname'],
                             'ville' => $billingAddress['city'],
                             //'fk_pays' => $commandeSocpeople['country_id'],
                             'fax' => $billingAddress['fax'],
                             'cp' => $billingAddress['postcode'],
                             //add wrap
-                            'address' => (addslashes(trim($billingAddress['company'])) != '' ? addslashes(trim($billingAddress['company'])) . '
-                                                                            ' : '') . addslashes($billingAddress['street']),
+                            'address' => (trim($billingAddress['company']) != '' ? trim($billingAddress['company']) . '
+                                                                            ' : '') . $billingAddress['street'],
                             'phone' => $billingAddress['telephone']
                     );
                     //set delivery as service			
                     $delivery = array(
-                            'description' => addslashes($commande['shipping_description']),
+                            'description' => $commande['shipping_description'],
                             'price' => $facture['shipping_amount'],
                             'qty' => 1, //0 to not show
                             'tva_tx' => $this->getTaxRate($facture['shipping_amount'], $facture['shipping_tax_amount'])
@@ -583,6 +665,27 @@ class eCommerceRemoteAccessMagento
         try {
             //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category.tree');
+        } catch (SoapFault $fault) {
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }
+        return $result;
+    }
+
+    
+    /**
+     * Return the magento's address id
+     * 
+     * @param   int             $remote_thirdparty_id       Id of thirdparty
+     * @return  array|boolean                               Array with address id
+     */
+    public function getRemoteAddressIdForSociete($remote_thirdparty_id)
+    {
+        dol_syslog("eCommerceRemoteAccessMagento getRemoteAddressIdForSociete session=".$this->session);
+        try {
+            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
+            $result = $this->client->call($this->session, 'customer_address.list', array('customerId'=>$remote_thirdparty_id));
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);

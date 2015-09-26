@@ -86,7 +86,7 @@ $var=!$var;
 			<td>
 				<?php
 					print $nbSocieteToUpdate;
-				?>
+				?>**
 			</td>
 			<?php if ($synchRights==true):?>
 			<td>
@@ -168,11 +168,13 @@ $var=!$var;
 			<?php endif; ?>
 		</tr>
 	</table>
-	* <?php
+	<?php
 	$categorytmp=new Categorie($db);
 	$categorytmp->fetch($site->fk_cat_societe);
 	$tagname=$categorytmp->label;
-	print $langs->trans("OnlyThirdPartyWithTags", $tagname); ?>
+	print '* '.$langs->trans("OnlyThirdPartyWithTags", $tagname).'<br>';
+	print '** '.$langs->trans("WithMagentoThirdIsModifiedIfAddressModified").'<br>';
+	?>
 	
 	
 	<form name="form_reset_data" id="form_reset_data" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">

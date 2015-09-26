@@ -116,7 +116,7 @@ class InterfaceAutoAddLine
             case 'LINEBILL_UPDATE':
             case 'LINEBILL_INSERT':
             case 'LINEBILL_DELETE':
-                dol_include_once('/autoaddline/class/autoAddLine.class.php');
+                dol_include_once('/autoaddline/class/autoaddline.class.php');
 
                 // Prepare some data arrays: existing autoaddlines ids and products linked to
                 $staticAutoAddLine = new AutoAddLine($this->db);

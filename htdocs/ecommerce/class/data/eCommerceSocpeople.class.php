@@ -295,6 +295,7 @@ class eCommerceSocpeople // extends CommonObject
 	
 	/**
      *    Load object in memory from database by remote_id
+     *    
      *    @param	$remoteId string remote_id
      *    @param	$siteId int fk_site
      *    @param	$typeId int contact type (1=>'company', 2=>'order', 3=>'invoice', 4=>'delivery')

@@ -18,10 +18,6 @@ if (! $res && preg_match('/\/nltechno([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $r
 if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res) die("Include of main fails");
 dol_include_once("/ecommerce/class/data/eCommerceSite.class.php");
-if (!defined('DOL_CLASS_PATH'))
-	define('DOL_CLASS_PATH', null);
-if (DOL_CLASS_PATH == null)
-	dol_include_once('/ecommerce/inc/pre.inc.php');
 set_time_limit(600);
 
 $langs->load("admin");

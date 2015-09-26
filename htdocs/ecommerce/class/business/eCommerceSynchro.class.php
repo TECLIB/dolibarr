@@ -21,29 +21,14 @@ dol_include_once('/ecommerce/class/data/eCommerceSocpeople.class.php');
 dol_include_once('/ecommerce/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerce/class/data/eCommerceCategory.class.php');
 dol_include_once('/ecommerce/admin/class/data/eCommerceDict.class.php');
-dol_include_once('/ecommerce/class/data/override/auguriaContact.class.php');
 
-if (!defined('DOL_CLASS_PATH'))
-    define('DOL_CLASS_PATH', null);
-
-if (DOL_CLASS_PATH == null)
-{
-    require_once(DOL_DOCUMENT_ROOT . '/societe.class.php');
-    require_once(DOL_DOCUMENT_ROOT . '/contact.class.php');
-    require_once(DOL_DOCUMENT_ROOT . '/product.class.php');
-    require_once(DOL_DOCUMENT_ROOT . '/facture.class.php');
-} else
-{
-//    require_once(DOL_DOCUMENT_ROOT . '/contact/' . DOL_CLASS_PATH . 'contact.class.php');
-    require_once(DOL_DOCUMENT_ROOT . '/societe/' . DOL_CLASS_PATH . 'societe.class.php');
-    require_once(DOL_DOCUMENT_ROOT . '/product/' . DOL_CLASS_PATH . 'product.class.php');
-    require_once(DOL_DOCUMENT_ROOT . '/compta/facture/' . DOL_CLASS_PATH . 'facture.class.php');
-}
-
-
-require_once(DOL_DOCUMENT_ROOT . '/commande/' . DOL_CLASS_PATH . 'commande.class.php');
-require_once(DOL_DOCUMENT_ROOT . '/categories/' . DOL_CLASS_PATH . 'categorie.class.php');
-require_once(DOL_DOCUMENT_ROOT . '/expedition/' . DOL_CLASS_PATH . 'expedition.class.php');
+require_once(DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php');
+require_once(DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
+require_once(DOL_DOCUMENT_ROOT . '/product/class/product.class.php');
+require_once(DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php');
+require_once(DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php');
+require_once(DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php');
+require_once(DOL_DOCUMENT_ROOT . '/expedition/class/expedition.class.php');
 
 
 
@@ -730,15 +715,19 @@ class eCommerceSynchro
                     //check if societe exists in eCommerceSociete
                     $synchExists = $this->eCommerceSociete->fetchByRemoteId($societeArray['remote_id'], $this->eCommerceSite->id);
                     $dBSociete = new Societe($this->db);
-                    $dBSociete->nom = $societeArray['name'];
-                    $dBSociete->email = $societeArray['email'];
-                    $dBSociete->client = $societeArray['client'];
+               
                     //if societe exists in eCommerceSociete, societe must exists in societe
                     if ($synchExists > 0 && isset($this->eCommerceSociete->fk_societe))
                     {
                         $refExists = $dBSociete->fetch($this->eCommerceSociete->fk_societe);
                         if ($refExistst >= 0)
                         {
+                            $dBSociete->name = $societeArray['name'];
+                            $dBSociete->email = $societeArray['email'];
+                            $dBSociete->client = $societeArray['client'];
+                            $dBSociete->tva_intra = $societeArray['vatnumber'];
+                            $dBSociete->tva_assuj = 1;      // tba_intra is not saved if this field is not set
+
                             $result = $dBSociete->update($dBSociete->id, $this->user);
                         } else
                         {
@@ -749,6 +738,12 @@ class eCommerceSynchro
                     //if societe not exists in eCommerceSociete, societe is created
                     else
                     {
+                        $dBSociete->name = $societeArray['name'];
+                        $dBSociete->email = $societeArray['email'];
+                        $dBSociete->client = $societeArray['client'];
+                        $dBSociete->tva_intra = $societeArray['vatnumber'];
+                        $dBSociete->tva_assuj = 1;      // tba_intra is not saved if this field is not set
+                        
                         $result = $dBSociete->create($this->user);
                     }
                     //if create/update of societe table ok
@@ -783,6 +778,22 @@ class eCommerceSynchro
                                 $this->errors[] = $this->errors . '<br/>' . $this->langs->trans('ECommerceSynchECommerceSocieteCreateError') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'];
                             }
                         }
+                        
+                        // Sync also people of thirdparty
+                        // We can disable this to have contact/address of thirdparty synchronize only when an order or invoice is synchronized
+                        $listofaddressids=$this->eCommerceRemoteAccess->getRemoteAddressIdForSociete($societeArray['remote_id']);
+                        if (is_array($listofaddressids))
+                        {
+                            $socpeoples = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSocpeople($listofaddressids);
+                            foreach($socpeoples as $tmpsocpeople)
+                            {
+                                $tmpsocpeople['fk_soc']=$dBSociete->id;
+                                $tmpsocpeople['type']=1;    // address of company
+                                var_dump($tmpsocpeople);
+                                $socpeopleCommandeId = $this->synchSocpeople($tmpsocpeople);
+                            }
+                        }
+                        exit;
                         $nbgoodsunchronize = $nbgoodsunchronize + 1;
                     } 
                     else
@@ -817,31 +828,31 @@ class eCommerceSynchro
      * @param $socpeopleArray array with all params to synchronize
      * @return socpeople id if ok and false if ko
      */
-    public function synchSocpeople($socpeople)
+    public function synchSocpeople($socpeopleArray)
     {
         try {
             if (!isset($this->eCommerceSocpeople))
                 $this->initECommerceSocpeople();
             //check if contact exists in eCommerceSocpeople
-            $synchExists = $this->eCommerceSocpeople->fetchByRemoteId($socpeople['remote_id'], $socpeople['type'], $this->eCommerceSite->id);
+            $synchExists = $this->eCommerceSocpeople->fetchByRemoteId($socpeopleArray['remote_id'], $socpeopleArray['type'], $this->eCommerceSite->id);
 
             //char to replace:
             array("\\n", "\\t", "\\r");
 
             //set data into contact
-            $dBContact = new auguriaContact($this->db);
+            $dBContact = new Contact($this->db);
 
-            $dBContact->socid = $socpeople['fk_soc'];
-            //$dBContact->fk_pays = $socpeople['fk_pays'];
-            $dBContact->name = $socpeople['name'];
-            $dBContact->town = $socpeople['ville'];
-            $dBContact->ville = $socpeople['ville'];
-            $dBContact->firstname = $socpeople['firstname'];
-            $dBContact->zip = $socpeople['cp'];
-            $dBContact->cp = $socpeople['cp'];
-            $dBContact->address = addslashes($socpeople['address']);
-            $dBContact->phone_pro = $socpeople['phone'];
-            $dBContact->fax = $socpeople['fax'];
+            $dBContact->socid = $socpeopleArray['fk_soc'];
+            //$dBContact->fk_pays = $socpeopleArray['fk_pays'];
+            $dBContact->name = $socpeopleArray['name'];
+            $dBContact->town = $socpeopleArray['ville'];
+            $dBContact->ville = $socpeopleArray['ville'];
+            $dBContact->firstname = $socpeopleArray['firstname'];
+            $dBContact->zip = $socpeopleArray['cp'];
+            $dBContact->cp = $socpeopleArray['cp'];
+            $dBContact->address = $socpeopleArray['address'];
+            $dBContact->phone_pro = $socpeopleArray['phone'];
+            $dBContact->fax = $socpeopleArray['fax'];
 
             $contactExists = $dBContact->getIdFromInfos();
             if ($contactExists)
@@ -869,7 +880,7 @@ class eCommerceSynchro
             //if create/update of contact table ok
             if ($result >= 0)
             {
-                $this->eCommerceSocpeople->last_update = $socpeople['last_update'];
+                $this->eCommerceSocpeople->last_update = $socpeopleArray['last_update'];
                 //if a previous synchro exists
                 if ($synchExists > 0)
                 {
@@ -886,8 +897,8 @@ class eCommerceSynchro
                     //eCommerce create
                     $this->eCommerceSocpeople->fk_socpeople = $dBContact->id;
                     $this->eCommerceSocpeople->fk_site = $this->eCommerceSite->id;
-                    $this->eCommerceSocpeople->remote_id = $socpeople['remote_id'];
-                    $this->eCommerceSocpeople->type = $socpeople['type'];
+                    $this->eCommerceSocpeople->remote_id = $socpeopleArray['remote_id'];
+                    $this->eCommerceSocpeople->type = $socpeopleArray['type'];
                     if ($this->eCommerceSocpeople->create($this->user) < 0)
                     {
                         $this->errors[] = $this->langs->trans('ECommerceSynchECommerceSocpeopleCreateError');
@@ -927,6 +938,8 @@ class eCommerceSynchro
 
             if (count($products))
             {
+                $this->db->begin();
+                
                 $ii = 0;
                 foreach ($products as $productArray)
                 {
@@ -1041,9 +1054,21 @@ class eCommerceSynchro
                         dol_syslog($this->error . '<br>' . $this->langs->trans('ECommerceSynchProductError') . ' ' . $productArray['label'], LOG_WARNING);
                     }
                     
-                    if (! $error) $nbgoodsunchronize = $nbgoodsunchronize + 1;
+                    if (! $error) 
+                    {
+                        $nbgoodsunchronize = $nbgoodsunchronize + 1;
+                    }
                 }
-                $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchProductSuccess');
+                
+                if ($error)
+                {
+                    $this->db->rollback();
+                }
+                else
+                {
+                    $this->db->commit();
+                    $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchProductSuccess');
+                }
             }
         } catch (Exception $e) {
             $this->errors[] = $this->langs->trans('ECommerceErrorsynchProduct');
@@ -1070,6 +1095,8 @@ class eCommerceSynchro
 
             if (count($commandes))
             {
+                $this->db->begin();
+                
                 // Local filter to exclude bundles and other complex types
                 $productsTypesOk = array('simple', 'virtual', 'downloadable');
                 
@@ -1160,6 +1187,7 @@ class eCommerceSynchro
                                 //eCommerce update
                                 if ($this->eCommerceCommande->update($this->user) < 0)
                                 {
+                                    $error++;
                                     $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceCommandeUpdateError');
                                 }
                             }
@@ -1173,6 +1201,7 @@ class eCommerceSynchro
                                 //$dBCommande->valid($this->user);
                                 if ($this->eCommerceCommande->create($this->user) < 0)
                                 {
+                                    $error++;
                                     $this->errors[] = $this->errors . '<br/>' . $this->langs->trans('ECommerceSyncheCommerceCommandeCreateError') . ' ' . $dBCommande->id;
                                 }
                             }
@@ -1183,13 +1212,23 @@ class eCommerceSynchro
                         $nbgoodsunchronize = $nbgoodsunchronize + 1;
                     } else
                     {
+                        $error++;
                         $this->errors[] = $this->errors . '<br/>' . $this->langs->trans('ECommerceSynchCommandeErrorSocieteNotExists') . ' ' . $commandeArray['remote_id_societe'];
                     }
                     unset($dBCommande);
                     unset($this->eCommerceSociete);
                     unset($this->eCommerceCommande);
                 }
-                $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchCommandeSuccess');
+                
+                if (! $error)
+                {
+                    $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchCommandeSuccess');
+                    $this->db->commit();
+                }
+                else
+                {
+                    $this->db->rollback();
+                }
             }
         } catch (Exception $e) {
             $this->errors[] = $this->langs->trans('ECommerceErrorsynchCommande');
@@ -1212,6 +1251,8 @@ class eCommerceSynchro
             
             if (count($factures))
             {
+                $this->db->begin();
+                
                 // Local filter to exclude bundles and other complex types
 //                $productsTypesOk = array('simple', 'virtual', 'downloadable');
                 
@@ -1380,9 +1421,16 @@ class eCommerceSynchro
                     unset($this->eCommerceFacture);
                     unset($this->eCommerceCommande);
                 }
-                $this->eCommerceSite->last_update = $this->toDate;
-                $this->eCommerceSite->update($this->user);
-                $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchFactureSuccess');
+                
+                if (! $error)
+                {
+                    $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchFactureSuccess');
+                    $this->db->commit();
+                }
+                else
+                {
+                    $this->db->rollback();
+                }
             }
         } catch (Exception $e) {
             $this->errors[] = $this->langs->trans('ECommerceErrorsynchFacture');
@@ -1556,7 +1604,7 @@ class eCommerceSynchro
             $this->initECommerceSocpeople();
             if ($this->eCommerceSocpeople->fetch($idSocpeople) > 0)
             {
-                $dbSocpeople = new auguriaContact($this->db);
+                $dbSocpeople = new Contact($this->db);
                 if ($dbSocpeople->fetch($this->eCommerceSocpeople->fk_socpeople) > 0)
                 {
                     if ($dbSocpeople->delete() > 0)

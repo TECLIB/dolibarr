@@ -17,10 +17,6 @@ if (! $res && file_exists("../../../../../main.inc.php")) $res=@include("../../.
 if (! $res && preg_match('/\/nltechno([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res) die("Include of main fails");
-if (!defined('DOL_CLASS_PATH'))
-	define('DOL_CLASS_PATH', null);
-if (DOL_CLASS_PATH == null)
-	dol_include_once('/ecommerce/inc/pre.inc.php');
 dol_include_once("/ecommerce/class/business/eCommerceSynchro.class.php");
 $langs->load("ecommerce@ecommerce");
 $errors = array();

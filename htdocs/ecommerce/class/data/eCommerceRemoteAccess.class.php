@@ -5,6 +5,7 @@
  * @copyright	Auguria
  * @author		<franck.charpentier@auguria.net>
  * @licence		GNU General Public License
+ * TODO This class is useless. Remove it to include directly the eCommerceRemoteAccessXxxx
  */
 class eCommerceRemoteAccess
 {
@@ -126,6 +127,19 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
+
+    /**
+     * Put the remote data into societe dolibarr data from instantiated class in the constructor
+     * @param $remoteObject array
+     * @return $dolibarrObject array
+     */
+    public function convertRemoteObjectIntoDolibarrSocpeople($remoteObject)
+	{
+	    $result=$this->class->convertRemoteObjectIntoDolibarrSocpeople($remoteObject);
+		$this->error=$this->class->error;
+		$this->errors=$this->class->errors;
+	    return $result;
+	}
 	
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
@@ -190,6 +204,20 @@ class eCommerceRemoteAccess
 	    return $result;
 	}
 	
+    /**
+     * Get list of address id for a customer
+     * 
+     * @param   int     $remote_thirdparty_id
+     * @return $dolibarrObject array
+     */
+    public function getRemoteAddressIdForSociete($remote_thirdparty_id)
+	{
+	    $result=$this->class->getRemoteAddressIdForSociete($remote_thirdparty_id);
+		$this->error=$this->class->error;
+		$this->errors=$this->class->errors;
+	    return $result;
+	}
+	
 	/**	\brief	Get a remote category tree from magento
 	 * 	\return	array	An array containing magento's categories as arrays
 	 */
@@ -200,7 +228,6 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
-	
 	
     /**
      * Create a remote livraison from instantiated class in the constructor

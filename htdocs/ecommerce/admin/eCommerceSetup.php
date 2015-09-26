@@ -19,17 +19,11 @@ if (! $res && preg_match('/\/nltechno([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $r
 if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res) die("Include of main fails");
 
-if (!defined('DOL_CLASS_PATH'))
-    define('DOL_CLASS_PATH', null);
-
-if (DOL_CLASS_PATH == null)
-    dol_include_once('/ecommerce/inc/pre.inc.php');
-
+require_once(DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php');
 dol_include_once('/ecommerce/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerce/admin/class/gui/eCommerceMenu.class.php');
 
-require_once(DOL_DOCUMENT_ROOT . '/categories/' . DOL_CLASS_PATH . 'categorie.class.php');
 
 $langs->load('admin');
 $langs->load('ecommerce@ecommerce');

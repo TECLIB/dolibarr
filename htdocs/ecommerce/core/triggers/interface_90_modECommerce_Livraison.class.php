@@ -6,12 +6,10 @@
  * @author		<franck.charpentier@auguria.net>
  * @licence		GNU General Public License
  */
-if (!defined('DOL_CLASS_PATH'))
-	define('DOL_CLASS_PATH', null);
 
 dol_include_once('/ecommerce/class/business/eCommerceSynchro.class.php');
 
-require_once(DOL_DOCUMENT_ROOT.'/expedition/'.DOL_CLASS_PATH.'expedition.class.php');
+require_once(DOL_DOCUMENT_ROOT.'/expedition/class/expedition.class.php');
 
 class InterfaceLivraison
 {
