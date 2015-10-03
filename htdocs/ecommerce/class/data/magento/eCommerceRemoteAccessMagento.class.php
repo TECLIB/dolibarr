@@ -389,7 +389,7 @@ class eCommerceRemoteAccessMagento
                                 $configurableItems[$item['item_id']] = array(
                                     'item_id' => $item['item_id'],
                                     'id_remote_product' => $item['product_id'],
-                                    'description' => addslashes($item['name']),
+                                    'description' => $item['name'],
                                     'product_type' => $item['product_type'], 
                                     'price' => $item['price'],
                                     'qty' => $item['qty_ordered'],
@@ -401,7 +401,7 @@ class eCommerceRemoteAccessMagento
                                     $items[] = array(
                                             'item_id' => $item['item_id'],
                                             'id_remote_product' => $item['product_id'],
-                                            'description' => addslashes($item['name']),
+                                            'description' => $item['name'],
                                             'product_type' => $item['product_type'], 
                                             'price' => $item['price'],
                                             'qty' => $item['qty_ordered'],
@@ -411,7 +411,7 @@ class eCommerceRemoteAccessMagento
                                     $items[] = array(
                                             'item_id' => $item['item_id'],
                                             'id_remote_product' => $item['product_id'],
-                                            'description' => addslashes($item['name']),
+                                            'description' => $item['name'],
                                             'product_type' => $item['product_type'], 
                                             'price' => $configurableItems['price'],
                                             'qty' => $item['qty_ordered'],
@@ -427,12 +427,13 @@ class eCommerceRemoteAccessMagento
                             'remote_id' => $commandeSocpeople['address_id'],
                             'type' => eCommerceSocpeople::CONTACT_TYPE_ORDER,
                             'last_update' => $commandeSocpeople['updated_at'],
-                            'name' => addslashes($commandeSocpeople['lastname']),
-                            'firstname' => addslashes($commandeSocpeople['firstname']),
-                            'ville' => addslashes($commandeSocpeople['city']),
+                            'name' => $commandeSocpeople['lastname'],
+                            'lastname' => $commandeSocpeople['lastname'],
+                            'firstname' => $commandeSocpeople['firstname'],
+                            'town' => $commandeSocpeople['city'],
                             //'fk_pays' => $commandeSocpeople['country_id'],
                             'fax' => $commandeSocpeople['fax'],
-                            'cp' => $commandeSocpeople['postcode'],
+                            'zip' => $commandeSocpeople['postcode'],
                             //add wrap
                             'address' => addslashes((trim($commandeSocpeople['company'])) != '' ? addslashes(trim($commandeSocpeople['company'])) . ', ' : '') . addslashes($commandeSocpeople['street']),
                             'phone' => $commandeSocpeople['telephone']
@@ -447,20 +448,21 @@ class eCommerceRemoteAccessMagento
                             'remote_id' => $livraisonSocpeople['address_id'],
                             'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
                             'last_update' => $livraisonSocpeople['updated_at'],
-                            'name' => addslashes($livraisonSocpeople['lastname']),
-                            'firstname' => addslashes($livraisonSocpeople['firstname']),
-                            'ville' => $livraisonSocpeople['city'],
+                            'name' => $livraisonSocpeople['lastname'],
+                            'lastname' => $livraisonSocpeople['lastname'],
+                            'firstname' => $livraisonSocpeople['firstname'],
+                            'town' => $livraisonSocpeople['city'],
                             //'fk_pays' => $commandeSocpeople['country_id'],
                             'fax' => $livraisonSocpeople['fax'],
-                            'cp' => $livraisonSocpeople['postcode'],
+                            'zip' => $livraisonSocpeople['postcode'],
                             //add wrap
-                            'address' => (addslashes(trim($livraisonSocpeople['company'])) != '' ? addslashes(trim($livraisonSocpeople['company'])) . ', ' : '') . addslashes($livraisonSocpeople['street']),
+                            'address' => (trim($livraisonSocpeople['company']) != '' ? trim($livraisonSocpeople['company']) . ', ' : '') . $livraisonSocpeople['street'],
                             'phone' => $livraisonSocpeople['telephone']
                     );
 
                     //set delivery as service
                     $delivery = array(
-                            'description' => addslashes($commande['shipping_description']),
+                            'description' => $commande['shipping_description'],
                             'price' => $commande['shipping_amount'],
                             'qty' => 1, //0 to not show
                             'tva_tx' => $this->getTaxRate($commande['shipping_amount'], $commande['shipping_tax_amount'])
@@ -548,7 +550,7 @@ class eCommerceRemoteAccessMagento
                             $items[] = array(
                                     'item_id' => $item['item_id'],
                                     'id_remote_product' => $item['product_id'],
-                                    'description' => addslashes($item['name']),
+                                    'description' => $item['name'],
                                     'product_type' => $item['product_type'], 
                                     'price' => $item['price'],
                                     'qty' => $item['qty'],
@@ -570,8 +572,8 @@ class eCommerceRemoteAccessMagento
                             'fax' => $shippingAddress['fax'],
                             'cp' => $shippingAddress['postcode'],
                             //add wrap
-                            'address' => (addslashes(trim($shippingAddress['company'])) != '' ? addslashes(trim($shippingAddress['company'])) . '
-                                                                            ' : '') . addslashes($shippingAddress['street']),
+                            'address' => (trim($shippingAddress['company']) != '' ? trim($shippingAddress['company']) . '
+                                                                            ' : '') . $shippingAddress['street'],
                             'phone' => $shippingAddress['telephone']
                     );
                     //set invoice address		

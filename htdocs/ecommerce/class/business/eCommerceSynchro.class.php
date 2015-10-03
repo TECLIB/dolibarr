@@ -755,6 +755,7 @@ class eCommerceSynchro
                         $cat->add_type($dBSociete, 'customer');
 
                         $this->eCommerceSociete->last_update = $societeArray['last_update'];
+                        $this->eCommerceSociete->fk_societe = $dBSociete->id;
                         //if a previous synchro exists
                         if ($synchExists > 0 && !isset($this->error))
                         {
@@ -769,7 +770,6 @@ class eCommerceSynchro
                         else
                         {
                             //eCommerce create
-                            $this->eCommerceSociete->fk_societe = $dBSociete->id;
                             $this->eCommerceSociete->fk_site = $this->eCommerceSite->id;
                             $this->eCommerceSociete->remote_id = $societeArray['remote_id'];
                             if ($this->eCommerceSociete->create($this->user) < 0)
@@ -789,11 +789,9 @@ class eCommerceSynchro
                             {
                                 $tmpsocpeople['fk_soc']=$dBSociete->id;
                                 $tmpsocpeople['type']=1;    // address of company
-                                var_dump($tmpsocpeople);
                                 $socpeopleCommandeId = $this->synchSocpeople($tmpsocpeople);
                             }
                         }
-                        exit;
                         $nbgoodsunchronize = $nbgoodsunchronize + 1;
                     } 
                     else
@@ -823,49 +821,75 @@ class eCommerceSynchro
 
     
     /**
-     * Synchronize socpeople to update for a society
+     * Synchronize socpeople to update for a society: Create or update it into dolibarr, then update the ecommerce_socpeople table.
      * 
-     * @param $socpeopleArray array with all params to synchronize
-     * @return socpeople id if ok and false if ko
+     * @param   array       $socpeople  Array array with all params to synchronize
+     * @return  int                     Id of socpeople into Dolibarr if OK and false if KO
      */
     public function synchSocpeople($socpeopleArray)
     {
         try {
             if (!isset($this->eCommerceSocpeople))
                 $this->initECommerceSocpeople();
-            //check if contact exists in eCommerceSocpeople
+            
+            //print "Work on remote_id = " .$socpeopleArray['remote_id']." type = ".$socpeopleArray['type']."\n";
+            
+            //check if contact exists in eCommerceSocpeople table
+            // $socpeopleArray['type'] = 1 = Contact de tiers
+            // $socpeopleArray['type'] = 2 = Contact de commande
+            // $socpeopleArray['type'] = 3 = Contact de facture
+            // $socpeopleArray['type'] = 4 = Contact de livraison
             $synchExists = $this->eCommerceSocpeople->fetchByRemoteId($socpeopleArray['remote_id'], $socpeopleArray['type'], $this->eCommerceSite->id);
-
-            //char to replace:
-            array("\\n", "\\t", "\\r");
 
             //set data into contact
             $dBContact = new Contact($this->db);
 
-            $dBContact->socid = $socpeopleArray['fk_soc'];
-            //$dBContact->fk_pays = $socpeopleArray['fk_pays'];
-            $dBContact->name = $socpeopleArray['name'];
-            $dBContact->town = $socpeopleArray['ville'];
-            $dBContact->ville = $socpeopleArray['ville'];
-            $dBContact->firstname = $socpeopleArray['firstname'];
-            $dBContact->zip = $socpeopleArray['cp'];
-            $dBContact->cp = $socpeopleArray['cp'];
-            $dBContact->address = $socpeopleArray['address'];
-            $dBContact->phone_pro = $socpeopleArray['phone'];
-            $dBContact->fax = $socpeopleArray['fax'];
+            $contactExists = 0;
+            
+            if ($syncExists > 0)
+            {
+                $test = $dBContact->fetch($this->eCommerceSocpeople->fk_socpeople);
+                if ($test > 0)
+                {
+                    $contactExists = $dBContact->id;
+                }
+            }
 
-            $contactExists = $dBContact->getIdFromInfos();
+            if (! $contactExists)
+            {
+                $dBContact->socid = $socpeopleArray['fk_soc'];
+                $dBContact->fk_soc = $socpeopleArray['fk_soc'];
+                //$dBContact->fk_pays = $socpeopleArray['fk_pays'];
+                $dBContact->lastname = $socpeopleArray['lastname'];
+                $dBContact->town = $socpeopleArray['town'];
+                $dBContact->ville = $socpeopleArray['town'];
+                $dBContact->firstname = $socpeopleArray['firstname'];
+                $dBContact->zip = $socpeopleArray['zip'];
+                $dBContact->cp = $socpeopleArray['zip'];
+                $dBContact->address = $socpeopleArray['address'];
+                $dBContact->phone_pro = $socpeopleArray['phone'];
+                $dBContact->fax = $socpeopleArray['fax'];
+    
+                $contactExists = $this->getContactIdFromInfos($dBContact);
+            }
+            
             if ($contactExists)
                 $dBContact->id = $contactExists;
-
+           
             //if contact exists in eCommerceSocpeople, contact must exists in societe
-            if (($synchExists > 0 && isset($this->eCommerceSocpeople->fk_socpeople)) || $contactExists > 0)
+            if (($synchExists > 0 && $this->eCommerceSocpeople->fk_socpeople > 0) || $contactExists > 0)
             {
                 $refExists = $dBContact->fetch($contactExists > 0 ? $contactExists : $this->eCommerceSocpeople->fk_socpeople);
-                if ($refExistst >= 0)
+                
+                if ($refExists > 0)
                 {
                     $result = $dBContact->update($dBContact->id, $this->user);
-                } else
+                }
+                else if ($refExists == 0)
+                {
+                    $result = $dBContact->create($this->user);
+                }
+                else if ($refExistst < 0)
                 {
                     $this->errors[] = $this->langs->trans('ECommerceSynchSocieteErrorBetweenECommerceSocpeopleAndContact');
                     return false;
@@ -876,11 +900,12 @@ class eCommerceSynchro
             {
                 $result = $dBContact->create($this->user);
             }
-
+            
             //if create/update of contact table ok
             if ($result >= 0)
             {
                 $this->eCommerceSocpeople->last_update = $socpeopleArray['last_update'];
+                $this->eCommerceSocpeople->fk_socpeople = $dBContact->id;
                 //if a previous synchro exists
                 if ($synchExists > 0)
                 {
@@ -895,7 +920,6 @@ class eCommerceSynchro
                 else
                 {
                     //eCommerce create
-                    $this->eCommerceSocpeople->fk_socpeople = $dBContact->id;
                     $this->eCommerceSocpeople->fk_site = $this->eCommerceSite->id;
                     $this->eCommerceSocpeople->remote_id = $socpeopleArray['remote_id'];
                     $this->eCommerceSocpeople->type = $socpeopleArray['type'];
@@ -1021,6 +1045,7 @@ class eCommerceSynchro
                         //$cat = new Categorie($this->db, $this->eCommerceSite->fk_cat_product);	
                         //$cat->add_type($dBProduct, 'product');					
                         $this->eCommerceProduct->last_update = $productArray['last_update'];
+                        $this->eCommerceProduct->fk_product = $dBProduct->id;
                         //if a previous synchro exists
                         if ($synchExists > 0)
                         {
@@ -1036,7 +1061,6 @@ class eCommerceSynchro
                         else
                         {
                             //eCommerce create
-                            $this->eCommerceProduct->fk_product = $dBProduct->id;
                             $this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
                             $this->eCommerceProduct->remote_id = $productArray['remote_id'];
                             if ($this->eCommerceProduct->create($this->user) < 0)
@@ -1102,7 +1126,6 @@ class eCommerceSynchro
                 
                 foreach ($commandes as $commandeArray)
                 {
-                    $result;
                     $this->initECommerceCommande();
                     $this->initECommerceSociete();
                     $dBCommande = new Commande($this->db);
@@ -1112,7 +1135,7 @@ class eCommerceSynchro
                     //check if ref exists in commande
                     $refExists = $dBCommande->fetch($this->eCommerceCommande->fk_commande);
 
-                    //check if societe exists
+                    //check if societe exists. This init $this->eCommerceSociete->fk_societe
                     $societeExists = $this->eCommerceSociete->fetchByRemoteId($commandeArray['remote_id_societe'], $this->eCommerceSite->id);
 
                     //if societe exists start
@@ -1122,13 +1145,16 @@ class eCommerceSynchro
                         {
                             //update commande
                             $result = 1;
-                        } else
+                        } 
+                        else
                         {
                             //create commande
+                            $dBCommande->statut=0;  // draft
                             $dBCommande->ref_client = $commandeArray['ref_client'];
                             $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
                             $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
                             $dBCommande->socid = $this->eCommerceSociete->fk_societe;
+                            $dBCommande->source=dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');
 
                             $result = $dBCommande->create($this->user);
 
@@ -1137,9 +1163,13 @@ class eCommerceSynchro
                             $commandeArray['socpeopleFacture']['fk_soc'] = $this->eCommerceSociete->fk_societe;
                             $commandeArray['socpeopleLivraison']['fk_soc'] = $this->eCommerceSociete->fk_societe;
 
-                            $socpeopleCommandeId = $this->synchSocpeople($commandeArray['socpeopleCommande']);
+                            $socpeopleCommandeId = $this->synchSocpeople($commandeArray['socpeopleCommande']);  // $socpeopleCommandeId = id of socpeople into dolibarr table
                             $socpeopleFactureId = $this->synchSocpeople($commandeArray['socpeopleFacture']);
                             $socpeopleLivraisonId = $this->synchSocpeople($commandeArray['socpeopleLivraison']);
+var_dump($socpeopleCommandeId);
+var_dump($socpeopleFactureId);
+var_dump($socpeopleLivraisonId);
+exit;
 
                             if ($socpeopleCommandeId > 0)
                                 $dBCommande->add_contact($socpeopleCommandeId, 'CUSTOMER');
@@ -1181,6 +1211,7 @@ class eCommerceSynchro
                         if ($result >= 0)
                         {
                             $this->eCommerceCommande->last_update = $commandeArray['last_update'];
+                            $this->eCommerceCommande->fk_commande = $dBCommande->id;
                             //if a previous synchro exists
                             if ($synchExists > 0)
                             {
@@ -1195,25 +1226,24 @@ class eCommerceSynchro
                             else
                             {
                                 //eCommerce create
-                                $this->eCommerceCommande->fk_commande = $dBCommande->id;
                                 $this->eCommerceCommande->fk_site = $this->eCommerceSite->id;
                                 $this->eCommerceCommande->remote_id = $commandeArray['remote_id'];
                                 //$dBCommande->valid($this->user);
                                 if ($this->eCommerceCommande->create($this->user) < 0)
                                 {
                                     $error++;
-                                    $this->errors[] = $this->errors . '<br/>' . $this->langs->trans('ECommerceSyncheCommerceCommandeCreateError') . ' ' . $dBCommande->id;
+                                    $this->errors[] = $this->errors . '<br>' . $this->langs->trans('ECommerceSyncheCommerceCommandeCreateError') . ' ' . $dBCommande->id;
                                 }
                             }
                         } else
                         {
-                            $this->errors[] = $this->errors . '<br/>' . $this->langs->trans('ECommerceSynchCommandeError');
+                            $this->errors[] = $this->errors . '<br>' . $this->langs->trans('ECommerceSynchCommandeError');
                         }
                         $nbgoodsunchronize = $nbgoodsunchronize + 1;
                     } else
                     {
                         $error++;
-                        $this->errors[] = $this->errors . '<br/>' . $this->langs->trans('ECommerceSynchCommandeErrorSocieteNotExists') . ' ' . $commandeArray['remote_id_societe'];
+                        $this->errors[] = $this->errors . '<br>' . $this->langs->trans('ECommerceSynchCommandeErrorSocieteNotExists') . ' ' . $commandeArray['remote_id_societe'];
                     }
                     unset($dBCommande);
                     unset($this->eCommerceSociete);
@@ -1379,6 +1409,7 @@ class eCommerceSynchro
                         if ($result >= 0)
                         {
                             $this->eCommerceFacture->last_update = $factureArray['last_update'];
+                            $this->eCommerceFacture->fk_facture = $dBFacture->id;
                             //if a previous synchro exists
                             if ($synchFactureExists > 0)
                             {
@@ -1393,7 +1424,6 @@ class eCommerceSynchro
                             else
                             {
                                 //eCommerce create
-                                $this->eCommerceFacture->fk_facture = $dBFacture->id;
                                 $this->eCommerceFacture->fk_site = $this->eCommerceSite->id;
                                 $this->eCommerceFacture->remote_id = $factureArray['remote_id'];
                                 if ($this->eCommerceFacture->create($this->user) < 0)
@@ -1679,5 +1709,51 @@ class eCommerceSynchro
         unset($this->eCommerceRemoteAccess);
     }
 
+    
+    /** 
+	 * Function to check if a contact informations passed by params exists in DB.
+	 *  
+	 * @param      Contact     $contact        Object Contact
+	 * @return	   int                         <0 if KO, >0 id of first contact corresponding if OK
+	 */
+	function getContactIdFromInfos($contact)
+	{	
+	    global $db;
+	    
+		$contactId = -1;
+		
+		$sql  = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'socpeople';
+		$sql .= ' WHERE lastname="'.$db->escape(trim($contact->lastname)).'"';
+		$sql .= ' AND firstname="'.$db->escape(trim($contact->firstname)).'"';
+		$sql .= ' AND address="'.$db->escape(trim($contact->address)).'"';
+		$sql .= ' AND town="'.$db->escape(trim($contact->town)).'"';
+		$sql .= ' AND zip="'.$db->escape(trim($contact->zip)).'"';
+		$sql .= ' AND fk_soc="'.$contact->fk_soc.'"';
+
+		$resql = $this->db->query($sql);
+		if($resql)
+		{			
+			if ($this->db->num_rows($resql))
+			{
+				$obj = $this->db->fetch_object($resql);
+				
+				$contactId = $obj->rowid;				
+			}
+			else
+			{
+			    $contactId = 0;
+			}
+			$this->db->free($resql);
+			return $contactId;
+		}
+		else 
+		{
+			$this->error=$this->db->lasterror();
+			dol_syslog("eCommerceSynchro::getContactIdFromInfos ".$this->error, LOG_ERR);
+			return -1;
+		}
+	}
+	
+    
 }
 

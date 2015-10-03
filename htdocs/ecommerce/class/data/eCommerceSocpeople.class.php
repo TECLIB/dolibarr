@@ -71,9 +71,9 @@ class eCommerceSocpeople // extends CommonObject
        
 		$sql.= " ".(isset($this->fk_socpeople)?intval($this->fk_socpeople):0).",";
 		$sql.= " ".(isset($this->fk_site)?intval($this->fk_site):0).",";
-		$sql.= " ".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
+		$sql.= " ".(isset($this->remote_id)?"'".$this->remote_id."'":"").",";
 		$sql.= " ".(isset($this->type)?intval($this->type):1).",";
-		$sql.= " ".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
+		$sql.= " ".(isset($this->last_update)?"'".$this->db->idate($this->last_update)."'" : 'null')."";
 		
 		$sql.= ")";
 

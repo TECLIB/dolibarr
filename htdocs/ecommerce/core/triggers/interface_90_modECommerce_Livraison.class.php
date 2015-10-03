@@ -125,6 +125,115 @@ class InterfaceLivraison
             }
         }
         
+        
+        if ($action == 'COMPANY_DELETE')
+        {
+            $this->db->begin();
+
+            $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_socpeople WHERE fk_socpeople IN (SELECT rowid FROM ".MAIN_DB_PREFIX."socpeople WHERE fk_soc = '".$this->db->escape($object->id)."')";
+            $resql=$this->db->query($sql);
+            if (! $resql)
+            {
+                $this->error=$this->db->lasterror();
+                $error++;
+            }
+            
+            $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_societe WHERE fk_societe ='".$this->db->escape($object->id)."'";
+            $resql=$this->db->query($sql);
+            if (! $resql)
+            {
+                $this->error=$this->db->lasterror();
+                $error++;
+            }
+            
+            if ($error) 
+            {
+                $this->db->rollback();
+                return -1;
+            }
+            else
+            {
+                $this->db->commit();
+                return 1;
+            }
+        } 
+        
+        if ($action == 'CONTACT_DELETE')
+        {
+            $this->db->begin();
+
+            $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_socpeople WHERE fk_socpeople = '".$this->db->escape($object->id)."'";
+            $resql=$this->db->query($sql);
+            if (! $resql)
+            {
+                $this->error=$this->db->lasterror();
+                $error++;
+            }
+            
+            if ($error) 
+            {
+                $this->db->rollback();
+                return -1;
+            }
+            else
+            {
+                $this->db->commit();
+                return 1;
+            }
+        } 
+        
+        if ($action == 'ORDER_DELETE')
+        {
+            $this->db->begin();
+
+            $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_commande WHERE fk_commande ='".$this->db->escape($object->id)."'";
+            $resql=$this->db->query($sql);
+            if (! $resql)
+            {
+                $this->error=$this->db->lasterror();
+                $error++;
+            }
+            
+            if ($error) 
+            {
+                $this->db->rollback();
+                return -1;
+            }
+            else
+            {
+                $this->db->commit();
+                return 1;
+            }
+        }        
+
+        if ($action == 'BILL_DELETE')
+        {
+            $this->db->begin();
+
+            $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_facture WHERE fk_facture ='".$this->db->escape($object->id)."'";
+            $resql=$this->db->query($sql);
+            if (! $resql)
+            {
+                $this->error=$this->db->lasterror();
+                $error++;
+            }
+            
+            if ($error) 
+            {
+                $this->db->rollback();
+                return -1;
+            }
+            else
+            {
+                $this->db->commit();
+                return 1;
+            }
+        }        
+        
+        
+        
+        
+        
         if ($action == 'SHIPPING_VALIDATE')
         {
         	try
