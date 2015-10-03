@@ -86,8 +86,10 @@ class eCommerceRemoteAccessMagento
     public function getSocieteToUpdate($fromDate, $toDate)
     {
         try {
+            dol_syslog("getSocieteToUpdate start");
             $filter = array('updated_at' => array('gt' => $fromDate, 'lt' => $toDate));
             $result = $this->client->call($this->session, 'customer.list', array($filter));
+            dol_syslog("getSocieteToUpdate end");
             return $result;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -106,6 +108,7 @@ class eCommerceRemoteAccessMagento
     public function getProductToUpdate($fromDate, $toDate)
     {
         try {
+            dol_syslog("getProductToUpdate start");
             $filter = array(
                     array('updated_at' => array('gt' => $fromDate, 'lt' => $toDate)),
 //                    array('type_id', array('eq' => 'downloadable'))
@@ -119,6 +122,7 @@ class eCommerceRemoteAccessMagento
                         $results[] = $product;
             }
             
+            dol_syslog("getProductToUpdate end");
             return $results;            
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -137,6 +141,7 @@ class eCommerceRemoteAccessMagento
     public function getCommandeToUpdate($fromDate, $toDate)
     {
         try {
+            dol_syslog("getCommandeToUpdate start");
             $filter = array('updated_at' => array('gt' => $fromDate, 'lt' => $toDate));
             $result = $this->client->call($this->session, 'sales_order.list', array($filter));
             
@@ -150,6 +155,7 @@ class eCommerceRemoteAccessMagento
                 //echo 'convertRemoteObjectIntoDolibarrCommande :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
             }
             
+            dol_syslog("getCommandeToUpdate end");
             return $result;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -168,8 +174,10 @@ class eCommerceRemoteAccessMagento
     public function getFactureToUpdate($fromDate, $toDate)
     {
         try {
+            dol_syslog("getFactureToUpdate start");
             $filter = array('updated_at' => array('gt' => $fromDate, 'lt' => $toDate));
             $result = $this->client->call($this->session, 'sales_order_invoice.list', array($filter));
+            dol_syslog("getFactureToUpdate end");
             return $result;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -645,9 +653,11 @@ class eCommerceRemoteAccessMagento
     {
         $commande = array();
         try {
+            dol_syslog("getCommande begin");
             $result = $this->client->call($this->session, 'sales_order.list', array(array('order_id' => $remoteCommandeId)));
             if (count($result == 1))
                 $commande = $this->client->call($this->session, 'sales_order.info', $result[0]['increment_id']);
+            dol_syslog("getCommande end");
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
@@ -672,6 +682,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
+        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree end");
         return $result;
     }
 
@@ -693,6 +704,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
+        dol_syslog("eCommerceRemoteAccessMagento getRemoteAddressIdForSociete end");
         return $result;
     }
 
@@ -714,12 +726,14 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
+        dol_syslog("eCommerceRemoteAccessMagento getCategoryData end");
         return $result;
     }
     
     
     public function createRemoteLivraison($livraison, $remote_order_id)
     {
+        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison session=".$this->session);
         $commande = $this->getCommande($remote_order_id);
         try {        
             $result = $this->client->call($this->session, 'sales_order_shipment.create', array($commande['increment_id'], array(), 'Shipment Created', true, true));
@@ -728,6 +742,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
+        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison end");
         return $result;
     }
 

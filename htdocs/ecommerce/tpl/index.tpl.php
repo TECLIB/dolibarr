@@ -13,7 +13,8 @@ if (count($sites)): ?>
 		</tr>
 <?php
 $var=!$var;
-	foreach ($sites as $site): ?>		
+	foreach ($sites as $site)
+	{ ?>		
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $site['name'] ?></td>
 			<td>
@@ -28,19 +29,19 @@ $var=!$var;
 				?>
 			</td>
 			<td>
-				<form name="form_index" id="form_detailed" action="<?php print dol_buildpath('/ecommerce/site.php',1); ?>" method="post">
+				<form name="form_index" id="form_detailed" action="<?php print dol_buildpath('/ecommerce/site.php',1); ?>?id=<?php echo $site['id'] ?>" method="post">
 					<input type="hidden" name="id" value="<?php print $site['id'] ?>">
 					<input class="button" type="submit" name="submit_detailed" value="<?php print $langs->trans('ECommerceUpdateSite') ?>">					
 				</form>
 			</td>
 			<td>
-				<form name="form_index" id="form_global" action="<?php print dol_buildpath('/ecommerce/site.php', 1); ?>" method="post">
+				<form name="form_index" id="form_global" action="<?php print dol_buildpath('/ecommerce/site.php', 1); ?>?id=<?php echo $site['id']; ?>" method="post">
 					<input type="hidden" name="id" value="<?php print $site['id'] ?>">
 					<input class="button" type="submit" name="submit_synchro_all" value="<?php print $langs->trans('ECommerceUpdateAll') ?>">
 				</form>
 			</td>			
 		</tr>
-	<?php endforeach; ?>
+	<?php } ?>
 	</table>
 <?php else: ?>
 <p><?php $langs->trans('ECommerceNoSite') ?></p>

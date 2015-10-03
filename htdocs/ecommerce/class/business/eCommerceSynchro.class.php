@@ -1166,10 +1166,6 @@ class eCommerceSynchro
                             $socpeopleCommandeId = $this->synchSocpeople($commandeArray['socpeopleCommande']);  // $socpeopleCommandeId = id of socpeople into dolibarr table
                             $socpeopleFactureId = $this->synchSocpeople($commandeArray['socpeopleFacture']);
                             $socpeopleLivraisonId = $this->synchSocpeople($commandeArray['socpeopleLivraison']);
-var_dump($socpeopleCommandeId);
-var_dump($socpeopleFactureId);
-var_dump($socpeopleLivraisonId);
-exit;
 
                             if ($socpeopleCommandeId > 0)
                                 $dBCommande->add_contact($socpeopleCommandeId, 'CUSTOMER');
@@ -1182,10 +1178,30 @@ exit;
                             if (count($commandeArray['items'])) {
                                 foreach ($commandeArray['items'] as $item)
                                 {
-                                    if (in_array($item['product_type'], $productsTypesOk)) {
+                                    if (in_array($item['product_type'], $productsTypesOk))  // sync of "simple", "virtual", "downloadable"
+                                    {
                                         $this->initECommerceProduct();
-                                        $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id);
-                                        $dBCommande->addline($dBCommande->id, $item['description'], $item['price'], $item['qty'], $item['tva_tx'], 0, 0, $this->eCommerceProduct->fk_product);
+                                        $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
+                                        
+                                        // TODO Get buy price depending on margin option
+                                        $buyprice=0;
+                                        
+                                        $dBCommande->addline($item['description'], $item['price'], $item['qty'], $item['tva_tx'], 0, 0, 
+                                            $this->eCommerceProduct->fk_product, //fk_product
+                                            0, //remise_percent
+                                            0, //info_bits
+                                            0, //fk_remise_except
+                                            'HT', //price_base_type
+                                            0, //pu_ttc
+                                            '', //date_start
+                                            '', //date_end
+                                            0, //type 0:product 1:service
+                                            0, //rang
+                                            0, //special_code
+                                            0, // fk_parent_line
+                                            0, // fk_prod four_price
+                                            $buyprice
+                                            );
                                         unset($this->eCommerceProduct);
                                     }
                                 }
@@ -1194,7 +1210,12 @@ exit;
                             if ($commandeArray['delivery']['qty'] > 0)
                             {
                                 $delivery = $commandeArray['delivery'];
-                                $dBCommande->addline($dBCommande->id, $delivery['description'], $delivery['price'], $delivery['qty'], $delivery['tva_tx'], 0, 0, 0, //fk_product
+                                
+                                // TODO Get buy price depending on margin option
+                                $buyprice=0;
+                                
+                                $dBCommande->addline($delivery['description'], $delivery['price'], $delivery['qty'], $delivery['tva_tx'], 0, 0, 
+                                        0, //fk_product
                                         0, //remise_percent
                                         0, //info_bits
                                         0, //fk_remise_except
@@ -1202,7 +1223,12 @@ exit;
                                         0, //pu_ttc
                                         '', //date_start
                                         '', //date_end
-                                        1//type 0:product 1:service
+                                        1, //type 0:product 1:service
+                                        0, //rang
+                                        0, //special_code
+                                        0, // fk_parent_line
+                                        0, // fk_prod four_price
+                                        $buyprice
                                 );
                             }
                         }
@@ -1376,7 +1402,7 @@ exit;
                                 {
                                     $this->initECommerceProduct();
                                     $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id);
-                                    $dBFacture->addline($dBFacture->id, $item['description'], $item['price'], $item['qty'], $item['tva_tx'], 0, 0, $this->eCommerceProduct->fk_product);
+                                    $dBFacture->addline($item['description'], $item['price'], $item['qty'], $item['tva_tx'], 0, 0, $this->eCommerceProduct->fk_product);
                                     unset($this->eCommerceProduct);
                                 }
 
@@ -1384,7 +1410,11 @@ exit;
                             if ($factureArray['delivery']['qty'] > 0)
                             {
                                 $delivery = $factureArray['delivery'];
-                                $dBFacture->addline($dBFacture->id, $delivery['description'], $delivery['price'], $delivery['qty'], $delivery['tva_tx'], 0, 0, 0, //fk_product
+                                
+                                // TODO Get buy price depending on margin option
+                                $buyprice=0;
+                                
+                                $dBFacture->addline($delivery['description'], $delivery['price'], $delivery['qty'], $delivery['tva_tx'], 0, 0, 0, //fk_product
                                         0, //remise_percent
                                         '', //date_start
                                         '', //date_end
@@ -1393,7 +1423,14 @@ exit;
                                         0, //fk_remise_except
                                         'HT', //price_base_type
                                         0, //pu_ttc
-                                        1//type 0:product 1:service
+                                        1, //type 0:product 1:service
+                                        0, //rang
+                                        0, //special code
+                                        '', // origin
+                                        0, // origin_id
+                                        0, //fk_parent_line
+                                        0, //fk_fourn_price
+                                        $buyprice
                                 );
                             }
 

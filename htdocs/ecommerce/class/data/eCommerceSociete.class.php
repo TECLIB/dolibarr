@@ -322,6 +322,7 @@ class eCommerceSociete // extends CommonObject
 	
 	/**
      *    Load object in memory from database by remote_id
+     *    
      *    @param	$remoteId string remote_id
      *    @param	$siteId int fk_site
      *    @return	int <0 if KO, >0 if OK
