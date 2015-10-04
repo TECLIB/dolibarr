@@ -989,6 +989,7 @@ class eCommerceSynchro
                     $dBProduct->price = $productArray['price'];
                     $dBProduct->tva_tx = $productArray['tax_rate'];
                     $dBProduct->tva_npr = 0;  // Avoiding _log_price's sql blank
+                    $dBProduct->country_id = $productArray['fk_country'];
 
                     if ($refExists > 0 && isset($dBProduct->id))
                     {

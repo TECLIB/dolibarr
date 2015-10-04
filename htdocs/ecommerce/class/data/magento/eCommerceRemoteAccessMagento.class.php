@@ -301,6 +301,8 @@ class eCommerceRemoteAccessMagento
      */
     public function convertRemoteObjectIntoDolibarrProduct($remoteObject)
     {
+        include_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
+        
         $products = array();
         $calls = array();
        
@@ -347,6 +349,8 @@ class eCommerceRemoteAccessMagento
                             'price_min' => $product['minimal_price'],
                             'fk_country' => ($product['country_of_manufacture'] ? getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, '') : null)
                     );
+                    //var_dump($product['country_of_manufacture']);
+                    //var_dump(getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, ''));exit;
                     // We also get special_price, minimal_price => ?, msrp, 
                 }
         }
