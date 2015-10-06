@@ -390,6 +390,8 @@ class eCommerceRemoteAccessMagento
             {
                 foreach ($results as $commande)
                 {
+                    //var_dump($commande);    // show order as it is from magento
+                    
                     //set each items
                     $items = array();
                     $configurableItems = array();
@@ -495,6 +497,12 @@ class eCommerceRemoteAccessMagento
                     else
                         $deliveryDate = $commande['created_at'];
 
+                    // define status of order
+                    $tmp = $commande['state'];       # Works also with $commande['status']           'pending', 'processing', 'holded', ...
+                    $status = 0;                                // draft = pending
+                    if ($tmp == 'processing')   $status = 1;    // validated = processing
+                    if ($tmp == 'holded')       $status = -1;   // canceled = holded
+                    
                     //add order to orders
                     $commandes[] = array(
                             'last_update' => $commande['updated_at'],
@@ -511,6 +519,7 @@ class eCommerceRemoteAccessMagento
                             'socpeopleLivraison' => $socpeopleLivraison,
                             //debug
                             //'commande' => $commande
+                            'status' => $status
                     );
                 }
             }

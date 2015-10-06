@@ -86,7 +86,7 @@ $var=!$var;
 			<td>
 				<?php
 					print $nbSocieteToUpdate;
-				?>**
+				?> **
 			</td>
 			<?php if ($synchRights==true):?>
 			<td>
