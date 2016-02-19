@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2011-2013	Laurent Destailleur	<eldy@users.sourceforge.net>
+/* Copyright (C) 2011-2016	Laurent Destailleur	<eldy@users.sourceforge.net>
  * Copyright (C) 2012		Regis Houssin		<regis.houssin@capnetworks.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ class ActionsAutoattachfile
 
 
     /**
-     * doActions
+     * getFormMail
      */
     function getFormMail($parameters, &$object, &$action, $hookmanager) 
     {
@@ -81,6 +81,7 @@ class ActionsAutoattachfile
     		$_SESSION["listofmimes"]=join(';',$listofmimes);
     	}
     
+    	return 0;
     }
     
 	/**
@@ -121,4 +122,3 @@ class ActionsAutoattachfile
 
 }
 
-?>
