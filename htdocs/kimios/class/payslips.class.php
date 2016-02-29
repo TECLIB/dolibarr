@@ -410,7 +410,7 @@ class KimiosPayslips extends KimiosDB{
             $message.= "Veuillez trouver en pièce jointe votre fiche de paie du mois de {$month} {$year}.\n\n";
             $message.= "Bonne réception,\nteclib'";
 
-            $sendtocc = "francois@teclib.com";
+            $sendtocc = "administration@teclib.com";
             $deliveryreceipt = 0;
 
             $mailfile = new CMailFile($subject,$sendto,$from,$message,$filepath,$mimetype,$filename,$sendtocc,'',$deliveryreceipt,-1);
