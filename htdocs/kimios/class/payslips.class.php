@@ -190,6 +190,9 @@ class KimiosPayslips extends KimiosDB{
                   'last_sender' => NULL
                );
                $KimiosPayslips->addToDB();
+               
+               $KimiosPayslips_f = $KimiosPayslips->find("`payslips_code` = '" . $payslips_code . "' 
+                                          AND `doliuserid` = '" . $doliUserId . "'");
             }
 
             $KimiosPayslips_f = $KimiosPayslips_f[key($KimiosPayslips_f)];

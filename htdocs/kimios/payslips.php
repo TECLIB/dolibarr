@@ -56,7 +56,7 @@ $step = GETPOST("step")?GETPOST("step"):1;
 
 $h = 0;
 for ($i = 1; $i < $step+1; $i++) {
-   $head[$h][0] = DOL_URL_ROOT.'/kimios/payslips.php';
+   $head[$h][0] = DOL_URL_ROOT.'/teclib/kimios/payslips.php';
    $head[$h][1] = $langs->trans("Step")." ".$i;
    if ($i == $step) $hselected=$h;
    $h++;
