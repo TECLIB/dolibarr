@@ -1,0 +1,11 @@
+# Dolibarr language file - fr_FR - kimios
+CHARSET=UTF-8
+KimiosSetup=Configuration du module Kimios
+KimiosSetupHead1=Paramètre
+KimiosSetupHead2=Valeur
+KimiosSetupKeyurl=URL du serveur Kimios
+KimiosSetupKeyuserName=Compte de connexion
+KimiosSetupKeypassword=Mot de passe du compte
+KimiosSetupKeyuserSource=Source principal de kimios
+KimiosSetupKeyinitialPath=Path initial
+KimiosSetupSubmit=Enregistrer les paramètres
