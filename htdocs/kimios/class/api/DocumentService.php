@@ -36,7 +36,7 @@ class SymbolicLink {
   }
 }
 
-class Bookmark {
+class KimiosBookmark {
   public $dmEntityType; // int
   public $dmEntityUid; // long
 
@@ -451,7 +451,7 @@ class DocumentService extends SoapClient {
                                     'WorkflowStatus' => 'WorkflowStatus',
                                     'SymbolicLink' => 'SymbolicLink',
                                     'Document' => 'Document',
-                                    'Bookmark' => 'Bookmark',
+                                    'KimiosBookmark' => 'KimiosBookmark',
                                     'DMServiceException' => 'DMServiceException',
                                     'getBookmarks' => 'getBookmarks',
                                     'getBookmarksResponse' => 'getBookmarksResponse',
