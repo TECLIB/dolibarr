@@ -89,7 +89,10 @@ class KimiosPayslips extends KimiosDB{
       $path = $initialPath;
       $path.= "TECLIB Groupe/Human Resources (RH)/Salaires Teclib' S.A.S/";
       $path.= $year_start."/";
-      $path.= $KimiosPayslips->get_full_month_text($month_start)."/";
+
+      if ($year_start != "2009") {
+         $path.= $KimiosPayslips->get_full_month_text($month_start)."/";
+      }
 
       print '<p><b>Répertoire GED sélectionné :</b> '.$path.'</p>';
 
@@ -207,7 +210,8 @@ class KimiosPayslips extends KimiosDB{
 
                print '<tr '.$bc[$var].'>';
                   print '<td>'.$total.'</td>';
-                  print '<td>'.$documentObject->name.'</td>';
+                  print '<td><a href="'.DOL_URL_ROOT.'/teclib/kimios/payslips.php?action=download&payslips_rowid='
+                                 . $KimiosPayslips_f['rowid'] . '" target="_blank">' . $documentObject->name . '</a></td>';
                   print '<td><a href="'.DOL_URL_ROOT.'/user/card.php?id=' .
                            $doliUserId.'" target="_blank">' .
                            img_object($langs->trans("ShowUser"),"user").' ' .
@@ -296,7 +300,9 @@ class KimiosPayslips extends KimiosDB{
                print '<input name="KimiosPayslips_rowid[]" type="hidden" value="'.$rowid.'">';
 
                print '<td>'.$KimiosPayslips->fields['kimios_docuid'].'</td>';
-               print '<td>'.$KimiosPayslips->fields['kimios_docpath'].'</td>';
+               print '<td><a href="'.DOL_URL_ROOT.'/teclib/kimios/payslips.php?action=download&payslips_rowid='.$rowid.'">' 
+                           . $KimiosPayslips->fields['kimios_docpath'].'</a>';
+               print '</td>';
                print '<td><a href="'.DOL_URL_ROOT.'/user/card.php?id=' .
                         $KimiosPayslips->fields['doliuserid'].'" target="_blank">' .
                         img_object($langs->trans("ShowUser"),"user").' ' .
@@ -451,7 +457,84 @@ class KimiosPayslips extends KimiosDB{
 
          }//end foreach
       }
+   }
 
+   function download($payslips_rowid) {
+      global $langs, $db, $bc, $user;
+
+      global $KimiosPhpSoap, $KimiosPayslips, $KimiosConfig, $sessionId;
+
+      $KimiosPayslips->getFromDB($payslips_rowid);
+      $documentId = $KimiosPayslips->fields['kimios_docuid'];
+
+      $DocumentService = new DocumentService(
+         $KimiosPhpSoap->getWsdl(
+            $KimiosConfig->fields['url'], 'DocumentService'), 
+         $KimiosPhpSoap->getArrayOptionsService(
+            $KimiosConfig->fields['url'], 'DocumentService'));
+      $getDocument = new getDocument(
+         array('sessionId' => $sessionId,
+            'documentId' => $documentId)
+      );
+      $documentResp = $DocumentService->getDocument($getDocument);
+      $Document = $documentResp->return;
+      $fileName = $Document->name.".".$Document->extension;
+      $mimeType = $Document->mimeType;
+
+      $DocumentVersionService = new DocumentVersionService(
+         $KimiosPhpSoap->getWsdl(
+            $KimiosConfig->fields['url'], 'DocumentVersionService'), 
+         $KimiosPhpSoap->getArrayOptionsService(
+            $KimiosConfig->fields['url'], 'DocumentVersionService')
+      );
+      $lastDocumentVersion = new getLastDocumentVersion(
+         array('sessionId' => $sessionId,
+            'documentId' => $documentId)
+      );
+      $lastDvResp = $DocumentVersionService->getLastDocumentVersion($lastDocumentVersion);
+      $dvUid = $lastDvResp->return->uid;
+
+      $FileTransferService = new FileTransferService(
+         $KimiosPhpSoap->getWsdl(
+            $KimiosConfig->fields['url'],'FileTransferService'), 
+         $KimiosPhpSoap->getArrayOptionsService(
+            $KimiosConfig->fields['url'],'FileTransferService'));
+      $downloadTransaction = new startDownloadTransaction(
+         array('sessionId'       => $sessionId,
+            'documentVersionId' => $dvUid,
+            'isCompressed'       => false)
+      );
+      $stDlResp = $FileTransferService->startDownloadTransaction($downloadTransaction);
+      $dTxUid  = $stDlResp->return->uid; 
+      $fileSize   = $stDlResp->return->size;
+
+      $chunkSize  = 1024;
+      $offset  = 0;
+      $chk = new getChunck(
+         array('transactionId'   => $dTxUid,
+            'sessionId'       => $sessionId,
+            'chunkSize'       => $chunkSize,
+            'offset'          => $offset)
+      );
+
+      header("Content-Type: ".$mimeType."; name=\"".$fileName."\"");
+      header("Content-Transfer-Encoding: binary");
+      header("Content-Length: ".$fileSize."");
+      header("Content-Disposition: attachment; filename=\"".$fileName."\"");
+      header("Expires: 0");
+      header("Cache-Control: no-cache, must-revalidate");
+      header("Pragma: no-cache");
+
+      while($offset < $fileSize){
+         if(($offset + $chunkSize)>$fileSize){
+            $chunkSize = ($fileSize - $offset);
+         }
+         $chk->offset   = $offset;
+         $chk->chunkSize = $chunkSize;
+         $chkResp       = $FileTransferService->getChunck($chk);
+         file_put_contents('php://output', $chkResp->return);
+         $offset     = $offset + $chunkSize;
+      }
    }
 
    static function get_full_month_text($month_number) {
@@ -491,14 +574,30 @@ class KimiosPayslips extends KimiosDB{
    function get_userid_by_filename($filename) {
       global $db;
 
+      //NOM Prénom_XXXX.pdf
       $userinfos = explode("_", $filename);
       $userinfos = explode(" ", $userinfos[0]);
       $firstname = strtoupper($userinfos[1]);
       $lastname = strtoupper($userinfos[0]);
 
-      $sql = "SELECT rowid FROM `llx_user` WHERE `lastname` = UPPER(\"$lastname\") AND `firstname` = UPPER(\"$firstname\")";
+      $sql = "SELECT rowid 
+               FROM `llx_user` 
+               WHERE `lastname` = UPPER(\"$lastname\")
+               AND `firstname` = UPPER(\"$firstname\")";
 
       $result = $db->query($sql);
+
+      if ($db->num_rows($result) == 0) {
+         //NOM_XXX.pdf
+         $userinfos = explode("_", $filename);
+         $lastname = strtoupper($userinfos[0]);
+
+         $sql = "SELECT rowid 
+                  FROM `llx_user` 
+                  WHERE `lastname` = UPPER(\"$lastname\")";
+
+         $result = $db->query($sql);
+      }
 
       while($obj = $db->fetch_object($result)) {
          return $obj->rowid;

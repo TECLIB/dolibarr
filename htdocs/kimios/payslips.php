@@ -50,9 +50,23 @@ define('_KIMIOS_EXEC',true);
 
 if (!$user->rights->kimios->send_payslips) accessforbidden();
 
-llxHeader();
-
 $step = GETPOST("step")?GETPOST("step"):1;
+$action = GETPOST("action")?GETPOST("action"):1;
+
+$KimiosPhpSoap = new KimiosPhpSoap();
+$ActionsKimios = new ActionsKimios();
+$KimiosPayslips = new KimiosPayslips();
+$KimiosConfig  = new KimiosConfig();
+$KimiosConfig->getFromDB(1);
+
+$sessionId = $ActionsKimios->connect();
+
+if ($action == 'download') {
+   $payslips_rowid = GETPOST("payslips_rowid")?GETPOST("payslips_rowid"):1;
+   KimiosPayslips::download($payslips_rowid);
+}
+
+llxHeader();
 
 $h = 0;
 for ($i = 1; $i < $step+1; $i++) {
@@ -63,14 +77,6 @@ for ($i = 1; $i < $step+1; $i++) {
 }
 
 dol_fiche_head($head, $hselected, "Envoi fiches de paie");
-
-$KimiosPhpSoap = new KimiosPhpSoap();
-$ActionsKimios = new ActionsKimios();
-$KimiosPayslips = new KimiosPayslips();
-$KimiosConfig  = new KimiosConfig();
-$KimiosConfig->getFromDB(1);
-
-$sessionId = $ActionsKimios->connect();
 
 print '<table class="notopnoleftnoright" width="100%">';
    KimiosPayslips::showStep($step);
