@@ -93,8 +93,6 @@ class KimiosPayslips extends KimiosDB{
 
       print '<p><b>Répertoire GED sélectionné :</b> '.$path.'</p>';
 
-      print '<p><b>Vérifiez les informations, puis sélectionnez les fiches à envoyer.</p>';
-
       $getDMentityFromPath = new getDMentityFromPath(
          array('sessionId' => $sessionId,
             'path' => $path)
@@ -110,6 +108,8 @@ class KimiosPayslips extends KimiosDB{
       if($documentExists) {
          $documentSearchResp = $SearchService->getDMentityFromPath($getDMentityFromPath);
          $documentId = $documentSearchResp->return->uid;
+      } else {
+         print '<p style="color:red;font-weight:bold;">Le répertoire dans la GED est inexistant !</p>';
       }
 
       $DocumentService = new DocumentService(
@@ -128,123 +128,133 @@ class KimiosPayslips extends KimiosDB{
 
       $allDocuments = $documentsResp->return->Document;
 
-      $payslips_code = $month_start."_".$year_start; 
+      if (count($allDocuments) == 0) {
 
-      print '<script type="text/javascript">
-         function checkAll(ref, name) {
-            var form = ref;
-          
-            while (form.parentNode && form.nodeName.toLowerCase() != \'form\'){ 
-               form = form.parentNode; 
-            }
-          
-            var elements = form.getElementsByTagName(\'input\');
-          
-            for (var i = 0; i < elements.length; i++) {
-               if (elements[i].type == \'checkbox\' && elements[i].name == name) {
-                  elements[i].checked = ref.checked;
+         print '<p style="color:red;font-weight:bold;">Le répertoire de la GED ne contient aucune fiche à envoyer.</p>';
+
+      } else {
+
+         print '<p>Vérifiez les informations, puis sélectionnez les fiches à envoyer.</p>';
+
+         $payslips_code = $month_start."_".$year_start; 
+
+         print '<script type="text/javascript">
+            function checkAll(ref, name) {
+               var form = ref;
+             
+               while (form.parentNode && form.nodeName.toLowerCase() != \'form\'){ 
+                  form = form.parentNode; 
+               }
+             
+               var elements = form.getElementsByTagName(\'input\');
+             
+               for (var i = 0; i < elements.length; i++) {
+                  if (elements[i].type == \'checkbox\' && elements[i].name == name) {
+                     elements[i].checked = ref.checked;
+                  }
                }
             }
-         }
-      </script>';
+         </script>';
 
-      print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">'."\n";
+         print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">'."\n";
 
-      print '<table class="liste" width="80%">'."\n";
+         print '<table class="liste" width="80%">'."\n";
 
-      print '<tr class="liste_titre">';
-         print '<td class="liste_titre">Num.</td>';
-         print '<td class="liste_titre">Fichier PDF</td>';
-         print '<td class="liste_titre">Utilisateur ERP</td>';
-         print '<td class="liste_titre">Email</td>';
-         print '<td class="liste_titre">Dernier envoi</td>';
-         print '<td class="liste_titre">Dernier expediteur</td>';
-         print '<td class="liste_titre" style="text-align:center;">Sélectionner<br />
-         <input name="coche" type="checkbox" onclick="checkAll(this, \'KimiosPayslips_rowid[]\');"  title="Tout / Rien"/></td>';
-      print '</tr>';
+         print '<tr class="liste_titre">';
+            print '<td class="liste_titre">Num.</td>';
+            print '<td class="liste_titre">Fichier PDF</td>';
+            print '<td class="liste_titre">Utilisateur ERP</td>';
+            print '<td class="liste_titre">Email</td>';
+            print '<td class="liste_titre">Dernier envoi</td>';
+            print '<td class="liste_titre">Dernier expediteur</td>';
+            print '<td class="liste_titre" style="text-align:center;">Sélectionner<br />
+            <input name="coche" type="checkbox" onclick="checkAll(this, \'KimiosPayslips_rowid[]\');"  title="Tout / Rien"/></td>';
+         print '</tr>';
 
-      $var=True; $total = 0;
+         $var=True; $total = 0;
 
-      foreach($allDocuments as $documentObject) {
+         foreach($allDocuments as $documentObject) {
 
-         if ($doliUserId = $KimiosPayslips->get_userid_by_filename($documentObject->name)) {
-            $var=!$var;
+            if ($doliUserId = $KimiosPayslips->get_userid_by_filename($documentObject->name)) {
+               $var=!$var;
 
-            $total++;
+               $total++;
 
-            $userDoli = new User($db);
-            $userDoli->fetch($doliUserId);
+               $userDoli = new User($db);
+               $userDoli->fetch($doliUserId);
 
-            $KimiosPayslips_f = $KimiosPayslips->find("`payslips_code` = '" . $payslips_code . "' 
-                                       AND `doliuserid` = '" . $doliUserId . "'");
-            if (count($KimiosPayslips_f) == 0) {
-               $KimiosPayslips->fields = array(
-                  'doliuserid' => $doliUserId,
-                  'payslips_code' => $payslips_code,
-                  'doliuseremail' => $userDoli->email,
-                  'kimios_docuid' => $documentObject->uid,
-                  'kimios_docpath' => addslashes($documentObject->path),
-                  'kimios_docmime' => addslashes($documentObject->mimeType),
-                  'kimios_docname' => $documentObject->name.".".$documentObject->extension,
-                  'last_send' => NULL,
-                  'last_sender' => NULL
-               );
-               $KimiosPayslips->addToDB();
-               
                $KimiosPayslips_f = $KimiosPayslips->find("`payslips_code` = '" . $payslips_code . "' 
                                           AND `doliuserid` = '" . $doliUserId . "'");
-            }
-
-            $KimiosPayslips_f = $KimiosPayslips_f[key($KimiosPayslips_f)];
-
-            print '<tr '.$bc[$var].'>';
-               print '<td>'.$total.'</td>';
-               print '<td>'.$documentObject->name.'</td>';
-               print '<td><a href="'.DOL_URL_ROOT.'/user/card.php?id=' .
-                        $doliUserId.'" target="_blank">' .
-                        img_object($langs->trans("ShowUser"),"user").' ' .
-                        $userDoli->firstname.' '.$userDoli->lastname.'</a>';
-               print '</td>';
-               print '<td>'.$userDoli->email.'</td>';
-               if ($KimiosPayslips_f['last_send'] != 0) {
-                  print '<td>'.date('d-m-Y', strtotime($KimiosPayslips_f['last_send'])).'</td>';               
-               } else {
-                  print '<td>Jamais envoyée.</td>';
+               if (count($KimiosPayslips_f) == 0) {
+                  $KimiosPayslips->fields = array(
+                     'doliuserid' => $doliUserId,
+                     'payslips_code' => $payslips_code,
+                     'doliuseremail' => $userDoli->email,
+                     'kimios_docuid' => $documentObject->uid,
+                     'kimios_docpath' => addslashes($documentObject->path),
+                     'kimios_docmime' => addslashes($documentObject->mimeType),
+                     'kimios_docname' => $documentObject->name.".".$documentObject->extension,
+                     'last_send' => NULL,
+                     'last_sender' => NULL
+                  );
+                  $KimiosPayslips->addToDB();
+                  
+                  $KimiosPayslips_f = $KimiosPayslips->find("`payslips_code` = '" . $payslips_code . "' 
+                                             AND `doliuserid` = '" . $doliUserId . "'");
                }
 
-               if ($KimiosPayslips_f['last_sender'] != 0) {
-                  $doliSenderId = $KimiosPayslips_f['last_sender'];
-                  $userDoliSender = new User($db);
-                  $userDoliSender->fetch($doliSenderId);
+               $KimiosPayslips_f = $KimiosPayslips_f[key($KimiosPayslips_f)];
+
+               print '<tr '.$bc[$var].'>';
+                  print '<td>'.$total.'</td>';
+                  print '<td>'.$documentObject->name.'</td>';
                   print '<td><a href="'.DOL_URL_ROOT.'/user/card.php?id=' .
-                           $doliSenderId.'" target="_blank">' .
+                           $doliUserId.'" target="_blank">' .
                            img_object($langs->trans("ShowUser"),"user").' ' .
-                           $userDoliSender->firstname.' '.$userDoliSender->lastname.'</a>';
+                           $userDoli->firstname.' '.$userDoli->lastname.'</a>';
                   print '</td>';
-               } else {
-                  print '<td>Jamais envoyée.</td>';
-               }
+                  print '<td>'.$userDoli->email.'</td>';
+                  if ($KimiosPayslips_f['last_send'] != 0) {
+                     print '<td>'.date('d-m-Y', strtotime($KimiosPayslips_f['last_send'])).'</td>';               
+                  } else {
+                     print '<td>Jamais envoyée.</td>';
+                  }
 
-               print '<td style="text-align:center;">';
-                  print '<input class="flat" name="KimiosPayslips_rowid[]" type="checkbox" value="'
-                                             . $KimiosPayslips_f['rowid'] . '" size="1">';
-               print '</td>';
-            print '</tr>';
+                  if ($KimiosPayslips_f['last_sender'] != 0) {
+                     $doliSenderId = $KimiosPayslips_f['last_sender'];
+                     $userDoliSender = new User($db);
+                     $userDoliSender->fetch($doliSenderId);
+                     print '<td><a href="'.DOL_URL_ROOT.'/user/card.php?id=' .
+                              $doliSenderId.'" target="_blank">' .
+                              img_object($langs->trans("ShowUser"),"user").' ' .
+                              $userDoliSender->firstname.' '.$userDoliSender->lastname.'</a>';
+                     print '</td>';
+                  } else {
+                     print '<td>Jamais envoyée.</td>';
+                  }
+
+                  print '<td style="text-align:center;">';
+                     print '<input class="flat" name="KimiosPayslips_rowid[]" type="checkbox" value="'
+                                                . $KimiosPayslips_f['rowid'] . '" size="1">';
+                  print '</td>';
+               print '</tr>';
+            }
          }
-      }
 
-      print '<tr class="liste_total">';
-         print '<td class="liste_titre" style="text-align:left;" colspan="7"><b>Nombre de fiches de paie : </b>'.$total.'</td>';
-      print '</tr>';
+         print '<tr class="liste_total">';
+            print '<td class="liste_titre" style="text-align:left;" colspan="7"><b>Nombre de fiches de paie : </b>'.$total.'</td>';
+         print '</tr>';
 
-      print '</table>';
+         print '</table>';
 
-      print '</br ><h3>Après avoir vérifié puis sélectionné les fiches à envoyer, cliquez sur : <input type="submit" class="button" value="' . 
-                        dol_escape_htmltag($langs->trans("Valider")) . '" /><h3>';
+         print '</br ><h3>Après avoir vérifié puis sélectionné les fiches à envoyer, cliquez sur : <input type="submit" class="button" value="' . 
+                           dol_escape_htmltag($langs->trans("Valider")) . '" /><h3>';
 
-      print '<input type="hidden" name="step" value="3" />';
+         print '<input type="hidden" name="step" value="3" />';
 
-      print '</form>';
+         print '</form>';
+      
+      }//end ELSE
    }
 
    function showStep3() {
