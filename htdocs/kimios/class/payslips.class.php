@@ -588,8 +588,8 @@ class KimiosPayslips extends KimiosDB{
 
       $sql = "SELECT rowid 
                FROM `llx_user` 
-               WHERE `lastname` = UPPER(\"$lastname\")
-               AND `firstname` = UPPER(\"$firstname\")";
+               WHERE `lastname` LIKE '%$lastname%'
+               AND `firstname` LIKE '%$firstname%'";
 
       $result = $db->query($sql);
 
