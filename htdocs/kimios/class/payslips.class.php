@@ -577,8 +577,14 @@ class KimiosPayslips extends KimiosDB{
       //NOM Prénom_XXXX.pdf
       $userinfos = explode("_", $filename);
       $userinfos = explode(" ", $userinfos[0]);
-      $firstname = strtoupper($userinfos[1]);
-      $lastname = strtoupper($userinfos[0]);
+
+      if (count($userinfos) == 3) {
+         $firstname = strtoupper($userinfos[2]);
+         $lastname = strtoupper($userinfos[0])." ".strtoupper($userinfos[1]);
+      } else {
+         $firstname = strtoupper($userinfos[1]);
+         $lastname = strtoupper($userinfos[0]);
+      }
 
       $sql = "SELECT rowid 
                FROM `llx_user` 
