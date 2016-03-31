@@ -29,7 +29,7 @@ $var=!$var;
 ?>		
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ECommerceCategoriesProducts') ?></td>
-			<td><?php print $nbCategoriesInDolibarr; ?></td>
+			<td><?php print $nbCategoriesInDolibarr; ?> *</td>
 			<td>
 				<?php
 					print $nbCategoriesToUpdate;
@@ -52,7 +52,7 @@ $var=!$var;
 ?>		
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ECommerceProducts') ?></td>
-			<td><?php print $nbProductInDolibarr; ?></td>
+			<td><?php print $nbProductInDolibarr; ?> **</td>
 			<td><?php print $nbProductToUpdate;	?>
 			</td>
 			<?php if ($synchRights==true):?>
@@ -82,11 +82,11 @@ $var=!$var;
 ?>		
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ECommerceSociete') ?></td>
-			<td><?php print $nbSocieteInDolibarr; ?> *</td>
+			<td><?php print $nbSocieteInDolibarr; ?> ***</td>
 			<td>
 				<?php
 					print $nbSocieteToUpdate;
-				?> **
+				?> ****
 			</td>
 			<?php if ($synchRights==true):?>
 			<td>
@@ -169,11 +169,16 @@ $var=!$var;
 		</tr>
 	</table>
 	<?php
+	$categorytmpprod=new Categorie($db);
+	$categorytmpprod->fetch($site->fk_cat_product);
+	$tagnameprod=$categorytmpprod->label;
 	$categorytmp=new Categorie($db);
 	$categorytmp->fetch($site->fk_cat_societe);
 	$tagname=$categorytmp->label;
-	print '* '.$langs->trans("OnlyThirdPartyWithTags", $tagname).'<br>';
-	print '** '.$langs->trans("WithMagentoThirdIsModifiedIfAddressModified").'<br>';
+	print '* '.$langs->trans("OnlyProductCategIn", $tagnameprod).'<br>';
+	print '** '.$langs->trans("OnlyProductsIn", $tagnameprod).'<br>';
+	print '*** '.$langs->trans("OnlyThirdPartyWithTags", $tagname).'<br>';
+	print '**** '.$langs->trans("WithMagentoThirdIsModifiedIfAddressModified").'<br>';
 	?>
 	
 	
@@ -192,7 +197,7 @@ else
 	$errors[] = $langs->trans('ECommerceSiteError');
 }
 
-setEventMessages($error, $errors, 'errors');
+setEventMessages(null, $errors, 'errors');
 setEventMessages(null, $success);
 
 llxFooter();

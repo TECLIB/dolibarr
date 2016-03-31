@@ -359,7 +359,7 @@ class eCommerceSynchro
                     $resanswer = array();
                     eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
 
-                    foreach ($resanswer as $remoteCatToCheck) // Check update for each one $remoteCatToCheck = array('category_id'=>, 'parent_id'=>...)
+                    foreach ($resanswer as $remoteCatToCheck) // Check update for each entry into $resanswer -> $remoteCatToCheck = array('category_id'=>, 'parent_id'=>...)
                     {
                         $this->initECommerceCategory(); // Initialise 2 properties eCommerceCategory and eCommerceMotherCategory
                         
@@ -379,6 +379,7 @@ class eCommerceSynchro
                 }
             }
         } catch (Exception $e) {
+            dol_syslog($e->getMessage(), LOG_ERR);
             $this->errors[] = $this->langs->trans('ECommerceErrorGetCategoryToUpdate');
         }
         return false;
@@ -563,6 +564,7 @@ class eCommerceSynchro
             {
                 $this->db->begin();
                 
+                dol_syslog("synchCategory::getCategoriesToUpdate");
                 $categories = $this->getCategoriesToUpdate();   // Return list of all categories that were modified on ecommerce side
                 if (count($categories))
                 {
@@ -580,7 +582,6 @@ class eCommerceSynchro
                         // if fetch on eCommerceMotherCat has failed
                         if ($motherExists < 1 && ($this->eCommerceMotherCategory->fetchByFKCategory($this->eCommerceSite->fk_cat_product, $this->eCommerceSite->id) < 0))
                         {
-                            exit;
                             // get the importRootCategory defined in eCommerceSite 
                             $dBCategorie->fetch($this->eCommerceSite->fk_cat_product);
 
@@ -876,16 +877,18 @@ class eCommerceSynchro
             if ($contactExists)
                 $dBContact->id = $contactExists;
            
-            //if contact exists in eCommerceSocpeople, contact must exists in societe
+            //if contact exists in eCommerceSocpeople, contact should exists also in llx_socpeople
             if (($synchExists > 0 && $this->eCommerceSocpeople->fk_socpeople > 0) || $contactExists > 0)
             {
                 $refExists = $dBContact->fetch($contactExists > 0 ? $contactExists : $this->eCommerceSocpeople->fk_socpeople);
                 
                 if ($refExists > 0)
                 {
-                    $result = $dBContact->update($dBContact->id, $this->user);
+                    //dol_syslog("We don't know if contact on ecommerce was modified so we force update of all fields");
+                    //$result = $dBContact->update($dBContact->id, $this->user);
+                    $result = 0;
                 }
-                else if ($refExists == 0)
+                else if ($refExists == 0)   // If not, we create it
                 {
                     $result = $dBContact->create($this->user);
                 }
@@ -900,8 +903,8 @@ class eCommerceSynchro
             {
                 $result = $dBContact->create($this->user);
             }
-            
-            //if create/update of contact table ok
+
+            //if create/update of contact table is ok
             if ($result >= 0)
             {
                 $this->eCommerceSocpeople->last_update = $socpeopleArray['last_update'];
@@ -1146,6 +1149,7 @@ class eCommerceSynchro
                     {
                         if ($refExists > 0 && $dBCommande->id > 0)
                         {
+                            dol_syslog("synchCommande Order with id=".$dBCommande->id." already exists");
                             //update commande
                             $result = 1;
                             
@@ -1186,8 +1190,10 @@ class eCommerceSynchro
                         } 
                         else
                         {
+                            dol_syslog("Create order");
+
                             //create commande
-                            $dBCommande->statut=0;  // draft
+                            $dBCommande->statut=0;  // draft == pending on magento
                             $dBCommande->ref_client = $commandeArray['ref_client'];
                             $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
                             $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
@@ -1196,15 +1202,36 @@ class eCommerceSynchro
 
                             $result = $dBCommande->create($this->user);
 
+                            if ($dBCommande->statut != $commandeArray['status'])
+                            {
+                                dol_syslog("synchCommande Status of order must be now set, we update order from status "+$dBCommande->statut+" to status "+$commandeArray['status']);
+                                if ($commandeArray['status'] == 0)
+                                {
+                                    $dBCommande->set_draft($user, 0);
+                                }
+                                if ($commandeArray['status'] == 1)
+                                {
+                                    $dBCommande->valid($user, 0);
+                                }
+                                if ($commandeArray['status'] == -1)
+                                {
+                                    $dBCommande->cancel(0);
+                                }
+                            }
+                            
                             //add or update contacts of order
                             $commandeArray['socpeopleCommande']['fk_soc'] = $this->eCommerceSociete->fk_societe;
                             $commandeArray['socpeopleFacture']['fk_soc'] = $this->eCommerceSociete->fk_societe;
                             $commandeArray['socpeopleLivraison']['fk_soc'] = $this->eCommerceSociete->fk_societe;
 
+                            dol_syslog("synchCommande Now we sync people/address");
                             $socpeopleCommandeId = $this->synchSocpeople($commandeArray['socpeopleCommande']);  // $socpeopleCommandeId = id of socpeople into dolibarr table
+                            dol_syslog("synchCommande socpeopleCommandeId = ".$socpeopleCommandeId);
                             $socpeopleFactureId = $this->synchSocpeople($commandeArray['socpeopleFacture']);
+                            dol_syslog("synchCommande socpeopleFactureId = ".$socpeopleFactureId);
                             $socpeopleLivraisonId = $this->synchSocpeople($commandeArray['socpeopleLivraison']);
-
+                            dol_syslog("synchCommande socpeopleLivraisonId = ".$socpeopleLivraisonId);
+                            
                             if ($socpeopleCommandeId > 0)
                                 $dBCommande->add_contact($socpeopleCommandeId, 'CUSTOMER');
                             if ($socpeopleFactureId > 0)
@@ -1213,6 +1240,7 @@ class eCommerceSynchro
                                 $dBCommande->add_contact($socpeopleLivraisonId, 'SHIPPING');
 
                             //add items
+                            dol_syslog("synchCommande Now we add lines on order");
                             if (count($commandeArray['items'])) {
                                 foreach ($commandeArray['items'] as $item)
                                 {

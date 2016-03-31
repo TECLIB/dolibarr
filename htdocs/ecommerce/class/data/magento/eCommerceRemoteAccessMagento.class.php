@@ -57,7 +57,7 @@ class eCommerceRemoteAccessMagento
             //ini_set("soap.wsdl_cache_enabled", "0");    // For test
             //$params['cache_wsdl']=WSDL_CACHE_NONE;
             
-            dol_syslog("eCommerceRemoteAccessMagento Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".$this->site->user_password);
+            dol_syslog("eCommerceRemoteAccessMagento Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".preg_replace('/./','*',$this->site->user_password));
             
             $this->client = new SoapClient($this->site->webservice_address, $params);
             
