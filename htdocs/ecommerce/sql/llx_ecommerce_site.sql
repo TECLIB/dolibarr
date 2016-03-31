@@ -27,5 +27,8 @@ CREATE TABLE `llx_ecommerce_site` (
   `filter_value` varchar(255) DEFAULT NULL,
   `fk_cat_societe` int(11) NOT NULL,
   `fk_cat_product` int(11) NOT NULL,
-  `last_update` datetime DEFAULT NULL
-) ENGINE=InnoDB COMMENT='Liste des sites à synchroniser';
+  `last_update` datetime DEFAULT NULL,
+  `timeout` int(11) NOT NULL DEFAULT 300,
+  `magento_use_special_price` INT( 1 ) NOT NULL DEFAULT '0',
+  `magento_price_type` VARCHAR(3) NOT NULL DEFAULT 'HT'
+) ENGINE=InnoDB COMMENT='List of sites to synchronized';

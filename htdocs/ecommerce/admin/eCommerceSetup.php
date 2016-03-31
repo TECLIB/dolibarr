@@ -97,7 +97,7 @@ if ($_POST['site_form_detail_action'] == 'save')
         } else
         {
             $db->rollback();
-            setEventMessages($langs->trans('ECommerceSetupErrorDb'), null, 'errors');
+            setEventMessages($siteDb->error, $siteDb->errors, 'errors');
         }
     }
 }
@@ -129,8 +129,8 @@ if ($siteId != null)
 $sites = $siteDb->listSites();
 $siteTypes = $siteDb->getSiteTypes();
 $classCategorie = new Categorie($db);
-$productCategories = $classCategorie->get_full_arbo(0);
-$societeCategories = $classCategorie->get_full_arbo(2);
+$productCategories = $classCategorie->get_full_arbo('product');
+$societeCategories = $classCategorie->get_full_arbo('customer');
 
 //SET VARIABLES
 $ecommerceId = ($_POST['ecommerce_id'] ? $_POST['ecommerce_id'] : $siteDb->id);

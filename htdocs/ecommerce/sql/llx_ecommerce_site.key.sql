@@ -16,6 +16,5 @@
 --
 -- ===================================================================
 
-ALTER TABLE `llx_ecommerce_site` ADD `timeout` int(11) unsigned NOT NULL DEFAULT 300;
-ALTER TABLE `llx_ecommerce_site` ADD `magento_use_special_price` INT( 1 ) NOT NULL DEFAULT '0' AFTER `timeout` ;
-ALTER TABLE `llx_ecommerce_site` ADD `magento_price_type` VARCHAR(3) NOT NULL DEFAULT 'HT' AFTER `magento_use_special_price` ;
+ALTER TABLE llx_ecommerce_site ADD UNIQUE INDEX uk_ecommerce_site_name (name);
+

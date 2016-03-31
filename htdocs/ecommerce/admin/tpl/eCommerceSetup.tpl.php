@@ -151,18 +151,12 @@ $var=!$var;
 					<td><span class="fieldrequired"><?php print $langs->trans('ECommerceSiteAddress') ?></span></td>
 					<td>
 						<input type="text" class="flat" name="ecommerce_webservice_address" value="<?php print $ecommerceWebserviceAddress ?>" size="60">
+						<?php 
+						if ($ecommerceWebserviceAddress)
+						    print '<br><a href="'.$ecommerceWebserviceAddress.'" target="_blank">'.$langs->trans("ECommerceClickUrlToTestUrl").'</a>';
+						?>
 					</td>
 					<td><?php print $langs->trans('ECommerceSiteAddressDescription') ?></td>
-				</tr>
-<?php
-$var=!$var;
-?>
-				<tr <?php print $bc[$var] ?>>
-					<td><span class="fieldrequired"><?php print $langs->trans('ECommerceTimeout') ?></span></td>
-					<td>
-						<input type="text" class="flat" name="ecommerce_timeout" value="<?php print $ecommerceTimeout ?>" size="10">
-					</td>
-					<td><?php print $langs->trans('ECommerceTimeoutDescription') ?></td>
 				</tr>
 <?php
 $var=!$var;
@@ -198,6 +192,16 @@ $var=!$var;
 $var=!$var;
 ?>
 				<tr <?php print $bc[$var] ?>>
+					<td><span><?php print $langs->trans('ECommerceTimeout') ?></span></td>
+					<td>
+						<input type="text" class="flat" name="ecommerce_timeout" value="<?php print $ecommerceTimeout ?>" size="10">
+					</td>
+					<td><?php print $langs->trans('ECommerceTimeoutDescription') ?></td>
+				</tr>
+<?php
+$var=!$var;
+?>
+				<tr <?php print $bc[$var] ?>>
 					<td><?php print $langs->trans('ECommerceMagentoUseSpecialPrice') ?></td>
 					<td>
 						<input type="checkbox" class="flat" name="ecommerce_magento_use_special_price" <?php print ($ecommerceMagentoUseSpecialPrice ? 'checked' : '') ?> />
@@ -220,13 +224,20 @@ $var=!$var;
 			</table>
 			<br/>
 			<center>
-				<input type="submit" name="save_site" class="button" value="<?php print $langs->trans('Save') ?>">
 <?php
-if ($siteDb->id):
+if ($siteDb->id)
+{
 ?>
+				<input type="submit" name="save_site" class="butAction" value="<?php print $langs->trans('Save') ?>">
 				<a class="butActionDelete" href='javascript:eCommerceConfirmDelete("site_form_detail", "<?php print $langs->trans('ECommerceConfirmDelete') ?>")'><?php print $langs->trans('Delete') ?></a>
 <?php
-endif;
+}
+else
+{
+?>
+				<input type="submit" name="save_site" class="butAction" value="<?php print $langs->trans('Add') ?>">
+<?php 
+}
 ?>
 			</center>
 		</form>
