@@ -241,25 +241,13 @@ class InterfaceLivraison
 	            dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 	            
         		//retrieve shipping id
-        		$object->load_object_linked('','shipping',$object->id,'delivery');        		
-        		$shippingId = $object->linked_object['shipping'][0];        		
+        		$shippingId = $object->id;        		
         	
-        		//retrieve order id
-        		$shipping = new Expedition($this->db);     
-        		//for before 2.9 compatibility  		
-        		if (intval($shippingId)==0)
-        			$shippingId = $shipping->fetch($object->id);        		
-        		$shipping->fetch($shippingId);
+        		$origin = $object->origin;
+        		$origin_id = $object->origin_id;
         		
-        		$shipping->load_object_linked('','commande',$shipping->id,'shipping');
-        		$orderId = $shipping->linked_object['commande'][0];    
-        		//for before 2.9 compatibility  		
-        		if (intval($orderId)==0 && count($shipping->linked_object))
-        			foreach ($shipping->linked_object as $linkArray)
-        			{
-        				if ($linkArray['type']=='commande')
-        					$orderId = $linkArray['linkid'];
-        			}
+				$orderId = $origin_id;
+
         		//load eCommerce Commande by order id
 	            $eCommerceCommande = new eCommerceCommande($this->db);
 	            $eCommerceCommande->fetchByCommandeId($orderId);
@@ -286,4 +274,3 @@ class InterfaceLivraison
     }
 
 }
-?>
