@@ -50,7 +50,7 @@ class modAutoAddLine extends DolibarrModules
         $this->name = preg_replace('/^mod/i', '', get_class($this));
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-        $this->version = '1.0';
+        $this->version = 'development';
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
         $this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
@@ -89,7 +89,9 @@ class modAutoAddLine extends DolibarrModules
         $this->need_dolibarr_version = array(3, 0); // Minimum version of Dolibarr required by module
         $this->langfiles = array('autoaddline@autoaddline');
         $this->description = 'Calcul et ajout automatique de lignes finales aux facture en fonction de services définis pour les produits associés (taxe carbone, réduction...)';
-
+        $this->editor_name = 'TecLib';
+        $this->editor_url = 'http://www.teclib.com';
+        
         // Constants
         // List of particular constants to add when module is enabled (key, 'chaine', value, desc, visible, 'current' or 'allentities', deleteonunactive)
         // Example: $this->const=array(0=>array('MYMODULE_MYNEWCONST1','chaine','myvalue','This is a constant to add',1),

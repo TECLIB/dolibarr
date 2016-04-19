@@ -53,6 +53,8 @@ class modAutoAttachFile extends DolibarrModules
 		$this->name = preg_replace('/^mod/i','',get_class($this));
 		// Module description used if translation string 'ModuleXXXDesc' not found (XXX is id value)
 		$this->description = "Automatically attach files to email form (proposals, orders, invoices)";
+        $this->editor_name = 'TecLib';
+        $this->editor_url = 'http://www.teclib.com';
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
 		$this->version = '3.5';
 		// Key used in llx_const table to save module status enabled/disabled (XXX is id value)

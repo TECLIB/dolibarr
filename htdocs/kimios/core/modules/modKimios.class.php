@@ -39,6 +39,8 @@ class modKimios extends DolibarrModules {
 		$this->family = "ecm";
 		$this->name = preg_replace('/^mod/i','',get_class($this));
 		$this->description = "Interface avec GED Kimios";
+        $this->editor_name = 'TecLib';
+        $this->editor_url = 'http://www.teclib.com';
 		$this->version = '1.0';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->special = 0;
