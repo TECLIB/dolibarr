@@ -32,8 +32,6 @@ $nbFactureInDolibarr = 0;
 $langs->load("admin");
 $langs->load("ecommerce");
 
-//CHECK ACCESS
-// || $user->getrights('magento')!=1
 // Protection if external user
 if ($user->societe_id > 0 || !$user->rights->ecommerce->read)
 {

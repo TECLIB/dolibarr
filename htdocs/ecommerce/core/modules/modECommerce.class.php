@@ -20,12 +20,13 @@ dol_include_once('/ecommerce/admin/class/data/eCommerceDict.class.php');
 class modECommerce extends DolibarrModules
 {
 	/**
-	 *   \brief      Constructor. Define names, constants, directories, boxes, permissions
-	 *   \param      DB      Database handler
+	 *   Constructor. Define names, constants, directories, boxes, permissions
+	 *   
+	 *   @param    DoliDB      $db      Database handler
 	 */
-	function modECommerce($DB)
+	function modECommerce($db)
 	{
-		$this->db = $DB;
+		$this->db = $db;
 
 		// Id for module (must be unique).
 		// Use here a free id (See in Home -> System information -> Dolibarr for list of used modules id).
@@ -37,7 +38,7 @@ class modECommerce extends DolibarrModules
 		// It is used to group modules in module setup page
 		$this->family = "other";
 		// Module label (no space allowed), used if translation string 'ModuleXXXName' not found (where XXX is value of numeric property 'numero' of module)
-		$this->name = 'Magento';
+		$this->name = 'Ecommerce';        //  Must be same than value used for if $conf->ecommerce->enabled
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
 		$this->description = "Module to synchronise Dolibarr with Magento ECommerce platform";
 		$this->descriptionlong = "See page https://wiki.dolibarr.org/index.php/Module_Magento_EN for more information";
