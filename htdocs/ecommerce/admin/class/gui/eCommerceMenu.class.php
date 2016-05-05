@@ -42,41 +42,43 @@ class eCommerceMenu
     	$menu = array();
     	
     	//define top menu
-    	$menu[0]=array(	'fk_menu'=>0,
+    	$menu[0]=array(	'fk_menu'=>'',
     					'type'=>'top',
     					'titre'=>'ECommerceMenu',
     					'mainmenu'=>'ecommerce',
-    					'leftmenu'=>'1',
+    					'leftmenu'=>'ecommerce',
     					'url'=>'/ecommerce/index.php',
     					'langs'=>'ecommerce@ecommerce',
     					'position'=>100,
-    					'enabled'=>'$user->rights->ecommerce->read',
-    					'perms'=>'1',
+    					'enabled'=>'$conf->ecommerce->enabled',
+    					'perms'=>'$user->rights->ecommerce->read',
     					'target'=>'',
     					'user'=>2);
     	//define left menu
-    	$menu[1]=array(	'fk_menu'=>'r=0',
+    	$menu[1]=array(	'fk_menu'=>'fk_mainmenu=ecommerce',
     					'type'=>'left',
     					'titre'=>'ECommerceMenu',
     					'mainmenu'=>'ecommerce',
+    	                'leftmenu'=>'ecommerce',
     					'url'=>'/ecommerce/index.php',
     					'langs'=>'ecommerce@ecommerce',
     					'position'=>100,
-    					'enabled'=>'$user->rights->ecommerce->read',
-    					'perms'=>'1',
+    					'enabled'=>'$conf->ecommerce->enabled',
+    					'perms'=>'$user->rights->ecommerce->read',
     					'target'=>'',
     					'user'=>2);
     	
     	//add link to configuration
-    	$menu[2]=array(	'fk_menu'=>'r=1',
+    	$menu[2]=array(	'fk_menu'=>'fk_mainmenu=ecommerce',
     					'type'=>'left',
     					'titre'=>'ECommerceSetupSites',
     					'mainmenu'=>'ecommerce',
+    	                'leftmenu'=>'ecommerce',
     					'url'=>'/ecommerce/admin/eCommerceSetup.php',
     					'langs'=>'ecommerce@ecommerce',
-    					'position'=>100,
-    					'enabled'=>'$user->rights->ecommerce->site',
-    					'perms'=>'1',
+    					'position'=>110,
+    					'enabled'=>'$conf->ecommerce->enabled',
+    					'perms'=>'$user->rights->ecommerce->site',
     					'target'=>'',
     					'user'=>2);
     	
@@ -84,15 +86,16 @@ class eCommerceMenu
     	$sites = $this->siteDb->listSites();
     	if (count($this->siteDb))
     		foreach ($sites as $site)
-    			$menu[]=array(	'fk_menu'=>'r=1',
+    			$menu[]=array(	'fk_menu'=>'fk_mainmenu=ecommerce',
     							'type'=>'left',
     							'titre'=>$site['name'],
     							'mainmenu'=>'ecommerce',
+    			                'leftmenu'=>'ecommerce',
     							'url'=>'/ecommerce/site.php?id='.$site['id'],
     							'langs'=>'ecommerce@ecommerce',
-    							'position'=>100,
-    							'enabled'=>'$user->rights->ecommerce->read',
-    							'perms'=>'1',
+    							'position'=>120,
+    							'enabled'=>'$conf->ecommerce->enabled',
+    							'perms'=>'$user->rights->ecommerce->read',
     							'target'=>'',
     							'user'=>2);
     	return $menu;
