@@ -47,7 +47,7 @@ $langs->load("notes@notes");
 // Security check
 $socid = GETPOST("socid");
 if ($user->societe_id) $socid=$user->societe_id;
-$result = restrictedArea($user, 'societe', $socid);
+$result = restrictedArea($user, 'societe', $socid, 'societe');
 
 $item_type = 'societe';
 
@@ -57,7 +57,8 @@ $item_type = 'societe';
  * Actions
  */
 
-if($action=="del_note") {
+if ($action=="del_note" && ! GETPOST('cancel')) 
+{
 	$notes = new Note();
 	$notes->getFromDB($_GET['note_id']);
 
@@ -67,7 +68,7 @@ if($action=="del_note") {
 	}
 }
 
-if($action=="edit_note_go") {
+if($action=="edit_note_go" && ! GETPOST('cancel')) {
 	$notes = new Note();
 	$notes->getFromDB($_POST['rowid']);
 
@@ -82,7 +83,8 @@ if($action=="edit_note_go") {
 	}
 }
 
-if($action=="add_note") {
+if ($action=="add_note") 
+{
 	$notes = new Note();
 	$notes->fields['user_id'] = $user->id;
 	$notes->fields['datetime'] = date('Y-m-d H:i:s');
@@ -118,7 +120,7 @@ if ($socid > 0)
 	$notes = new Note();
 	$existing_notes = $notes->find("item_type = '".$item_type."' AND item_id = '".$socid."'", "datetime DESC");
 
-	print '<script src="'.dol_buildpath('/notes/lib/uniform/jquery.uniform.js',1).'" type="text/javascript" charset="utf-8"></script>';
+	//print '<script src="'.dol_buildpath('/notes/lib/uniform/jquery.uniform.js',1).'" type="text/javascript" charset="utf-8"></script>';
 
 	print '<script src="'.dol_buildpath('/notes/lib/jquery.easyconfirm.js',1).'" type="text/javascript" charset="utf-8"></script>';
 
@@ -130,14 +132,15 @@ jQuery(function() {
 		collapsible: true,
 		active : 9999999,
 		autoHeight: false,
-		navigation: true
+		navigation: true,
+		disabled: false
 	});
 
 	$( "#dialog" ).dialog({
 		autoOpen: false,
 		show: "blind",
-		width: 680,
-		height: 440,
+		width: 740,
+		height: 450,
 		modal: true
 	});
 
@@ -146,8 +149,8 @@ jQuery(function() {
 		return false;
 	});
 
-	$("#supprimernote").easyconfirm({locale: {
-		title: '{$langs->trans("AreYouSure")}?',
+	$(".teclibnotedeletebutton").easyconfirm({locale: {
+		title: '{$langs->trans("DeleteNote")}?',
 		text: '{$langs->trans("AreYouSure")}?',
 		button: ['{$langs->trans("Cancel")}',' {$langs->trans("Confirm")}'],
 		closeText: 'fermer'
@@ -165,12 +168,12 @@ JS;
 	print '<input type="hidden" name="socid" value="'.$socid.'" />';
 	print '<input type="hidden" name="action" value="add_note" />';
 	print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" /></p>';
-	print '<p>';
-	//$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',180,'dolibarr_notes');
+	//print '<p>';
+	//$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',240,'dolibarr_notes');     WYSIWYG does not work into a dialog.
 	//print $doleditor->Create();
-	print '<textarea name="note_value" rows="20" cols="100"></textarea>';
-	print '</p>';
-	print '<p><input type="submit" value="'.$langs->trans("Save").'" class="button" /></p>';
+	print '<textarea id="noteteclib" name="note_value" rows="20" style="width: 98%"></textarea>';
+	//print '</p>';
+	print '<div class="center"><input type="submit" value="'.$langs->trans("Save").'" class="button" /></div>';
 	print '</form>';
 	print '</div>'."\n";
 
@@ -193,11 +196,10 @@ JS;
 		print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90"
 		value="' . $notes->fields['note_title'] . '" /></p>';
 
-		print '<p>';
 		$doleditor=new DolEditor('note_value',$notes->fields['note_value'],'',180,'dolibarr_notes');
 		print $doleditor->Create();
 		//print '<textarea name="note_value" rows="20" cols="100"></textarea></p>';
-		print '<p><input type="submit" value="'.$langs->trans("Save").'" class="button" /></p>';
+		print '<p><div class="center"><input type="submit" value="'.$langs->trans("Save").'" class="button" /> &nbsp; <input type="submit" name="cancel" value="'.$langs->trans("Cancel").'" class="button" /></div></p>';
 		print '</form>';
 		print '</div>';
 	}
@@ -216,21 +218,19 @@ JS;
 				$user->fetch($note_infos['user_id']);
 				$auteur = $user->getFullName($langs);
 
+				
 			 	print'<h3 class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-top">';
 			 	print '<a href="#">';
 			 	print 'n°'.$note_infos['rowid'].' - '.$note_infos['datetime'].' - '.$auteur;
 			 	print ' : '.$note_infos['note_title'];
 			 	print '</a>';
 			 	print '</h3>';
-
+			 	
 			 	print '<div class="ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content-active">';
-
-			 	print '<p style="border:1px dashed grey;padding-top:1px;padding-bottom:1px;
-			 	width:50px;text-align:center;margin-top:-10px;">';
-			 	Note::showEdit($socid,$note_infos['rowid']);
-			 	Note::showDelete($socid,$note_infos['rowid']);
+			 	print '<p style="float: right; width:50px; text-align:center;margin-bottom:0px; margin-top: 0px;">';
+			 	Note::showEdit($socid,$note_infos['rowid']);       // Show button EditNote
+			 	Note::showDelete($socid,$note_infos['rowid']);     // Show button DeleteNote
 			 	print '</p>';
-
 			 	print dol_htmlentitiesbr($note_infos['note_value']);
 			 	print '</div>';
 			}
@@ -246,4 +246,5 @@ JS;
 }
 
 llxFooter();
-?>
+
+$db->close();
