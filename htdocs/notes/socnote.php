@@ -115,7 +115,10 @@ if ($socid > 0)
 
 	$head = societe_prepare_head($societe);
 
-	dol_fiche_head($head, 'noteteclib', $langs->trans("ThirdParty"),0,'company');
+	$title=$langs->trans("ThirdParty");
+	if (! empty($conf->global->MAIN_HTML_TITLE) && preg_match('/thirdpartynameonly/',$conf->global->MAIN_HTML_TITLE) && $object->name) $title=$object->name;
+	
+	dol_fiche_head($head, 'noteteclib', $title, 0, 'company');
 
 	$notes = new Note();
 	$existing_notes = $notes->find("item_type = '".$item_type."' AND item_id = '".$socid."'", "datetime DESC");
