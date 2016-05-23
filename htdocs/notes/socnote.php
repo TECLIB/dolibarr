@@ -51,6 +51,12 @@ $result = restrictedArea($user, 'societe', $socid, 'societe');
 
 $item_type = 'societe';
 
+$societe = new Societe($db);
+if ($socid > 0)
+{
+    $societe->fetch($socid);
+}
+
 
 
 /*
@@ -104,21 +110,18 @@ if ($action=="add_note")
  * View
  */
 
-llxHeader();
+$title=$langs->trans("ThirdParty");
+if (! empty($conf->global->MAIN_HTML_TITLE) && preg_match('/thirdpartynameonly/',$conf->global->MAIN_HTML_TITLE) && $societe->name) $title=$societe->name;
+
+llxHeader('', $title);
 
 if ($socid > 0)
 {
-	$societe = new Societe($db, $socid);
-	$societe->fetch($socid);
-
 	if ($conf->notification->enabled) $langs->load("mails");
 
 	$head = societe_prepare_head($societe);
 
-	$title=$langs->trans("ThirdParty");
-	if (! empty($conf->global->MAIN_HTML_TITLE) && preg_match('/thirdpartynameonly/',$conf->global->MAIN_HTML_TITLE) && $societe->name) $title=$societe->name;
-	
-	dol_fiche_head($head, 'noteteclib', $title, 0, 'company');
+	dol_fiche_head($head, 'noteteclib', $langs->trans("ThirdParty"), 0, 'company');
 
 	$notes = new Note();
 	$existing_notes = $notes->find("item_type = '".$item_type."' AND item_id = '".$socid."'", "datetime DESC");
