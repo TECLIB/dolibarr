@@ -411,14 +411,15 @@ class eCommerceSociete // extends CommonObject
 
 	/**	
      * 		Select all the ids from eCommerceSociete for a site
+     * 
      * 		@param int		siteId
      * 		@return array	synchObject ids for this site
      */
-    public function getAllECommerceSocieteIds($siteId, $anonymousId)
+    public function getAllECommerceSocieteIds($siteId)
     {
    		global $langs;
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."ecommerce_societe";
-        $sql.= " WHERE fk_site = ".$siteId." AND rowid<>".intval($anonymousId);       
+        $sql.= " WHERE fk_site = ".$siteId;       
     	dol_syslog(get_class($this)."::getAllECommerceSocieteIds sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
 

@@ -102,7 +102,7 @@ if ($id)
 	    
 	    
     	/***************************************************
-    	* Vars to build tpl page
+    	* Vars to build output tpl page
     	****************************************************/
         $nbCategoriesInDolibarr = $synchro->getNbCategoriesInDolibarr(true);
 		if ($nbCategoriesInDolibarr < 0) $error++;
@@ -119,7 +119,7 @@ if ($id)
 		if ($nbFactureInDolibarr < 0) $error++;
     	
 		
-		$result=0;
+		/*$result=0;
 		
 		if (! $error)
 		{
@@ -131,7 +131,7 @@ if ($id)
 			$errors = $synchro->errors;
 			$errors[] = $synchro->error;
 			$error++;
-		}
+		}*/
 
 		if (! $error)
 		{

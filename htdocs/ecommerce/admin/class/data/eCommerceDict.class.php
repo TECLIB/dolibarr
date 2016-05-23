@@ -86,7 +86,7 @@ class eCommerceDict
      * Get the value of ECOMMERCE_COMPANY_ANONYMOUS from db
      * @return int > 0 if OK, 0 if KO
      */
-    public function getAnonymousConstValue()
+    /*public function getAnonymousConstValue()
     {
     	$sql = "SELECT value FROM ".$this->table." WHERE name='ECOMMERCE_COMPANY_ANONYMOUS'";
     	$result = -1;
@@ -97,7 +97,7 @@ class eCommerceDict
 			$result = $obj->value;
 		}
 		return $result;
-    } 
+    }*/
     
 }
 

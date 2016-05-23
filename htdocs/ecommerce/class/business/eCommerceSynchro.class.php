@@ -1649,19 +1649,19 @@ class eCommerceSynchro
         return $settlementTerms['rowid'];
     }
 
-    private function getAnonymousConstValue()
+    /*private function getAnonymousConstValue()
     {
         $table = MAIN_DB_PREFIX . "const";
         $eCommerceDict = new eCommerceDict($this->db, $table);
         return $eCommerceDict->getAnonymousConstValue();
-    }
+    }*/
 
     /**
      * Check if constant ECOMMERCE_COMPANY_ANONYMOUS exists with value of the generic thirdparty id.
      * 
      * @return	int		    <0 if KO, eCommerceAnonymous->id if OK
      */
-    public function checkAnonymous()
+    /*public function checkAnonymous()
     {
         $dbAnonymousExists=0;
         
@@ -1695,7 +1695,7 @@ class eCommerceSynchro
             $this->errors[] = $this->langs->trans('ECommerceNoDbAnonymous') . ' ' . $this->langs->trans('ECommerceReboot');
             return -1;
         }
-    }
+    }*/
 
     /**
      * Delete any data linked to synchronization, then delete synchro's datas to clean sync
@@ -1814,7 +1814,7 @@ class eCommerceSynchro
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
         $this->initECommerceSociete();
-        $arrayECommerceSocieteIds = $this->eCommerceSociete->getAllECommerceSocieteIds($this->eCommerceSite->id, $this->checkAnonymous());
+        $arrayECommerceSocieteIds = $this->eCommerceSociete->getAllECommerceSocieteIds($this->eCommerceSite->id);
 
         foreach ($arrayECommerceSocieteIds as $idSociete)
         {
