@@ -116,7 +116,7 @@ if ($socid > 0)
 	$head = societe_prepare_head($societe);
 
 	$title=$langs->trans("ThirdParty");
-	if (! empty($conf->global->MAIN_HTML_TITLE) && preg_match('/thirdpartynameonly/',$conf->global->MAIN_HTML_TITLE) && $object->name) $title=$object->name;
+	if (! empty($conf->global->MAIN_HTML_TITLE) && preg_match('/thirdpartynameonly/',$conf->global->MAIN_HTML_TITLE) && $societe->name) $title=$societe->name;
 	
 	dol_fiche_head($head, 'noteteclib', $title, 0, 'company');
 
