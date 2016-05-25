@@ -106,18 +106,28 @@ if ($id)
     	****************************************************/
         $nbCategoriesInDolibarr = $synchro->getNbCategoriesInDolibarr(true);
 		if ($nbCategoriesInDolibarr < 0) $error++;
-		$nbProductInDolibarr = $synchro->getNbProductInDolibarr(true);
+        $nbCategoriesInDolibarrLinkedToE = $synchro->getNbCategoriesInDolibarrLinkedToE($site->fk_cat_product);
+		
+        $nbProductInDolibarr = $synchro->getNbProductInDolibarr(true);
 		if ($nbProductInDolibarr < 0) $error++;
+		$nbProductInDolibarrLinkedToE = $synchro->getNbProductInDolibarrLinkedToE(true);
+		
 		$nbSocieteInDolibarr = $synchro->getNbSocieteInDolibarr(true);
 		if ($nbSocieteInDolibarr < 0) $error++;
+		$nbSocieteInDolibarrLinkedToE = $synchro->getNbSocieteInDolibarrLinkedToE(true);
+		
 		if (! empty($conf->commande->enabled))
 		{
             $nbCommandeInDolibarr = $synchro->getNbCommandeInDolibarr(true);
             if ($nbCommandeInDolibarr < 0) $error++;
+            $nbCommandeInDolibarrLinkedToE = $synchro->getNbCommandeInDolibarrLinkedToE(true);
 		}
-		$nbFactureInDolibarr = $synchro->getNbFactureInDolibarr(true);
-		if ($nbFactureInDolibarr < 0) $error++;
-    	
+		if (! empty($conf->facture->enabled))
+		{
+			$nbFactureInDolibarr = $synchro->getNbFactureInDolibarr(true);
+			if ($nbFactureInDolibarr < 0) $error++;
+			$nbFactureInDolibarrLinkedToE = $synchro->getNbFactureInDolibarrLinkedToE(true);
+		}
 		
 		/*$result=0;
 		

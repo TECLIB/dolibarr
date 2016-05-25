@@ -11,7 +11,7 @@ dol_include_once('/ecommerce/class/business/eCommerceSynchro.class.php');
 
 require_once(DOL_DOCUMENT_ROOT.'/expedition/class/expedition.class.php');
 
-class InterfaceLivraison
+class InterfaceECommerce
 {
     private $db;
     private $name;
@@ -23,9 +23,9 @@ class InterfaceLivraison
     
     /**
      *   This class is a trigger on delivery to update delivery on eCommerce Site
-     *   @param      DB      Handler database access
+     *   @param      DoliDB		$DB      Handler database access
      */
-    function InterfaceLivraison($DB)
+    function InterfaceECommerce($DB)
     {
         $this->db = $DB ;
     
@@ -82,7 +82,70 @@ class InterfaceLivraison
      */
 	function run_trigger($action,$object,$user,$langs,$conf)
     {
-        if ($action == 'CATEGORY_DELETE' && ((int) $object->type == 0))     // Product category
+    	
+    	
+        if ($action == 'COMPANY_MODIFY')
+        {
+            $this->db->begin();
+
+            $eCommerceSite = new eCommerceSite($this->db);
+			$sites = $eCommerceSite->listSites('objects');
+
+			
+			
+            var_dump($object); exit;
+            if ($error) 
+            {
+                $this->db->rollback();
+                return -1;
+            }
+            else
+            {
+                $this->db->commit();
+                return 1;
+            }
+        }
+        
+        if ($action == 'PRODUCT_MODIFY')
+        {
+            $this->db->begin();
+
+            $eCommerceSite = new eCommerceSite($this->db);
+			$sites = $eCommerceSite->listSites('objects');
+
+			foreach($sites as $site)
+			{
+				$eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+            	
+				$eCommerceProduct = new eCommerceProduct($this->db);
+				$eCommerceProduct->fetchByProductId($object->id, $site->id);
+				
+				if ($eCommerceProduct->remote_id)
+				{
+            		$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
+				var_dump($eCommerceProduct->remote_id); exit;
+				}
+				else
+				{
+					dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record. We do nothing.");
+				}
+			}
+			
+            var_dump($object); exit;
+            if ($error) 
+            {
+                $this->db->rollback();
+                return -1;
+            }
+            else
+            {
+                $this->db->commit();
+                return 1;
+            }
+        }
+        
+    	
+    	if ($action == 'CATEGORY_DELETE' && ((int) $object->type == 0))     // Product category
         {
             $this->db->begin();
 

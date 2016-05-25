@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * @module		ECommerce
  * @version		1.0
  * @copyright	Auguria
@@ -21,16 +21,16 @@ class eCommerceProduct // extends CommonObject
     var $last_update;
 	
     /**
-     *      \brief      Constructor
-     *      \param      DB      Database handler
+     *    Constructor
+     *    @param      DoliDB			$db      	Database handler
      */
-    function eCommerceProduct($DB) 
+    function eCommerceProduct($db)
     {
-        $this->db = $DB;
+        $this->db = $db;
         return 1;
     }
 
-	
+
     /**
      *      \brief      Create in database
      *      \param      user        	User that create
@@ -112,9 +112,10 @@ class eCommerceProduct // extends CommonObject
 
     
     /**
-     *    \brief      Load object in memory from database
-     *    \param      id          id object
-     *    \return     int         <0 if KO, >0 if OK
+     *    Load object in memory from database
+     *    
+     *    @param      int				$id          id object
+     *    @return     int         					 <0 if KO, >0 if OK
      */
     function fetch($id)
     {
@@ -127,7 +128,7 @@ class eCommerceProduct // extends CommonObject
 		$sql.= " t.last_update";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_product as t";
         $sql.= " WHERE t.rowid = ".$id;
-    
+    	
     	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
@@ -314,6 +315,7 @@ class eCommerceProduct // extends CommonObject
 	
 	/**
      *    Load object in memory from database by remote_id
+     *    
      *    @param	$remoteId string remote_id
      *    @param	$siteId int fk_site
      *    @return	int <0 if KO, >0 if OK
@@ -356,7 +358,52 @@ class eCommerceProduct // extends CommonObject
         }
     }
     
-	/**	
+	/**
+     *    Load object in memory from database by remote_id
+     *    
+     *    @param	$productId string product_id
+     *    @param	$siteId int fk_site
+     *    @return	int <0 if KO, >0 if OK
+     */
+	public function fetchByProductId($productId, $siteId)
+    {
+    	global $langs;
+        $sql = "SELECT";
+		$sql.= " t.rowid,";
+		$sql.= " t.fk_product,";
+		$sql.= " t.fk_site,";
+		$sql.= " t.remote_id,";
+		$sql.= " t.last_update";
+        $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_product as t";
+        $sql.= " WHERE t.fk_site = ".$siteId;
+        $sql.= " AND t.fk_product = ".$productId;
+    	dol_syslog(get_class($this)."::fetchByProductId sql=".$sql, LOG_DEBUG);
+        $resql=$this->db->query($sql);
+        if ($resql)
+        {
+            if ($this->db->num_rows($resql)==1)
+            {
+                $obj = $this->db->fetch_object($resql);
+                $this->id    = $obj->rowid;
+                $this->fk_product = $obj->fk_product;
+                $this->fk_site = $obj->fk_site;
+                $this->remote_id = $obj->remote_id;
+                $this->last_update = $obj->last_update;
+           		$this->db->free($resql);
+                return 1;
+            }
+            $this->db->free($resql);
+            return -1;
+        }
+        else
+        {
+      	    $this->error="Error ".$this->db->lasterror();
+            dol_syslog(get_class($this)."::fetchByProductId ".$this->error, LOG_ERR);
+            return -1;
+        }
+    }
+    
+    /**	
      * 		Select all the ids from eCommerceProduct for a site
      * 		@param int		siteId
      * 		@return array	synchObject ids for this site
@@ -392,4 +439,3 @@ class eCommerceProduct // extends CommonObject
         }
     }
 }
-?>

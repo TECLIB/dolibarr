@@ -41,6 +41,8 @@ class eCommerceSynchro
     
     //Data access
     private $db;
+    public $eCommerceRemoteAccess;
+    
     private $eCommerceSite;
     private $eCommerceSociete;
     private $eCommerceSocpeople;
@@ -49,7 +51,6 @@ class eCommerceSynchro
     private $eCommerceMotherCategory;
     private $eCommerceCommande;
     private $eCommerceFacture;
-    private $eCommerceRemoteAccess;
     //class members	
     public $toDate;
     private $societeLastUpdateDate;
@@ -65,13 +66,13 @@ class eCommerceSynchro
     private $commandeToUpdate;
     private $factureToUpdate;
     
-
+	
     
     /**
      * Constructor
      * 
      * @param Database          $db           Database handler
-     * @param eCommerceSote     $site         Object eCommerceSite       
+     * @param eCommerceSite     $site         Object eCommerceSite       
      */
     function eCommerceSynchro($db, $site)
     {
@@ -274,6 +275,22 @@ class eCommerceSynchro
             return -1;
         }
     }
+
+    public function getNbCategoriesInDolibarrLinkedToE($excludeid = 0)
+    {
+        $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE type = 0";
+        $sql.=" AND fk_category <> ".$excludeid;
+        $resql=$this->db->query($sql);
+        if ($resql)
+        {
+            $obj=$this->db->fetch_object($resql);
+            return $obj->nb;
+        }
+        else
+        {
+            return -1;
+        }
+    }
     
     public function getNbProductInDolibarr()
     {
@@ -290,11 +307,28 @@ class eCommerceSynchro
         }
     }
     
+    public function getNbProductInDolibarrLinkedToE()
+    {
+        $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_product";
+        $resql=$this->db->query($sql);
+        if ($resql)
+        {
+            $obj=$this->db->fetch_object($resql);
+            return $obj->nb;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    
     public function getNbSocieteInDolibarr()
     {
-        $sql="SELECT COUNT(s.rowid) as nb FROM ".MAIN_DB_PREFIX."societe as s, ".MAIN_DB_PREFIX."categorie_societe as cs";
+        /*$sql="SELECT COUNT(s.rowid) as nb FROM ".MAIN_DB_PREFIX."societe as s, ".MAIN_DB_PREFIX."categorie_societe as cs";
         $sql.=" WHERE s.rowid = cs.fk_soc AND cs.fk_categorie = ".$this->eCommerceSite->fk_cat_societe;
-
+		*/
+    	$sql="SELECT COUNT(s.rowid) as nb FROM ".MAIN_DB_PREFIX."societe as s";
+        
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -307,6 +341,22 @@ class eCommerceSynchro
         }
     }
 
+    public function getNbSocieteInDolibarrLinkedToE()
+    {
+        $sql="SELECT COUNT(s.rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_societe as s";
+
+        $resql=$this->db->query($sql);
+        if ($resql)
+        {
+            $obj=$this->db->fetch_object($resql);
+            return $obj->nb;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    
     public function getNbCommandeInDolibarr()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."commande";
@@ -322,9 +372,39 @@ class eCommerceSynchro
         }
     }
     
+    public function getNbCommandeInDolibarrLinkedToE()
+    {
+        $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_commande";
+        $resql=$this->db->query($sql);
+        if ($resql)
+        {
+            $obj=$this->db->fetch_object($resql);
+            return $obj->nb;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    
     public function getNbFactureInDolibarr()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."facture";
+        $resql=$this->db->query($sql);
+        if ($resql)
+        {
+            $obj=$this->db->fetch_object($resql);
+            return $obj->nb;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    
+    public function getNbFactureInDolibarrLinkedToE()
+    {
+        $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_facture";
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -568,21 +648,21 @@ class eCommerceSynchro
                 $categories = $this->getCategoriesToUpdate();   // Return list of all categories that were modified on ecommerce side
                 if (count($categories))
                 {
-                    foreach ($categories as $categoryArray)     // Loop on each categories found on ecommerce side
+                    foreach ($categories as $categoryArray)     // Loop on each categories found on ecommerce side. Cursor is $categoryArray
                     {
                         dol_syslog("synchCategory Process sync of magento category_id=".$categoryArray['category_id']." name=".$categoryArray['name']);
 
                         $this->initECommerceCategory();             // Initialise new objects
                         $dBCategorie = new Categorie($this->db);
 
-                        // Mother should exists in eCommerceCat, if not, that implies motherIsImportRoot					
+                        // Check if the ecommerce category has an ecommerce parent category, if not, that implies it is root					
                         $motherExists = $this->eCommerceMotherCategory->fetchByRemoteId($categoryArray['parent_id'], $this->eCommerceSite->id);
                         // Now $this->eCommerceMotherCategory contains the mother category or null
-                        
-                        // if fetch on eCommerceMotherCat has failed
+
+                        // if fetch on eCommerceMotherCategory has failed, it is root
                         if ($motherExists < 1 && ($this->eCommerceMotherCategory->fetchByFKCategory($this->eCommerceSite->fk_cat_product, $this->eCommerceSite->id) < 0))
                         {
-                            // get the importRootCategory defined in eCommerceSite 
+                            // get the importRootCategory of Dolibarr set for the eCommerceSite 
                             $dBCategorie->fetch($this->eCommerceSite->fk_cat_product);
 
                             $this->eCommerceMotherCategory->label = $dBCategorie->label;
@@ -606,7 +686,7 @@ class eCommerceSynchro
                             if ($synchExists == 0) 
                             {
                                 // Category entry exists into ecommerce_category with fk_category that link to non existing category
-                                // Should not happend because we added a cleaned of all orphelins entrie into getCategoriesToUpdate
+                                // Should not happend because we added a cleaned of all orphelins entries into getCategoriesToUpdate
                                 $synchExists = -1;
                             }
                         }
@@ -655,16 +735,40 @@ class eCommerceSynchro
                                 if ($this->eCommerceCategory->create($this->user) < 0)  // insert into table lxx_ecommerce_category
                                 {
                                     $error++;
-                                    $this->errors[] = $this->errors . '<br/>' . $this->langs->trans('ECommerceSyncheCommerceCategoryCreateError') . ' ' . $categoryArray['label'];
+                                    $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceCategoryCreateError') . ' ' . $categoryArray['label'];
                                     break;
                                 }
                             }
                         } 
                         else
                         {
-                            $error++;
-                            $this->errors[] = $this->errors . '<br/>' . $this->langs->trans('ECommerceSynchCategoryError');
-                            break;
+							if ($result == -4)
+							{
+								// The category already exists
+								$dBCategorie->fetch(0, $dBCategorie->label, $dBCategorie->type);
+								$this->eCommerceCategory->label = $dBCategorie->label;                         	
+								$this->eCommerceCategory->description = $dBCategorie->description;                        	
+								$this->eCommerceCategory->fk_category = $dBCategorie->id;
+                                $this->eCommerceCategory->type = $dBCategorie->type;
+                                $this->eCommerceCategory->fk_site = $this->eCommerceSite->id;
+                                $this->eCommerceCategory->remote_id = $categoryArray['category_id'];
+                                $this->eCommerceCategory->remote_parent_id = $categoryArray['parent_id'];
+                                
+                                if ($this->eCommerceCategory->create($this->user) < 0)  // insert into table lxx_ecommerce_category
+                                {
+                                    $error++;
+                                    $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceCategoryCreateError') . ' ' . $categoryArray['label'];
+                                    break;
+                                }
+							}
+							else
+							{
+                            	$error++;
+                            	$this->errors[] = $this->langs->trans('ECommerceSynchCategoryError').' '.$dBCategorie->error;
+                            	break;
+							}
+                            
+                            
                         }
                         $nbgoodsunchronize++;
                         

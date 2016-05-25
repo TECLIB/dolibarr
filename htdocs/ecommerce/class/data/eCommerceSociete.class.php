@@ -21,12 +21,12 @@ class eCommerceSociete // extends CommonObject
     var $last_update;
 	
     /**
-     *      Database access to ecommerce_societe
-     *      @param      DB      Database handler
+     *    Database access to ecommerce_societe
+     *    @param      DoliDB 		$db      Database handler
      */
-    function eCommerceSociete($DB) 
+    function eCommerceSociete($db) 
     {
-        $this->db = $DB;
+        $this->db = $db;
         return 1;
     }
 
@@ -112,9 +112,10 @@ class eCommerceSociete // extends CommonObject
 
     
     /**
-     *    \brief      Load object in memory from database
-     *    \param      id          id object
-     *    \return     int         <0 if KO, >0 if OK
+     *    Load object in memory from database
+     *    
+     *    @param    int				$id         id object
+     *    @return   int         				<0 if KO, >0 if OK
      */
     function fetch($id)
     {
@@ -127,7 +128,7 @@ class eCommerceSociete // extends CommonObject
 		$sql.= " t.last_update";
 		$sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_societe as t";
         $sql.= " WHERE t.rowid = ".$id;
-    
+        
     	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)

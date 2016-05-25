@@ -16,8 +16,9 @@ if (is_object($site))
 	<script type="text/javascript" src="<?php print dol_buildpath('/ecommerce/js/form.js',1); ?>"></script>
 	<table class="noborder" width="100%">
 		<tr class="liste_titre">
-			<td width="20%"><?php print $langs->trans('ECommerceObjectToUpdate') ?></td>
-			<td width="20%"><?php print $langs->trans('NbInDolibarr') ?></td>
+			<td><?php print $langs->trans('ECommerceObjectToUpdate') ?></td>
+			<td><?php print $langs->trans('NbInDolibarr') ?></td>
+			<td><?php print $langs->trans('NbInDolibarrLinkedToE') ?></td>
 			<td><?php print $langs->trans('ECommerceCountToUpdate') ?></td>
 			<?php if ($synchRights==true):?>
 			<td>&nbsp;</td>
@@ -30,6 +31,7 @@ $var=!$var;
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ECommerceCategoriesProducts') ?></td>
 			<td><?php print $nbCategoriesInDolibarr; ?> *</td>
+			<td><?php print $nbCategoriesInDolibarrLinkedToE; ?> *</td>
 			<td>
 				<?php
 					print $nbCategoriesToUpdate;
@@ -51,8 +53,9 @@ $var=!$var;
 $var=!$var;
 ?>		
 		<tr <?php print $bc[$var] ?>>
-			<td><?php print $langs->trans('ECommerceProducts') ?></td>
+			<td><?php print $langs->trans('ProductsOrServices') ?></td>
 			<td><?php print $nbProductInDolibarr; ?> **</td>
+			<td><?php print $nbProductInDolibarrLinkedToE; ?> **</td>
 			<td><?php print $nbProductToUpdate;	?>
 			</td>
 			<?php if ($synchRights==true):?>
@@ -83,6 +86,7 @@ $var=!$var;
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ECommerceSociete') ?></td>
 			<td><?php print $nbSocieteInDolibarr; ?> ***</td>
+			<td><?php print $nbSocieteInDolibarrLinkedToE; ?> ***</td>
 			<td>
 				<?php
 					print $nbSocieteToUpdate;
@@ -116,6 +120,7 @@ $var=!$var;
             {
                 ?>
     			<td><?php print $nbCommandeInDolibarr; ?></td>
+    			<td><?php print $nbCommandeInDolibarrLinkedToE; ?></td>
     			<td><?php print $nbCommandeToUpdate; ?></td>
     			<?php if ($synchRights==true):?>
     			<td>
@@ -144,6 +149,7 @@ $var=!$var;
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ECommerceFacture') ?></td>
 			<td><?php print $nbFactureInDolibarr; ?></td>
+			<td><?php print $nbFactureInDolibarrLinkedToE; ?></td>
 			<td>
 				<?php
 					print $nbFactureToUpdate;
@@ -176,12 +182,20 @@ $var=!$var;
 	$categorytmp->fetch($site->fk_cat_societe);
 	$tagname=$categorytmp->label;
 	print '* '.$langs->trans("OnlyProductCategIn", $tagnameprod).'<br>';
-	print '** '.$langs->trans("OnlyProductsIn", $tagnameprod).'<br>';
-	print '*** '.$langs->trans("OnlyThirdPartyWithTags", $tagname).'<br>';
+	print '** '.$langs->trans("OnlyProductsIn", $tagnameprod, $tagnameprod).'<br>';
+	//print '*** '.$langs->trans("OnlyThirdPartyWithTags", $tagname).'<br>';
+	print '*** '.$langs->trans("OnlyThirdPartyIn", $tagname).'<br>';
 	print '**** '.$langs->trans("WithMagentoThirdIsModifiedIfAddressModified").'<br>';
+	
+	print '<div class="tabsAction">';
+	print '<div class="inline-block divButAction">';
+	print '<a href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'" class="butAction">'.$langs->trans('RefreshCount').'</a>';
+	print '</div>';
+	print '</div>';
+	
+	print '</form>';
 	?>
-	
-	
+
 	<form name="form_reset_data" id="form_reset_data" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
 		<input type="hidden" name="id" value="<?php print $site->id ?>">
 		<input type="hidden" name="to_date" value="<?php print $toDate ?>">
