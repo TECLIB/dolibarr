@@ -54,17 +54,32 @@ class eCommerceRemoteAccessMagento
             ini_set('default_socket_timeout', $params['response_timeout']);
             ini_set("memory_limit", "1024M");
             
-            //ini_set("soap.wsdl_cache_enabled", "0");    // For test
-            //$params['cache_wsdl']=WSDL_CACHE_NONE;
+            // To force non cache even when enabled
+            if (! empty($conf->global->ECOMMERCE_SOAP_FORCE_NO_CACHE))
+            {
+                ini_set("soap.wsdl_cache_enabled", "0");
+                $params['cache_wsdl']=WSDL_CACHE_NONE;
+            }
+            
+            /*var_dump($params);
+            var_dump($this->site->webservice_address);
+            include DOL_DOCUMENT_ROOT.'/core/lib/geturl.lib.php';
+            $aaa=getURLContent('http://pchome-ld.hd.free.fr:801/magento/index.php/api/?wsdl');
+            var_dump($aaa);
+            exit;*/
             
             //dol_syslog("eCommerceRemoteAccessMagento Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".preg_replace('/./','*',$this->site->user_password));
             dol_syslog("eCommerceRemoteAccessMagento Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".$this->site->user_password);
             
+            // TODO Add option to manage mode "non WSDL". location and uri should be set on $params.
             $this->client = new SoapClient($this->site->webservice_address, $params);
             
+            dol_syslog("eCommerceRemoteAccessMagento new SoapClient ok. Now we call SOAP login method");
             
+            //xdebug_disable();
             $this->session = $this->client->login($this->site->user_name, $this->site->user_password);
-
+            //xdebug_enable();
+            
             dol_syslog("eCommerceRemoteAccessMagento connected with session=".$this->session);
             
             return true;

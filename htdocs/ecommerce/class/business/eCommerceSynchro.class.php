@@ -105,10 +105,17 @@ class eCommerceSynchro
         {
             if (! $this->eCommerceRemoteAccess->connect())
             {
-                $this->errors[] = $this->langs->trans('ECommerceConnectErrorCheckUsernamePasswordAndAdress');
-                $this->errors = array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
+                $this->error = $this->langs->trans('ECommerceConnectErrorCheckUsernamePasswordAndAdress');
+                $this->errors[] = $this->error; 
+                $this->errors= array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
+                dol_syslog("eCommerceSynchro Connect error ".$this->error, LOG_DEBUG);
+                return -1;
             }
-
+            else
+            {
+                dol_syslog("eCommerceSynchro Connected", LOG_DEBUG);
+            }
+            
             return 1;
         }
         catch (Exception $e) 

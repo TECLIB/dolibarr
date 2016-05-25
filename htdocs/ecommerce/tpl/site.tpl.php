@@ -8,10 +8,25 @@ if (is_object($site))
     
     print_fiche_titre($langs->trans('ECommerceSiteSynchro').' '.$site->name, $linkback, 'eCommerceTitle@ecommerce');
     
+    print '<br>';
+    
     print $langs->trans("ECommerceLastCompleteSync").': ';
-    if ($site->last_update) print dol_print_date($site->last_update, 'dayhoursec');
+    if ($site->last_update) print '<strong>'.dol_print_date($site->last_update, 'dayhoursec').'</strong>';
     else print $langs->trans("ECommerceNoUpdateSite");
-    print '<br><br>'."\n";
+    print '<br>';
+    
+    $soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');
+    $soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
+    if ($soapwsdlcacheon)
+    {
+        print img_warning('').' '.$langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).'<br>';
+    }
+    else
+    {
+        print $langs->trans("SoapCacheIsOff", $soapwsdlcachedir).'<br>';
+    }
+    
+    print '<br>'."\n";
 ?>
 	<script type="text/javascript" src="<?php print dol_buildpath('/ecommerce/js/form.js',1); ?>"></script>
 	<table class="noborder" width="100%">

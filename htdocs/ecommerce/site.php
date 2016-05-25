@@ -62,6 +62,7 @@ if ($id)
 		if (count($synchro->errors))
 		{
 		    $error++;
+		    setEventMessages($synchro->error, $synchro->errors, 'errors');
 		}
 
 		//synch only with write rights
