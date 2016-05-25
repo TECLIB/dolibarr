@@ -6,7 +6,7 @@
  * @author		<franck.charpentier@auguria.net>
  * @licence		GNU General Public License
  */
- 
+
 llxHeader();
 
 print_fiche_titre($langs->trans("ECommerceSetup"),$linkback,'setup');
@@ -182,16 +182,6 @@ $var=!$var;
 $var=!$var;
 ?>
 				<tr <?php print $bc[$var] ?>>
-					<td class="fieldrequired"><?php print $langs->trans('ECommerceUserPasswordRetype') ?></td>
-					<td>
-						<input type="password" class="flat" name="ecommerce_user_password2" value="<?php print $ecommerceUserPassword2 ?>" size="20">
-					</td>
-					<td>&nbsp;</td>
-				</tr>
-<?php
-$var=!$var;
-?>
-				<tr <?php print $bc[$var] ?>>
 					<td><span><?php print $langs->trans('ECommerceTimeout') ?></span></td>
 					<td>
 						<input type="text" class="flat" name="ecommerce_timeout" value="<?php print $ecommerceTimeout ?>" size="10">
@@ -254,4 +244,4 @@ if ($success != array())
 		
 <?php 
 llxFooter();
-?>		
+		

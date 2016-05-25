@@ -54,8 +54,6 @@ if ($_POST['site_form_detail_action'] == 'save')
         $errors[] = $langs->trans('ECommerceSetupTypeEmpty');
     if (trim($_POST['ecommerce_webservice_address']) == '')
         $errors[] = $langs->trans('ECommerceSetupAddressEmpty');
-    if ($_POST['ecommerce_user_password'] != $_POST['ecommerce_user_password2'])
-        $errors[] = $langs->trans('ECommerceSetupPasswordNotSame');
     if (trim($_POST['ecommerce_timeout']) == '')
         $errors[] = $langs->trans('ECommerceSetupTimeoutEmpty');
     elseif (!ctype_digit($_POST['ecommerce_timeout']))
@@ -139,7 +137,6 @@ $ecommerceType = ($_POST['ecommerce_type'] ? $_POST['ecommerce_type'] : intval($
 $ecommerceWebserviceAddress = ($_POST['ecommerce_webservice_address'] ? $_POST['ecommerce_webservice_address'] : $siteDb->webservice_address);
 $ecommerceUserName = ($_POST['ecommerce_user_name'] ? $_POST['ecommerce_user_name'] : $siteDb->user_name);
 $ecommerceUserPassword = ($_POST['ecommerce_user_password'] ? $_POST['ecommerce_user_password'] : $siteDb->user_password);
-$ecommerceUserPassword2 = ($_POST['ecommerce_user_password2'] ? $_POST['ecommerce_user_password2'] : $siteDb->user_password);
 $ecommerceFilterLabel = ($_POST['ecommerce_filter_label'] ? $_POST['ecommerce_filter_label'] : $siteDb->filter_label);
 $ecommerceFilterValue = ($_POST['ecommerce_filter_value'] ? $_POST['ecommerce_filter_value'] : $siteDb->filter_value);
 $ecommerceFkCatSociete = ($_POST['ecommerce_fk_cat_societe'] ? $_POST['ecommerce_fk_cat_societe'] : intval($siteDb->fk_cat_societe));
