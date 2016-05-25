@@ -75,22 +75,22 @@ class eCommerceCategory // extends CommonObject
             $this->remote_id = trim($this->remote_id);
         if (isset($this->remote_parent_id))
             $this->remote_parent_id = trim($this->remote_parent_id);
-        //...
+
         // Check parameters
         // Put here code to add control on parameters values
+
         // Insert request
         $sql = "INSERT INTO " . MAIN_DB_PREFIX . $this->table_element . "(";
         $sql.= " label,type,description,fk_category,fk_site,remote_id,remote_parent_id,last_update";
         $sql.= ") VALUES (";
-        $sql.= " '" . $this->label . "',";
-        $sql.= " '" . $this->type . "',";
-        $sql.= " '" . $this->description . "',";
-        $sql.= " '" . $this->fk_category . "',";
-        $sql.= " '" . $this->fk_site . "',";
-        $sql.= " '" . $this->remote_id . "',";
-        $sql.= " '" . $this->remote_parent_id . "',";
+        $sql.= " '" . $this->db->escape($this->label) . "',";
+        $sql.= " '" . $this->db->escape($this->type) . "',";
+        $sql.= " '" . $this->db->escape($this->description) . "',";
+        $sql.= " '" . $this->db->escape($this->fk_category) . "',";
+        $sql.= " '" . $this->db->escape($this->fk_site) . "',";
+        $sql.= " '" . $this->db->escape($this->remote_id) . "',";
+        $sql.= " '" . $this->db->escape($this->remote_parent_id) . "',";
         $sql.= " '" . $this->db->idate($this->last_update) . "'";
-        //...
         $sql.= ")";
 
         $this->db->begin();
