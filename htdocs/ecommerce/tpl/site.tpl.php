@@ -185,9 +185,16 @@ $var=!$var;
 	print '** '.$langs->trans("OnlyProductsIn", $tagnameprod, $tagnameprod).'<br>';
 	print '*** '.$langs->trans("OnlyThirdPartyWithTags", $tagname).'<br>';
 	print '**** '.$langs->trans("WithMagentoThirdIsModifiedIfAddressModified").'<br>';
+	
+	print '<div class="tabsAction">';
+	print '<div class="inline-block divButAction">';
+	print '<a href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'" class="butAction">'.$langs->trans('RefreshCount').'</a>';
+	print '</div>';
+	print '</div>';
+	
+	print '</form>';
 	?>
-	
-	
+
 	<form name="form_reset_data" id="form_reset_data" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
 		<input type="hidden" name="id" value="<?php print $site->id ?>">
 		<input type="hidden" name="to_date" value="<?php print $toDate ?>">

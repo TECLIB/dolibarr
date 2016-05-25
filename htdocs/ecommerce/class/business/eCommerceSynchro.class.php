@@ -275,9 +275,10 @@ class eCommerceSynchro
         }
     }
 
-    public function getNbCategoriesInDolibarrLinkedToE()
+    public function getNbCategoriesInDolibarrLinkedToE($excludeid = 0)
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE type = 0";
+        $sql.=" AND fk_category <> ".$excludeid;
         $resql=$this->db->query($sql);
         if ($resql)
         {

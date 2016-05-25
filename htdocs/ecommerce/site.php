@@ -106,7 +106,7 @@ if ($id)
     	****************************************************/
         $nbCategoriesInDolibarr = $synchro->getNbCategoriesInDolibarr(true);
 		if ($nbCategoriesInDolibarr < 0) $error++;
-        $nbCategoriesInDolibarrLinkedToE = $synchro->getNbCategoriesInDolibarrLinkedToE(true);
+        $nbCategoriesInDolibarrLinkedToE = $synchro->getNbCategoriesInDolibarrLinkedToE($site->fk_cat_product);
 		
         $nbProductInDolibarr = $synchro->getNbProductInDolibarr(true);
 		if ($nbProductInDolibarr < 0) $error++;
