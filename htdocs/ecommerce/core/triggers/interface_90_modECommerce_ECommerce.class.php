@@ -11,7 +11,7 @@ dol_include_once('/ecommerce/class/business/eCommerceSynchro.class.php');
 
 require_once(DOL_DOCUMENT_ROOT.'/expedition/class/expedition.class.php');
 
-class InterfaceLivraison
+class InterfaceECommerce
 {
     private $db;
     private $name;
@@ -23,9 +23,9 @@ class InterfaceLivraison
     
     /**
      *   This class is a trigger on delivery to update delivery on eCommerce Site
-     *   @param      DB      Handler database access
+     *   @param      DoliDB		$DB      Handler database access
      */
-    function InterfaceLivraison($DB)
+    function InterfaceECommerce($DB)
     {
         $this->db = $DB ;
     

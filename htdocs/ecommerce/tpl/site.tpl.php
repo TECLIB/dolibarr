@@ -183,7 +183,8 @@ $var=!$var;
 	$tagname=$categorytmp->label;
 	print '* '.$langs->trans("OnlyProductCategIn", $tagnameprod).'<br>';
 	print '** '.$langs->trans("OnlyProductsIn", $tagnameprod, $tagnameprod).'<br>';
-	print '*** '.$langs->trans("OnlyThirdPartyWithTags", $tagname).'<br>';
+	//print '*** '.$langs->trans("OnlyThirdPartyWithTags", $tagname).'<br>';
+	print '*** '.$langs->trans("OnlyThirdPartyIn", $tagname).'<br>';
 	print '**** '.$langs->trans("WithMagentoThirdIsModifiedIfAddressModified").'<br>';
 	
 	print '<div class="tabsAction">';
