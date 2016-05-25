@@ -241,7 +241,4 @@ if ($success != array())
 		print '<p class="ok">'.$succes.'</p>';
 ?>
 		<br/>
-		
-<?php 
-llxFooter();
-		
+				

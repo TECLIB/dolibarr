@@ -162,5 +162,19 @@ else
 $urltpl=dol_buildpath('/ecommerce/admin/tpl/eCommerceSetup.tpl.php',0);
 include($urltpl);
 
+$soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');
+$soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
+if ($soapwsdlcacheon)
+{
+    print img_warning('').' '.$langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).'<br>';
+}
+else
+{
+    print $langs->trans("SoapCacheIsOff", $soapwsdlcachedir).'<br>';
+}
+
+llxFooter();
+
+
 $db->close();
 clearstatcache();
