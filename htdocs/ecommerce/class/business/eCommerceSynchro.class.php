@@ -41,6 +41,8 @@ class eCommerceSynchro
     
     //Data access
     private $db;
+    public $eCommerceRemoteAccess;
+    
     private $eCommerceSite;
     private $eCommerceSociete;
     private $eCommerceSocpeople;
@@ -49,7 +51,6 @@ class eCommerceSynchro
     private $eCommerceMotherCategory;
     private $eCommerceCommande;
     private $eCommerceFacture;
-    private $eCommerceRemoteAccess;
     //class members	
     public $toDate;
     private $societeLastUpdateDate;
@@ -65,13 +66,13 @@ class eCommerceSynchro
     private $commandeToUpdate;
     private $factureToUpdate;
     
-
+	
     
     /**
      * Constructor
      * 
      * @param Database          $db           Database handler
-     * @param eCommerceSote     $site         Object eCommerceSite       
+     * @param eCommerceSite     $site         Object eCommerceSite       
      */
     function eCommerceSynchro($db, $site)
     {

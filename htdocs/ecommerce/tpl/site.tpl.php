@@ -53,7 +53,7 @@ $var=!$var;
 $var=!$var;
 ?>		
 		<tr <?php print $bc[$var] ?>>
-			<td><?php print $langs->trans('ECommerceProducts') ?></td>
+			<td><?php print $langs->trans('ProductsOrServices') ?></td>
 			<td><?php print $nbProductInDolibarr; ?> **</td>
 			<td><?php print $nbProductInDolibarrLinkedToE; ?> **</td>
 			<td><?php print $nbProductToUpdate;	?>

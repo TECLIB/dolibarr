@@ -445,12 +445,15 @@ class eCommerceSite // extends CommonObject
 	}
 
 	/**
-	 *    \brief  	Renvoie la liste des sites
-	 *    \return 	array		Tableau des id de site
+	 *    Return list of sites
+	 *    
+	 *    @param	string		$mode		'array' or 'object'
+	 *    @return 	array					List of sites
 	 */
-	function listSites()
+	function listSites($mode='array')
 	{
 		global $langs;
+		
 		$list = array();
 		
         $sql = "SELECT";
@@ -467,7 +470,16 @@ class eCommerceSite // extends CommonObject
 			while ($i < $num)
 			{
 				$obj = $this->db->fetch_object($result);
-				$list[$i] =array('id'=>$obj->rowid, 'name'=>$obj->name, 'last_update'=>$obj->last_update);
+				if ($mode == 'array')
+				{
+					$list[$i]=array('id'=>$obj->rowid, 'name'=>$obj->name, 'last_update'=>$obj->last_update);
+				}
+				else
+				{
+					$tmpsite=new eCommerceSite($this->db);
+					$tmpsite->fetch($obj->rowid);
+					$list[$i]=$tmpsite;
+				}
 				$i++;
 			}
 		}

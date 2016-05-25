@@ -760,6 +760,51 @@ class eCommerceRemoteAccessMagento
         return $result;
     }
 
+    
+    /**
+     * Return the magento's category tree
+     * 
+     * @return  array|boolean       Array with categories or false if error
+     */
+    public function updateRemoteProduct($remote_id)
+    {
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteProduct session=".$this->session);
+        
+        try {        
+			$productData = array(
+			    'name' => 'Product name new 2',
+			    'description' => 'Product description 2',
+			    //'short_description' => 'Product short description',
+			    'weight' => '10',
+			    'status' => '1',
+			    //'url_key' => 'product-url-key',
+			    //'url_path' => 'product-url-path',
+			    //'visibility' => '4',
+			    //'price' => '100',
+			    //'tax_class_id' => 1,
+			    //'meta_title' => 'Product meta title',
+			    //'meta_keyword' => 'Product meta keyword',
+			    //'meta_description' => 'Product meta description'
+			);
+        	
+        	$result = $this->client->call($this->session, 'catalog_product.update', array($remote_id, $productData, null, 'product_id'));
+        } catch (SoapFault $fault) {
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteProduct end");
+        return $result;
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
     /**
      * Calcul tax rate and return the closest dolibarr tax rate.
      * 
