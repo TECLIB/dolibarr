@@ -1,5 +1,4 @@
 <?php
-
 /*
  * @module		ECommerce
  * @version		1.2
