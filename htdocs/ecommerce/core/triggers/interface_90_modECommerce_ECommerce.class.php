@@ -99,22 +99,60 @@ class InterfaceECommerce
         {
             $this->db->begin();
 
-            $eCommerceSite = new eCommerceSite($this->db);
-			$sites = $eCommerceSite->listSites('objects');
-
+			$eCommerceSite = new eCommerceSite($this->db);
+			$sites = $eCommerceSite->listSites('object');
 			
+			foreach($sites as $site)
+			{
+			    $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+			    dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+			    $eCommerceSynchro->connect();
+			    if (count($eCommerceSynchro->errors))
+			    {
+			        $error++;
+			        setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+			    }
 			
-            var_dump($object); exit;
-            if ($error) 
-            {
-                $this->db->rollback();
-                return -1;
-            }
-            else
-            {
-                $this->db->commit();
-                return 1;
-            }
+			    if (! $error)
+			    {
+    				$eCommerceSociete = new eCommerceSociete($this->db);
+    				$eCommerceSociete->fetchByFkSociete($object->id, $site->id);
+    
+    				if ($eCommerceSociete->remote_id > 0)
+    				{
+    				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSociete($eCommerceSociete->remote_id, $object);
+    				}
+    				else
+    				{
+    				    // Get current categories
+    				    require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+    				    $c = new Categorie($this->db);
+    				    $catids = $c->containing($object->id, Categorie::TYPE_CUSTOMER, 'id');
+    
+    				    if (in_array($site->fk_cat_societe, $catids))
+    				    {
+    				        dol_syslog("Societe with id ".$object->id." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
+    				        // TODO
+    				        //$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
+    				    }
+    				    else
+    				    {
+    				        dol_syslog("Societe with id ".$object->id." is not linked to an ecommerce record and does not has category flag to push on eCommerce.");
+    				    }
+    				}
+			    }
+			}
+				
+			if ($error)
+			{
+			    $this->db->rollback();
+			    return -1;
+			}
+			else
+			{
+			    $this->db->commit();
+			    return 1;
+			}
         }
         
         if ($action == 'PRODUCT_MODIFY')
@@ -122,37 +160,46 @@ class InterfaceECommerce
             $this->db->begin();
 
             $eCommerceSite = new eCommerceSite($this->db);
-			$sites = $eCommerceSite->listSites('objects');
+			$sites = $eCommerceSite->listSites('object');
 
 			foreach($sites as $site)
 			{
 				$eCommerceSynchro = new eCommerceSynchro($this->db, $site);
-            	
-				$eCommerceProduct = new eCommerceProduct($this->db);
-				$eCommerceProduct->fetchByProductId($object->id, $site->id);
-				
-				if ($eCommerceProduct->remote_id > 0)
+				dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+				$eCommerceSynchro->connect();
+				if (count($eCommerceSynchro->errors))
 				{
-            		$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
-				var_dump($eCommerceProduct->remote_id); exit;
+				    $error++;
+				    setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
 				}
-				else
+				
+				if (! $error)
 				{
-				    // Get current categories
-				    require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
-				    $c = new Categorie($this->db);
-				    $existing = $c->containing($object->id, Categorie::TYPE_PRODUCT, 'id');
-				    
-				    if ($existing)
-				    {
-				        dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
-				        // TODO
-				        //$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
-				    }
-				    else
-				    {
-					   dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record and does not has category flag to push on eCommerce.");
-				    }
+    				$eCommerceProduct = new eCommerceProduct($this->db);
+    				$eCommerceProduct->fetchByProductId($object->id, $site->id);
+    				
+    				if ($eCommerceProduct->remote_id > 0)
+    				{
+                		$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id, $object);
+    				}
+    				else
+    				{
+    				    // Get current categories
+    				    require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+    				    $c = new Categorie($this->db);
+    				    $catids = $c->containing($object->id, Categorie::TYPE_PRODUCT, 'id');
+    				    
+    				    if (in_array($site->fk_cat_product, $catids))
+    				    {
+    				        dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
+    				        // TODO
+    				        //$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
+    				    }
+    				    else
+    				    {
+    					   dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record and does not has category flag to push on eCommerce.");
+    				    }
+    				}
 				}
 			}
 			

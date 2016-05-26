@@ -232,8 +232,9 @@ class eCommerceRemoteAccess
 	    return $result;
 	}
 	
-	/**	\brief	Get a remote category tree from magento
-	 * 	\return	array	An array containing magento's categories as arrays
+	/**	Get a remote category tree from magento
+	 * 
+	 * 	@return	array	An array containing magento's categories as arrays
 	 */
 	public function getCategoryData($category_id)
 	{
@@ -243,10 +244,42 @@ class eCommerceRemoteAccess
 	    return $result;
 	}
 	
-    /**
+	
+	/**
+	 * Update remote product
+	 * 
+	 * @param  int     $remote_product_id    Id of product on remote ecommerce
+	 * @param  Product $object               Product object
+	 * @return bool
+	 */
+	public function updateRemoteProduct($remote_product_id, $object)
+	{
+	    $result=$this->class->updateRemoteProduct($remote_product_id, $object);
+	    $this->error=$this->class->error;
+	    $this->errors=$this->class->errors;
+	    return $result;
+	}	
+	
+	/**
+	 * Update remote societe
+	 * 
+	 * @param  int     $remote_societe_id    Id of societe on remote ecommerce
+	 * @param  Product $object               Product object
+	 * @return bool
+	 */
+	public function updateRemoteSociete($remote_societe_id, $object)
+	{
+	    $result=$this->class->updateRemoteSociete($remote_societe_id, $object);
+	    $this->error=$this->class->error;
+	    $this->errors=$this->class->errors;
+	    return $result;
+	}
+	
+	/**
      * Create a remote livraison from instantiated class in the constructor
-     * @param $livraison object livraison
-     * @parame $remote_order_id string id remote order
+     * 
+     * @param Object    $livraison object livraison
+     * @param int       $remote_order_id        String id remote order
      * @return bool
      */
 	public function createRemoteLivraison($livraison, $remote_order_id)

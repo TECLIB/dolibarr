@@ -63,14 +63,16 @@ if ($id)
 	{
 		$site= new eCommerceSite($db);
 		$site->fetch($id);
-		if (isset($site->timeout))
-			set_time_limit($site->timeout);
 		
 		$site->cleanOrphelins();	
 		
+		require_once(DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php');
+		$params=getSoapParams();
+		if (! empty($params['response_timeout'])) set_time_limit($params['response_timeout']);
+		
 	    $synchro = new eCommerceSynchro($db, $site);
 	    
-	    dol_syslog("Try to connect");
+	    dol_syslog("site.php Try to connect to eCommerce site ".$site->name);
 		$synchro->connect();
 		if (count($synchro->errors))
 		{

@@ -64,10 +64,10 @@ if ($_POST['site_form_detail_action'] == 'save')
         $errors[] = $langs->trans('ECommerceSetupTypeEmpty');
     if (trim($_POST['ecommerce_webservice_address']) == '')
         $errors[] = $langs->trans('ECommerceSetupAddressEmpty');
-    if (trim($_POST['ecommerce_timeout']) == '')
+    /*if (trim($_POST['ecommerce_timeout']) == '')
         $errors[] = $langs->trans('ECommerceSetupTimeoutEmpty');
     elseif (!ctype_digit($_POST['ecommerce_timeout']))
-        $errors[] = $langs->trans('ECommerceSetupTimeoutMustBeInt');
+        $errors[] = $langs->trans('ECommerceSetupTimeoutMustBeInt');*/
 
     if ($errors == array())
     {
@@ -82,7 +82,7 @@ if ($_POST['site_form_detail_action'] == 'save')
         $siteDb->fk_cat_societe = $_POST['ecommerce_fk_cat_societe'];
         $siteDb->fk_cat_product = $_POST['ecommerce_fk_cat_product'];
         $siteDb->last_update = $_POST['ecommerce_last_update'];
-        $siteDb->timeout = $_POST['ecommerce_timeout'];
+        //$siteDb->timeout = $_POST['ecommerce_timeout'];
         $siteDb->magento_use_special_price = ($_POST['ecommerce_magento_use_special_price'] ? 1 : 0);
         $siteDb->magento_price_type = $_POST['ecommerce_magento_price_type'];
 
@@ -153,11 +153,11 @@ $ecommerceFkCatSociete = ($_POST['ecommerce_fk_cat_societe'] ? $_POST['ecommerce
 $ecommerceFkCatProduct = ($_POST['ecommerce_fk_cat_product'] ? $_POST['ecommerce_fk_cat_product'] : intval($siteDb->fk_cat_product));
 $ecommerceMagentoUseSpecialPrice = ($_POST['ecommerce_magento_use_special_price'] ? $_POST['ecommerce_magento_use_special_price'] : intval($siteDb->magento_use_special_price));
 $ecommerceMagentoPriceType = ($_POST['ecommerce_magento_price_type'] ? $_POST['ecommerce_magento_price_type'] : $siteDb->ecommerce_magento_price_type);
-$ecommerceTimeout = 300;
+/*$ecommerceTimeout = 300;
 if (isset($_POST['ecommerce_timeout']))
     $ecommerceTimeout = $_POST['ecommerce_timeout'];
 elseif (isset($siteDb->timeout))
-    $ecommerceTimeout = $siteDb->timeout;
+    $ecommerceTimeout = $siteDb->timeout;*/
 
 $ecommerceLastUpdate = $siteDb->last_update;
 $var = true;

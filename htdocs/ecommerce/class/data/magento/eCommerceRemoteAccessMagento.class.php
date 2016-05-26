@@ -56,13 +56,8 @@ class eCommerceRemoteAccessMagento
         try {
             require_once(DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php');
             $params=getSoapParams();
-            
-            if ($this->site->timeout > 0)
-            {
-                $params['response_timeout'] = $this->site->timeout;
-            }
-            ini_set('default_socket_timeout', $params['response_timeout']);
-            ini_set("memory_limit", "1024M");
+            @ini_set('default_socket_timeout', $params['response_timeout']);
+            @ini_set("memory_limit", "1024M");
             
             // To force non cache even when enabled
             if (! empty($conf->global->ECOMMERCE_SOAP_FORCE_NO_CACHE))
@@ -770,47 +765,39 @@ class eCommerceRemoteAccessMagento
     }
     
     
-    public function createRemoteLivraison($livraison, $remote_order_id)
-    {
-        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison session=".$this->session);
-        $commande = $this->getCommande($remote_order_id);
-        try {        
-            $result = $this->client->call($this->session, 'sales_order_shipment.create', array($commande['increment_id'], array(), 'Shipment Created', true, true));
-        } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
-        }
-        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison end");
-        return $result;
-    }
-
-    
     /**
-     * Return the magento's category tree
+     * Update the remote product
      * 
-     * @return  array|boolean       Array with categories or false if error
+     * @param   int     $remote_id      Id of product on remote ecommerce
+	 * @param   Product $object         Product object
+     * @return  boolean                 True or false
      */
-    public function updateRemoteProduct($remote_id)
+    public function updateRemoteProduct($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteProduct session=".$this->session);
-        
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteProduct session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+
+        $new_country_code = getCountry($object->country_id, 2);
+
         try {        
 			$productData = array(
-			    'name' => 'Product name new 2',
-			    'description' => 'Product description 2',
+			    'sku' => $object->ref,
+			    'name' => $object->label,
+			    'description' => $object->description,
 			    //'short_description' => 'Product short description',
-			    'weight' => '10',
-			    'status' => '1',
+			    'weight' => $object->weight,
+			    'status' => $object->status,
+			    'country_of_manufacture' => $object->country_code,
 			    //'url_key' => 'product-url-key',
 			    //'url_path' => 'product-url-path',
 			    //'visibility' => '4',
-			    //'price' => '100',
 			    //'tax_class_id' => 1,
 			    //'meta_title' => 'Product meta title',
 			    //'meta_keyword' => 'Product meta keyword',
 			    //'meta_description' => 'Product meta description'
 			);
+			if ($new_country_code) $productData['country_of_manufacture']=$new_country_code;
+			if ($this->site->magento_use_special_price) $productData['special_price']=$object->price;
+			else $productData['price']=$object->price;
         	
         	$result = $this->client->call($this->session, 'catalog_product.update', array($remote_id, $productData, null, 'product_id'));
         } catch (SoapFault $fault) {
@@ -822,9 +809,62 @@ class eCommerceRemoteAccessMagento
         return $result;
     }
 
+    /**
+     * Update the remote societe
+     *
+     * @param   int     $remote_id      Id of societe on remote ecommerce
+     * @param   Societe $object         Societe object
+     * @return  boolean                 True or false
+     */
+    public function updateRemoteSociete($remote_id, $object)
+    {
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteSociete session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
     
+        //$new_country_code = getCountry($object->country_id, 2);
     
+        try {
+            $societeData = array(
+                'name' => $object->name,
+                'firstname' => $object->firstname,
+                'lastname' => $object->lastname,
+                'email' => $object->email
+            );
+            /*if ($new_country_code) $productData['country_of_manufacture']=$new_country_code;
+            if ($this->site->magento_use_special_price) $productData['special_price']=$object->price;
+            else $productData['price']=$object->price;*/
+             
+            $result = $this->client->call($this->session, 'customer.update', array($remote_id, $societeData));
+        } catch (SoapFault $fault) {
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteSociete end");
+        return $result;
+    }
     
+
+    /**
+     * Create shipment
+     * 
+     * @param   int     $livraison              Object shipment ?
+     * @param   int     $remote_order_id        Id of order
+     * @return  boolean                         True or false
+     */
+    public function createRemoteLivraison($livraison, $remote_order_id)
+    {
+        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison session=".$this->session);
+        $commande = $this->getCommande($remote_order_id);
+        try {
+            $result = $this->client->call($this->session, 'sales_order_shipment.create', array($commande['increment_id'], array(), 'Shipment Created', true, true));
+        } catch (SoapFault $fault) {
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }
+        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison end");
+        return $result;
+    }    
     
     
     

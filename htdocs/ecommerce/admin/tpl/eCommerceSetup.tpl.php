@@ -190,6 +190,7 @@ $var=!$var;
 					<td><?php print $langs->trans('ECommerceUserPasswordDescription') ?></td>
 				</tr>
 <?php
+/*
 $var=!$var;
 ?>
 				<tr <?php print $bc[$var] ?>>
@@ -200,6 +201,7 @@ $var=!$var;
 					<td><?php print $langs->trans('ECommerceTimeoutDescription') ?></td>
 				</tr>
 <?php
+*/
 $var=!$var;
 ?>
 				<tr <?php print $bc[$var] ?>>
