@@ -120,18 +120,31 @@ class InterfaceECommerce
 				$eCommerceProduct = new eCommerceProduct($this->db);
 				$eCommerceProduct->fetchByProductId($object->id, $site->id);
 				
-				if ($eCommerceProduct->remote_id)
+				if ($eCommerceProduct->remote_id > 0)
 				{
             		$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
 				var_dump($eCommerceProduct->remote_id); exit;
 				}
 				else
 				{
-					dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record. We do nothing.");
+				    // Get current categories
+				    require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+				    $c = new Categorie($this->db);
+				    $existing = $c->containing($object->id, Categorie::TYPE_PRODUCT, 'id');
+				    
+				    if ($existing)
+				    {
+				        dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
+				        // TODO
+				        //$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
+				    }
+				    else
+				    {
+					   dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record and does not has category flag to push on eCommerce.");
+				    }
 				}
 			}
 			
-            var_dump($object); exit;
             if ($error) 
             {
                 $this->db->rollback();

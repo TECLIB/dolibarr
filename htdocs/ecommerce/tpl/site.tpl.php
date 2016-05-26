@@ -19,7 +19,7 @@ if (is_object($site))
     $soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
     if ($soapwsdlcacheon)
     {
-        print $langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).'<br>';
+        print $langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir, $langs->transnoentitiesnoconv("ECommerceSiteAddress")).'<br>';
     }
     else
     {

@@ -37,16 +37,43 @@ class eCommerceSite // extends CommonObject
     private $siteTypes = array(1=>'magento');
 	
     /**
-     *      \brief      Constructor
-     *      \param      DB      Database handler
+     * Constructor
+     * 
+     * @param      DoliDB      $db      Database handler
      */
-    function eCommerceSite($DB) 
+    function eCommerceSite($db) 
     {
-        $this->db = $DB;
-        return 1;
+        $this->db = $db;
     }
 
-	
+
+    /**
+     * Clean orphelins record
+     *
+     * @return  void
+     */
+    function cleanOrphelins()
+    {
+        // Clean orphelins entries to have a clean database (having such records should not happen)
+        /*$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE type = ".Categorie::TYPE_PRODUCT." AND fk_category NOT IN (select rowid from ".MAIN_DB_PREFIX."categorie)";
+         $this->db->query($sql);
+         $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE type = ".Categorie::TYPE_CUSTOMER." AND fk_category NOT IN (select rowid from ".MAIN_DB_PREFIX."categorie)";
+         $this->db->query($sql);*/
+        $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE fk_category NOT IN (select rowid from ".MAIN_DB_PREFIX."categorie)";
+        $this->db->query($sql);
+        $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_product WHERE fk_product NOT IN (select rowid from ".MAIN_DB_PREFIX."product)";
+        $this->db->query($sql);
+        $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_societe WHERE fk_societe NOT IN (select rowid from ".MAIN_DB_PREFIX."societe)";
+        $this->db->query($sql);
+        $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_socpeople WHERE fk_socpeople NOT IN (select rowid from ".MAIN_DB_PREFIX."socpeople)";
+        $this->db->query($sql);
+        $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_commande WHERE fk_commande NOT IN (select rowid from ".MAIN_DB_PREFIX."commande)";
+        $this->db->query($sql);
+        $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_facture WHERE fk_facture NOT IN (select rowid from ".MAIN_DB_PREFIX."facture)";
+        $this->db->query($sql);
+    }
+    
+    
     /**
      *      \brief      Create in database
      *      \param      user        	User that create
@@ -472,7 +499,7 @@ class eCommerceSite // extends CommonObject
 				$obj = $this->db->fetch_object($result);
 				if ($mode == 'array')
 				{
-					$list[$i]=array('id'=>$obj->rowid, 'name'=>$obj->name, 'last_update'=>$obj->last_update);
+					$list[$i]=array('id'=>$obj->rowid, 'name'=>$obj->name, 'last_update'=>$this->db->jdate($obj->last_update));
 				}
 				else
 				{

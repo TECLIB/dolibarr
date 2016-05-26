@@ -43,7 +43,7 @@ if ($user->societe_id > 0 || !$user->rights->ecommerce->read)
 ****************************************************/
 
 $eCommerceSite = new eCommerceSite($db);
-$sites = $eCommerceSite->listSites();
+$sites = $eCommerceSite->listSites('object');
 
 /***************************************************
 * Show page

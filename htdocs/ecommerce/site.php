@@ -55,6 +55,8 @@ if ($id)
 		if (isset($site->timeout))
 			set_time_limit($site->timeout);
 		
+		$site->cleanOrphelins();	
+		
 	    $synchro = new eCommerceSynchro($db, $site);
 	    
 	    dol_syslog("Try to connect");
@@ -65,6 +67,20 @@ if ($id)
 		    setEventMessages($synchro->error, $synchro->errors, 'errors');
 		}
 
+		/*$result=0;
+		
+		if (! $error)
+		{
+		  $result=$synchro->checkAnonymous();
+		}
+		
+		if ($result <= 0)
+		{
+		  $errors = $synchro->errors;
+		  $errors[] = $synchro->error;
+		  $error++;
+		}*/
+		
 		//synch only with write rights
 		if (! $error && $user->rights->ecommerce->write)
 		{
@@ -129,20 +145,6 @@ if ($id)
 			if ($nbFactureInDolibarr < 0) $error++;
 			$nbFactureInDolibarrLinkedToE = $synchro->getNbFactureInDolibarrLinkedToE(true);
 		}
-		
-		/*$result=0;
-		
-		if (! $error)
-		{
-		  $result=$synchro->checkAnonymous();
-		}
-
-		if ($result <= 0)
-		{
-			$errors = $synchro->errors;
-			$errors[] = $synchro->error;
-			$error++;
-		}*/
 
 		if (! $error)
 		{
