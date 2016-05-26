@@ -77,7 +77,7 @@ class eCommerceRemoteAccess
      * 
      * @param $fromDate datetime updates from this date
      * @param $toDate datetime updates to this date
-     * @return array of remote societe
+     * @return  array       Array of remote societe
      */
     public function getSocieteToUpdate($fromDate, $toDate)
 	{

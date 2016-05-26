@@ -94,7 +94,6 @@ class InterfaceECommerce
 	function run_trigger($action,$object,$user,$langs,$conf)
     {
     	
-    	
         if ($action == 'COMPANY_MODIFY')
         {
             $this->db->begin();
@@ -104,7 +103,13 @@ class InterfaceECommerce
 			
 			foreach($sites as $site)
 			{
-			    $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+		        if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
+                {
+                    dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
+                    continue;
+                }
+			    
+                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
 			    dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
 			    $eCommerceSynchro->connect();
 			    if (count($eCommerceSynchro->errors))
@@ -164,7 +169,13 @@ class InterfaceECommerce
 
 			foreach($sites as $site)
 			{
-				$eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
+                {
+                    dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
+                    continue;
+                }
+			    
+                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
 				dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
 				$eCommerceSynchro->connect();
 				if (count($eCommerceSynchro->errors))
@@ -215,7 +226,8 @@ class InterfaceECommerce
             }
         }
         
-    	
+    	/* Delete */
+        
     	if ($action == 'CATEGORY_DELETE' && ((int) $object->type == 0))     // Product category
         {
             $this->db->begin();

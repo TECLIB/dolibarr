@@ -303,7 +303,7 @@ class eCommerceFacture // extends CommonObject
             $sql.= " WHERE t.fk_site = ".$siteId;
             dol_syslog(get_class($this)."::getLastUpdate sql=".$sql, LOG_DEBUG);
 
-            $lastdate = '0000-00-00 00:00:00';
+            $lastdate = null;
 
             $resql=$this->db->query($sql);
             if ($resql)
@@ -311,8 +311,8 @@ class eCommerceFacture // extends CommonObject
                 if ($this->db->num_rows($resql))
                 {
                     $obj = $this->db->fetch_object($resql);
-                                    if ($obj->lastdate != null)
-                            $lastdate = $obj->lastdate;                	              
+                    if ($obj->lastdate != null)
+                            $lastdate = $this->db->jdate($obj->lastdate);                	              
                 }
                 $this->db->free($resql);
             }

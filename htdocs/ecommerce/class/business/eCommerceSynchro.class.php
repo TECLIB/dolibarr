@@ -438,18 +438,15 @@ class eCommerceSynchro
                 
                 if (is_array($tmp))
                 {
-                    // Clean orphelins entries to have a clean database (having such records should not happen)
-                    $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE fk_category NOT IN (select rowid from ".MAIN_DB_PREFIX."categorie)";
-                    $this->db->query($sql);
-                    
                     $resanswer = array();
                     eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
 
                     foreach ($resanswer as $remoteCatToCheck) // Check update for each entry into $resanswer -> $remoteCatToCheck = array('category_id'=>, 'parent_id'=>...)
                     {
+                        dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id']);
                         $this->initECommerceCategory(); // Initialise 2 properties eCommerceCategory and eCommerceMotherCategory
                         
-                        // Complete info of $remoteCatToCheck
+                        // Complete info of $remoteCatToCheck['category_id']
                         $tmp=$this->eCommerceRemoteAccess->getCategoryData($remoteCatToCheck['category_id']);
                         
                         $remoteCatToCheck['updated_at']=$tmp['updated_at'];
@@ -473,15 +470,18 @@ class eCommerceSynchro
     
     /**
      * Get modified product since the last update
-     * @param $force bool to force update
-     * @return array
+     * 
+     * @param   int     $force      Bool to force to reload cache list $this->productToUpdate
+     * @return  array               Array of remote product (also stored into this->productToUpdate)
      */
     public function getProductToUpdate($force = false)
     {
         try {
             if (!isset($this->productToUpdate) || $force == true)
             {
-                $this->productToUpdate = $this->eCommerceRemoteAccess->getProductToUpdate($this->getProductLastUpdateDate($force), $this->toDate);
+                $lastupdatedate = $this->getProductLastUpdateDate($force);
+                dol_syslog("getProductToUpdate from ".dol_print_date($lastupdatedate, 'standard'));
+                $this->productToUpdate = $this->eCommerceRemoteAccess->getProductToUpdate($lastupdatedate, $this->toDate);
             }
             return $this->productToUpdate;
         } catch (Exception $e) {
@@ -491,8 +491,9 @@ class eCommerceSynchro
 
     /**
      * Get modified societe since the last update
-     * @param $force bool to force update
-     * @return array
+     * 
+     * @param   int     $force      Bool to force to reload cache list $this->societeToUpdate 
+     * @return  array               Array of remote societe (also stored into this->societeToUpdate)
      */
     public function getSocieteToUpdate($force = false)
     {
@@ -500,6 +501,7 @@ class eCommerceSynchro
             if (!isset($this->societeToUpdate) || $force == true)
             {
                 $lastupdatedate=$this->getSocieteLastUpdateDate($force);
+                dol_syslog("getSocieteLastUpdateDate from ".dol_print_date($lastupdatedate, 'standard'));
                 $this->societeToUpdate = $this->eCommerceRemoteAccess->getSocieteToUpdate($lastupdatedate, $this->toDate);
             }
             return $this->societeToUpdate;
@@ -510,14 +512,19 @@ class eCommerceSynchro
 
     /**
      * Get modified commande since the last update
-     * @param $force bool to force update
-     * @return array
+     * 
+     * @param   int     $force      Bool to force to reload cache list $this->commandeToUpdate
+     * @return  array               Array of remote order (also stored into this->commandeToUpdate)
      */
     public function getCommandeToUpdate($force = false)
     {
         try {
             if (!isset($this->commandeToUpdate) || $force == true)
-                $this->commandeToUpdate = $this->eCommerceRemoteAccess->getCommandeToUpdate($this->getCommandeLastUpdateDate($force), $this->toDate);
+            {
+                $lastupdatedate=$this->getCommandeLastUpdateDate($force);
+                dol_syslog("getCommandeToUpdate from ".dol_print_date($lastupdatedate, 'standard'));
+                $this->commandeToUpdate = $this->eCommerceRemoteAccess->getCommandeToUpdate($lastupdatedate, $this->toDate);
+            }
             return $this->commandeToUpdate;
         } catch (Exception $e) {
             $this->errors[] = $this->langs->trans('ECommerceErrorGetCommandeToUpdate');
@@ -526,14 +533,19 @@ class eCommerceSynchro
 
     /**
      * Get modified facture since the last update
-     * @param $force bool to force update
-     * @return array
+     * 
+     * @param   int     $force      Bool to force to reload cache list $this->factureToUpdate
+     * @return  array               Array of remote invoice (also stored into this->factureToUpdate)
      */
     public function getFactureToUpdate($force = false)
     {
         try {
             if (!isset($this->factureToUpdate) || $force == true)
-                $this->factureToUpdate = $this->eCommerceRemoteAccess->getFactureToUpdate($this->getFactureLastUpdateDate($force), $this->toDate);
+            {
+                $lastupdatedate=$this->getFactureLastUpdateDate($force);
+                dol_syslog("getFactureLastUpdateDate from ".dol_print_date($lastupdatedate, 'standard'));
+                $this->factureToUpdate = $this->eCommerceRemoteAccess->getFactureToUpdate($lastupdatedate, $this->toDate);
+            }
             return $this->factureToUpdate;
         } catch (Exception $e) {
             $this->errors[] = $this->langs->trans('ECommerceErrorGetFactureToUpdate');
@@ -706,7 +718,8 @@ class eCommerceSynchro
                         $dBCategorie->label = $categoryArray['name'];
                         $dBCategorie->description = $categoryArray['description'];
                         $dBCategorie->type = 0;             // for product category type	
-
+                        $dBCategorie->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                        
                         //var_dump('synchExists='.$synchExists);
                         if ($synchExists >= 0)
                         {
@@ -814,8 +827,17 @@ class eCommerceSynchro
     {
         try {
             $nbgoodsunchronize = 0;
-            if ($this->getNbSocieteToUpdate(true) > 0)
-                $societes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSociete($this->getSocieteToUpdate());
+            $societes=array();
+            
+            //if ($this->getNbSocieteToUpdate(true) > 0)
+            //    $societes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSociete($this->getSocieteToUpdate());
+
+            dol_syslog("synchSociete");
+            $resulttoupdate=$this->getSocieteToUpdate();
+            if (is_array($resulttoupdate))
+            {
+                if (count($resulttoupdate) > 0) $societes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSociete($resulttoupdate);
+            }
 
             if (count($societes))
             {
@@ -826,7 +848,7 @@ class eCommerceSynchro
                     //check if societe exists in eCommerceSociete
                     $synchExists = $this->eCommerceSociete->fetchByRemoteId($societeArray['remote_id'], $this->eCommerceSite->id);
                     $dBSociete = new Societe($this->db);
-               
+
                     //if societe exists in eCommerceSociete, societe must exists in societe
                     if ($synchExists > 0 && isset($this->eCommerceSociete->fk_societe))
                     {
@@ -838,12 +860,13 @@ class eCommerceSynchro
                             $dBSociete->client = $societeArray['client'];
                             $dBSociete->tva_intra = $societeArray['vatnumber'];
                             $dBSociete->tva_assuj = 1;      // tba_intra is not saved if this field is not set
-
+                            $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                            
                             $result = $dBSociete->update($dBSociete->id, $this->user);
-                        } else
+                        } 
+                        else
                         {
                             $this->errors[] = $this->langs->trans('ECommerceSynchSocieteErrorBetweenECommerceSocieteAndSociete');
-                            return false;
                         }
                     }
                     //if societe not exists in eCommerceSociete, societe is created
@@ -853,18 +876,29 @@ class eCommerceSynchro
                         $dBSociete->email = $societeArray['email'];
                         $dBSociete->client = $societeArray['client'];
                         $dBSociete->tva_intra = $societeArray['vatnumber'];
-                        $dBSociete->tva_assuj = 1;      // tba_intra is not saved if this field is not set
+                        $dBSociete->tva_assuj = 1;                              // tva_intra is not saved if this field is not set
+                        $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
                         
                         $result = $dBSociete->create($this->user);
+                        if ($result < 0)
+                        {
+                            $error++;
+                            $this->error=$dBSociete->error;
+                            $this->errors=$dBSociete->errors;
+                        }
                     }
+                    
                     //if create/update of societe table ok
                     if ($result >= 0)
                     {
+                        dol_syslog("synchSociete Now we will set the tags id=".$this->eCommerceSite->fk_cat_societe." to the thirdparty id=".$dBSociete->id." created or modified");
+                        
                         //set category					
                         $cat = new Categorie($this->db);
                         $cat->fetch($this->eCommerceSite->fk_cat_societe);
                         $cat->add_type($dBSociete, 'customer');
 
+                        dol_syslog("synchSociete Now we will update link rowid=".$this->eCommerceSociete->id." with last_update = ".$societeArray['last_update']);
                         $this->eCommerceSociete->last_update = $societeArray['last_update'];
                         $this->eCommerceSociete->fk_societe = $dBSociete->id;
                         //if a previous synchro exists
@@ -886,7 +920,7 @@ class eCommerceSynchro
                             if ($this->eCommerceSociete->create($this->user) < 0)
                             {
                                 $error++;
-                                $this->errors[] = $this->errors . '<br/>' . $this->langs->trans('ECommerceSynchECommerceSocieteCreateError') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'];
+                                $this->errors[] = $this->langs->trans('ECommerceSynchECommerceSocieteCreateError') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'];
                             }
                         }
                         
@@ -908,7 +942,7 @@ class eCommerceSynchro
                     else
                     {
                         $error++;
-                        $this->errors[] = $this->errors . '<br/>' . $this->langs->trans('ECommerceSynchSocieteErrorCreateUpdateSociete') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'];
+                        $this->errors[] = $this->langs->trans('ECommerceSynchSocieteErrorCreateUpdateSociete') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'];
                     }
                 }
                 
@@ -980,7 +1014,8 @@ class eCommerceSynchro
                 $dBContact->address = $socpeopleArray['address'];
                 $dBContact->phone_pro = $socpeopleArray['phone'];
                 $dBContact->fax = $socpeopleArray['fax'];
-    
+                $dBContact->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                
                 $contactExists = $this->getContactIdFromInfos($dBContact);
             }
             
@@ -1001,6 +1036,12 @@ class eCommerceSynchro
                 else if ($refExists == 0)   // If not, we create it
                 {
                     $result = $dBContact->create($this->user);
+                    if ($result < 0)
+                    {
+                        $error++;
+                        $this->error=$dBContact->error;
+                        $this->errors=$dBContact->errors;
+                    }
                 }
                 else if ($refExistst < 0)
                 {
@@ -1063,14 +1104,16 @@ class eCommerceSynchro
     {
         try {
             $nbgoodsunchronize = 0;
+            $products = array();
             
-            //$this->synchCategory();
-            
-            $nbofproduct = $this->getNbProductToUpdate(true);
+            //if ($this->getNbProductToUpdate(true) > 0)
+            //    $products = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct($this->getProductToUpdate());
 
-            if ($nbofproduct > 0)
+            dol_syslog("synchProduct");
+            $resulttoupdate=$this->getProductToUpdate();
+            if (is_array($resulttoupdate))
             {
-                $products = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct($this->getProductToUpdate());
+                if (count($resulttoupdate) > 0) $products = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct($resulttoupdate);
             }
 
             if (count($products))
@@ -1103,7 +1146,8 @@ class eCommerceSynchro
                     $dBProduct->tva_tx = $productArray['tax_rate'];
                     $dBProduct->tva_npr = 0;  // Avoiding _log_price's sql blank
                     $dBProduct->country_id = $productArray['fk_country'];
-
+                    $dBProduct->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                    
                     if ($refExists > 0 && isset($dBProduct->id))
                     {
                         //update
@@ -1167,8 +1211,8 @@ class eCommerceSynchro
                             if ($this->eCommerceProduct->update($this->user) < 0)
                             {
                                 $error++;
-                                $this->errors[] = $this->error . '<br>' . $this->langs->trans('ECommerceSyncheCommerceProductUpdateError') . ' ' . $productArray['label'];
-                                dol_syslog($this->error . '<br>' . $this->langs->trans('ECommerceSyncheCommerceProductUpdateError') . ' ' . $productArray['label'], LOG_WARNING);
+                                $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceProductUpdateError') . ' ' . $productArray['label'];
+                                dol_syslog($this->langs->trans('ECommerceSyncheCommerceProductUpdateError') . ' ' . $productArray['label'], LOG_WARNING);
                             }
                         }
                         //if not previous synchro exists
@@ -1180,16 +1224,16 @@ class eCommerceSynchro
                             if ($this->eCommerceProduct->create($this->user) < 0)
                             {
                                 $error++;
-                                $this->errors[] = $this->error . '<br>' . $this->langs->trans('ECommerceSyncheCommerceProductCreateError') . ' ' . $productArray['label'];
-                                dol_syslog($this->error . '<br>' . $this->langs->trans('ECommerceSyncheCommerceProductCreateError') . ' ' . $productArray['label'], LOG_WARNING);
+                                $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceProductCreateError') . ' ' . $productArray['label'];
+                                dol_syslog($this->langs->trans('ECommerceSyncheCommerceProductCreateError') . ' ' . $productArray['label'], LOG_WARNING);
                             }
                         }
                     } 
                     else
                     {
                         $error++;
-                        $this->errors[] = $this->error . '<br>' . $this->langs->trans('ECommerceSynchProductError') . ' ' . $productArray['label'];
-                        dol_syslog($this->error . '<br>' . $this->langs->trans('ECommerceSynchProductError') . ' ' . $productArray['label'], LOG_WARNING);
+                        $this->errors[] = $this->langs->trans('ECommerceSynchProductError') . ' ' . $productArray['label'];
+                        dol_syslog($this->langs->trans('ECommerceSynchProductError') . ' ' . $productArray['label'], LOG_WARNING);
                     }
                     
                     if (! $error) 
@@ -1268,6 +1312,8 @@ class eCommerceSynchro
                             $tmpdatedeliv1=dol_print_date($dBCommande->date_livraison, 'dayrfc');
                             $tmpdatedeliv2=dol_print_date(strtotime($commandeArray['date_livraison']), 'dayrfc');
                             
+                            $dBCommande->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                            
                             if ($dBCommande->ref_client != $commandeArray['ref_client']
                                 || $tmpdateorder1 != $tmpdateorder2
                                 || $tmpdatedeliv1 != $tmpdatedeliv2
@@ -1278,6 +1324,7 @@ class eCommerceSynchro
                                 $dBCommande->ref_client = $commandeArray['ref_client'];
                                 $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
                                 $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
+                                
                                 $dBCommande->update($user);
                             }
                             
@@ -1309,7 +1356,8 @@ class eCommerceSynchro
                             $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
                             $dBCommande->socid = $this->eCommerceSociete->fk_societe;
                             $dBCommande->source=dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');
-
+                            $dBCommande->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                            
                             $result = $dBCommande->create($this->user);
 
                             if ($dBCommande->statut != $commandeArray['status'])
@@ -1575,6 +1623,7 @@ class eCommerceSynchro
                             $dBFacture->cond_reglement_id = $settlementTermsId;
                             $dBFacture->origin = 'commande';
                             $dBFacture->origin_id = $dBCommande->id;
+                            $dBFacture->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
                             $result = $dBFacture->create($this->user);
 

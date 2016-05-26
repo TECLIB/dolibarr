@@ -18,7 +18,7 @@
  */
 
 dol_include_once('/ecommerce/admin/class/data/eCommerceDict.class.php');
-dol_include_once('/ecommerce/class/data/eCommerceCategory.class.php');
+dol_include_once('/ecommegetSocieteToUpdaterce/class/data/eCommerceCategory.class.php');
 dol_include_once('/ecommerce/class/data/eCommerceSociete.class.php');
 
 
@@ -107,9 +107,11 @@ class eCommerceRemoteAccessMagento
     public function getSocieteToUpdate($fromDate, $toDate)
     {
         try {
-            dol_syslog("getSocieteToUpdate start");
-            $filter = array('updated_at' => array('gt' => $fromDate, 'lt' => $toDate));
-            $result = $this->client->call($this->session, 'customer.list', array($filter));
+            dol_syslog("getSocieteToUpdate start gt => ".dol_print_date($fromDate, 'standard').", lt => ".dol_print_date($toDate, 'standard'));
+            $filter = array(
+                array('updated_at' => array('gt' => dol_print_date($fromDate, 'standard'), 'lt' => dol_print_date($toDate, 'standard')))
+            );
+            $result = $this->client->call($this->session, 'customer.list', $filter);
             dol_syslog("getSocieteToUpdate end");
             return $result;
         } catch (SoapFault $fault) {
@@ -129,10 +131,10 @@ class eCommerceRemoteAccessMagento
     public function getProductToUpdate($fromDate, $toDate)
     {
         try {
-            dol_syslog("getProductToUpdate start");
+            dol_syslog("getProductToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
             $filter = array(
-                    array('updated_at' => array('gt' => $fromDate, 'lt' => $toDate)),
-//                    array('type_id', array('eq' => 'downloadable'))
+                array('updated_at' => array('gt' => dol_print_date($fromDate, 'standard'), 'lt' => dol_print_date($toDate, 'standard'))),
+                //array('type_id', array('eq' => 'downloadable'))
             );
             $result = $this->client->call($this->session, 'catalog_product.list', $filter);
             
@@ -162,10 +164,12 @@ class eCommerceRemoteAccessMagento
     public function getCommandeToUpdate($fromDate, $toDate)
     {
         try {
-            dol_syslog("getCommandeToUpdate start");
-            $filter = array('updated_at' => array('gt' => $fromDate, 'lt' => $toDate));
-            $result = $this->client->call($this->session, 'sales_order.list', array($filter));
-            
+            dol_syslog("getCommandeToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
+            $filter = array(
+                array('updated_at' => array('gt' => dol_print_date($fromDate, 'standard'), 'lt' => dol_print_date($toDate, 'standard'))),
+            );
+            $result = $this->client->call($this->session, 'sales_order.list', $filter);
+
             foreach ($result as $rcommande)
             {
                 $calls[] = array('sales_order.info', $rcommande['increment_id']);
@@ -195,9 +199,11 @@ class eCommerceRemoteAccessMagento
     public function getFactureToUpdate($fromDate, $toDate)
     {
         try {
-            dol_syslog("getFactureToUpdate start");
-            $filter = array('updated_at' => array('gt' => $fromDate, 'lt' => $toDate));
-            $result = $this->client->call($this->session, 'sales_order_invoice.list', array($filter));
+            dol_syslog("getFactureToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
+            $filter = array(
+                array('updated_at' => array('gt' => dol_print_date($fromDate, 'standard'), 'lt' => dol_print_date($toDate, 'standard'))),
+            );
+            $result = $this->client->call($this->session, 'sales_order_invoice.list', $filter);
             dol_syslog("getFactureToUpdate end");
             return $result;
         } catch (SoapFault $fault) {
@@ -207,10 +213,11 @@ class eCommerceRemoteAccessMagento
         }
     }
 
+    
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
      * 
-     * @param $remoteObject array
+     * @param $remoteObject         Array of ids of objects to convert
      * @return array societe
      */
     public function convertRemoteObjectIntoDolibarrSociete($remoteObject)
@@ -229,6 +236,7 @@ class eCommerceRemoteAccessMagento
                 //echo 'convertRemoteObjectIntoDolibarrSociete :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
             }
             if (count($results))
+            {
                 foreach ($results as $societe)
                 {
                     $newobj=array(
@@ -241,6 +249,7 @@ class eCommerceRemoteAccessMagento
                     );
                     $societes[] = $newobj;
                 }
+            }
         }
 
         //important - order by last update

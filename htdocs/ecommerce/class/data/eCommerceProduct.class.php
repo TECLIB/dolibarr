@@ -304,7 +304,7 @@ class eCommerceProduct // extends CommonObject
         $sql.= " WHERE t.fk_site = ".$siteId;
     	dol_syslog(get_class($this)."::getLastUpdate sql=".$sql, LOG_DEBUG);
     	
-    	$lastdate = '0000-00-00 00:00:00';
+    	$lastdate = null;
     	
         $resql=$this->db->query($sql);
         if ($resql)
@@ -313,7 +313,7 @@ class eCommerceProduct // extends CommonObject
             {
                 $obj = $this->db->fetch_object($resql);
 				if ($obj->lastdate != null)
-                	$lastdate = $obj->lastdate;                	              
+                	$lastdate = $this->db->jdate($obj->lastdate);                	              
             }
             $this->db->free($resql);
         }

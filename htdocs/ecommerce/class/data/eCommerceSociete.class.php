@@ -316,7 +316,7 @@ class eCommerceSociete // extends CommonObject
             {
                 $obj = $this->db->fetch_object($resql);
 				if ($obj->lastdate != null)
-                	$lastdate = $obj->lastdate;                	              
+                	$lastdate = $this->db->jdate($obj->lastdate);                	              
             }
             $this->db->free($resql);
         }
