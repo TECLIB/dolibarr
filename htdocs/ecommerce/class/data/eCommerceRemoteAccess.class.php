@@ -40,9 +40,13 @@ class eCommerceRemoteAccess
     {
     	$this->db = $db;
         $this->site = $site;
+                
         $this->setName();
+
         dol_include_once('/ecommerce/class/data/'.$this->dirName.'/eCommerceRemoteAccess'.$this->className.'.class.php');
+        
         $this->setClass();        
+        
         return 1;
     }
     
@@ -89,6 +93,7 @@ class eCommerceRemoteAccess
 
     /**
      * Get product to update from instantiated class in the constructor
+     * 
      * @param $fromDate datetime updates from this date
      * @param $toDate datetime updates to this date
      * @return array of remote product
@@ -103,6 +108,7 @@ class eCommerceRemoteAccess
     
     /**
      * Get commande to update from instantiated class in the constructor
+     * 
      * @param $fromDate datetime updates from this date
      * @param $toDate datetime updates to this date
      * @return array of remote commande
@@ -117,6 +123,7 @@ class eCommerceRemoteAccess
     
     /**
      * Get facture to update from instantiated class in the constructor
+     * 
      * @param $fromDate datetime updates from this date
      * @param $toDate datetime updates to this date
      * @return array of remote facture
@@ -131,6 +138,7 @@ class eCommerceRemoteAccess
 	
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
+     * 
      * @param $remoteObject array
      * @return $dolibarrObject array
      */
@@ -144,6 +152,7 @@ class eCommerceRemoteAccess
 
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
+     * 
      * @param $remoteObject array
      * @return $dolibarrObject array
      */
@@ -157,6 +166,7 @@ class eCommerceRemoteAccess
 	
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
+     * 
      * @param $remoteObject array
      * @return $dolibarrObject array
      */
@@ -170,6 +180,7 @@ class eCommerceRemoteAccess
 	
     /**
      * Put the remote data into commande dolibarr data from instantiated class in the constructor
+     * 
      * @param $remoteObject array
      * @return $dolibarrObject array
      */
@@ -183,6 +194,7 @@ class eCommerceRemoteAccess
 	
     /**
      * Put the remote data into facture dolibarr data from instantiated class in the constructor
+     * 
      * @param $remoteObject array
      * @return $dolibarrObject array
      */
@@ -196,19 +208,22 @@ class eCommerceRemoteAccess
 	
     /**
      * Get a commande from instantiated class in the constructor
-     * @param $remoteCommandeId string
-     * @return $dolibarrObject array
+     * 
+     * @param   int     $remoteCommandeId   string
+     * @return  array                       dolibarrObject array
      */
-	public function getCommande($remoteCommandeId)
+	public function getRemoteCommande($remoteCommandeId)
 	{
-	    $result=$this->class->getCommande($remoteCommandeId);
+	    $result=$this->class->getRemoteCommande($remoteCommandeId);
 		$this->error=$this->class->error;
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
 	
-	/**	\brief	Get a remote category tree from magento
-	 * 	\return	array	An array containing magento's categories as arrays
+	/**	
+	 * Get a remote category tree from magento
+	 * 
+	 * @return	array	An array containing magento's categories as arrays
 	 */
 	public function getRemoteCategoryTree()
 	{
@@ -217,6 +232,19 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
+
+	/**
+	 * Get a remote category att from magento
+	 * 
+	 * @return	array	An array containing magento's categories as arrays
+	 */
+	/*public function getRemoteCategoryAtt()
+	{
+	    $result=$this->class->getRemoteCategoryAtt();
+	    $this->error=$this->class->error;
+	    $this->errors=$this->class->errors;
+	    return $result;
+	}*/
 	
     /**
      * Get list of address id for a customer
@@ -232,7 +260,8 @@ class eCommerceRemoteAccess
 	    return $result;
 	}
 	
-	/**	Get a remote category tree from magento
+	/**	
+	 *  Get a remote category tree from magento
 	 * 
 	 * 	@return	array	An array containing magento's categories as arrays
 	 */
@@ -264,12 +293,27 @@ class eCommerceRemoteAccess
 	 * Update remote societe
 	 * 
 	 * @param  int     $remote_societe_id    Id of societe on remote ecommerce
-	 * @param  Product $object               Product object
+	 * @param  Societe $object               Societe object
 	 * @return bool
 	 */
 	public function updateRemoteSociete($remote_societe_id, $object)
 	{
 	    $result=$this->class->updateRemoteSociete($remote_societe_id, $object);
+	    $this->error=$this->class->error;
+	    $this->errors=$this->class->errors;
+	    return $result;
+	}
+	
+	/**
+	 * Update remote contact
+	 *
+	 * @param  int     $remote_contact_id    Id of contact on remote ecommerce
+	 * @param  Contact $object               Contact object
+	 * @return bool
+	 */
+	public function updateRemoteSocpeople($remote_contact_id, $object)
+	{
+	    $result=$this->class->updateRemoteSocpeople($remote_contact_id, $object);
 	    $this->error=$this->class->error;
 	    $this->errors=$this->class->errors;
 	    return $result;

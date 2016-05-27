@@ -358,6 +358,58 @@ class eCommerceSocpeople // extends CommonObject
         }
     }
     
+    /**
+     *    Load object in memory from database by fkContact
+     *
+     *    @param	$fkSocpeople int fk_contact
+     *    @param	$siteId int fk_site
+     *    @return	int <0 if KO, >0 if OK
+     */
+    public function fetchByFkSocpeople($fkSocpeople, $siteId)
+    {
+        // Clean parameters
+        if (isset($fkSocpeople)) $fkSocpeople=trim($fkSocpeople);
+        if (isset($siteId)) $siteId=intval($siteId);
+    
+        global $langs;
+        $sql = "SELECT";
+        $sql.= " t.rowid,";
+        $sql.= " t.fk_socpeople,";
+        $sql.= " t.fk_site,";
+        $sql.= " t.remote_id,";
+        $sql.= " t.type,";
+        $sql.= " t.last_update";
+        $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_socpeople as t";
+        $sql.= " WHERE t.fk_site = ".$siteId;
+        $sql.= " AND t.type = 1";       // TODO what about other types ?
+        $sql.= " AND t.fk_socpeople = ".$fkSocpeople;
+        dol_syslog(get_class($this)."::fetchByFkSocpeople sql=".$sql, LOG_DEBUG);
+        $resql=$this->db->query($sql);
+        if ($resql)
+        {
+            if ($this->db->num_rows($resql) > 0)
+            {
+                $obj = $this->db->fetch_object($resql);
+                $this->id    = $obj->rowid;
+                $this->fk_socpeople = $obj->fk_socpeople;
+                $this->fk_site = $obj->fk_site;
+                $this->remote_id = $obj->remote_id;
+                $this->type = $obj->type;
+                $this->last_update = $obj->last_update;
+                $this->db->free($resql);
+                return 1;
+            }
+            $this->db->free($resql);
+            return -1;
+        }
+        else
+        {
+            $this->error="Error ".$this->db->lasterror();
+            dol_syslog(get_class($this)."::fetchByFkSocpeople ".$this->error, LOG_ERR);
+            return -1;
+        }
+    }
+    
 	/**	
      * 		Select all the ids from eCommerceSocpeople for a site
      * 		@param int		siteId

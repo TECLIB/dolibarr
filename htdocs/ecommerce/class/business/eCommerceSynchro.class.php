@@ -1,10 +1,20 @@
 <?php
-/*
- * @module		ECommerce
- * @version		1.2
- * @copyright	Auguria
- * @author		<franck.charpentier@auguria.net>
- * @licence		GNU General Public License
+/* Copyright (C) 2010 Franck Charpentier - Auguria <franck.charpentier@auguria.net>
+ * Copyright (C) 2013 Laurent Destailleur          <eldy@users.sourceforge.net>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * or see http://www.gnu.org/
  */
 
 /**
@@ -82,7 +92,7 @@ class eCommerceSynchro
             $this->user = $user;
             $this->db = $db;
             $this->eCommerceSite = $site;
-
+            
             $this->eCommerceRemoteAccess = new eCommerceRemoteAccess($this->db, $this->eCommerceSite);
         
             $this->toDate = dol_now();      // Set date to use as last update date
@@ -435,12 +445,13 @@ class eCommerceSynchro
 
                 // get a magento category tree in a one-leveled array
                 $tmp=$this->eCommerceRemoteAccess->getRemoteCategoryTree();
-                
                 if (is_array($tmp))
                 {
                     $resanswer = array();
                     eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
-
+                    
+                    // $resanswer is array with all categories
+                    // We must loop on each categorie to make a WS call to get updated_at info.
                     foreach ($resanswer as $remoteCatToCheck) // Check update for each entry into $resanswer -> $remoteCatToCheck = array('category_id'=>, 'parent_id'=>...)
                     {
                         dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id']);
@@ -451,6 +462,7 @@ class eCommerceSynchro
                         
                         $remoteCatToCheck['updated_at']=$tmp['updated_at'];
 
+                        // Check into link table ecommerce_category if record has been modified on magento or not 
                         if ($this->eCommerceCategory->checkForUpdate($this->eCommerceSite->id, $this->toDate, $remoteCatToCheck))
                             $this->categoryToUpdate[] = $remoteCatToCheck;
                         
@@ -1268,14 +1280,19 @@ class eCommerceSynchro
         global $conf, $user;
         
         try {
-            
             $nbgoodsunchronize = 0;
+            $nbrecorderror =0;
+            $commandes = array();
             
-            /*$this->synchSociete();
-            $this->synchProduct();*/
+            //if ($this->getNbCommandeToUpdate(true) > 0)
+            //    $commandes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrCommande($this->getCommandeToUpdate());
 
-            if ($this->getNbCommandeToUpdate(true) > 0)
-                $commandes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrCommande($this->getCommandeToUpdate());
+            dol_syslog("synchCommande");
+            $resulttoupdate=$this->getCommandeToUpdate();
+            if (is_array($resulttoupdate))
+            {
+                if (count($resulttoupdate) > 0) $commandes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrCommande($resulttoupdate);
+            }
 
             if (count($commandes))
             {
@@ -1284,18 +1301,21 @@ class eCommerceSynchro
                 // Local filter to exclude bundles and other complex types
                 $productsTypesOk = array('simple', 'virtual', 'downloadable');
                 
+                // Loop on each modified order
                 foreach ($commandes as $commandeArray)
                 {
+                    $error = 0;
+                    
                     $this->initECommerceCommande();
                     $this->initECommerceSociete();
                     $dBCommande = new Commande($this->db);
 
-                    //check if commande exists in eCommerceCommande (with remote id)
+                    //check if commande exists in eCommerceCommande (with remote id). It set ->fk_commande. This is a sql request.
                     $synchExists = $this->eCommerceCommande->fetchByRemoteId($commandeArray['remote_id'], $this->eCommerceSite->id);
                     //check if ref exists in commande
                     $refExists = $dBCommande->fetch($this->eCommerceCommande->fk_commande);
 
-                    //check if societe exists. This init $this->eCommerceSociete->fk_societe
+                    //check if societe exists in eCommerceSociete (with remote id). This init ->fk_societe. This is a sql request.
                     $societeExists = $this->eCommerceSociete->fetchByRemoteId($commandeArray['remote_id_societe'], $this->eCommerceSite->id);
 
                     //if societe exists start
@@ -1303,7 +1323,7 @@ class eCommerceSynchro
                     {
                         if ($refExists > 0 && $dBCommande->id > 0)
                         {
-                            dol_syslog("synchCommande Order with id=".$dBCommande->id." already exists");
+                            dol_syslog("synchCommande Order with id=".$dBCommande->id." already exists in Dolibarr");
                             //update commande
                             $result = 1;
                             
@@ -1325,29 +1345,33 @@ class eCommerceSynchro
                                 $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
                                 $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
                                 
-                                $dBCommande->update($user);
+                                $result = $dBCommande->update($user);
+                                if ($result <= 0) $error++;
                             }
                             
-                            if ($dBCommande->statut != $commandeArray['status'])
+                            if (! $error)
                             {
-                                dol_syslog("Status of order has changed, we update order from status "+$dBCommande->statut+" to status "+$commandeArray['status']);
-                                if ($commandeArray['status'] == 0)
+                                if ($dBCommande->statut != $commandeArray['status'])
                                 {
-                                    $dBCommande->set_draft($user, 0);
-                                }
-                                if ($commandeArray['status'] == 1)
-                                {
-                                    $dBCommande->valid($user, 0);
-                                }
-                                if ($commandeArray['status'] == -1)
-                                {
-                                    $dBCommande->cancel(0);
+                                    dol_syslog("Status of order has changed, we update order from status ".$dBCommande->statut." to status ".$commandeArray['status']);
+                                    if ($commandeArray['status'] == 0)
+                                    {
+                                        $dBCommande->set_draft($user, 0);
+                                    }
+                                    if ($commandeArray['status'] == 1)
+                                    {
+                                        $dBCommande->valid($user, 0);
+                                    }
+                                    if ($commandeArray['status'] == -1)
+                                    {
+                                        $dBCommande->cancel(0);
+                                    }
                                 }
                             }
                         } 
                         else
                         {
-                            dol_syslog("Create order");
+                            dol_syslog("synchCommande Order not found in Dolibarr, so we create it");
 
                             //create commande
                             $dBCommande->statut=0;  // draft == pending on magento
@@ -1359,74 +1383,42 @@ class eCommerceSynchro
                             $dBCommande->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
                             
                             $result = $dBCommande->create($this->user);
-
-                            if ($dBCommande->statut != $commandeArray['status'])
+                            if ($result <= 0) 
                             {
-                                dol_syslog("synchCommande Status of order must be now set, we update order from status "+$dBCommande->statut+" to status "+$commandeArray['status']);
-                                if ($commandeArray['status'] == 0)
-                                {
-                                    $dBCommande->set_draft($user, 0);
-                                }
-                                if ($commandeArray['status'] == 1)
-                                {
-                                    $dBCommande->valid($user, 0);
-                                }
-                                if ($commandeArray['status'] == -1)
-                                {
-                                    $dBCommande->cancel(0);
-                                }
+                                dol_syslog("synchCommande result=".$result." ".$dBCommande->error, LOG_ERR);
+                                $error++;
                             }
                             
-                            //add or update contacts of order
-                            $commandeArray['socpeopleCommande']['fk_soc'] = $this->eCommerceSociete->fk_societe;
-                            $commandeArray['socpeopleFacture']['fk_soc'] = $this->eCommerceSociete->fk_societe;
-                            $commandeArray['socpeopleLivraison']['fk_soc'] = $this->eCommerceSociete->fk_societe;
-
-                            dol_syslog("synchCommande Now we sync people/address");
-                            $socpeopleCommandeId = $this->synchSocpeople($commandeArray['socpeopleCommande']);  // $socpeopleCommandeId = id of socpeople into dolibarr table
-                            dol_syslog("synchCommande socpeopleCommandeId = ".$socpeopleCommandeId);
-                            $socpeopleFactureId = $this->synchSocpeople($commandeArray['socpeopleFacture']);
-                            dol_syslog("synchCommande socpeopleFactureId = ".$socpeopleFactureId);
-                            $socpeopleLivraisonId = $this->synchSocpeople($commandeArray['socpeopleLivraison']);
-                            dol_syslog("synchCommande socpeopleLivraisonId = ".$socpeopleLivraisonId);
-                            
-                            if ($socpeopleCommandeId > 0)
-                                $dBCommande->add_contact($socpeopleCommandeId, 'CUSTOMER');
-                            if ($socpeopleFactureId > 0)
-                                $dBCommande->add_contact($socpeopleFactureId, 'BILLING');
-                            if ($socpeopleLivraisonId > 0)
-                                $dBCommande->add_contact($socpeopleLivraisonId, 'SHIPPING');
-
-                            //add items
-                            dol_syslog("synchCommande Now we add lines on order");
-                            if (count($commandeArray['items'])) {
+                            // Add lines
+                            if (! $error && count($commandeArray['items']))
+                            {
                                 foreach ($commandeArray['items'] as $item)
                                 {
                                     if (in_array($item['product_type'], $productsTypesOk))  // sync of "simple", "virtual", "downloadable"
                                     {
                                         $this->initECommerceProduct();
                                         $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-                                        
+                            
                                         // Define the buy price for margin calculation
                                         $buyprice=0;
                                         $fk_product = $this->eCommerceProduct->fk_product;
-                                        if (isset($conf->global->MARGIN_TYPE) && $conf->global->MARGIN_TYPE == 'pmp')   // If Rule is on PMP 
+                                        if (isset($conf->global->MARGIN_TYPE) && $conf->global->MARGIN_TYPE == 'pmp')   // If Rule is on PMP
                                         {
-                            			    include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
-                            			    $product=new Product($this->db);
-                            			    $product->fetch($fk_product);
-                                            $buyprice=$product->pmp;   
+                                            include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
+                                            $product=new Product($this->db);
+                                            $product->fetch($fk_product);
+                                            $buyprice=$product->pmp;
                                         }
-                            			if (empty($buyprice))    // Prend meilleur prix si option meilleur prix on (et donc buyprice par encore defini) ou si PMP n'a rien donné 
-                            			{
-                            			    // by external module, take lowest buying price
-                            			    include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
-                            			    $productFournisseur = new ProductFournisseur($this->db);
-                            			    $productFournisseur->find_min_price_product_fournisseur($fk_product);
-                            			    $buyprice = $productFournisseur->fourn_unitprice;
-                            			}
-                                        
-                                        $dBCommande->addline($item['description'], $item['price'], $item['qty'], $item['tva_tx'], 0, 0, 
+                                        if (empty($buyprice))    // Prend meilleur prix si option meilleur prix on (et donc buyprice par encore defini) ou si PMP n'a rien donné
+                                        {
+                                            // by external module, take lowest buying price
+                                            include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
+                                            $productFournisseur = new ProductFournisseur($this->db);
+                                            $productFournisseur->find_min_price_product_fournisseur($fk_product);
+                                            $buyprice = $productFournisseur->fourn_unitprice;
+                                        }
+                            
+                                        $result = $dBCommande->addline($item['description'], $item['price'], $item['qty'], $item['tva_tx'], 0, 0,
                                             $this->eCommerceProduct->fk_product, //fk_product
                                             0, //remise_percent
                                             0, //info_bits
@@ -1442,39 +1434,96 @@ class eCommerceSynchro
                                             0, // fk_prod four_price
                                             $buyprice
                                             );
+                                        dol_syslog("result=".$result);
+                                        if ($result <= 0)
+                                        {
+                                            $this->errors[]=$dBCommande->error;
+                                            $error++;
+                                        }
+                            
                                         unset($this->eCommerceProduct);
                                     }
                                 }
                             }
-                            //add delivery
-                            if ($commandeArray['delivery']['qty'] > 0)
+                            
+                            // Add specific line for delivery
+                            if (! $error && $commandeArray['delivery']['qty'] > 0)
                             {
                                 $delivery = $commandeArray['delivery'];
-                                
+                            
                                 // TODO Get buy price depending on margin option. No margin on delivery ?
                                 $buyprice=0;
+                            
+                                $result = $dBCommande->addline($delivery['description'], $delivery['price'], $delivery['qty'], $delivery['tva_tx'], 0, 0,
+                                    0, //fk_product
+                                    0, //remise_percent
+                                    0, //info_bits
+                                    0, //fk_remise_except
+                                    'HT', //price_base_type
+                                    0, //pu_ttc
+                                    '', //date_start
+                                    '', //date_end
+                                    1, //type 0:product 1:service
+                                    0, //rang
+                                    0, //special_code
+                                    0, // fk_parent_line
+                                    0, // fk_prod four_price
+                                    $buyprice
+                                    );
+                                if ($result <= 0)
+                                {
+                                    $this->errors[]=$dBCommande->error;
+                                    $error++;
+                                }
+                            }                            
+                            
+                            dol_syslog("synchCommande Status of order = ".$commandeArray['status']." dbCommande = ".$dBCommande->statut);
+                            if (! $error)
+                            {
+                                if ($dBCommande->statut != $commandeArray['status'])
+                                {
+                                    dol_syslog("synchCommande Status of order must be now set, we update order from status ".$dBCommande->statut." to status ".$commandeArray['status']);
+                                    if ($commandeArray['status'] == 0)
+                                    {
+                                        $dBCommande->set_draft($user, 0);
+                                    }
+                                    if ($commandeArray['status'] == 1)
+                                    {
+                                        $dBCommande->valid($user, 0);
+                                    }
+                                    if ($commandeArray['status'] == -1)
+                                    {
+                                        $dBCommande->cancel(0);
+                                    }
+                                }
+                            }
+                            
+                            //add or update contacts of order
+                            $commandeArray['socpeopleCommande']['fk_soc'] = $this->eCommerceSociete->fk_societe;
+                            $commandeArray['socpeopleFacture']['fk_soc'] = $this->eCommerceSociete->fk_societe;
+                            $commandeArray['socpeopleLivraison']['fk_soc'] = $this->eCommerceSociete->fk_societe;
+                            
+                            if (! $error)
+                            {
+                                dol_syslog("synchCommande Now we sync people/address");
+                                $socpeopleCommandeId = $this->synchSocpeople($commandeArray['socpeopleCommande']);  // $socpeopleCommandeId = id of socpeople into dolibarr table
+                                dol_syslog("synchCommande socpeopleCommandeId = ".$socpeopleCommandeId);
+                                $socpeopleFactureId = $this->synchSocpeople($commandeArray['socpeopleFacture']);
+                                dol_syslog("synchCommande socpeopleFactureId = ".$socpeopleFactureId);
+                                $socpeopleLivraisonId = $this->synchSocpeople($commandeArray['socpeopleLivraison']);
+                                dol_syslog("synchCommande socpeopleLivraisonId = ".$socpeopleLivraisonId);
                                 
-                                $dBCommande->addline($delivery['description'], $delivery['price'], $delivery['qty'], $delivery['tva_tx'], 0, 0, 
-                                        0, //fk_product
-                                        0, //remise_percent
-                                        0, //info_bits
-                                        0, //fk_remise_except
-                                        'HT', //price_base_type
-                                        0, //pu_ttc
-                                        '', //date_start
-                                        '', //date_end
-                                        1, //type 0:product 1:service
-                                        0, //rang
-                                        0, //special_code
-                                        0, // fk_parent_line
-                                        0, // fk_prod four_price
-                                        $buyprice
-                                );
+                                if ($socpeopleCommandeId > 0)
+                                    $dBCommande->add_contact($socpeopleCommandeId, 'CUSTOMER');
+                                if ($socpeopleFactureId > 0)
+                                    $dBCommande->add_contact($socpeopleFactureId, 'BILLING');
+                                if ($socpeopleLivraisonId > 0)
+                                    $dBCommande->add_contact($socpeopleLivraisonId, 'SHIPPING');
                             }
                         }
 
                         //if synchro commande ok
-                        if ($result >= 0)
+                        if (! $error)
                         {
                             $this->eCommerceCommande->last_update = $commandeArray['last_update'];
                             $this->eCommerceCommande->fk_commande = $dBCommande->id;
@@ -1498,25 +1547,33 @@ class eCommerceSynchro
                                 if ($this->eCommerceCommande->create($this->user) < 0)
                                 {
                                     $error++;
-                                    $this->errors[] = $this->errors . '<br>' . $this->langs->trans('ECommerceSyncheCommerceCommandeCreateError') . ' ' . $dBCommande->id;
+                                    $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceCommandeCreateError') . ' ' . $dBCommande->id;
                                 }
                             }
-                        } else
+                        }
+                        else
                         {
-                            $this->errors[] = $this->errors . '<br>' . $this->langs->trans('ECommerceSynchCommandeError');
+                            $this->errors[] = $this->langs->trans('ECommerceSynchCommandeError');
                         }
                         $nbgoodsunchronize = $nbgoodsunchronize + 1;
-                    } else
+                    } 
+                    else
                     {
                         $error++;
-                        $this->errors[] = $this->errors . '<br>' . $this->langs->trans('ECommerceSynchCommandeErrorSocieteNotExists') . ' ' . $commandeArray['remote_id_societe'];
+                        $this->errors[] = $this->langs->trans('ECommerceSynchCommandeErrorSocieteNotExists') . ' ' . $commandeArray['remote_id_societe'];
                     }
                     unset($dBCommande);
                     unset($this->eCommerceSociete);
                     unset($this->eCommerceCommande);
+                    
+                    if ($error) 
+                    {
+                        $nbrecorderror++;
+                        break;      // We decide to stop on first error
+                    }
                 }
                 
-                if (! $error)
+                if (! $nbrecorderror)
                 {
                     $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchCommandeSuccess');
                     $this->db->commit();
@@ -1538,15 +1595,21 @@ class eCommerceSynchro
     {
         global $conf, $user;
         
+        $factures = array();
+        
         try {
             
-            //Synchronize orders before
-            //$this->synchCommande();
-            
-            $nbgoodsunchronize = 0;
+            /*$nbgoodsunchronize = 0;
             if ($this->getNbFactureToUpdate(true) > 0)
-                $factures = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrFacture($this->getFactureToUpdate());
-            
+                $factures = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrFacture($this->getFactureToUpdate());*/
+
+            dol_syslog("synchFacture");
+            $resulttoupdate=$this->getFactureToUpdate();
+            if (is_array($resulttoupdate))
+            {
+                if (count($resulttoupdate) > 0) $factures = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrFacture($resulttoupdate);
+            }
+                
             if (count($factures))
             {
                 $this->db->begin();

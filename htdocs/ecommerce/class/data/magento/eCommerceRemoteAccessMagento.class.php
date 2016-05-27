@@ -18,7 +18,7 @@
  */
 
 dol_include_once('/ecommerce/admin/class/data/eCommerceDict.class.php');
-dol_include_once('/ecommegetSocieteToUpdaterce/class/data/eCommerceCategory.class.php');
+dol_include_once('/ecommerce/class/data/eCommerceCategory.class.php');
 dol_include_once('/ecommerce/class/data/eCommerceSociete.class.php');
 
 
@@ -592,7 +592,7 @@ class eCommerceRemoteAccessMagento
                 {
                     $configurableItems = array();
                     //retrive remote order from invoice
-                    $commande = $this->getCommande($facture['order_id']);
+                    $commande = $this->getRemoteCommande($facture['order_id']);
                     //set each invoice items
                     $items = array();
                     if (count($facture['items']))
@@ -692,16 +692,22 @@ class eCommerceRemoteAccessMagento
         return $factures;
     }
 
-    public function getCommande($remoteCommandeId)
+    
+    public function getRemoteCommande($remoteCommandeId)
     {
         $commande = array();
         try {
             dol_syslog("getCommande begin");
             $result = $this->client->call($this->session, 'sales_order.list', array(array('order_id' => $remoteCommandeId)));
+            //dol_syslog($this->client->__getLastRequest());
             if (count($result == 1))
+            {
                 $commande = $this->client->call($this->session, 'sales_order.info', $result[0]['increment_id']);
+                //dol_syslog($this->client->__getLastRequest());
+            }
             dol_syslog("getCommande end");
         } catch (SoapFault $fault) {
+            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
@@ -720,7 +726,9 @@ class eCommerceRemoteAccessMagento
         try {
             //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category.tree');
+            //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
+            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
@@ -728,7 +736,28 @@ class eCommerceRemoteAccessMagento
         dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree end");
         return $result;
     }
-
+    
+    /**
+     * Return the magento's category att
+     *
+     * @return  array|boolean       Array with categories or false if error
+     */
+    /*public function getRemoteCategoryAtt()
+    {
+        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryAtt session=".$this->session);
+        try {
+            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
+            $result = $this->client->call($this->session, 'catalog_category_attribute.list');
+            //dol_syslog($this->client->__getLastRequest());
+        } catch (SoapFault $fault) {
+            dol_syslog($this->client->__getLastRequest());
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }
+        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryAtt end");
+        return $result;
+    }*/
     
     /**
      * Return the magento's address id
@@ -742,7 +771,9 @@ class eCommerceRemoteAccessMagento
         try {
             //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'customer_address.list', array('customerId'=>$remote_thirdparty_id));
+            //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
+            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
@@ -764,7 +795,9 @@ class eCommerceRemoteAccessMagento
         try {
             //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category.info', array('categoryId'=>$category_id));
+            //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
+            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
@@ -809,7 +842,9 @@ class eCommerceRemoteAccessMagento
 			else $productData['price']=$object->price;
         	
         	$result = $this->client->call($this->session, 'catalog_product.update', array($remote_id, $productData, null, 'product_id'));
+        	//dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
+            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
@@ -833,9 +868,9 @@ class eCommerceRemoteAccessMagento
     
         try {
             $societeData = array(
-                'name' => $object->name,
-                'firstname' => $object->firstname,
-                'lastname' => $object->lastname,
+                //'name' => $object->name,
+                //'firstname' => $object->firstname,
+                //'lastname' => $object->lastname,
                 'email' => $object->email
             );
             /*if ($new_country_code) $productData['country_of_manufacture']=$new_country_code;
@@ -843,7 +878,9 @@ class eCommerceRemoteAccessMagento
             else $productData['price']=$object->price;*/
              
             $result = $this->client->call($this->session, 'customer.update', array($remote_id, $societeData));
+            //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
+            //dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
@@ -852,7 +889,47 @@ class eCommerceRemoteAccessMagento
         return $result;
     }
     
+    /**
+     * Update the remote contact
+     *
+     * @param   int     $remote_id      Id of contact on remote ecommerce
+     * @param   Contact $object         Contact object
+     * @return  boolean                 True or false
+     */
+    public function updateRemoteSocpeople($remote_id, $object)
+    {
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteSocpeople session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+    
+        $new_country_code = getCountry($object->country_id, 2);
 
+        try {
+            $contactData = array(
+                //'name' => $object->name,
+                'firstname' => $object->firstname,
+                'lastname' => $object->lastname,
+                'street' => array($object->address, ''),
+                'city' => $object->town,
+                'postcode' => $object->zip,
+                //'email' => $object->email
+                'telephone' => $object->phone_pro,
+                'fax' => $object->fax,
+                //'is_default_billing'
+                //'is_default_shipping'
+            );
+            if ($new_country_code) $contactData['country_id']=$new_country_code;
+             
+            $result = $this->client->call($this->session, 'customer_address.update', array($remote_id, $contactData));
+            //dol_syslog($this->client->__getLastRequest());
+        } catch (SoapFault $fault) {
+            dol_syslog($this->client->__getLastRequest());
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteSocpeople end");
+        return $result;
+    }
+    
     /**
      * Create shipment
      * 
@@ -863,10 +940,12 @@ class eCommerceRemoteAccessMagento
     public function createRemoteLivraison($livraison, $remote_order_id)
     {
         dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison session=".$this->session);
-        $commande = $this->getCommande($remote_order_id);
+        $commande = $this->getRemoteCommande($remote_order_id);
         try {
             $result = $this->client->call($this->session, 'sales_order_shipment.create', array($commande['increment_id'], array(), 'Shipment Created', true, true));
+            //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
+            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;

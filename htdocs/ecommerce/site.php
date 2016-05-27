@@ -134,7 +134,9 @@ if ($id)
     	/***************************************************
     	* Vars to build output tpl page
     	****************************************************/
-        $nbCategoriesInDolibarr = $synchro->getNbCategoriesInDolibarr(true);
+        
+		// Count into Dolibarr
+		$nbCategoriesInDolibarr = $synchro->getNbCategoriesInDolibarr(true);
 		if ($nbCategoriesInDolibarr < 0) $error++;
         $nbCategoriesInDolibarrLinkedToE = $synchro->getNbCategoriesInDolibarrLinkedToE($site->fk_cat_product);
 		
@@ -159,11 +161,11 @@ if ($id)
 			$nbFactureInDolibarrLinkedToE = $synchro->getNbFactureInDolibarrLinkedToE(true);
 		}
 
+		// Count into Magento
 		if (! $error)
 		{
 			if (! $error) $nbCategoriesToUpdate = $synchro->getNbCategoriesToUpdate(true);
 			if ($nbCategoriesToUpdate < 0) $error++;
-			exit;
 			if (! $error) $nbProductToUpdate = $synchro->getNbProductToUpdate(true);
 			if ($nbProductToUpdate < 0) $error++;
 			if (! $error) $nbSocieteToUpdate = $synchro->getNbSocieteToUpdate(true);

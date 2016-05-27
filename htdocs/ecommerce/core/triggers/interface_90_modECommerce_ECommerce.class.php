@@ -160,6 +160,72 @@ class InterfaceECommerce
 			}
         }
         
+        if ($action == 'CONTACT_MODIFY')
+        {
+            $this->db->begin();
+        
+            $eCommerceSite = new eCommerceSite($this->db);
+            $sites = $eCommerceSite->listSites('object');
+            	
+            foreach($sites as $site)
+            {
+                if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
+                {
+                    dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
+                    continue;
+                }
+                 
+                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+                dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+                $eCommerceSynchro->connect();
+                if (count($eCommerceSynchro->errors))
+                {
+                    $error++;
+                    setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+                }
+                	
+                if (! $error)
+                {
+                    $eCommerceSocpeople = new eCommerceSocpeople($this->db);
+                    $eCommerceSocpeople->fetchByFkSocpeople($object->id, $site->id);
+        
+                    if ($eCommerceSocpeople->remote_id > 0)
+                    {
+                        $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSocpeople($eCommerceSocpeople->remote_id, $object);
+                    }
+                    else
+                    {
+                        // Get current categories
+                        require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+                        $c = new Categorie($this->db);
+                        $catids = $c->containing($object->fk_soc, Categorie::TYPE_CUSTOMER, 'id');
+        
+                        if (in_array($site->fk_cat_societe, $catids))
+                        {
+                            dol_syslog("Contact with id ".$object->id." of societe with id ".$object->fk_soc." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
+                            // TODO
+                            //$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
+                        }
+                        else
+                        {
+                            dol_syslog("Contact with id ".$object->id." of societe with id ".$object->fk_soc." is not linked to an ecommerce record and does not has category flag to push on eCommerce.");
+                        }
+                    }
+                }
+            }
+        
+            if ($error)
+            {
+                $this->db->rollback();
+                return -1;
+            }
+            else
+            {
+                $this->db->commit();
+                return 1;
+            }
+        }
+        
         if ($action == 'PRODUCT_MODIFY')
         {
             $this->db->begin();
