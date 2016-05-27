@@ -367,6 +367,50 @@ class eCommerceFacture // extends CommonObject
             return -1;
         }
     }
+   
+    /**
+     *    Load object in memory from database by remote_id
+     *    @param	int    $factureId     Invoice id in Dolibarr
+     *    @param	int    $siteId        ID site
+     *    @return	int                   <0 if KO, >0 if OK
+     */
+    public function fetchByFactureId($factureId, $siteId)
+    {
+        global $langs;
+        $sql = "SELECT";
+        $sql.= " t.rowid,";
+        $sql.= " t.fk_facture,";
+        $sql.= " t.fk_site,";
+        $sql.= " t.remote_id,";
+        $sql.= " t.last_update";
+        $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_facture as t";
+        $sql.= " WHERE t.fk_site = ".$siteId;
+        $sql.= " AND t.fk_facture = ".$factureId;
+        dol_syslog(get_class($this)."::fetchByFactureId sql=".$sql, LOG_DEBUG);
+        $resql=$this->db->query($sql);
+        if ($resql)
+        {
+            if ($this->db->num_rows($resql)==1)
+            {
+                $obj = $this->db->fetch_object($resql);
+                $this->id    = $obj->rowid;
+                $this->fk_facture = $obj->fk_facture;
+                $this->fk_site = $obj->fk_site;
+                $this->remote_id = $obj->remote_id;
+                $this->last_update = $obj->last_update;
+                $this->db->free($resql);
+                return 1;
+            }
+            $this->db->free($resql);
+            return -1;
+        }
+        else
+        {
+            $this->error="Error ".$this->db->lasterror();
+            dol_syslog(get_class($this)."::fetchByFactureId ".$this->error, LOG_ERR);
+            return -1;
+        }
+    }
     
     /**	
      * 		Select all the ids from eCommerceFacture for a site
@@ -404,4 +448,4 @@ class eCommerceFacture // extends CommonObject
         }
     }
 }
-?>
+

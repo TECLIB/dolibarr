@@ -371,10 +371,12 @@ class eCommerceCommande
 	
 	/**
      *    Load object in memory from database by dolibarr commande_id
-     *    @param	$commandeId int commande_id
-     *    @return	int <0 if KO, >0 if OK
+     *    
+     *    @param	int    $commandeId     Order id in dolibarr
+     *    @param	int    $siteId         ID fk_site
+     *    @return	int                    <0 if KO, >0 if OK
      */
-	public function fetchByCommandeId($commandeId)
+	public function fetchByCommandeId($commandeId, $siteId)
     {
     	global $langs;
         $sql = "SELECT";
@@ -385,6 +387,7 @@ class eCommerceCommande
 		$sql.= " t.last_update";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_commande as t";
         $sql.= " WHERE t.fk_commande = ".$commandeId;
+        $sql.= " AND t.fk_site = ".$siteId;
     	dol_syslog(get_class($this)."::fetchByCommandeId sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)

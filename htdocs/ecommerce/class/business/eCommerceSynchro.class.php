@@ -1289,6 +1289,7 @@ class eCommerceSynchro
 
             dol_syslog("synchCommande");
             $resulttoupdate=$this->getCommandeToUpdate();
+           
             if (is_array($resulttoupdate))
             {
                 if (count($resulttoupdate) > 0) $commandes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrCommande($resulttoupdate);
@@ -1354,15 +1355,19 @@ class eCommerceSynchro
                                 if ($dBCommande->statut != $commandeArray['status'])
                                 {
                                     dol_syslog("Status of order has changed, we update order from status ".$dBCommande->statut." to status ".$commandeArray['status']);
-                                    if ($commandeArray['status'] == 0)
+                                    if ($commandeArray['status'] == Commande::STATUS_DRAFT)
                                     {
                                         $dBCommande->set_draft($user, 0);
                                     }
-                                    if ($commandeArray['status'] == 1)
+                                    if ($commandeArray['status'] == Commande::STATUS_VALIDATE)
                                     {
                                         $dBCommande->valid($user, 0);
                                     }
-                                    if ($commandeArray['status'] == -1)
+                                    if ($commandeArray['status'] == Commande::STATUS_SHIPMENTONPROCESS) 
+                                    {
+                                        $dBCommande->setStatut(Commande::STATUS_SHIPMENTONPROCESS, $dbCommande->id, $dbCommande->table_element);
+                                    }
+                                    if ($commandeArray['status'] == Commande::STATUS_CANCELED)
                                     {
                                         $dBCommande->cancel(0);
                                     }
@@ -1374,7 +1379,7 @@ class eCommerceSynchro
                             dol_syslog("synchCommande Order not found in Dolibarr, so we create it");
 
                             //create commande
-                            $dBCommande->statut=0;  // draft == pending on magento
+                            $dBCommande->statut=Commande::STATUS_DRAFT;             // STATUS_DRAFT by default
                             $dBCommande->ref_client = $commandeArray['ref_client'];
                             $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
                             $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
@@ -1476,26 +1481,30 @@ class eCommerceSynchro
                                     $error++;
                                 }
                             }                            
-                            
+                 
                             dol_syslog("synchCommande Status of order = ".$commandeArray['status']." dbCommande = ".$dBCommande->statut);
                             if (! $error)
                             {
-                                if ($dBCommande->statut != $commandeArray['status'])
-                                {
+                                //if ($dBCommande->statut != $commandeArray['status'])      // Always when creating
+                                //{
                                     dol_syslog("synchCommande Status of order must be now set, we update order from status ".$dBCommande->statut." to status ".$commandeArray['status']);
-                                    if ($commandeArray['status'] == 0)
+                                    if ($commandeArray['status'] == Commande::STATUS_DRAFT)   // status draft. Should not happen with magento
                                     {
-                                        $dBCommande->set_draft($user, 0);
+                                        // Nothing to do
                                     }
-                                    if ($commandeArray['status'] == 1)
+                                    if ($commandeArray['status'] == Commande::STATUS_VALIDATED) 
                                     {
                                         $dBCommande->valid($user, 0);
                                     }
-                                    if ($commandeArray['status'] == -1)
+                                    if ($commandeArray['status'] == Commande::STATUS_SHIPMENTONPROCESS) 
+                                    {
+                                        $dBCommande->setStatut(Commande::STATUS_SHIPMENTONPROCESS, $dbCommande->id, $dbCommande->table_element);
+                                    }
+                                    if ($commandeArray['status'] == Commande::STATUS_CANCELED)
                                     {
                                         $dBCommande->cancel(0);
                                     }
-                                }
+                                //}
                             }
                             
                             //add or update contacts of order
@@ -1850,9 +1859,11 @@ class eCommerceSynchro
     }
 
     /**
-     * Synchronize delivery
-     * @param object livraison
-     * @return bool true or false
+     * Synchronize shipment
+     * 
+     * @param   Shipment    $livraison          Shipment object
+     * @param   int         $remote_order_id    Remote id of order
+     * @return  bool                            true or false
      */
     public function synchLivraison($livraison, $remote_order_id)
     {
@@ -1863,6 +1874,14 @@ class eCommerceSynchro
         }
     }
 
+    
+    
+    /**
+     * Return dictionnary entry for a code
+     * 
+     * @param   string    $code         Code of payment term
+     * @return  mixed                   Record
+     */
     public function getSettlementTermsId($code)
     {
         $table = MAIN_DB_PREFIX . "c_payment_term";

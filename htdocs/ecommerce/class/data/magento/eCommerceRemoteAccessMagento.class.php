@@ -177,7 +177,7 @@ class eCommerceRemoteAccessMagento
             try {
                 $results = $this->client->multiCall($this->session, $calls);
             } catch (SoapFault $fault) {
-                //echo 'convertRemoteObjectIntoDolibarrCommande :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
+                //echo 'getCommandeToUpdate :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
             }
             
             dol_syslog("getCommandeToUpdate end");
@@ -398,6 +398,7 @@ class eCommerceRemoteAccessMagento
 
     /**
      * Put the remote data into commande dolibarr data from instantiated class in the constructor
+     * 
      * @param $remoteObject array
      * @return array commande
      */
@@ -528,12 +529,13 @@ class eCommerceRemoteAccessMagento
                         $deliveryDate = $commande['created_at'];
 
                     // define status of order
-                    $tmp = $commande['state'];       # Works also with $commande['status']           'pending', 'processing', 'holded', ...
-                    $status = 0;                                // draft = pending
-                    if ($tmp == 'processing')   $status = 1;    // validated = processing
-                    if ($tmp == 'holded')       $status = -1;   // canceled = holded
-                    
-                    //add order to orders
+                    $tmp = $commande['status'];                                                  // We choosed to use status (and not state) so value like:  'pending', 'processing', 'holded', ...
+                    $status = Commande::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
+                    if ($tmp == 'pending')      $status = Commande::STATUS_VALIDATED;            // validated = pending
+                    if ($tmp == 'processing')   $status = Commande::STATUS_SHIPMENTONPROCESS;    // shipment in process = processing
+                    if ($tmp == 'holded')       $status = Commande::STATUS_CANCELED;             // canceled = holded
+
+                    // Add order content to array or orders
                     $commandes[] = array(
                             'last_update' => $commande['updated_at'],
                             'remote_id' => $commande['order_id'],
@@ -939,10 +941,10 @@ class eCommerceRemoteAccessMagento
      */
     public function createRemoteLivraison($livraison, $remote_order_id)
     {
-        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison session=".$this->session);
-        $commande = $this->getRemoteCommande($remote_order_id);
+        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison session=".$this->session." dolibarr shipment id = ".$livraison->id.", ref = ".$livraison->ref.", order remote id = ".$remote_order_id);
+        $remoteCommande = $this->getRemoteCommande($remote_order_id);   // SOAP request to get data
         try {
-            $result = $this->client->call($this->session, 'sales_order_shipment.create', array($commande['increment_id'], array(), 'Shipment Created', true, true));
+            $result = $this->client->call($this->session, 'sales_order_shipment.create', array($remoteCommande['increment_id'], array(), 'Shipment Created from '.$livraison->ref, true, true));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
             dol_syslog($this->client->__getLastRequest());

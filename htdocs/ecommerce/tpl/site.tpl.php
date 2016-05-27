@@ -176,7 +176,7 @@ $var=!$var;
 				<form name="form_synchro_commande" id="form_synchro_facture" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
 					<input type="hidden" name="id" value="<?php print $site->id ?>">
 					<input type="hidden" name="to_date" value="<?php print $toDate ?>">
-					<input type="submit" name="submit_synchro_commande" id="submit_synchro_facture" class="button" disabled="disabled" value="<?php print $langs->trans('ECommerceSynchronizeCommande').' ('.$langs->trans("SyncSocieteFirst").')'; ?>">
+					<input type="submit" name="submit_synchro_commande" id="submit_synchro_facture" class="button" disabled="disabled" value="<?php print $langs->trans('ECommerceSynchronizeFacture').' ('.$langs->trans("SyncSocieteFirst").')'; ?>">
 				</form>
 				<?php } elseif ($nbFactureToUpdate>0) { ?>
 				<form name="form_synchro_facture" id="form_synchro_facture" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">

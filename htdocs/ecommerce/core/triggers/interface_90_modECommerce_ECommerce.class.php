@@ -1,6 +1,6 @@
 <?php
-/* Copyright (C) 2010 Franck Charpentier - Auguria <franck.charpentier@auguria.net>
- * Copyright (C) 2013 Laurent Destailleur          <eldy@users.sourceforge.net>
+/* Copyright (C) 2010      Franck Charpentier - Auguria <franck.charpentier@auguria.net>
+ * Copyright (C) 2013-2016 Laurent Destailleur          <eldy@users.sourceforge.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -93,6 +93,7 @@ class InterfaceECommerce
      */
 	function run_trigger($action,$object,$user,$langs,$conf)
     {
+    	$error=0;
     	
         if ($action == 'COMPANY_MODIFY')
         {
@@ -126,6 +127,12 @@ class InterfaceECommerce
     				if ($eCommerceSociete->remote_id > 0)
     				{
     				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSociete($eCommerceSociete->remote_id, $object);
+    				    if (! $result)
+    				    {
+    				        $error++;
+    				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+    				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+    				    }
     				}
     				else
     				{
@@ -192,6 +199,12 @@ class InterfaceECommerce
                     if ($eCommerceSocpeople->remote_id > 0)
                     {
                         $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSocpeople($eCommerceSocpeople->remote_id, $object);
+                        if (! $result)
+    				    {
+    				        $error++;
+    				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+    				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+    				    }
                     }
                     else
                     {
@@ -258,6 +271,12 @@ class InterfaceECommerce
     				if ($eCommerceProduct->remote_id > 0)
     				{
                 		$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id, $object);
+    				    if (! $result)
+    				    {
+    				        $error++;
+    				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+    				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+    				    }
     				}
     				else
     				{
@@ -445,43 +464,87 @@ class InterfaceECommerce
         
         
         
-        
+        // A shipment is validated, it means order has status "In process"
         if ($action == 'SHIPPING_VALIDATE')
         {
-        	try
-        	{
-	            dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
-	            
-        		//retrieve shipping id
-        		$shippingId = $object->id;        		
-        	
-        		$origin = $object->origin;
-        		$origin_id = $object->origin_id;
-        		
-				$orderId = $origin_id;
+	        dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
+	        
+            $this->db->begin();
 
-        		//load eCommerce Commande by order id
-	            $eCommerceCommande = new eCommerceCommande($this->db);
-	            $eCommerceCommande->fetchByCommandeId($orderId);
-	            
-	            if (isset($eCommerceCommande->id) &&  $eCommerceCommande->id > 0)
-	            {
-		            //set eCommerce site
-		            $eCommerceSite = new eCommerceSite($this->db);
-		            $eCommerceSite->fetch($eCommerceCommande->fk_site);
-		            
-		            $synchro = new eCommerceSynchro($this->db, $eCommerceSite);
-		            $synchro->synchLivraison($object, $eCommerceCommande->remote_id);
-					return 1;
-	            }
-        	}
-        	catch (Exception $e)
+	        $eCommerceSite = new eCommerceSite($this->db);
+            $sites = $eCommerceSite->listSites('object');
+            	
+            foreach($sites as $site)
+            {
+                if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
+                {
+                    dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
+                    continue;
+                }
+
+            	try
+            	{
+            		//retrieve shipping id
+            		$shippingId = $object->id;        		
+            	
+            		$origin = $object->origin;
+            		$origin_id = $object->origin_id;
+    
+    				$orderId = $origin_id;
+    				
+            		//load eCommerce Commande by order id
+    	            $eCommerceCommande = new eCommerceCommande($this->db);
+    	            $eCommerceCommande->fetchByCommandeId($orderId, $site->id);
+
+    	            if (isset($eCommerceCommande->remote_id) && $eCommerceCommande->remote_id > 0)
+    	            {
+    		            $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+    		            dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+    		            $eCommerceSynchro->connect();
+    		            if (count($eCommerceSynchro->errors))
+    		            {
+    		                $error++;
+    		                setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+    		            }
+
+    		            if (! $error)
+    		            {
+    		                dol_syslog("Trigger ".$action." call synchLivraison for object shipment id = ".$object->id." and order id = ".$origin_id.", order remote id = ".$eCommerceCommande->remote_id);
+                            $result = $eCommerceSynchro->synchLivraison($object, $eCommerceCommande->remote_id);
+                            if (! $result)
+                            {
+                                $error++;
+                                $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+                                $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+                            }
+    		            }
+    	            }
+    	            else
+    	            {
+    	                dol_syslog("This order id = ".$orderId." is not linked to this eCommerce site id = ".$site->id.", so we do nothing");
+    	            }
+            	}
+            	catch (Exception $e)
+            	{
+                	$this->errors[] = 'Trigger exception : '.$e->getMessage();
+    	            dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id." ".'Trigger exception : '.$e->getMessage());
+                	break;
+            	}
+            }
+            
+        	if ($error)
         	{
-            	$this->errors = 'Trigger exception : '.$e;
-	            dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id." ".$this->errors);
-            	return -1;
+        	    $this->db->rollback();
+        	    return -1;
         	}
+        	else
+        	{
+        	    $this->db->commit();
+        	    return 1;
+        	}        	
         }
+        
+        
 		return 0;
     }
 

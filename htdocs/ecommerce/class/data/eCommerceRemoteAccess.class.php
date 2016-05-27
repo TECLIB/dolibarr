@@ -322,7 +322,7 @@ class eCommerceRemoteAccess
 	/**
      * Create a remote livraison from instantiated class in the constructor
      * 
-     * @param Object    $livraison object livraison
+     * @param Object    $livraison              Object livraison
      * @param int       $remote_order_id        String id remote order
      * @return bool
      */
