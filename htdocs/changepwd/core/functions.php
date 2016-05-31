@@ -38,6 +38,11 @@ function changePassword($user,$oldPassword,$newPassword,$newPasswordCnf){
     return false;
   }
 
+  if ($oldPassword == $newPassword ) {
+    $message[] = "<div style='color:red; font-weight:bold;'>Error E111 - Votre nouveau mot de passe correspond à votre mot de passe actuel, vous devez en choisir un NOUVEAU!</div>";
+    return false;
+  }
+
   if ($newPassword != $newPasswordCnf ) {
     $message[] = "<div style='color:red; font-weight:bold;'>Error E101 - Vos nouveaux mots de passe ne sont pas les mêmes!</div>";
     return false;
