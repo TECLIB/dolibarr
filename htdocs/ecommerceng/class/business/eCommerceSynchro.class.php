@@ -21,15 +21,15 @@
  * Class for synchronize remote sites with Dolibarr
  */
  
-dol_include_once('/ecommerce/class/data/eCommerceRemoteAccess.class.php');
-dol_include_once('/ecommerce/class/data/eCommerceCommande.class.php');
-dol_include_once('/ecommerce/class/data/eCommerceFacture.class.php');
-dol_include_once('/ecommerce/class/data/eCommerceProduct.class.php');
-dol_include_once('/ecommerce/class/data/eCommerceSociete.class.php');
-dol_include_once('/ecommerce/class/data/eCommerceSocpeople.class.php');
-dol_include_once('/ecommerce/class/data/eCommerceSite.class.php');
-dol_include_once('/ecommerce/class/data/eCommerceCategory.class.php');
-dol_include_once('/ecommerce/admin/class/data/eCommerceDict.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceRemoteAccess.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceCommande.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceFacture.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceProduct.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceSociete.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceSocpeople.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceCategory.class.php');
+dol_include_once('/ecommerceng/admin/class/data/eCommerceDict.class.php');
 
 require_once(DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');

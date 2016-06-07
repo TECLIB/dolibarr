@@ -28,8 +28,8 @@ if (! $res && file_exists("../../../../../main.inc.php")) $res=@include("../../.
 if (! $res && preg_match('/\/nltechno([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res) die("Include of main fails");
-dol_include_once("/ecommerce/class/business/eCommerceSynchro.class.php");
-$langs->load("ecommerce@ecommerce");
+dol_include_once("/ecommerceng/class/business/eCommerceSynchro.class.php");
+$langs->load("ecommerce@ecommerceng");
 $errors = array();
 $success = array();
 $site = null;
@@ -44,7 +44,7 @@ $langs->load("admin");
 $langs->load("ecommerce");
 
 // Protection if external user
-if ($user->societe_id > 0 || !$user->rights->ecommerce->read)
+if ($user->societe_id > 0 || !$user->rights->ecommerceng->read)
 {
 	accessforbidden();
 }
@@ -95,7 +95,7 @@ if ($id)
 		}*/
 		
 		//synch only with write rights
-		if (! $error && $user->rights->ecommerce->write)
+		if (! $error && $user->rights->ecommerceng->write)
 		{
 			if (GETPOST('reset_data'))
 			{
@@ -175,6 +175,7 @@ if ($id)
                 if (! $error) $nbCommandeToUpdate = $synchro->getNbCommandeToUpdate(true);
                 if ($nbCommandeToUpdate < 0) $error++;
             }
+            //exit;
 			if (! $error) $nbFactureToUpdate = $synchro->getNbFactureToUpdate(true);
 			if ($nbFactureToUpdate < 0) $error++;
 
@@ -184,7 +185,7 @@ if ($id)
 			    $site->update($user);
 			}
 			
-			if ($user->rights->ecommerce->write)
+			if ($user->rights->ecommerceng->write)
 				$synchRights = true;
 			
 			if (count($synchro->success))
@@ -203,7 +204,7 @@ if ($id)
 /***************************************************
 * Show page
 ****************************************************/
-$urltpl=dol_buildpath('/ecommerce/tpl/site.tpl.php',0);
+$urltpl=dol_buildpath('/ecommerceng/tpl/site.tpl.php',0);
 include($urltpl);
 
 $db->close();

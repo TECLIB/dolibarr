@@ -18,7 +18,7 @@
  */
 
 
-dol_include_once('/ecommerce/class/data/eCommerceSociete.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceSociete.class.php');
 
 class eCommerceSite // extends CommonObject
 {

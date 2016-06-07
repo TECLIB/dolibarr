@@ -18,7 +18,7 @@
  */
 
 
-dol_include_once('/ecommerce/class/business/eCommerceSynchro.class.php');
+dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
 
 require_once(DOL_DOCUMENT_ROOT.'/expedition/class/expedition.class.php');
 

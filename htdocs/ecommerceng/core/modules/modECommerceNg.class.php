@@ -21,21 +21,21 @@
 require_once(DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php');
 require_once(DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php');
 
-dol_include_once('/ecommerce/admin/class/gui/eCommerceMenu.class.php');
-dol_include_once('/ecommerce/admin/class/data/eCommerceDict.class.php');
+dol_include_once('/ecommerceng/admin/class/gui/eCommerceMenu.class.php');
+dol_include_once('/ecommerceng/admin/class/data/eCommerceDict.class.php');
 
 
 /**
  *  Description and activation class for module ECommerce
  */
-class modECommerce extends DolibarrModules
+class modECommerceNg extends DolibarrModules
 {
 	/**
 	 *   Constructor. Define names, constants, directories, boxes, permissions
 	 *   
 	 *   @param    DoliDB      $db      Database handler
 	 */
-	function modECommerce($db)
+	function __construct($db)
 	{
 		$this->db = $db;
 
@@ -43,15 +43,15 @@ class modECommerce extends DolibarrModules
 		// Use here a free id (See in Home -> System information -> Dolibarr for list of used modules id).
 		$this->numero = 107100;
 		// Key text used to identify module (for permissions, menus, etc...)
-		$this->rights_class = 'ecommerce';
+		$this->rights_class = 'ecommerceng';
 
 		// Family can be 'crm','financial','hr','projects','products','ecm','technic','other'
 		// It is used to group modules in module setup page
 		$this->family = "other";
 		// Module label (no space allowed), used if translation string 'ModuleXXXName' not found (where XXX is value of numeric property 'numero' of module)
-		$this->name = 'Ecommerce';        //  Must be same than value used for if $conf->ecommerce->enabled
+		$this->name = 'EcommerceNg';        //  Must be same than value used for if $conf->ecommerceng->enabled
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
-		$this->description = "Module to synchronise Dolibarr with Magento ECommerce platform";
+		$this->description = "Module to synchronise Dolibarr with ECommerce platform (currently ecommerce supported: Magento)";
 		$this->descriptionlong = "See page https://wiki.dolibarr.org/index.php/Module_Magento_EN for more information";
 		$this->editor_name = 'TecLib';
 		$this->editor_url = 'http://www.teclib.com';
@@ -65,9 +65,9 @@ class modECommerce extends DolibarrModules
 		// Name of image file used for this module.
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/images directory, use this->picto=DOL_URL_ROOT.'/module/images/file.png'
-		$this->picto='eCommerce.png@ecommerce';
+		$this->picto='eCommerce.png@ecommerceng';
                 
-                // Defined all module parts (triggers, login, substitutions, menus, css, etc...)
+        // Defined all module parts (triggers, login, substitutions, menus, css, etc...)
 		// for default path (eg: /mymodule/core/xxxxx) (0=disable, 1=enable)
 		// for specific path of parts (eg: /mymodule/core/modules/barcode)
 		// for specific css file (eg: /mymodule/css/mymodule.css.php)
@@ -95,14 +95,14 @@ class modECommerce extends DolibarrModules
 		$this->style_sheet = '';
 
 		// Config pages. Put here list of php page names stored in admmin directory used to setup module.
-		$this->config_page_url = array('eCommerceSetup.php@ecommerce');
+		$this->config_page_url = array('eCommerceSetup.php@ecommerceng');
 
 		// Dependencies
-		$this->depends = array("modFacture","modSociete","modProduit","modCategorie","modWebServices");		// List of modules id that must be enabled if this module is enabled
+		$this->depends = array("modSociete","modProduct","modCategorie","modWebServices");		// List of modules id that must be enabled if this module is enabled
 		$this->requiredby = array();	// List of modules id to disable if this one is disabled
 		$this->phpmin = array(4,3);					// Minimum version of PHP required by module
 		$this->need_dolibarr_version = array(2,7);	// Minimum version of Dolibarr required by module
-		$this->langfiles = array("ecommerce@ecommerce");
+		$this->langfiles = array("ecommerce@ecommerceng");
 
 		// Constants
 		$this->const = array();			// List of particular constants to add when module is enabled
@@ -138,13 +138,13 @@ class modECommerce extends DolibarrModules
 
 		// Permissions
 		$this->rights = array();		// Permission array used by this module
-		$this->rights_class = 'ecommerce';
+		$this->rights_class = 'ecommerceng';
 		$r=0;
 
 		$r++;
 		$this->rights[$r][0] = 107101;
 		$this->rights[$r][1] = 'See synchronization status';
-		$this->rights[$r][3] = 0;
+		$this->rights[$r][3] = 1;
 		$this->rights[$r][4] = 'read';
 
 		$r++;
@@ -236,7 +236,7 @@ class modECommerce extends DolibarrModules
 	 */
 	function load_tables()
 	{
-		return $this->_load_tables('/ecommerce/sql/');
+		return $this->_load_tables('/ecommerceng/sql/');
 	}
 	
 	/**

@@ -17,9 +17,9 @@
  * or see http://www.gnu.org/
  */
 
-dol_include_once('/ecommerce/admin/class/data/eCommerceDict.class.php');
-dol_include_once('/ecommerce/class/data/eCommerceCategory.class.php');
-dol_include_once('/ecommerce/class/data/eCommerceSociete.class.php');
+dol_include_once('/ecommerceng/admin/class/data/eCommerceDict.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceCategory.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceSociete.class.php');
 
 
 /**
@@ -107,7 +107,7 @@ class eCommerceRemoteAccessMagento
     public function getSocieteToUpdate($fromDate, $toDate)
     {
         try {
-            dol_syslog("getSocieteToUpdate start gt => ".dol_print_date($fromDate, 'standard').", lt => ".dol_print_date($toDate, 'standard'));
+            dol_syslog("getSocieteToUpdate start gt = ".dol_print_date($fromDate, 'standard').", lt = ".dol_print_date($toDate, 'standard'));
             $filter = array(
                 array('updated_at' => array('gt' => dol_print_date($fromDate, 'standard'), 'lt' => dol_print_date($toDate, 'standard')))
             );

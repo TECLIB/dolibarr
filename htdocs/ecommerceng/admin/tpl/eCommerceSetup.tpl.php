@@ -23,7 +23,7 @@ llxHeader();
 print_fiche_titre($langs->trans("ECommerceSetup"),$linkback,'setup');
 
 ?>
-	<script type="text/javascript" src="<?php print dol_buildpath('/ecommerce/js/form.js',1); ?>"></script>
+	<script type="text/javascript" src="<?php print dol_buildpath('/ecommerceng/js/form.js',1); ?>"></script>
 	<br/>
 	<form id="site_form_select" name="site_form_select" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
 		<select class="flat" id="site_form_select_site" name="site_form_select_site" onchange="eCommerceSubmitForm('site_form_select')">

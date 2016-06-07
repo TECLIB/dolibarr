@@ -1,6 +1,6 @@
 <?php
 /* Copyright (C) 2010 Franck Charpentier - Auguria <franck.charpentier@auguria.net>
- * Copyright (C) 2013 Laurent Destailleur          <eldy@users.sourceforge.net>
+ * Copyright (C) 2016 Laurent Destailleur          <eldy@users.sourceforge.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,17 +31,18 @@ if (! $res) die("Include of main fails");
 
 require_once(DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php');
-dol_include_once('/ecommerce/class/data/eCommerceSite.class.php');
-dol_include_once('/ecommerce/admin/class/gui/eCommerceMenu.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
+dol_include_once('/ecommerceng/admin/class/gui/eCommerceMenu.class.php');
 
 
 $langs->load('admin');
-$langs->load('ecommerce@ecommerce');
+$langs->load('ecommerce@ecommerceng');
+
 $siteId = null;
 $errors = array();
 $success = array();
 //CHECK ACCESS
-if (!$user->admin || !$user->rights->ecommerce->site)
+if (!$user->admin || !$user->rights->ecommerceng->site)
     accessforbidden();
 
 //DATABASE ACCESS
@@ -169,7 +170,7 @@ else
     $title = $langs->trans('ECommerceCreateSite');
 
 //SHOW PAGE
-$urltpl=dol_buildpath('/ecommerce/admin/tpl/eCommerceSetup.tpl.php',0);
+$urltpl=dol_buildpath('/ecommerceng/admin/tpl/eCommerceSetup.tpl.php',0);
 include($urltpl);
 
 $soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');

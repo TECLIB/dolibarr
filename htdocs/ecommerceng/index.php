@@ -28,11 +28,11 @@ if (! $res && file_exists("../../../../../main.inc.php")) $res=@include("../../.
 if (! $res && preg_match('/\/nltechno([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res) die("Include of main fails");
-dol_include_once("/ecommerce/class/data/eCommerceSite.class.php");
+dol_include_once("/ecommerceng/class/data/eCommerceSite.class.php");
 set_time_limit(600);
 
 $langs->load("admin");
-$langs->load("ecommerce@ecommerce");
+$langs->load("ecommerce@ecommerceng");
 //$langs->load("companies");
 //$langs->load("users");
 //$langs->load("orders");
@@ -44,7 +44,7 @@ $langs->load("ecommerce@ecommerce");
 ****************************************************/
 //CHECK ACCESS
 // Protection if external user
-if ($user->societe_id > 0 || !$user->rights->ecommerce->read)
+if ($user->societe_id > 0 || !$user->rights->ecommerceng->read)
 {
 	accessforbidden();
 }
@@ -61,7 +61,7 @@ $sites = $eCommerceSite->listSites('object');
 ****************************************************/
 $var=true;
 
-$urltpl=dol_buildpath('/ecommerce/tpl/index.tpl.php',0);
+$urltpl=dol_buildpath('/ecommerceng/tpl/index.tpl.php',0);
 include($urltpl);
 
 $db->close();

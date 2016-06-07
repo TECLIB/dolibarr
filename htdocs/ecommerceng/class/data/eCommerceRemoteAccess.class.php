@@ -43,7 +43,7 @@ class eCommerceRemoteAccess
                 
         $this->setName();
 
-        dol_include_once('/ecommerce/class/data/'.$this->dirName.'/eCommerceRemoteAccess'.$this->className.'.class.php');
+        dol_include_once('/ecommerceng/class/data/'.$this->dirName.'/eCommerceRemoteAccess'.$this->className.'.class.php');
         
         $this->setClass();        
         

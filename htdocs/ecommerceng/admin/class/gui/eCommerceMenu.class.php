@@ -22,8 +22,8 @@
  * Class for update menus
  */
 
-dol_include_once('/ecommerce/core/modules/modECommerce.class.php');
-dol_include_once('/ecommerce/class/data/eCommerceSite.class.php');
+dol_include_once('/ecommerceng/core/modules/modECommerceNg.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 
 class eCommerceMenu
 {
@@ -58,11 +58,11 @@ class eCommerceMenu
     					'titre'=>'ECommerceMenu',
     					'mainmenu'=>'ecommerce',
     					'leftmenu'=>'ecommerce',
-    					'url'=>'/ecommerce/index.php',
-    					'langs'=>'ecommerce@ecommerce',
+    					'url'=>'/ecommerceng/index.php',
+    					'langs'=>'ecommerce@ecommerceng',
     					'position'=>100,
-    					'enabled'=>'$conf->ecommerce->enabled',
-    					'perms'=>'$user->rights->ecommerce->read',
+    					'enabled'=>'$conf->ecommerceng->enabled',
+    					'perms'=>'$user->rights->ecommerceng->read',
     					'target'=>'',
     					'user'=>2);
     	//define left menu
@@ -71,11 +71,11 @@ class eCommerceMenu
     					'titre'=>'ECommerceMenu',
     					'mainmenu'=>'ecommerce',
     	                'leftmenu'=>'ecommerce',
-    					'url'=>'/ecommerce/index.php',
-    					'langs'=>'ecommerce@ecommerce',
+    					'url'=>'/ecommerceng/index.php',
+    					'langs'=>'ecommerce@ecommerceng',
     					'position'=>100,
-    					'enabled'=>'$conf->ecommerce->enabled',
-    					'perms'=>'$user->rights->ecommerce->read',
+    					'enabled'=>'$conf->ecommerceng->enabled',
+    					'perms'=>'$user->rights->ecommerceng->read',
     					'target'=>'',
     					'user'=>2);
     	
@@ -85,11 +85,11 @@ class eCommerceMenu
     					'titre'=>'ECommerceSetupSites',
     					'mainmenu'=>'ecommerce',
     	                'leftmenu'=>'ecommerce',
-    					'url'=>'/ecommerce/admin/eCommerceSetup.php',
-    					'langs'=>'ecommerce@ecommerce',
+    					'url'=>'/ecommerceng/admin/eCommerceSetup.php',
+    					'langs'=>'ecommerce@ecommerceng',
     					'position'=>110,
-    					'enabled'=>'$conf->ecommerce->enabled',
-    					'perms'=>'$user->rights->ecommerce->site',
+    					'enabled'=>'$conf->ecommerceng->enabled',
+    					'perms'=>'$user->rights->ecommerceng->site',
     					'target'=>'',
     					'user'=>2);
     	
@@ -102,11 +102,11 @@ class eCommerceMenu
     							'titre'=>$site['name'],
     							'mainmenu'=>'ecommerce',
     			                'leftmenu'=>'ecommerce',
-    							'url'=>'/ecommerce/site.php?id='.$site['id'],
-    							'langs'=>'ecommerce@ecommerce',
+    							'url'=>'/ecommerceng/site.php?id='.$site['id'],
+    							'langs'=>'ecommerce@ecommerceng',
     							'position'=>120,
-    							'enabled'=>'$conf->ecommerce->enabled',
-    							'perms'=>'$user->rights->ecommerce->read',
+    							'enabled'=>'$conf->ecommerceng->enabled',
+    							'perms'=>'$user->rights->ecommerceng->read',
     							'target'=>'',
     							'user'=>2);
     	return $menu;
@@ -118,7 +118,7 @@ class eCommerceMenu
     function updateMenu()
     {
     	if ($this->module == null)
-        	$this->module = new modECommerce($this->db);
+        	$this->module = new modECommerceNg($this->db);
         	
     	$this->module->menu = $this->getMenu();
     	$this->module->db->begin();

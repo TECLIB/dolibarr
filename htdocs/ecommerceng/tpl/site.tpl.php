@@ -6,7 +6,7 @@ if (is_object($site))
 {
     $linkback='<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
     
-    print_fiche_titre($langs->trans('ECommerceSiteSynchro').' '.$site->name, $linkback, 'eCommerceTitle@ecommerce');
+    print_fiche_titre($langs->trans('ECommerceSiteSynchro').' '.$site->name, $linkback, 'eCommerceTitle@ecommerceng');
     
     print '<br>';
     
@@ -28,7 +28,7 @@ if (is_object($site))
     
     print '<br>'."\n";
 ?>
-	<script type="text/javascript" src="<?php print dol_buildpath('/ecommerce/js/form.js',1); ?>"></script>
+	<script type="text/javascript" src="<?php print dol_buildpath('/ecommerceng/js/form.js',1); ?>"></script>
 	<table class="noborder" width="100%">
 		<tr class="liste_titre">
 			<td><?php print $langs->trans('ECommerceObjectToUpdate') ?></td>
@@ -222,7 +222,7 @@ $var=!$var;
 }
 else
 {
-	print_fiche_titre($langs->trans("ECommerceSiteSynchro"),$linkback,'eCommerceTitle@ecommerce');
+	print_fiche_titre($langs->trans("ECommerceSiteSynchro"),$linkback,'eCommerceTitle@ecommerceng');
 	$errors[] = $langs->trans('ECommerceSiteError');
 }
 
