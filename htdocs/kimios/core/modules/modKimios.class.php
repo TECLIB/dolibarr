@@ -34,7 +34,7 @@ class modKimios extends DolibarrModules {
         global $langs,$conf;
 
         $this->db = $db;
-		$this->numero = 107100;
+		$this->numero = 107200;
 		$this->rights_class = 'kimios';
 		$this->family = "ecm";
 		$this->name = preg_replace('/^mod/i','',get_class($this));
@@ -59,7 +59,7 @@ class modKimios extends DolibarrModules {
 		$r=0;
 
 		$r++;
-		$this->rights[$r][0] = 62354;
+		$this->rights[$r][0] = 107201;
 		$this->rights[$r][1] = 'Envoyer les fiches de payes';
 		$this->rights[$r][2] = 'a';
 		$this->rights[$r][3] = 1;
