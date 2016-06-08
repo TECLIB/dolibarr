@@ -99,33 +99,27 @@ if ($id)
 		{
 			if (GETPOST('reset_data'))
 			{
-			    dol_syslog("**** dropImportedAndSyncData");
 				$synchro->dropImportedAndSyncData();
 			}
 
 			if (GETPOST('submit_synchro_category') || GETPOST('submit_synchro_all'))
 			{
-			    dol_syslog("**** synchCategory");
 				$synchro->synchCategory();
 			}
 			if (GETPOST('submit_synchro_product') || GETPOST('submit_synchro_all'))
 			{
-			    dol_syslog("**** synchProduct");
 				$synchro->synchProduct();
 			}
 			if (GETPOST('submit_synchro_societe') || GETPOST('submit_synchro_all'))
 			{
-			    dol_syslog("**** synchSociete");
 				$synchro->synchSociete();
 			}
 			if (GETPOST('submit_synchro_commande') || GETPOST('submit_synchro_all'))
 			{
-			    dol_syslog("**** synchCommande");
 				$synchro->synchCommande();
 			}
 			if (GETPOST('submit_synchro_facture') || GETPOST('submit_synchro_all'))
 			{
-			    dol_syslog("**** synchFacture");
 				$synchro->synchFacture();
 			}
 		}

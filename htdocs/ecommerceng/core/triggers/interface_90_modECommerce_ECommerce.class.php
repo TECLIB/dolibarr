@@ -573,7 +573,8 @@ class InterfaceECommerce
                         setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
                     }
                     
-                    if (! $error)
+                    // Do we sync the stock ?
+                    if (! $error && $site->stock_sync_direction == 'dolibarr2ecommerce')
                     {
                         $eCommerceProduct = new eCommerceProduct($this->db);
                         $eCommerceProduct->fetchByProductId($object->product_id, $site->id);

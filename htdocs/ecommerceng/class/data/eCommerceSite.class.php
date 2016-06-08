@@ -265,10 +265,11 @@ class eCommerceSite // extends CommonObject
     
 
     /**
-     *      \brief      Update database
-     *      \param      user        	User that modify
-     *      \param      notrigger	    0=launch triggers after, 1=disable triggers
-     *      \return     int         	<0 if KO, >0 if OK
+     *   Update database
+     *   
+     *   @param      User   $user        	User that modify
+     *   @param      int    $notrigger	    0=launch triggers after, 1=disable triggers
+     *   @return     int                	<0 if KO, >0 if OK
      */
     function update($user=0, $notrigger=0)
     {
@@ -411,9 +412,10 @@ class eCommerceSite // extends CommonObject
 
 	
 	/**
-	 *		\brief      Load an object from its id and create a new one in database
-	 *		\param      fromid     		Id of object to clone
-	 * 	 	\return		int				New id of clone
+	 *	Load an object from its id and create a new one in database
+	 *
+	 *	@param      int     $fromid     		Id of object to clone
+	 * 	@return		int		             		New id of clone
 	 */
 	function createFromClone($fromid)
 	{
@@ -492,7 +494,7 @@ class eCommerceSite // extends CommonObject
 	}
 
 	/**
-	 *    Return list of sites
+	 *    Return list of all defined ecommerce sites
 	 *    
 	 *    @param	string		$mode		'array' or 'object'
 	 *    @return 	array					List of sites

@@ -568,10 +568,10 @@ class eCommerceCategory // extends CommonObject
     }
     
     /**
-     * 		\brief		Function to get DolibarrCategory's ids from remoteCategoriesIds
-     * 		\param		object		database
-     * 		\param		array		remoteId
-     * 		\return		array	of categories' ids 
+     * 		Function to return list of id of Dolibarr categories from a list of remoteCategoriesIds
+     * 
+     * 		@param		array		        Array of remote ids
+     * 		@return		array	            Array of categories' ids 
      */
     public function getDolibarrCategoryFromRemoteIds($ids)
     {

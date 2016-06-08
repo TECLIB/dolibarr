@@ -237,6 +237,7 @@ $var=!$var;
 
 			<br>
 			
+
 <?php 			
 if ($conf->stock->enabled)
 {
@@ -245,24 +246,13 @@ if ($conf->stock->enabled)
     $var=!$var;
 ?>
 			<table class="noborder" width="100%">
+	
 				<tr class="liste_titre">
 					<td width="20%"><?php print $langs->trans('Parameter') ?></td>
 					<td><?php print $langs->trans('Value') ?></td>
 					<td><?php print $langs->trans('Description') ?></td>
 				</tr>
-
-				<tr <?php print $bc[$var] ?>>
-					<td><span><?php print $langs->trans('ECommerceStockProduct') ?></span></td>
-					<td>
-							<?php
-								print $formproduct->selectWarehouses($ecommerceFkWarehouse, 'ecommerce_fk_warehouse', 0, 1);
-							?>
-					</td>
-					<td><?php print $langs->trans('ECommerceStockProductDescription') ?></td>
-				</tr>				
-<?php
-    $var=!$var;
-?>
+					
 				<tr <?php print $bc[$var] ?>>
 					<td><span><?php print $langs->trans('ECommerceStockSyncDirection') ?></span></td>
 					<td>
@@ -272,6 +262,19 @@ if ($conf->stock->enabled)
 						?>
 					</td>
 					<td><?php print $langs->trans('ECommerceStockSyncDirectionDescription') ?></td>
+				</tr>				
+<?php
+    $var=!$var;
+?>
+
+				<tr <?php print $bc[$var] ?>>
+					<td><span><?php print $langs->trans('ECommerceStockProduct') ?></span></td>
+					<td>
+							<?php
+								print $formproduct->selectWarehouses($ecommerceFkWarehouse, 'ecommerce_fk_warehouse', 0, 1);
+							?>
+					</td>
+					<td><?php print $langs->trans('ECommerceStockProductDescription', $langs->transnoentitiesnoconv('ECommerceStockSyncDirection')) ?></td>
 				</tr>				
 <?php
 }

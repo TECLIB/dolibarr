@@ -139,29 +139,49 @@ elseif ($_POST['site_form_detail_action'] == 'delete')
     }
 }
 
-//LOAD SITE
-if (isset($_POST['site_form_select_site']))
-    $siteId = $_POST['site_form_select_site'];
-elseif (isset($_POST['ecommerce_id']))
-    $siteId = $_POST['ecommerce_id'];
-if ($siteId != null)
-    $siteDb->fetch($siteId);
 
+
+/*
+ *  View 
+ */
+
+if (! extension_loaded('soap'))
+{
+    llxHeader();
+    
+    print info_admin($langs->trans("ErrorModuleSoapRequired"));
+    
+    llxFooter();
+    exit;
+}
+    
 $sites = $siteDb->listSites();
 $siteTypes = $siteDb->getSiteTypes();
-$classCategorie = new Categorie($db);
-$productCategories = $classCategorie->get_full_arbo('product');
-$societeCategories = $classCategorie->get_full_arbo('customer');
 
 // Set $site_form_select_site on first site.
 if (count($sites))
 {
     foreach ($sites as $option)
     {
-        $site_form_select_site = $option->id;
+        $site_form_select_site = $option['id'];
         break;
     }
 }
+
+//LOAD SELECTED SITE
+if (isset($_POST['site_form_select_site']))
+    $siteId = $_POST['site_form_select_site'];
+elseif (isset($_POST['ecommerce_id']))
+    $siteId = $_POST['ecommerce_id'];
+elseif ($site_form_select_site)
+    $siteId = $site_form_select_site;
+
+if ($siteId != null)
+    $siteDb->fetch($siteId);
+
+$classCategorie = new Categorie($db);
+$productCategories = $classCategorie->get_full_arbo('product');
+$societeCategories = $classCategorie->get_full_arbo('customer');
 
 //SET VARIABLES
 $ecommerceId = ($_POST['ecommerce_id'] ? $_POST['ecommerce_id'] : $siteDb->id);

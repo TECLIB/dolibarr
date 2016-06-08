@@ -492,7 +492,6 @@ class eCommerceSynchro
             if (!isset($this->productToUpdate) || $force == true)
             {
                 $lastupdatedate = $this->getProductLastUpdateDate($force);
-                dol_syslog("getProductToUpdate from ".dol_print_date($lastupdatedate, 'standard'));
                 $this->productToUpdate = $this->eCommerceRemoteAccess->getProductToUpdate($lastupdatedate, $this->toDate);
             }
             return $this->productToUpdate;
@@ -513,7 +512,6 @@ class eCommerceSynchro
             if (!isset($this->societeToUpdate) || $force == true)
             {
                 $lastupdatedate=$this->getSocieteLastUpdateDate($force);
-                dol_syslog("getSocieteLastUpdateDate from ".dol_print_date($lastupdatedate, 'standard'));
                 $this->societeToUpdate = $this->eCommerceRemoteAccess->getSocieteToUpdate($lastupdatedate, $this->toDate);
             }
             return $this->societeToUpdate;
@@ -534,7 +532,6 @@ class eCommerceSynchro
             if (!isset($this->commandeToUpdate) || $force == true)
             {
                 $lastupdatedate=$this->getCommandeLastUpdateDate($force);
-                dol_syslog("getCommandeToUpdate from ".dol_print_date($lastupdatedate, 'standard'));
                 $this->commandeToUpdate = $this->eCommerceRemoteAccess->getCommandeToUpdate($lastupdatedate, $this->toDate);
             }
             return $this->commandeToUpdate;
@@ -555,7 +552,6 @@ class eCommerceSynchro
             if (!isset($this->factureToUpdate) || $force == true)
             {
                 $lastupdatedate=$this->getFactureLastUpdateDate($force);
-                dol_syslog("getFactureLastUpdateDate from ".dol_print_date($lastupdatedate, 'standard'));
                 $this->factureToUpdate = $this->eCommerceRemoteAccess->getFactureToUpdate($lastupdatedate, $this->toDate);
             }
             return $this->factureToUpdate;
@@ -564,6 +560,8 @@ class eCommerceSynchro
         }
     }
 
+
+    /* getNbXXXToUpdate */
     
     
     /**
@@ -666,6 +664,8 @@ class eCommerceSynchro
         try {
             $nbgoodsunchronize = 0;
 
+            dol_syslog("***** eCommerceSynchro synchCategory");
+            
             // Safety check : importRootCategory exists
             $dBCategorie = new Categorie($this->db);
             $importRootExists = ($dBCategorie->fetch($this->eCommerceSite->fk_cat_product) > 0) ? 1 : 0;
@@ -674,7 +674,7 @@ class eCommerceSynchro
             {
                 $this->db->begin();
                 
-                dol_syslog("synchCategory::getCategoriesToUpdate");
+                dol_syslog("synchCategory importRootExists=".$importRootExists);
                 $categories = $this->getCategoriesToUpdate();   // Return list of all categories that were modified on ecommerce side
                 if (count($categories))
                 {
@@ -844,7 +844,7 @@ class eCommerceSynchro
             //if ($this->getNbSocieteToUpdate(true) > 0)
             //    $societes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSociete($this->getSocieteToUpdate());
 
-            dol_syslog("synchSociete");
+            dol_syslog("***** eCommerceSynchro synchSociete");
             $resulttoupdate=$this->getSocieteToUpdate();
             if (is_array($resulttoupdate))
             {
@@ -986,6 +986,8 @@ class eCommerceSynchro
     public function synchSocpeople($socpeopleArray)
     {
         try {
+            dol_syslog("***** eCommerceSynchro synchSocPeople");
+            
             if (!isset($this->eCommerceSocpeople))
                 $this->initECommerceSocpeople();
             
@@ -1118,7 +1120,7 @@ class eCommerceSynchro
             $nbgoodsunchronize = 0;
             $products = array();
             
-            dol_syslog("synchProduct");
+            dol_syslog("***** eCommerceSynchro synchProduct");
             $resulttoupdate=$this->getProductToUpdate();
             if (is_array($resulttoupdate))
             {
@@ -1152,7 +1154,7 @@ class eCommerceSynchro
                     $dBProduct->type = $productArray['fk_product_type'];
                     $dBProduct->finished = $productArray['finished'];
                     $dBProduct->status = $productArray['envente'];
-                    $dBProduct->price = $productArray['price'];
+                    $dBProduct->price = $productArray['price'];             // New price, later we will save/update price with price_base_type (TE/TI)
                     $dBProduct->tva_tx = $productArray['tax_rate'];
                     $dBProduct->tva_npr = 0;  // Avoiding _log_price's sql blank
                     $dBProduct->country_id = $productArray['fk_country'];
@@ -1164,11 +1166,16 @@ class eCommerceSynchro
                         $result = $dBProduct->update($dBProduct->id, $this->user);
                         if ($result >= 0)// rajouter constante TTC/HT
                         {
-                            $dBProduct->updatePrice($dBProduct->price, $this->eCommerceSite->magento_price_type, $this->user);
+                            // If eCommerce setup hase change and now prices are switch TI/TE (Tax Include / Tax Excluded)
+                            if ($dBProduct->price_base_type != $this->eCommerceSite->magento_price_type)
+                            {
+                                dol_syslog("Setup price for eCommerce are switched from TE toTI or TI to TE, we update price of product");
+                                $dBProduct->updatePrice($dBProduct->price, $this->eCommerceSite->magento_price_type, $this->user);
+                            }
                         }
 
                         // We must set the initial stock
-                        if ($conf->global->ECOMMERCENG_SYNC_STOCK == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
+                        if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
                         {
                             dol_syslog("Stock for product updated is ".$productArray['stock_qty']," in ecommerce, but ".$dBProduct->stock_reel." in Dolibarr, we must update it");
                             if (empty($this->eCommerceSite->fk_warehouse))
@@ -1210,9 +1217,9 @@ class eCommerceSynchro
                             $this->errors=$dBProduct->error;
                             $this->errors[]=$dBProduct->errors;
                         }
-
+var_dump($this->eCommerceSite->stock_sync_direction);exit;
                         // We must set the initial stock
-                        if ($conf->global->ECOMMERCENG_SYNC_STOCK == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
+                        if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
                         {
                             dol_syslog("Stock for product created is ".$productArray['stock_qty']," in ecommerce, but ".$dBProduct->stock_reel." in Dolibarr, we must update it");
                             if (empty($this->eCommerceSite->fk_warehouse))
@@ -1243,23 +1250,35 @@ class eCommerceSynchro
                     if (! $error && $result >= 0)
                     {
                         // For safety, reinit eCommCat, then getDol catsIds from RemoteIds of the productArray
+                        dol_syslog("Synch of product is ok, we check now categories");
+                        
+                        
                         $this->initECommerceCategory();
-                        $catsIds = $this->eCommerceCategory->getDolibarrCategoryFromRemoteIds($productArray['categories']);
+                        $catsIds = $this->eCommerceCategory->getDolibarrCategoryFromRemoteIds($productArray['categories']);     // Return array of dolibarr category ids found into link table
 
                         if (count($catsIds) > 0)  // This product belongs at least to a category
                         {
+                            // The category should exist because we run synchCategory before synchProduct in most cases				
+                            $cat = new Categorie($this->db); // Instanciate a new cat without id (to avoid fetch)
+                            
+                            $listofexistingcatsforproduct = array();
+                            $tmpcatids = $cat->containing($dBProduct->id, 'product', 'id');
+                            if (is_array($listofexistingcatsforproduct)) $listofexistingcatsforproduct = array_values($tmpcatids);
+                            
                             foreach ($catsIds as $catId)
                             {
-                                // The category must exist because of synchCategory on start of synchProduct				
-                                $cat = new Categorie($this->db); // Instanciate a new cat without id (to avoid fetch)
-                                $cat->id = $catId;     // Affecting id (for calling add_type)
-                                $cat->add_type($dBProduct, 'product');
-                                unset($cat);
+                                if (! in_array($catId, $listofexistingcatsforproduct))
+                                {
+                                    dol_syslog("The product id=".$dbProduct->id." seems to no be linked yet to category id=".$catId.", so we link it.");
+                                    $cat->id = $catId;     // Affecting id (for calling add_type)
+                                    $cat->add_type($dBProduct, 'product');
+                                    unset($cat);
+                                }
                             }
                         } 
-                        else      // This product doesn't belongs to any category
+                        else      // This product doesn't belongs to any category yet (nothing found int the category link table)
                         {
-                            // So we put it in importRoot defined for the site
+                            // So we put it into category importRoot defined for the site
                             $cat = new Categorie($this->db);
                             $cat->id = $this->eCommerceSite->fk_cat_product;
                             $cat->add_type($dBProduct, 'product');
@@ -1341,11 +1360,8 @@ class eCommerceSynchro
             $nbgoodsunchronize = 0;
             $nbrecorderror =0;
             $commandes = array();
-            
-            //if ($this->getNbCommandeToUpdate(true) > 0)
-            //    $commandes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrCommande($this->getCommandeToUpdate());
 
-            dol_syslog("synchCommande");
+            dol_syslog("***** eCommerceSynchro synchCommande");
             $resulttoupdate=$this->getCommandeToUpdate();
            
             if (is_array($resulttoupdate))
@@ -1682,12 +1698,8 @@ class eCommerceSynchro
         $factures = array();
         
         try {
+            dol_syslog("***** eCommerceSynchro synchFacture");
             
-            /*$nbgoodsunchronize = 0;
-            if ($this->getNbFactureToUpdate(true) > 0)
-                $factures = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrFacture($this->getFactureToUpdate());*/
-
-            dol_syslog("synchFacture");
             $resulttoupdate=$this->getFactureToUpdate();
             if (is_array($resulttoupdate))
             {
@@ -2014,6 +2026,8 @@ class eCommerceSynchro
     public function synchLivraison($livraison, $remote_order_id)
     {
         try {
+            dol_syslog("***** eCommerceSynchro syncLivraison");
+            
             return $this->eCommerceRemoteAccess->createRemoteLivraison($livraison, $remote_order_id);
         } catch (Exception $e) {
             $this->errors[] = $this->langs->trans('ECommerceErrorrCeateRemoteLivraison');
@@ -2089,6 +2103,8 @@ class eCommerceSynchro
      */
     public function dropImportedAndSyncData()
     {
+        dol_syslog("***** eCommerceSynchro dropImportedAndSyncData");
+        
         // Drop invoices
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
