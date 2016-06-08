@@ -48,6 +48,8 @@ if (!$user->admin || !$user->rights->ecommerceng->site)
 //DATABASE ACCESS
 $siteDb = new eCommerceSite($db);
 
+$site_form_select_site = 0;
+
 
 /*
  * Actions
@@ -85,6 +87,7 @@ if ($_POST['site_form_detail_action'] == 'save')
         $siteDb->fk_cat_societe = $_POST['ecommerce_fk_cat_societe'];
         $siteDb->fk_cat_product = $_POST['ecommerce_fk_cat_product'];
         $siteDb->fk_warehouse = $_POST['ecommerce_fk_warehouse'];
+        $siteDb->stock_sync_direction = $_POST['ecommerce_stock_sync_direction'];
         $siteDb->last_update = $_POST['ecommerce_last_update'];
         //$siteDb->timeout = $_POST['ecommerce_timeout'];
         $siteDb->magento_use_special_price = ($_POST['ecommerce_magento_use_special_price'] ? 1 : 0);
@@ -150,6 +153,16 @@ $classCategorie = new Categorie($db);
 $productCategories = $classCategorie->get_full_arbo('product');
 $societeCategories = $classCategorie->get_full_arbo('customer');
 
+// Set $site_form_select_site on first site.
+if (count($sites))
+{
+    foreach ($sites as $option)
+    {
+        $site_form_select_site = $option->id;
+        break;
+    }
+}
+
 //SET VARIABLES
 $ecommerceId = ($_POST['ecommerce_id'] ? $_POST['ecommerce_id'] : $siteDb->id);
 $ecommerceName = ($_POST['ecommerce_name'] ? $_POST['ecommerce_name'] : $siteDb->name);
@@ -162,6 +175,7 @@ $ecommerceFilterValue = ($_POST['ecommerce_filter_value'] ? $_POST['ecommerce_fi
 $ecommerceFkCatSociete = ($_POST['ecommerce_fk_cat_societe'] ? $_POST['ecommerce_fk_cat_societe'] : intval($siteDb->fk_cat_societe));
 $ecommerceFkCatProduct = ($_POST['ecommerce_fk_cat_product'] ? $_POST['ecommerce_fk_cat_product'] : intval($siteDb->fk_cat_product));
 $ecommerceFkWarehouse = ($_POST['ecommerce_fk_warehouse'] ? $_POST['ecommerce_fk_warehouse'] : intval($siteDb->fk_warehouse));
+$ecommerceStockSyncDirection = ($_POST['ecommerce_stock_sync_direction'] ? $_POST['ecommerce_stock_sync_direction'] : $siteDb->stock_sync_direction);
 $ecommerceMagentoUseSpecialPrice = ($_POST['ecommerce_magento_use_special_price'] ? $_POST['ecommerce_magento_use_special_price'] : intval($siteDb->magento_use_special_price));
 $ecommerceMagentoPriceType = ($_POST['ecommerce_magento_price_type'] ? $_POST['ecommerce_magento_price_type'] : $siteDb->ecommerce_magento_price_type);
 /*$ecommerceTimeout = 300;

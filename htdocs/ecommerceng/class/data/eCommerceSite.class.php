@@ -40,6 +40,7 @@ class eCommerceSite // extends CommonObject
 	var $fk_cat_societe;
 	var $fk_cat_product;
 	var $fk_warehouse;
+	var $stock_sync_direction;
 	var $last_update;
 	var $timeout;
 	var $magento_use_special_price;
@@ -84,13 +85,13 @@ class eCommerceSite // extends CommonObject
         $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_facture WHERE fk_facture NOT IN (select rowid from ".MAIN_DB_PREFIX."facture)";
         $this->db->query($sql);
     }
-    
-    
+
     /**
-     *      \brief      Create in database
-     *      \param      user        	User that create
-     *      \param      notrigger	    0=launch triggers after, 1=disable triggers
-     *      \return     int         	<0 if KO, Id of created object if OK
+     *      Create in database
+     *      
+     *      @param      User    $user        	User that create
+     *      @param      int     $notrigger	    0=launch triggers after, 1=disable triggers
+     *      @return     int                    	<0 if KO, Id of created object if OK
      */
     function create($user, $notrigger=0)
     {
@@ -108,6 +109,7 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->fk_cat_societe)) $this->fk_cat_societe=trim($this->fk_cat_societe);
 		if (isset($this->fk_cat_product)) $this->fk_cat_product=trim($this->fk_cat_product);
 		if (isset($this->fk_warehouse)) $this->fk_warehouse=trim($this->fk_warehouse);
+		if (isset($this->stock_sync_direction)) $this->stock_sync_direction=trim($this->stock_sync_direction);
 		if (isset($this->timeout)) $this->timeout=trim($this->timeout);
 
 		// Check parameters
@@ -126,6 +128,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= "fk_cat_societe,";
 		$sql.= "fk_cat_product,";
 		$sql.= "fk_warehouse,";
+		$sql.= "stock_sync_direction,";
 		$sql.= "last_update,";
 		$sql.= "timeout,";
 		$sql.= "magento_use_special_price,";
@@ -141,6 +144,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " ".($this->fk_cat_societe > 0 ? 'NULL':"'".$this->fk_cat_societe."'").",";
 		$sql.= " ".($this->fk_cat_product > 0 ? 'NULL':"'".$this->fk_cat_product."'").",";
 		$sql.= " ".($this->fk_warehouse > 0 ? 'NULL':"'".$this->fk_warehouse."'").",";
+		$sql.= " ".($this->stock_sync_direction ? 'none':"'".$this->stock_sync_direction."'").",";
 		$sql.= " ".(! isset($this->last_update) || strlen($this->last_update)==0?'NULL':"'".$this->db->idate($this->last_update)."'").",";
 		$sql.= " ".(! isset($this->timeout)?'300':"'".intval($this->timeout)."'").",";
 		$sql.= " ".(! isset($this->magento_use_special_price)?'0':"'".intval($this->magento_use_special_price)."'").",";
@@ -211,12 +215,11 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.fk_cat_societe,";
 		$sql.= " t.fk_cat_product,";
 		$sql.= " t.fk_warehouse,";
+		$sql.= " t.stock_sync_direction,";
 		$sql.= " t.last_update,";
 		$sql.= " t.timeout,";
 		$sql.= " t.magento_use_special_price,";
 		$sql.= " t.magento_price_type";
-
-		
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_site as t";
         $sql.= " WHERE t.rowid = ".$id;
     
@@ -240,6 +243,7 @@ class eCommerceSite // extends CommonObject
 				$this->fk_cat_societe = $obj->fk_cat_societe;
 				$this->fk_cat_product = $obj->fk_cat_product;
 				$this->fk_warehouse = $obj->fk_warehouse;
+				$this->stock_sync_direction = $obj->stock_sync_direction;
 				$this->last_update = $this->db->jdate($obj->last_update);
 				$this->timeout = $obj->timeout;
 				$this->magento_use_special_price = $obj->magento_use_special_price;
@@ -301,6 +305,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " fk_cat_societe=".($this->fk_cat_societe > 0 ? $this->fk_cat_societe:"null").",";
 		$sql.= " fk_cat_product=".($this->fk_cat_product > 0 ? $this->fk_cat_product:"null").",";
 		$sql.= " fk_warehouse=".($this->fk_warehouse > 0 ? $this->fk_warehouse:"null").",";
+		$sql.= " stock_sync_direction=".($this->stock_sync_direction ? "'".$this->stock_sync_direction."'":"none").",";
 		$sql.= " last_update=".((isset($this->last_update) && $this->last_update != '') ? "'".$this->db->idate($this->last_update)."'" : 'null').",";
 		$sql.= " timeout=".(isset($this->timeout)? "'".intval($this->timeout)."'" : '300').",";
 		$sql.= " magento_use_special_price=".(isset($this->magento_use_special_price)? "'".intval($this->magento_use_special_price)."'" : '0').",";
@@ -460,8 +465,10 @@ class eCommerceSite // extends CommonObject
 
 	
 	/**
-	 *		\brief		Initialise object with example values
-	 *		\remarks	id must be 0 if object instance is a specimen.
+	 *	Initialise object with example values
+	 *  id must be 0 if object instance is a specimen.
+	 *  
+	 *	@return     void
 	 */
 	function initAsSpecimen()
 	{
@@ -476,6 +483,8 @@ class eCommerceSite // extends CommonObject
 		$this->filter_value='';
 		$this->fk_cat_societe='';
 		$this->fk_cat_product='';
+		$this->fk_warehouse='';
+		$this->stock_sync_direction='none';
 		$this->last_update='';
 		$this->timeout='';	
 		$this->magento_use_special_price='';
@@ -524,9 +533,15 @@ class eCommerceSite // extends CommonObject
 		return $list;
 	}
 	
+	/**
+	 * Return list of available site types
+	 * 
+	 * @return string[]
+	 */
 	public function getSiteTypes()
 	{
 		return $this->siteTypes;
 	}
+	
 }
 

@@ -27,7 +27,7 @@ print_fiche_titre($langs->trans("ECommerceSetup"),$linkback,'setup');
 
 ?>
 	<script type="text/javascript" src="<?php print dol_buildpath('/ecommerceng/js/form.js',1); ?>"></script>
-	<br/>
+	<br>
 	<form id="site_form_select" name="site_form_select" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
 		<select class="flat" id="site_form_select_site" name="site_form_select_site" onchange="eCommerceSubmitForm('site_form_select')">
 			<option value="0"><?php print $langs->trans('ECommerceAddNewSite') ?></option>
@@ -44,18 +44,44 @@ if (count($sites))
 ?>
 		</select>
 	</form>
-	<br/>
-<?php print_titre($title); ?>
+	<br>
+
+	<?php print_titre($langs->trans("MainSyncSetup")); ?>
+	
 	<form name="site_form_detail" id="site_form_detail" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
 			<input type="hidden" name="token" value="<?php print $_SESSION['newtoken'] ?>">
 			<input id="site_form_detail_action" type="hidden" name="site_form_detail_action" value="save">
 			<input type="hidden" name="ecommerce_id" value="<?php print $ecommerceId ?>">
 			<input type="hidden" name="ecommerce_last_update" value="<?php print $ecommerceLastUpdate ?>">
+
 			<table class="noborder" width="100%">
 				<tr class="liste_titre">
 					<td width="20%"><?php print $langs->trans('Parameter') ?></td>
 					<td><?php print $langs->trans('Value') ?></td>
 					<td><?php print $langs->trans('Description') ?></td>
+				</tr>
+<?php
+$var=!$var;
+?>
+				<tr <?php print $bc[$var] ?>>
+					<td><span class="fieldrequired"><?php print $langs->trans('ECommerceSiteType') ?></span></td>
+					<td>
+						<select class="flat" name="ecommerce_type">
+							<option value="0">&nbsp;</option>
+							<?php
+								if (count($siteTypes))
+									foreach ($siteTypes as $key=>$value)
+									{
+										print '
+											<option';
+										if ($ecommerceType == $key)
+											print ' selected="selected"';
+										print ' value="'.$key.'">'.$langs->trans($value).'</option>';
+									}
+								?>
+						</select>
+					</td>
+					<td><?php print $langs->trans('ECommerceSiteTypeDescription') ?></td>
 				</tr>
 <?php
 $var=!$var;
@@ -91,21 +117,6 @@ $var=!$var;
 					<td><?php print $langs->trans('ECommerceCatProductDescription') ?></td>
 				</tr>
 <?php
-if ($conf->stock->enabled)
-{
-    $var=!$var;
-?>
-				<tr <?php print $bc[$var] ?>>
-					<td><span><?php print $langs->trans('ECommerceStockProduct') ?></span></td>
-					<td>
-							<?php
-								print $formproduct->selectWarehouses($ecommerceFkWarehouse, 'ecommerce_fk_warehouse', 0, 1);
-							?>
-					</td>
-					<td><?php print $langs->trans('ECommerceStockProductDescription') ?></td>
-				</tr>				
-<?php
-}
 $var=!$var;
 ?>
 				<tr <?php print $bc[$var] ?>>
@@ -149,30 +160,7 @@ $var=!$var;
 					</td>
 					<td><?php print $langs->trans('ECommerceFilterValueDescription') ?></td>
 				</tr>
-<?php
-$var=!$var;
-?>
 				-->
-				<tr <?php print $bc[$var] ?>>
-					<td><span class="fieldrequired"><?php print $langs->trans('ECommerceSiteType') ?></span></td>
-					<td>
-						<select class="flat" name="ecommerce_type">
-							<option value="0">&nbsp;</option>
-							<?php
-								if (count($siteTypes))
-									foreach ($siteTypes as $key=>$value)
-									{
-										print '
-											<option';
-										if ($ecommerceType == $key)
-											print ' selected="selected"';
-										print ' value="'.$key.'">'.$langs->trans($value).'</option>';
-									}
-								?>
-						</select>
-					</td>
-					<td><?php print $langs->trans('ECommerceSiteTypeDescription') ?></td>
-				</tr>
 <?php
 $var=!$var;
 ?>
@@ -220,6 +208,7 @@ $var=!$var;
 				</tr>
 <?php
 */
+/* TODO A activer et tester "special prices"
 $var=!$var;
 ?>
 				<tr <?php print $bc[$var] ?>>
@@ -230,6 +219,7 @@ $var=!$var;
 					<td><?php print $langs->trans('ECommerceMagentoUseSpecialPriceDescription') ?></td>
 				</tr>
 <?php
+*/
 $var=!$var;
 ?>
 				<tr <?php print $bc[$var] ?>>
@@ -243,7 +233,55 @@ $var=!$var;
 					<td><?php print $langs->trans('ECommerceMagentoPriceTypeDescription') ?></td>
 				</tr>
 			</table>
-			<br/>
+
+
+			<br>
+			
+<?php 			
+if ($conf->stock->enabled)
+{
+    print_titre($langs->trans("StockSyncSetup"));
+        
+    $var=!$var;
+?>
+			<table class="noborder" width="100%">
+				<tr class="liste_titre">
+					<td width="20%"><?php print $langs->trans('Parameter') ?></td>
+					<td><?php print $langs->trans('Value') ?></td>
+					<td><?php print $langs->trans('Description') ?></td>
+				</tr>
+
+				<tr <?php print $bc[$var] ?>>
+					<td><span><?php print $langs->trans('ECommerceStockProduct') ?></span></td>
+					<td>
+							<?php
+								print $formproduct->selectWarehouses($ecommerceFkWarehouse, 'ecommerce_fk_warehouse', 0, 1);
+							?>
+					</td>
+					<td><?php print $langs->trans('ECommerceStockProductDescription') ?></td>
+				</tr>				
+<?php
+    $var=!$var;
+?>
+				<tr <?php print $bc[$var] ?>>
+					<td><span><?php print $langs->trans('ECommerceStockSyncDirection') ?></span></td>
+					<td>
+						<?php
+                            $array=array('none'=>$langs->trans('None'), 'ecommerce2dolibarr'=>'eCommerce to Dolibarr', 'dolibarr2ecommerce'=>'Dolibarr to eCommerce');
+							print $form->selectarray('ecommerce_stock_sync_direction', $array, $ecommerceStockSyncDirection);
+						?>
+					</td>
+					<td><?php print $langs->trans('ECommerceStockSyncDirectionDescription') ?></td>
+				</tr>				
+<?php
+}
+?>			
+			</table>
+			
+			
+			
+			
+			<br>
 			<center>
 <?php
 if ($siteDb->id)

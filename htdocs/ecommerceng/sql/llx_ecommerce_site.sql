@@ -28,6 +28,7 @@ CREATE TABLE llx_ecommerce_site (
   fk_cat_societe integer NOT NULL,
   fk_cat_product integer NOT NULL,
   fk_warehouse integer NULL,
+  stock_sync_direction varchar(24) DEFAULT 'none',
   last_update datetime DEFAULT NULL,
   timeout int(11) NOT NULL DEFAULT 300,
   magento_use_special_price INT( 1 ) NOT NULL DEFAULT '0',

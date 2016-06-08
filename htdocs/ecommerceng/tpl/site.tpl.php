@@ -213,7 +213,7 @@ $var=!$var;
 	print '*** '.$langs->trans("OnlyThirdPartyIn", $tagname).'<br>';
 	print '**** '.$langs->trans("WithMagentoThirdIsModifiedIfAddressModified").'<br>';
 	
-	
+
 	if ($user->admin)
 	{
 	?>
