@@ -77,11 +77,11 @@ class mod_project_teclib extends ModeleNumRefProjects
 
 			$oldmask='{cccc}-{00}';
 			$customercode=$objsoc->code_client;
-			$numFinalOld=get_next_value($db,$oldmask,'projet','ref'," AND fk_soc = ".$objsoc->id,$objsoc,'');
+			$numFinalOld=get_next_value($db,$oldmask,'projet','ref'," AND fk_soc = ".$objsoc->id,$objsoc,'', 'next', false);
 
 			$mask='{cccc}-{000}';
 			$customercode=$objsoc->code_client;
-			$numFinalNew=get_next_value($db,$mask,'projet','ref'," AND fk_soc = ".$objsoc->id,$objsoc,'');
+			$numFinalNew=get_next_value($db,$mask,'projet','ref'," AND fk_soc = ".$objsoc->id,$objsoc,'', 'next', false);
 /*
 			$sql = " SELECT ref FROM llx_projet WHERE fk_soc = ".$objsoc->id." ORDER BY ref DESC";
 
