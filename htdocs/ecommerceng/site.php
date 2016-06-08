@@ -97,11 +97,15 @@ if ($id)
 		//synch only with write rights
 		if (! $error && $user->rights->ecommerceng->write)
 		{
-			if (GETPOST('reset_data'))
+			if (GETPOST('reset_data') == 'all')
 			{
 				$synchro->dropImportedAndSyncData();
 			}
-
+			if (GETPOST('reset_data') == 'links')
+			{
+			    // TODO
+			}
+				
 			if (GETPOST('submit_synchro_category') || GETPOST('submit_synchro_all'))
 			{
 				$synchro->synchCategory();

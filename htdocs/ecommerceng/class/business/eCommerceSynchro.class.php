@@ -1217,7 +1217,7 @@ class eCommerceSynchro
                             $this->errors=$dBProduct->error;
                             $this->errors[]=$dBProduct->errors;
                         }
-var_dump($this->eCommerceSite->stock_sync_direction);exit;
+
                         // We must set the initial stock
                         if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
                         {
@@ -1259,8 +1259,7 @@ var_dump($this->eCommerceSite->stock_sync_direction);exit;
                         if (count($catsIds) > 0)  // This product belongs at least to a category
                         {
                             // The category should exist because we run synchCategory before synchProduct in most cases				
-                            $cat = new Categorie($this->db); // Instanciate a new cat without id (to avoid fetch)
-                            
+                            $cat = new Categorie($this->db);
                             $listofexistingcatsforproduct = array();
                             $tmpcatids = $cat->containing($dBProduct->id, 'product', 'id');
                             if (is_array($listofexistingcatsforproduct)) $listofexistingcatsforproduct = array_values($tmpcatids);
@@ -1270,6 +1269,7 @@ var_dump($this->eCommerceSite->stock_sync_direction);exit;
                                 if (! in_array($catId, $listofexistingcatsforproduct))
                                 {
                                     dol_syslog("The product id=".$dbProduct->id." seems to no be linked yet to category id=".$catId.", so we link it.");
+                                    $cat = new Categorie($this->db); // Instanciate a new cat without id (to avoid fetch)
                                     $cat->id = $catId;     // Affecting id (for calling add_type)
                                     $cat->add_type($dBProduct, 'product');
                                     unset($cat);

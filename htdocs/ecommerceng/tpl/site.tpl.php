@@ -39,7 +39,6 @@ if (is_object($site))
     
     print '<br>'."\n";
 ?>
-	<script type="text/javascript" src="<?php print dol_buildpath('/ecommerceng/js/form.js',1); ?>"></script>
 	<table class="noborder" width="100%">
 		<tr class="liste_titre">
 			<td><?php print $langs->trans('ECommerceObjectToUpdate') ?></td>
@@ -216,16 +215,10 @@ $var=!$var;
 
 	if ($user->admin)
 	{
-	?>
-
-	<form name="form_reset_data" id="form_reset_data" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
-		<input type="hidden" name="id" value="<?php print $site->id ?>">
-		<input type="hidden" name="to_date" value="<?php print $toDate ?>">
-		<input type="hidden" name="reset_data" id="form_reset_data_value" value="1" >
-		<input type="hidden" name="confirm" id="confirm" value="<?php print $langs->trans('ECommerceConfirmReset') ?>">
-		<div class="tabsAction" ><input type="submit" name="submit_reset" class="butActionDelete" value="<?php print $langs->trans('ECommerceReset') ?>"></div>
-	</form>
-<?php
+	    print '<br><br><br>';
+	    print '<a style="color: #600" id="submit_reset" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=all">'.$langs->trans('ECommerceReset').'</a>';
+	    print '<br><br>';
+	    print '<a style="color: #600" id="submit_reset" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=links">'.$langs->trans('ECommerceResetLink').'</a>';
 	}
 }
 else
