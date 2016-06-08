@@ -122,7 +122,7 @@ class eCommerceRemoteAccessMagento
     }
 
     /**
-     * Call Magenta API to get last updated products
+     * Call Magenta API to get last updated products. We are interested here by list of id only. We will retreive properties later.
      * 
      * @param   datetime $fromDate      From date
      * @param   datetime $toDate        To date
@@ -140,11 +140,14 @@ class eCommerceRemoteAccessMagento
             
             $results = array();
             $productsTypesOk = array('simple', 'virtual', 'downloadable');
-            foreach ($result as $product) {
+            foreach ($result as $product) 
+            {
                 if (in_array($product['type'], $productsTypesOk))
-                        $results[] = $product;
+                {
+                    $results[] = $product;
+                }
             }
-            
+
             dol_syslog("getProductToUpdate end");
             return $results;            
         } catch (SoapFault $fault) {
@@ -358,10 +361,44 @@ class eCommerceRemoteAccessMagento
                 return false;
             }
 
-            if (count($results))
-                foreach ($results as $product)
+            /*
+            $calls = array();
+            foreach ($remoteObject as $rproduct)
+            {
+                if ($rproduct['sku'])
                 {
-                    //var_dump($product);exit;
+                    $calls[] = array('cataloginventory_stock_item.list', $rproduct['sku']);
+                }
+            }
+            
+            try {
+                $results2 = $this->client->multiCall($this->session, $calls);
+            } catch (SoapFault $fault) {
+                $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+                dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+                return false;
+            }
+            var_dump($results2);exit;*/
+            
+            if (count($results))
+                foreach ($results as $cursorproduct => $product)
+                {
+                    // Complete data with info in stock
+                    // Note: if product is set "do not manage stock" on magento, no information is returned and stock is returned whatever is this option.
+                    try {
+                        $result2 = $this->client->call($this->session, 'cataloginventory_stock_item.list', $product['product_id']);
+                    } catch (SoapFault $fault) {
+                        $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+                        dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+                        return false;
+                    }
+                    //var_dump($result2);exit;
+                    foreach($result2 as $val)
+                    {
+                        $product['stock_qty'] = $val['qty'];
+                        $product['is_in_stock'] = $val['is_in_stock'];
+                    }
+
                     $products[] = array(
                             'ref' => dol_sanitizeFileName(stripslashes($product['sku'])),
                             'label' => $product['name'],
@@ -377,7 +414,10 @@ class eCommerceRemoteAccessMagento
                             'categories' => $product['categories'],
                             'tax_rate' => $product['tax_rate'],
                             'price_min' => $product['minimal_price'],
-                            'fk_country' => ($product['country_of_manufacture'] ? getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, '') : null)
+                            'fk_country' => ($product['country_of_manufacture'] ? getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, '') : null),
+                            // Stock
+                            'stock_qty' => $product['stock_qty'],
+                            'is_in_stock' => $product['is_in_stock'],   // not used
                     );
                     //var_dump($product['country_of_manufacture']);
                     //var_dump(getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, ''));exit;
@@ -534,7 +574,8 @@ class eCommerceRemoteAccessMagento
                     if ($tmp == 'pending')      $status = Commande::STATUS_VALIDATED;            // validated = pending
                     if ($tmp == 'processing')   $status = Commande::STATUS_SHIPMENTONPROCESS;    // shipment in process = processing
                     if ($tmp == 'holded')       $status = Commande::STATUS_CANCELED;             // canceled = holded
-
+                    if ($tmp == 'complete')     $status = Commande::STATUS_CLOSED;               // complete
+                    
                     // Add order content to array or orders
                     $commandes[] = array(
                             'last_update' => $commande['updated_at'],
@@ -549,13 +590,15 @@ class eCommerceRemoteAccessMagento
                             'socpeopleCommande' => $socpeopleCommande,
                             'socpeopleFacture' => $socpeopleFacture,
                             'socpeopleLivraison' => $socpeopleLivraison,
+                            'status' => $status,                         // dolibarr status
+                            'remote_status' => $commande['status']       // remote status, for information only
                             //debug
-                            //'commande' => $commande
-                            'status' => $status
+                            //'remote_commande' => $commande
                     );
                 }
             }
         }
+        
         //important - order by last update
         if (count($commandes))
         {
@@ -570,6 +613,7 @@ class eCommerceRemoteAccessMagento
 
     /**
      * Put the remote data into facture dolibarr data from instantiated class in the constructor
+     * 
      * @param $remoteObject array
      * @return array facture
      */
@@ -653,35 +697,55 @@ class eCommerceRemoteAccessMagento
                             'tva_tx' => $this->getTaxRate($facture['shipping_amount'], $facture['shipping_tax_amount'])
                     );
 
-                    //define remote id societe : 0 for anonymous
                     $eCommerceTempSoc = new eCommerceSociete($this->db);
                     if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
+                    {
                         $remoteIdSociete = 0;
+                    }
                     else
                     {
                         $remoteIdSociete = $commande['customer_id'];
                     }
+                    
+                    // load local order to be used to retreive some data for invoice
+                    $eCommerceTempCommande = new eCommerceCommande($this->db);
+                    $eCommerceTempCommande->fetchByRemoteId($commande['order_id'], $this->site->id);
+                    $dbCommande = new Commande($this->db);
+                    $dbCommande->fetch($eCommerceTempCommande->fk_commande);
 
+                    // define status of invoice
+                    $tmp = $facture['state'];                                                   // state from is 1, 2, 3
+                    $status = Facture::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
+
+                    if ($tmp == 1)     $status = Facture::STATUS_VALIDATED;            // validated = pending
+                    if ($tmp == 2)     $status = Facture::STATUS_CLOSED;               // complete
+                    if ($tmp == 3)     $status = Facture::STATUS_CANCELED;             // canceled = holded
+                    
                     //add invoice to invoices
                     $factures[] = array(
                             'last_update' => $facture['updated_at'],
                             'remote_id' => $facture['invoice_id'],
+                            'remote_increment_id' => $facture['increment_id'],
+                            'ref_client' => $facture['increment_id'],
                             'remote_order_id' => $facture['order_id'],
+                            'remote_order_increment_id' => $facture['order_increment_id'],
                             'remote_id_societe' => $remoteIdSociete,
                             'socpeopleLivraison' => $socpeopleLivraison,
                             'socpeopleFacture' => $socpeopleFacture,
-                            'ref_client' => $facture['increment_id'],
                             'date' => $facture['created_at'],
-                            'code_cond_reglement' => 'CASH',
+                            'code_cond_reglement' => $dbCommande->cond_reglement_code,      // Take for local order
                             'delivery' => $delivery,
                             'items' => $items,
+                            'status' => $tmp,
+                            'remote_state' => $facture['state']
                             //debug
-                            //'commande' => $commande,
-                            //'facture' => $facture
+                            //'remote_commande' => $commande,
+                            //'remote_facture' => $facture
                     );
                 }
             }
         }
+        
         //important - order by last update
         if (count($factures))
         {
@@ -695,28 +759,10 @@ class eCommerceRemoteAccessMagento
     }
 
     
-    public function getRemoteCommande($remoteCommandeId)
-    {
-        $commande = array();
-        try {
-            dol_syslog("getCommande begin");
-            $result = $this->client->call($this->session, 'sales_order.list', array(array('order_id' => $remoteCommandeId)));
-            //dol_syslog($this->client->__getLastRequest());
-            if (count($result == 1))
-            {
-                $commande = $this->client->call($this->session, 'sales_order.info', $result[0]['increment_id']);
-                //dol_syslog($this->client->__getLastRequest());
-            }
-            dol_syslog("getCommande end");
-        } catch (SoapFault $fault) {
-            dol_syslog($this->client->__getLastRequest());
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
-        }
-        return $commande;
-    }
-
+    
+    // Now functions to get data on remote shop, from the remote id.
+    
+    
     /**
      * Return the magento's category tree
      * 
@@ -807,6 +853,35 @@ class eCommerceRemoteAccessMagento
         dol_syslog("eCommerceRemoteAccessMagento getCategoryData end");
         return $result;
     }
+
+    /**
+     * Return the magento's order
+     *
+     * @param   int         $remoteCommandeId       Id of remote order
+     * @return  object                              Order
+     */
+    public function getRemoteCommande($remoteCommandeId)
+    {
+        $commande = array();
+        try {
+            dol_syslog("getCommande begin");
+            $result = $this->client->call($this->session, 'sales_order.list', array(array('order_id' => $remoteCommandeId)));
+            //dol_syslog($this->client->__getLastRequest());
+            if (count($result == 1))
+            {
+                $commande = $this->client->call($this->session, 'sales_order.info', $result[0]['increment_id']);
+                //dol_syslog($this->client->__getLastRequest());
+            }
+            dol_syslog("getCommande end");
+        } catch (SoapFault $fault) {
+            dol_syslog($this->client->__getLastRequest());
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }
+        return $commande;
+    }
+    
     
     
     /**
@@ -855,6 +930,49 @@ class eCommerceRemoteAccessMagento
         return $result;
     }
 
+    /**
+     * Update the remote stock of product
+     *
+     * @param   int         $remote_id      Id of product on remote ecommerce
+     * @param   Movement    $object         Movement object, enhanced with property qty_after be the trigger STOCK_MOVEMENT.
+     * @return  boolean                     True or false
+     */
+    public function updateRemoteStockProduct($remote_id, $object)
+    {
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteStockProduct session=".$this->session." product remote_id=".$remote_id." movement object->id=".$object->id.", new qty=".$object->qty_after);
+    
+        // $object->qty is the qty of movement
+        try {
+            $stockItemData = array(
+                'qty' => $object->qty_after,
+                //'is_in_stock ' => 1,
+                //'manage_stock ' => 1,
+                //'use_config_manage_stock' => 0,
+                //'min_qty' => 2,
+                //'use_config_min_qty ' => 0,
+                //'min_sale_qty' => 1,
+                //'use_config_min_sale_qty' => 0,
+                //'max_sale_qty' => 10,
+                //'use_config_max_sale_qty' => 0,
+                //'is_qty_decimal' => 0,
+                //'backorders' => 1,
+                //'use_config_backorders' => 0,
+                //'notify_stock_qty' => 10,
+                //'use_config_notify_stock_qty' => 0
+            );
+             
+            $result = $this->client->call($this->session, 'cataloginventory_stock_item.update', array($remote_id, $stockItemData));
+            //dol_syslog($this->client->__getLastRequest());
+        } catch (SoapFault $fault) {
+            dol_syslog($this->client->__getLastRequest());
+            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteStockProduct end");
+        return $result;
+    }    
+    
     /**
      * Update the remote societe
      *

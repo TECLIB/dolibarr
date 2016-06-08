@@ -1118,14 +1118,12 @@ class eCommerceSynchro
             $nbgoodsunchronize = 0;
             $products = array();
             
-            //if ($this->getNbProductToUpdate(true) > 0)
-            //    $products = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct($this->getProductToUpdate());
-
             dol_syslog("synchProduct");
             $resulttoupdate=$this->getProductToUpdate();
             if (is_array($resulttoupdate))
             {
                 if (count($resulttoupdate) > 0) $products = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct($resulttoupdate);
+                //var_dump($products);exit;
             }
 
             if (count($products))
@@ -1168,9 +1166,33 @@ class eCommerceSynchro
                         {
                             $dBProduct->updatePrice($dBProduct->price, $this->eCommerceSite->magento_price_type, $this->user);
                         }
+
+                        // We must set the initial stock
+                        if ($conf->global->ECOMMERCENG_SYNC_STOCK == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
+                        {
+                            dol_syslog("Stock for product updated is ".$productArray['stock_qty']," in ecommerce, but ".$dBProduct->stock_reel." in Dolibarr, we must update it");
+                            if (empty($this->eCommerceSite->fk_warehouse))
+                            {
+                                $error++;
+                                $this->errors[]='SetupOfWarehouseNotDefinedForThisSite';
+                                break;
+                            }
                         
-                        // We must update the stock ?
-                        // TODO
+                            // Update/init stock
+                            include_once DOL_DOCUMENT_ROOT.'/product/stock/class/mouvementstock.class.php';
+                            $movement = new MouvementStock($this->db);
+                            $movement->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                            
+                            $lot=null;
+                            if ($dBProduct->status_batch) $lot='000000';
+                            $result = $movement->reception($this->user, $dBProduct->id, $this->eCommerceSite->fk_warehouse, ($productArray['stock_qty'] - $dBProduct->stock_reel), 0, '(StockUpdateFromeCommerceSync)', '', '', $lot);
+                            if ($result <= 0)
+                            {
+                                $error++;
+                                $this->errors=$movement->error;
+                                $this->errors[]=$movement->errors;
+                            }
+                        }
                     }
                     else
                     {
@@ -1182,13 +1204,43 @@ class eCommerceSynchro
                         {                            
                             $dBProduct->updatePrice($dBProduct->price, $this->eCommerceSite->magento_price_type, $this->user);                            
                         }
-                        
+                        else
+                        {
+                            $error++;
+                            $this->errors=$dBProduct->error;
+                            $this->errors[]=$dBProduct->errors;
+                        }
+
                         // We must set the initial stock
-                        // TODO
+                        if ($conf->global->ECOMMERCENG_SYNC_STOCK == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
+                        {
+                            dol_syslog("Stock for product created is ".$productArray['stock_qty']," in ecommerce, but ".$dBProduct->stock_reel." in Dolibarr, we must update it");
+                            if (empty($this->eCommerceSite->fk_warehouse))
+                            {
+                                $error++;
+                                $this->errors[]='SetupOfWarehouseNotDefinedForThisSite';
+                                break;
+                            }
+                        
+                            // Update/init stock
+                            include_once DOL_DOCUMENT_ROOT.'/product/stock/class/mouvementstock.class.php';
+                            $movement = new MouvementStock($this->db);
+                            $movement->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+
+                            $lot=null;
+                            if ($dBProduct->status_batch) $lot='000000';
+                            $result = $movement->reception($this->user, $dBProduct->id, $this->eCommerceSite->fk_warehouse, ($productArray['stock_qty'] - $dBProduct->stock_reel), 0, '(StockInitFromeCommerceSync)', '', '', $lot);
+                            if ($result <= 0)
+                            {
+                                $error++;
+                                $this->errors=$movement->error;
+                                $this->errors[]=$movement->errors;
+                            }
+                        }
                     }
 
                     //if synchro product ok
-                    if ($result >= 0)
+                    if (! $error && $result >= 0)
                     {
                         // For safety, reinit eCommCat, then getDol catsIds from RemoteIds of the productArray
                         $this->initECommerceCategory();
@@ -1204,7 +1256,8 @@ class eCommerceSynchro
                                 $cat->add_type($dBProduct, 'product');
                                 unset($cat);
                             }
-                        } else      // This product doesn't belongs to any category
+                        } 
+                        else      // This product doesn't belongs to any category
                         {
                             // So we put it in importRoot defined for the site
                             $cat = new Categorie($this->db);
@@ -1216,6 +1269,7 @@ class eCommerceSynchro
                         //$cat->add_type($dBProduct, 'product');					
                         $this->eCommerceProduct->last_update = $productArray['last_update'];
                         $this->eCommerceProduct->fk_product = $dBProduct->id;
+                        
                         //if a previous synchro exists
                         if ($synchExists > 0)
                         {
@@ -1227,17 +1281,21 @@ class eCommerceSynchro
                                 dol_syslog($this->langs->trans('ECommerceSyncheCommerceProductUpdateError') . ' ' . $productArray['label'], LOG_WARNING);
                             }
                         }
-                        //if not previous synchro exists
+                        // if not previous synchro exists into link table (we faild to find it from the remote_id 
                         else
                         {
+                            // May be an old record with an old product removed on eCommerce still exists, we delete it before inster.
+                            $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_product WHERE fk_product=".$this->eCommerceProduct->fk_product;
+                            $resql = $this->db->query($sql);
+                            
                             //eCommerce create
                             $this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
                             $this->eCommerceProduct->remote_id = $productArray['remote_id'];
                             if ($this->eCommerceProduct->create($this->user) < 0)
                             {
                                 $error++;
-                                $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceProductCreateError') . ' ' . $productArray['label'];
-                                dol_syslog($this->langs->trans('ECommerceSyncheCommerceProductCreateError') . ' ' . $productArray['label'], LOG_WARNING);
+                                $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceProductCreateError') . ' ' . $productArray['label'].', '.$this->eCommerceProduct->error;
+                                dol_syslog($this->langs->trans('ECommerceSyncheCommerceProductCreateError') . ' ' . $productArray['label'].', '.$this->eCommerceProduct->error, LOG_WARNING);
                             }
                         }
                     } 
@@ -1350,6 +1408,7 @@ class eCommerceSynchro
                                 if ($result <= 0) $error++;
                             }
                             
+                            // Now update status
                             if (! $error)
                             {
                                 if ($dBCommande->statut != $commandeArray['status'])
@@ -1359,7 +1418,7 @@ class eCommerceSynchro
                                     {
                                         $dBCommande->set_draft($user, 0);
                                     }
-                                    if ($commandeArray['status'] == Commande::STATUS_VALIDATE)
+                                    if ($commandeArray['status'] == Commande::STATUS_VALIDATED)
                                     {
                                         $dBCommande->valid($user, 0);
                                     }
@@ -1370,6 +1429,11 @@ class eCommerceSynchro
                                     if ($commandeArray['status'] == Commande::STATUS_CANCELED)
                                     {
                                         $dBCommande->cancel(0);
+                                    }
+                                    if ($commandeArray['status'] == Commande::STATUS_CLOSED)
+                                    {
+                                        $dBCommande->cloture($user);
+                                        $dBCommande->classifyBilled($user);
                                     }
                                 }
                             }
@@ -1482,6 +1546,7 @@ class eCommerceSynchro
                                 }
                             }                            
                  
+                            // Now update status
                             dol_syslog("synchCommande Status of order = ".$commandeArray['status']." dbCommande = ".$dBCommande->statut);
                             if (! $error)
                             {
@@ -1494,7 +1559,7 @@ class eCommerceSynchro
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_VALIDATED) 
                                     {
-                                        $dBCommande->valid($user, 0);
+                                        $dBCommande->valid($this->user, 0);
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_SHIPMENTONPROCESS) 
                                     {
@@ -1503,6 +1568,11 @@ class eCommerceSynchro
                                     if ($commandeArray['status'] == Commande::STATUS_CANCELED)
                                     {
                                         $dBCommande->cancel(0);
+                                    }
+                                    if ($commandeArray['status'] == Commande::STATUS_CLOSED)
+                                    {
+                                        $dBCommande->cloture($this->user);
+                                        $dBCommande->classifyBilled($this->user);
                                     }
                                 //}
                             }
@@ -1549,6 +1619,10 @@ class eCommerceSynchro
                             //if not previous synchro exists
                             else
                             {
+                                // May be an old record with an old product removed on eCommerce still exists, we delete it before inster.
+                                $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_commande WHERE fk_commande=".$this->eCommerceCommande->fk_commande;
+                                $resql = $this->db->query($sql);
+                                
                                 //eCommerce create
                                 $this->eCommerceCommande->fk_site = $this->eCommerceSite->id;
                                 $this->eCommerceCommande->remote_id = $commandeArray['remote_id'];
@@ -1556,7 +1630,8 @@ class eCommerceSynchro
                                 if ($this->eCommerceCommande->create($this->user) < 0)
                                 {
                                     $error++;
-                                    $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceCommandeCreateError') . ' ' . $dBCommande->id;
+                                    $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceCommandeCreateError').' '.$dBCommande->id.', '.$this->eCommerceCommande->error;
+                                    dol_syslog($this->langs->trans('ECommerceSyncheCommerceCommandeCreateError') . ' ' . $dBCommande->id.', '.$this->eCommerceCommande->error, LOG_WARNING);
                                 }
                             }
                         }
@@ -1628,7 +1703,6 @@ class eCommerceSynchro
                 
                 foreach ($factures as $factureArray)
                 {
-                    
                     if (isset($this->errors))
                         return false;
                     
@@ -1641,8 +1715,9 @@ class eCommerceSynchro
                     $dBCommande = new Commande($this->db);
                     $dBExpedition = new Expedition($this->db);
 
-                    //check if commande exists in eCommerceCommande (with remote id)
+                    //check if commande exists in eCommerceCommande (with remote_order_id)
                     $synchCommandeExists = $this->eCommerceCommande->fetchByRemoteId($factureArray['remote_order_id'], $this->eCommerceSite->id);
+                    
                     //check if ref exists in commande
                     $refCommandeExists = $dBCommande->fetch($this->eCommerceCommande->fk_commande);
 
@@ -1662,6 +1737,29 @@ class eCommerceSynchro
                             {
                                 //update
                                 $result = 1;
+
+                                if ($dBFacture->statut != $factureArray['status'])
+                                {
+                                    dol_syslog("Status of invoice has changed, we update invoice from status ".$dBFacture->statut." to status ".$factureArray['status']);
+                                    if ($factureArray['status'] == Facture::STATUS_DRAFT)   // status draft. Should not happen with magento
+                                    {
+                                        // Nothing to do
+                                    }
+                                    if ($factureArray['status'] == Facture::STATUS_VALIDATED)   // status validated done previously.
+                                    {
+                                        // Nothing to do
+                                    }
+                                    if ($factureArray['status'] == Facture::STATUS_ABANDONED)
+                                    {
+                                        $dBFacture->set_canceled($this->user);
+                                    }
+                                    if ($factureArray['status'] == Facture::STATUS_CLOSED)
+                                    {
+                                        // Enter payment
+                                        // TODO
+                                    }
+                                }
+                                
                             } else
                             {
                                 $this->errors[] = $this->langs->trans('ECommerceSynchFactureErrorFactureSynchExistsButNotFacture');
@@ -1676,10 +1774,16 @@ class eCommerceSynchro
                              * valid order
                              * 
                              * ************************************************************** */
-                            if ($refCommandeExists > 0)
+                            if ($refCommandeExists > 0 && $dBCommande->statut == Commande::STATUS_DRAFT)
                             {
-                                $dBCommande->valid($this->user);
+                                $idWareHouse = 0;       // TODO get correct value if option decrease on order validation is on
+                                $dBCommande->valid($this->user, $idWareHouse);
                             }
+                            if ($refCommandeExists > 0 && $dBCommande->statut == Commande::STATUS_VALIDATED)
+                            {
+                                $dBCommande->cloture($this->user);
+                            }
+                            //var_dump($factureArray);exit;
                             
                             /* **************************************************************
                              * 
@@ -1689,14 +1793,21 @@ class eCommerceSynchro
 
                             $settlementTermsId = $this->getSettlementTermsId($factureArray['code_cond_reglement']);
 
+                            $origin = 'commande';
+                            $originid = $dBCommande->id;
+                            
                             $dBFacture->ref_client = $factureArray['ref_client'];
                             $dBFacture->date = strtotime($factureArray['date']);
                             $dBFacture->socid = $this->eCommerceSociete->fk_societe;
                             $dBFacture->cond_reglement_id = $settlementTermsId;
-                            $dBFacture->origin = 'commande';
-                            $dBFacture->origin_id = $dBCommande->id;
                             $dBFacture->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
+                            // Add link to order (cut takenf from facture card page)
+                            $dBFacture->origin = $origin;
+                            $dBFacture->origin_id = $originid;
+                            $dBFacture->linked_objects[$dBFacture->origin] = $dBFacture->origin_id;
+
+                            // Now we create invoice
                             $result = $dBFacture->create($this->user);
 
                             //add or update contacts of invoice
@@ -1719,8 +1830,9 @@ class eCommerceSynchro
                                     $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id);
                                     
                                     // Define the buy price for margin calculation
-                                    $buyprice=0;
                                     $fk_product = $this->eCommerceProduct->fk_product;
+                                    // TODO Use the defineBuyPrice function instead of following code to define buyprice.                                    
+                                    $buyprice=0;
                                     if (isset($conf->global->MARGIN_TYPE) && $conf->global->MARGIN_TYPE == 'pmp')   // If Rule is on PMP 
                                     {
                         			    include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
@@ -1736,7 +1848,7 @@ class eCommerceSynchro
                         			    $productFournisseur->find_min_price_product_fournisseur($fk_product);
                         			    $buyprice = $productFournisseur->fourn_unitprice;
                         			}
-                                    
+
                                     $dBFacture->addline(
                                         $item['description'], 
                                         $item['price'], 
@@ -1789,14 +1901,42 @@ class eCommerceSynchro
                             }
 
                             $dBFacture->validate($this->user);
+                            
+                            // Now update status
+                            dol_syslog("synchFacture Status of invoice = ".$factureArray['state']." dbFacture = ".$dBFacture->statut);
+                            if (! $error)
+                            {
+                                //if ($dBFacture->statut != $factureArray['status'])      // Always when creating
+                                //{
+                                dol_syslog("synchFacture Status of invoice must be now set, we update invoice from status ".$dBFacture->statut." to status ".$factureArray['status']);
+                                if ($factureArray['status'] == Facture::STATUS_DRAFT)   // status draft. Should not happen with magento
+                                {
+                                    // Nothing to do
+                                }
+                                if ($factureArray['status'] == Facture::STATUS_VALIDATED)   // status validated done previously.
+                                {
+                                    // Nothing to do
+                                }
+                                if ($factureArray['status'] == Facture::STATUS_ABANDONED)
+                                {
+                                    $dBFacture->set_canceled($this->user);
+                                }
+                                if ($factureArray['status'] == Facture::STATUS_CLOSED)
+                                {
+                                    // Enter payment
+                                    // TODO
+                                }
+                                //}
+                            }                            
+                            
                         }
-
+                        
                         /* **************************************************************
                          * 
                          * register into eCommerceFacture
                          * 
                          * ************************************************************** */
-                        //if synchro commande ok
+                        //if synchro invoice ok
                         if ($result >= 0)
                         {
                             $this->eCommerceFacture->last_update = $factureArray['last_update'];
@@ -1814,17 +1954,23 @@ class eCommerceSynchro
                             //if not previous synchro exists
                             else
                             {
+                                // May be an old record with an old product removed on eCommerce still exists, we delete it before inster.
+                                $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_facture WHERE fk_facture=".$this->eCommerceFacture->fk_facture;
+                                $resql = $this->db->query($sql);
+                                
                                 //eCommerce create
                                 $this->eCommerceFacture->fk_site = $this->eCommerceSite->id;
                                 $this->eCommerceFacture->remote_id = $factureArray['remote_id'];
                                 if ($this->eCommerceFacture->create($this->user) < 0)
                                 {
-                                    $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceFactureCreateError');
+                                    $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceFactureCreateError').' '.$dBFacture->id.', '.$this->eCommerceFacture->error;
+                                    dol_syslog($this->langs->trans('ECommerceSyncheCommerceFactureCreateError') . ' ' . $dBFacture->id.', '.$this->eCommerceFacture->error, LOG_WARNING);
                                     return false;
                                 }
                             }
                             $nbgoodsunchronize = $nbgoodsunchronize + 1;
-                        } else
+                        } 
+                        else
                         {
                             $this->errors[] = $this->langs->trans('ECommerceSynchCommandeError');
                             return false;
@@ -1957,7 +2103,8 @@ class eCommerceSynchro
                 $dbFacture = new Facture($this->db);
                 if ($dbFacture->fetch($this->eCommerceFacture->fk_facture) > 0)
                 {
-                    if ($dbFacture->delete() > 0)
+                    $idWarehouse = 0;   // We don't want to change stock here
+                    if ($dbFacture->delete($dbFacture->id, 0, $idWarehouse) > 0)
                         $dolObjectsDeleted++;
                 }
                 if ($this->eCommerceFacture->delete($this->user) > 0)
@@ -2014,7 +2161,7 @@ class eCommerceSynchro
                     if ($dbProduct->delete($dbProduct->id) >= 0)
                         $dolObjectsDeleted++;
                 }
-                if ($this->eCommerceProduct->delete($this->user) > 0)
+                if ($this->eCommerceProduct->delete($this->user, 0) > 0)
                     $synchObjectsDeleted++;
             }
         }
@@ -2038,10 +2185,10 @@ class eCommerceSynchro
                 $dbSocpeople = new Contact($this->db);
                 if ($dbSocpeople->fetch($this->eCommerceSocpeople->fk_socpeople) > 0)
                 {
-                    if ($dbSocpeople->delete() > 0)
+                    if ($dbSocpeople->delete(0) > 0)
                         $dolObjectsDeleted++;
                 }
-                if ($this->eCommerceSocpeople->delete($this->user) > 0)
+                if ($this->eCommerceSocpeople->delete($this->user, 0) > 0)
                     $synchObjectsDeleted++;
             }
         }
@@ -2065,10 +2212,10 @@ class eCommerceSynchro
                 $dbSociete = new Societe($this->db);
                 if ($dbSociete->fetch($this->eCommerceSociete->fk_societe) > 0)
                 {
-                    if ($dbSociete->delete($dbSociete->id,$this->user) > 0)
+                    if ($dbSociete->delete($dbSociete->id, $this->user, 1) > 0)
                         $dolObjectsDeleted++;
                 }
-                if ($this->eCommerceSociete->delete($this->user) > 0)
+                if ($this->eCommerceSociete->delete($this->user, 0) > 0)
                     $synchObjectsDeleted++;
             }
         }
@@ -2095,7 +2242,7 @@ class eCommerceSynchro
                     if ($dbCategory->delete($this->user) > 0)
                         $dolObjectsDeleted++;
                 }
-                if ($this->eCommerceCategory->delete($this->user) > 0)
+                if ($this->eCommerceCategory->delete($this->user, 0) > 0)
                     $synchObjectsDeleted++;
             }
         }

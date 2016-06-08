@@ -63,6 +63,8 @@ if ($_POST['site_form_detail_action'] == 'save')
         $errors[] = $langs->trans('ECommerceSetupCatSocieteEmpty');
     if ($_POST['ecommerce_type'] == 0)
         $errors[] = $langs->trans('ECommerceSetupTypeEmpty');
+    if (! ($_POST['ecommerce_fk_warehouse'] > 0))
+        setEventMessages($langs->trans('WarningStockProductNotFilled'), null, 'warnings');
     if (trim($_POST['ecommerce_webservice_address']) == '')
         $errors[] = $langs->trans('ECommerceSetupAddressEmpty');
     /*if (trim($_POST['ecommerce_timeout']) == '')
@@ -82,6 +84,7 @@ if ($_POST['site_form_detail_action'] == 'save')
         $siteDb->filter_value = $_POST['ecommerce_filter_value'];
         $siteDb->fk_cat_societe = $_POST['ecommerce_fk_cat_societe'];
         $siteDb->fk_cat_product = $_POST['ecommerce_fk_cat_product'];
+        $siteDb->fk_warehouse = $_POST['ecommerce_fk_warehouse'];
         $siteDb->last_update = $_POST['ecommerce_last_update'];
         //$siteDb->timeout = $_POST['ecommerce_timeout'];
         $siteDb->magento_use_special_price = ($_POST['ecommerce_magento_use_special_price'] ? 1 : 0);
@@ -109,6 +112,10 @@ if ($_POST['site_form_detail_action'] == 'save')
             setEventMessages($siteDb->error, $siteDb->errors, 'errors');
         }
     }
+    else
+    {
+        setEventMessages('', $errors, 'errors');
+    }
 }
 //DELETE
 elseif ($_POST['site_form_detail_action'] == 'delete')
@@ -116,7 +123,9 @@ elseif ($_POST['site_form_detail_action'] == 'delete')
     $siteDb->id = $_POST['ecommerce_id'];
     $result = $siteDb->delete($user);
     if ($result < 0)
-        $errors[] = $langs->trans('ECommerceDeleteErrorDb');
+    {
+        setEventMessages($langs->trans('ECommerceDeleteErrorDb'), null, 'errors');
+    }
     else
     {
         $eCommerceMenu = new eCommerceMenu($db, $siteDb);
@@ -152,6 +161,7 @@ $ecommerceFilterLabel = ($_POST['ecommerce_filter_label'] ? $_POST['ecommerce_fi
 $ecommerceFilterValue = ($_POST['ecommerce_filter_value'] ? $_POST['ecommerce_filter_value'] : $siteDb->filter_value);
 $ecommerceFkCatSociete = ($_POST['ecommerce_fk_cat_societe'] ? $_POST['ecommerce_fk_cat_societe'] : intval($siteDb->fk_cat_societe));
 $ecommerceFkCatProduct = ($_POST['ecommerce_fk_cat_product'] ? $_POST['ecommerce_fk_cat_product'] : intval($siteDb->fk_cat_product));
+$ecommerceFkWarehouse = ($_POST['ecommerce_fk_warehouse'] ? $_POST['ecommerce_fk_warehouse'] : intval($siteDb->fk_warehouse));
 $ecommerceMagentoUseSpecialPrice = ($_POST['ecommerce_magento_use_special_price'] ? $_POST['ecommerce_magento_use_special_price'] : intval($siteDb->magento_use_special_price));
 $ecommerceMagentoPriceType = ($_POST['ecommerce_magento_price_type'] ? $_POST['ecommerce_magento_price_type'] : $siteDb->ecommerce_magento_price_type);
 /*$ecommerceTimeout = 300;

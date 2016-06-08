@@ -39,6 +39,7 @@ class eCommerceSite // extends CommonObject
 	var $filter_value;
 	var $fk_cat_societe;
 	var $fk_cat_product;
+	var $fk_warehouse;
 	var $last_update;
 	var $timeout;
 	var $magento_use_special_price;
@@ -97,7 +98,6 @@ class eCommerceSite // extends CommonObject
 		$error=0;
     	
 		// Clean parameters
-        
 		if (isset($this->name)) $this->name=trim($this->name);
 		if (isset($this->type)) $this->type=trim($this->type);
 		if (isset($this->webservice_address)) $this->webservice_address=trim($this->webservice_address);
@@ -107,9 +107,8 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->filter_value)) $this->filter_value=trim($this->filter_value);
 		if (isset($this->fk_cat_societe)) $this->fk_cat_societe=trim($this->fk_cat_societe);
 		if (isset($this->fk_cat_product)) $this->fk_cat_product=trim($this->fk_cat_product);
+		if (isset($this->fk_warehouse)) $this->fk_warehouse=trim($this->fk_warehouse);
 		if (isset($this->timeout)) $this->timeout=trim($this->timeout);
-
-        
 
 		// Check parameters
 		// Put here code to add control on parameters values
@@ -126,14 +125,12 @@ class eCommerceSite // extends CommonObject
 		$sql.= "filter_value,";
 		$sql.= "fk_cat_societe,";
 		$sql.= "fk_cat_product,";
+		$sql.= "fk_warehouse,";
 		$sql.= "last_update,";
 		$sql.= "timeout,";
 		$sql.= "magento_use_special_price,";
 		$sql.= "magento_price_type";
-
-		
         $sql.= ") VALUES (";
-        
 		$sql.= " ".(! isset($this->name)?'NULL':"'".addslashes($this->name)."'").",";
 		$sql.= " ".(! isset($this->type)?'NULL':"'".$this->type."'").",";
 		$sql.= " ".(! isset($this->webservice_address)?'NULL':"'".addslashes($this->webservice_address)."'").",";
@@ -141,8 +138,9 @@ class eCommerceSite // extends CommonObject
 		$sql.= " ".(! isset($this->user_password)?'NULL':"'".addslashes($this->user_password)."'").",";
 		$sql.= " ".(! isset($this->filter_label)?'NULL':"'".addslashes($this->filter_label)."'").",";
 		$sql.= " ".(! isset($this->filter_value)?'NULL':"'".addslashes($this->filter_value)."'").",";
-		$sql.= " ".(! isset($this->fk_cat_societe)?'NULL':"'".$this->fk_cat_societe."'").",";
-		$sql.= " ".(! isset($this->fk_cat_product)?'NULL':"'".$this->fk_cat_product."'").",";
+		$sql.= " ".($this->fk_cat_societe > 0 ? 'NULL':"'".$this->fk_cat_societe."'").",";
+		$sql.= " ".($this->fk_cat_product > 0 ? 'NULL':"'".$this->fk_cat_product."'").",";
+		$sql.= " ".($this->fk_warehouse > 0 ? 'NULL':"'".$this->fk_warehouse."'").",";
 		$sql.= " ".(! isset($this->last_update) || strlen($this->last_update)==0?'NULL':"'".$this->db->idate($this->last_update)."'").",";
 		$sql.= " ".(! isset($this->timeout)?'300':"'".intval($this->timeout)."'").",";
 		$sql.= " ".(! isset($this->magento_use_special_price)?'0':"'".intval($this->magento_use_special_price)."'").",";
@@ -193,16 +191,16 @@ class eCommerceSite // extends CommonObject
 
     
     /**
-     *    \brief      Load object in memory from database
-     *    \param      id          id object
-     *    \return     int         <0 if KO, >0 if OK
+     *   Load object in memory from database
+     *   
+     *   @param     int     $id         Id of object
+     *   @return    int                 <0 if KO, >0 if OK
      */
     function fetch($id)
     {
     	global $langs;
         $sql = "SELECT";
 		$sql.= " t.rowid,";
-		
 		$sql.= " t.name,";
 		$sql.= " t.type,";
 		$sql.= " t.webservice_address,";
@@ -212,6 +210,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.filter_value,";
 		$sql.= " t.fk_cat_societe,";
 		$sql.= " t.fk_cat_product,";
+		$sql.= " t.fk_warehouse,";
 		$sql.= " t.last_update,";
 		$sql.= " t.timeout,";
 		$sql.= " t.magento_use_special_price,";
@@ -240,6 +239,7 @@ class eCommerceSite // extends CommonObject
 				$this->filter_value = $obj->filter_value;
 				$this->fk_cat_societe = $obj->fk_cat_societe;
 				$this->fk_cat_product = $obj->fk_cat_product;
+				$this->fk_warehouse = $obj->fk_warehouse;
 				$this->last_update = $this->db->jdate($obj->last_update);
 				$this->timeout = $obj->timeout;
 				$this->magento_use_special_price = $obj->magento_use_special_price;
@@ -282,9 +282,8 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->filter_value)) $this->filter_value=trim($this->filter_value);
 		if (isset($this->fk_cat_societe)) $this->fk_cat_societe=trim($this->fk_cat_societe);
 		if (isset($this->fk_cat_product)) $this->fk_cat_product=trim($this->fk_cat_product);
+		if (isset($this->fk_warehouse)) $this->fk_warehouse=trim($this->fk_warehouse);
 		if (isset($this->timeout)) $this->timeout=trim($this->timeout);
-
-        
 
 		// Check parameters
 		// Put here code to add control on parameters values
@@ -299,13 +298,13 @@ class eCommerceSite // extends CommonObject
 		$sql.= " user_password=".(isset($this->user_password)?"'".addslashes($this->user_password)."'":"null").",";
 		$sql.= " filter_label=".(isset($this->filter_label)?"'".addslashes($this->filter_label)."'":"null").",";
 		$sql.= " filter_value=".(isset($this->filter_value)?"'".addslashes($this->filter_value)."'":"null").",";
-		$sql.= " fk_cat_societe=".(isset($this->fk_cat_societe)?$this->fk_cat_societe:"null").",";
-		$sql.= " fk_cat_product=".(isset($this->fk_cat_product)?$this->fk_cat_product:"null").",";
+		$sql.= " fk_cat_societe=".($this->fk_cat_societe > 0 ? $this->fk_cat_societe:"null").",";
+		$sql.= " fk_cat_product=".($this->fk_cat_product > 0 ? $this->fk_cat_product:"null").",";
+		$sql.= " fk_warehouse=".($this->fk_warehouse > 0 ? $this->fk_warehouse:"null").",";
 		$sql.= " last_update=".((isset($this->last_update) && $this->last_update != '') ? "'".$this->db->idate($this->last_update)."'" : 'null').",";
 		$sql.= " timeout=".(isset($this->timeout)? "'".intval($this->timeout)."'" : '300').",";
 		$sql.= " magento_use_special_price=".(isset($this->magento_use_special_price)? "'".intval($this->magento_use_special_price)."'" : '0').",";
         $sql.= " magento_price_type=".(isset($this->magento_price_type)? "'".$this->magento_price_type."'" : 'HT')."";
-        
         $sql.= " WHERE rowid=".$this->id;
  
 		$this->db->begin();
@@ -350,10 +349,11 @@ class eCommerceSite // extends CommonObject
   
   
  	/**
-	 *   \brief      Delete object in database
-     *	\param      user        	User that delete
-     *   \param      notrigger	    0=launch triggers after, 1=disable triggers
-	 *	\return		int				<0 if KO, >0 if OK
+	 * Delete object in database
+     *	
+     * @param   User    $user        	 User that delete
+     * @param   int     $notrigger	     0=launch triggers after, 1=disable triggers
+	 * @return	int				         <0 if KO, >0 if OK
 	 */
 	function delete($user, $notrigger=0)
 	{
@@ -529,4 +529,4 @@ class eCommerceSite // extends CommonObject
 		return $this->siteTypes;
 	}
 }
-?>
+

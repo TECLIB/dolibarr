@@ -544,6 +544,82 @@ class InterfaceECommerce
         	}        	
         }
         
+        // Stock Movement
+        if ($action == 'STOCK_MOVEMENT')
+        {
+            dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
+             
+            $this->db->begin();
+        
+            $eCommerceSite = new eCommerceSite($this->db);
+            $sites = $eCommerceSite->listSites('object');
+
+            foreach($sites as $site)
+            {
+                if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
+                {
+                    dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
+                    continue;
+                }
+            
+                try
+                {
+                    $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+                    dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+                    $eCommerceSynchro->connect();
+                    if (count($eCommerceSynchro->errors))
+                    {
+                        $error++;
+                        setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+                    }
+                    
+                    if (! $error)
+                    {
+                        $eCommerceProduct = new eCommerceProduct($this->db);
+                        $eCommerceProduct->fetchByProductId($object->product_id, $site->id);
+
+                        // Get new qty. We read stock_reel of product. Trigger is called after creating movement and updating table product, so we get total after move. 
+                        $dbProduct = new Product($this->db);
+                        $dbProduct->fetch($object->product_id);
+                        
+                        $object->qty_after = $dbProduct->stock_reel;
+                        
+                        if ($eCommerceProduct->remote_id > 0)
+                        {
+                            $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($eCommerceProduct->remote_id, $object);
+                            if (! $result)
+                            {
+                                $error++;
+                                $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+                                $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+                            }
+                        }
+                        else
+                        {
+       					    dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record and does not has category flag to push on eCommerce.");
+                        }
+                    }
+                }
+                catch (Exception $e)
+                {
+                    $error++;
+                    $this->errors[] = 'Trigger exception : '.$e->getMessage();
+                    dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id." ".'Trigger exception : '.$e->getMessage());
+                    break;
+                }                    
+            }                    
+
+            if ($error)
+            {
+                $this->db->rollback();
+                return -1;
+            }
+            else
+            {
+                $this->db->commit();
+                return 1;
+            }            
+        }
         
 		return 0;
     }

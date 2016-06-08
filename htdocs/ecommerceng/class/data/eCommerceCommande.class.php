@@ -450,4 +450,3 @@ class eCommerceCommande
         }
     }
 }
-?>

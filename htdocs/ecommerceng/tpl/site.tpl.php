@@ -9,6 +9,9 @@ if (is_object($site))
     print_fiche_titre($langs->trans('ECommerceSiteSynchro').' '.$site->name, $linkback, 'eCommerceTitle@ecommerceng');
     
     print '<br>';
+
+    
+    print '<table class="centpercent nobordernopadding"><tr><td>';
     
     print $langs->trans("ECommerceLastCompleteSync").': ';
     if ($site->last_update) print '<strong>'.dol_print_date($site->last_update, 'dayhoursec').'</strong>';
@@ -25,6 +28,14 @@ if (is_object($site))
     {
         print $langs->trans("SoapCacheIsOff", $soapwsdlcachedir).'<br>';
     }
+    
+    print '</td><td align="right">';
+    
+    $button.='<a href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'" class="butAction">'.$langs->trans('RefreshCount').'</a>';
+    print $button;
+    
+    print '</td></tr></table>';
+    
     
     print '<br>'."\n";
 ?>
@@ -202,13 +213,9 @@ $var=!$var;
 	print '*** '.$langs->trans("OnlyThirdPartyIn", $tagname).'<br>';
 	print '**** '.$langs->trans("WithMagentoThirdIsModifiedIfAddressModified").'<br>';
 	
-	print '<div class="tabsAction">';
-	print '<div class="inline-block divButAction">';
-	print '<a href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'" class="butAction">'.$langs->trans('RefreshCount').'</a>';
-	print '</div>';
-	print '</div>';
 	
-	print '</form>';
+	if ($user->admin)
+	{
 	?>
 
 	<form name="form_reset_data" id="form_reset_data" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
@@ -219,6 +226,7 @@ $var=!$var;
 		<div class="tabsAction" ><input type="submit" name="submit_reset" class="butActionDelete" value="<?php print $langs->trans('ECommerceReset') ?>"></div>
 	</form>
 <?php
+	}
 }
 else
 {

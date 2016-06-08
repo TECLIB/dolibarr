@@ -206,6 +206,7 @@ class eCommerceRemoteAccess
 	    return $result;
 	}
 	
+	
     /**
      * Get a commande from instantiated class in the constructor
      * 
@@ -284,6 +285,21 @@ class eCommerceRemoteAccess
 	public function updateRemoteProduct($remote_product_id, $object)
 	{
 	    $result=$this->class->updateRemoteProduct($remote_product_id, $object);
+	    $this->error=$this->class->error;
+	    $this->errors=$this->class->errors;
+	    return $result;
+	}	
+	
+	/**
+	 * Update remote stock of product
+	 * 
+	 * @param  int     $remote_product_id    Id of product on remote ecommerce
+	 * @param  Product $object               Product object
+	 * @return bool
+	 */
+	public function updateRemoteStockProduct($remote_product_id, $object)
+	{
+	    $result=$this->class->updateRemoteStockProduct($remote_product_id, $object);
 	    $this->error=$this->class->error;
 	    $this->errors=$this->class->errors;
 	    return $result;

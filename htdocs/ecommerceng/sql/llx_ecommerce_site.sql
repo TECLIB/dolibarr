@@ -16,19 +16,20 @@
 --
 -- ===================================================================
 
-CREATE TABLE `llx_ecommerce_site` (
-  `rowid` int(11) NOT NULL auto_increment PRIMARY KEY,
-  `name` varchar(255) NOT NULL,
-  `type` int(11) NOT NULL DEFAULT 1,
-  `webservice_address` varchar(255) NOT NULL,
-  `user_name` varchar(255) DEFAULT NULL,
-  `user_password` varchar(255) DEFAULT NULL,
-  `filter_label` varchar(255) DEFAULT NULL,
-  `filter_value` varchar(255) DEFAULT NULL,
-  `fk_cat_societe` int(11) NOT NULL,
-  `fk_cat_product` int(11) NOT NULL,
-  `last_update` datetime DEFAULT NULL,
-  `timeout` int(11) NOT NULL DEFAULT 300,
-  `magento_use_special_price` INT( 1 ) NOT NULL DEFAULT '0',
-  `magento_price_type` VARCHAR(3) NOT NULL DEFAULT 'HT'
-) ENGINE=InnoDB COMMENT='List of sites to synchronized';
+CREATE TABLE llx_ecommerce_site (
+  rowid integer NOT NULL auto_increment PRIMARY KEY,
+  name varchar(255) NOT NULL,
+  type integer NOT NULL DEFAULT 1,
+  webservice_address varchar(255) NOT NULL,
+  user_name varchar(255) DEFAULT NULL,
+  user_password varchar(255) DEFAULT NULL,
+  filter_label varchar(255) DEFAULT NULL,
+  filter_value varchar(255) DEFAULT NULL,
+  fk_cat_societe integer NOT NULL,
+  fk_cat_product integer NOT NULL,
+  fk_warehouse integer NULL,
+  last_update datetime DEFAULT NULL,
+  timeout int(11) NOT NULL DEFAULT 300,
+  magento_use_special_price INT( 1 ) NOT NULL DEFAULT '0',
+  magento_price_type VARCHAR(3) NOT NULL DEFAULT 'HT'
+) ENGINE=InnoDB;

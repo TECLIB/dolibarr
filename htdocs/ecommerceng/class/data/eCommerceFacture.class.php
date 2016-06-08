@@ -238,10 +238,11 @@ class eCommerceFacture // extends CommonObject
   
   
  	/**
-	 *   \brief      Delete object in database
-     *	\param      user        	User that delete
-     *   \param      notrigger	    0=launch triggers after, 1=disable triggers
-	 *	\return		int				<0 if KO, >0 if OK
+	 *  Delete object in database
+	 *  
+     *	@param      User    $user        	User that delete
+     *  @param      int     $notrigger	    0=launch triggers after, 1=disable triggers
+	 *	@return		int				        <0 if KO, >0 if OK
 	 */
 	function delete($user, $notrigger=0)
 	{
@@ -326,6 +327,7 @@ class eCommerceFacture // extends CommonObject
 	
 	/**
      *    Load object in memory from database by remote_id
+     *    
      *    @param	$remoteId string remote_id
      *    @param	$siteId int fk_site
      *    @return	int <0 if KO, >0 if OK

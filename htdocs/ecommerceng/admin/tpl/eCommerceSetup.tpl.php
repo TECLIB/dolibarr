@@ -17,6 +17,9 @@
  * or see http://www.gnu.org/
  */
 
+include_once DOL_DOCUMENT_ROOT.'/product/class/html.formproduct.class.php';
+
+$formproduct = new FormProduct($db);
 
 llxHeader();
 
@@ -88,6 +91,21 @@ $var=!$var;
 					<td><?php print $langs->trans('ECommerceCatProductDescription') ?></td>
 				</tr>
 <?php
+if ($conf->stock->enabled)
+{
+    $var=!$var;
+?>
+				<tr <?php print $bc[$var] ?>>
+					<td><span><?php print $langs->trans('ECommerceStockProduct') ?></span></td>
+					<td>
+							<?php
+								print $formproduct->selectWarehouses($ecommerceFkWarehouse, 'ecommerce_fk_warehouse', 0, 1);
+							?>
+					</td>
+					<td><?php print $langs->trans('ECommerceStockProductDescription') ?></td>
+				</tr>				
+<?php
+}
 $var=!$var;
 ?>
 				<tr <?php print $bc[$var] ?>>
@@ -246,12 +264,9 @@ else
 		</form>
 
 <?php
-if ($errors != array())
-	foreach ($errors as $error)
-		print '<p class="error">'.$error.'</p>';
 if ($success != array())
 	foreach ($success as $succes)
 		print '<p class="ok">'.$succes.'</p>';
 ?>
-		<br/>
+		<br>
 				
