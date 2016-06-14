@@ -150,7 +150,7 @@ $var=!$var;
     			<?php if ($synchRights==true):?>
     			<td>
                         <?php
-    				if ($nbSocieteToUpdate>0) { ?>
+    				if ($nbCommandeToUpdate>0 && $nbSocieteToUpdate>0) { ?>
     				<form name="form_synchro_commande" id="form_synchro_commande" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
     					<input type="hidden" name="id" value="<?php print $site->id ?>">
     					<input type="hidden" name="to_date" value="<?php print $toDate ?>">
@@ -182,7 +182,7 @@ $var=!$var;
 			</td>
 			<?php if ($synchRights==true):?>
 			<td>
-				<?php if ($nbSocieteToUpdate>0) { ?>
+				<?php if ($nbFactureToUpdate>0 && $nbSocieteToUpdate>0) { ?>
 				<form name="form_synchro_commande" id="form_synchro_facture" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
 					<input type="hidden" name="id" value="<?php print $site->id ?>">
 					<input type="hidden" name="to_date" value="<?php print $toDate ?>">
