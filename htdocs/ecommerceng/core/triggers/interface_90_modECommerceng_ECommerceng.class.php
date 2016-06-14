@@ -22,7 +22,7 @@ dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
 
 require_once(DOL_DOCUMENT_ROOT.'/expedition/class/expedition.class.php');
 
-class InterfaceECommerce
+class InterfaceECommerceng
 {
     private $db;
     private $name;
@@ -34,11 +34,12 @@ class InterfaceECommerce
     
     /**
      *   This class is a trigger on delivery to update delivery on eCommerce Site
-     *   @param      DoliDB		$DB      Handler database access
+     *   
+     *   @param      DoliDB		$db      Handler database access
      */
-    function InterfaceECommerce($DB)
+    function __construct($db)
     {
-        $this->db = $DB ;
+        $this->db = $db;
     
         $this->name = preg_replace('/^Interface/i','',get_class($this));
         $this->family = "eCommerce";

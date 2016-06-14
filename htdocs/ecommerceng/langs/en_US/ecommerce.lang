@@ -43,6 +43,7 @@ ECommerceNoUpdateSite=This site has never been synchronized
 ECommerceUpdateSite=Detailed update of this site
 ECommerceUpdateAll=Update all for this site
 ECommerceReset=Remove from Dolibarr all data coming from Ecommerce synchronisation
+ECommerceResetLink=Remove records for links between Dolibarr and Ecommerce
 ECommerceMenu=ECommerce Sync
 ECommerceSetupCatProductEmpty=Product category is required.
 ECommerceSetupCatSocieteEmpty=Customer category is required.

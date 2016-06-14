@@ -86,7 +86,7 @@ $var=!$var;
 			<?php if ($synchRights==true):?>
 			<td>
 				<?php
-				if ($nbCategoriesToUpdate>0) {
+				if ($nbProductToUpdate>0 && $nbCategoriesToUpdate>0) {
 				    ?>
 				<form name="form_synchro_product" id="form_synchro_product" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
 					<input type="hidden" name="id" value="<?php print $site->id ?>">

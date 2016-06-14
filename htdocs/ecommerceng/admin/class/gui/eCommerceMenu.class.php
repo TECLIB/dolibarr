@@ -56,8 +56,8 @@ class eCommerceMenu
     	$menu[0]=array(	'fk_menu'=>'',
     					'type'=>'top',
     					'titre'=>'ECommerceMenu',
-    					'mainmenu'=>'ecommerce',
-    					'leftmenu'=>'ecommerce',
+    					'mainmenu'=>'ecommerceng',
+    					'leftmenu'=>'ecommerceng',
     					'url'=>'/ecommerceng/index.php',
     					'langs'=>'ecommerce@ecommerceng',
     					'position'=>100,
@@ -66,11 +66,11 @@ class eCommerceMenu
     					'target'=>'',
     					'user'=>2);
     	//define left menu
-    	$menu[1]=array(	'fk_menu'=>'fk_mainmenu=ecommerce',
+    	$menu[1]=array(	'fk_menu'=>'fk_mainmenu=ecommerceng',
     					'type'=>'left',
     					'titre'=>'ECommerceMenu',
-    					'mainmenu'=>'ecommerce',
-    	                'leftmenu'=>'ecommerce',
+    					'mainmenu'=>'ecommerceng',
+    	                'leftmenu'=>'ecommerceng',
     					'url'=>'/ecommerceng/index.php',
     					'langs'=>'ecommerce@ecommerceng',
     					'position'=>100,
@@ -80,11 +80,11 @@ class eCommerceMenu
     					'user'=>2);
     	
     	//add link to configuration
-    	$menu[2]=array(	'fk_menu'=>'fk_mainmenu=ecommerce',
+    	$menu[2]=array(	'fk_menu'=>'fk_mainmenu=ecommerceng',
     					'type'=>'left',
     					'titre'=>'ECommerceSetupSites',
-    					'mainmenu'=>'ecommerce',
-    	                'leftmenu'=>'ecommerce',
+    					'mainmenu'=>'ecommerceng',
+    	                'leftmenu'=>'ecommerceng',
     					'url'=>'/ecommerceng/admin/eCommerceSetup.php',
     					'langs'=>'ecommerce@ecommerceng',
     					'position'=>110,
@@ -97,11 +97,11 @@ class eCommerceMenu
     	$sites = $this->siteDb->listSites();
     	if (count($this->siteDb))
     		foreach ($sites as $site)
-    			$menu[]=array(	'fk_menu'=>'fk_mainmenu=ecommerce',
+    			$menu[]=array(	'fk_menu'=>'fk_mainmenu=ecommerceng',
     							'type'=>'left',
     							'titre'=>$site['name'],
-    							'mainmenu'=>'ecommerce',
-    			                'leftmenu'=>'ecommerce',
+    							'mainmenu'=>'ecommerceng',
+    			                'leftmenu'=>'ecommerceng',
     							'url'=>'/ecommerceng/site.php?id='.$site['id'],
     							'langs'=>'ecommerce@ecommerceng',
     							'position'=>120,
