@@ -99,11 +99,11 @@ if ($id)
 		{
 			if (GETPOST('reset_data') == 'all')
 			{
-				$synchro->dropImportedAndSyncData();
+				$synchro->dropImportedAndSyncData(1);
 			}
 			if (GETPOST('reset_data') == 'links')
 			{
-			    // TODO
+			    $synchro->dropImportedAndSyncData(0);
 			}
 				
 			if (GETPOST('submit_synchro_category') || GETPOST('submit_synchro_all'))

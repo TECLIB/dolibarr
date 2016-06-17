@@ -32,12 +32,13 @@ if (is_object($site))
     
     print '</td><td align="right">';
     
-    $button.='<a style="padding-right: 10px" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=refresh" class="butAction">'.$langs->trans('RefreshCount').'</a>';
+    $button.='<a class="button" style="margin-right: 15px" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=refresh" class="butAction">'.$langs->trans('RefreshCount').'</a>';
     print $button;
     
-    if ($synchRights==true && ($nbCategoriesToUpdate>0 || $nbProductToUpdate>0 || $nbSocieteToUpdate>0 || $nbCommandeToUpdate>0 || $nbFactureToUpdate>0)) $disabled=true;
+    $disabled=true;
+    if ($synchRights != true || ($nbCategoriesToUpdate>0 || $nbProductToUpdate>0 || $nbSocieteToUpdate>0 || $nbCommandeToUpdate>0 || $nbFactureToUpdate>0)) $disabled=false;
     
-    $button2.='<a '.($disabled?'disabled="disabled" ':'').'href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=submit_synchro_all" class="butAction">'.$langs->trans('SyncAll').'</a>';
+    $button2.='<a class="button'.($disabled?' buttonRefused':'').'" href="'.($disabled?'#':$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=submit_synchro_all&submit_synchro_all=1').'" class="butAction">'.$langs->trans('SyncAll').'</a>';
     print $button2;
     
     print '</td></tr></table>';
@@ -233,10 +234,21 @@ $var=!$var;
 	{
 		print '<br><br>';
    		dol_fiche_head('', '', $langs->trans('DangerZone'));
-		print '<a style="color: #600" id="submit_reset" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=all">'.$langs->trans('ECommerceReset').'</a>';
-	    print '<br><br>';
-	    print '<a style="color: #600" id="submit_reset" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=links">'.$langs->trans('ECommerceResetLink').'</a>';
+	    print '<a style="color: #600" id="submit_reset_data_links" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=links">'.$langs->trans('ECommerceResetLink').'</a>';
+   		print '<br><br>';
+		print '<a style="color: #600" id="submit_reset_data_all" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=all">'.$langs->trans('ECommerceReset').'</a>';
 		dol_fiche_end();
+		
+		print "
+		<!-- Include jQuery confirm -->
+		<script type=\"text/javascript\">
+		$('#submit_reset_data_links').on('click', function () {
+		    return confirm('".dol_escape_js($langs->trans("AreYouSureYouWantToDeleteLinks"))."');
+		});
+        $('#submit_reset_data_all').on('click', function () {
+		    return confirm('".dol_escape_js($langs->trans("AreYouSureYouWantToDeleteAll"))."');
+		});
+        </script>";
 	}
 }
 else
@@ -246,6 +258,7 @@ else
 }
 
 setEventMessages(null, $errors, 'errors');
-setEventMessages(null, $success);
+if (GETPOST('reset_data')) setEventMessages(null, $success, 'warnings');
+else setEventMessages(null, $success);
 
 llxFooter();

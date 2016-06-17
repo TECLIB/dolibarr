@@ -129,3 +129,7 @@ MainSyncSetup=Main synchronization setup
 StockSyncSetup=Stock synchronization setup
 ErrorModuleSoapRequired=Error: PHP module SOAP is required to have this module working.
 SyncAll=Synchronize All
+DangerZone=Danger Zone
+AreYouSureYouWantToDeleteLinks=Are you sure you want to delete mapping links between Dolibarr and eCommerce objects ?
+AreYouSureYouWantToDeleteAll=Are you sure you want to delete mapping links between Dolibarr and eCommerce objects but also objects found in Dolibarr ?
+
