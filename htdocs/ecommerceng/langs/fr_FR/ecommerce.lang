@@ -106,6 +106,6 @@ OnlyThirdPartyWithTags=Nb de tiers ayant le tag '<b>%s</b>' (donc sensé être c
 NbInDolibarr=Nb dans l'ERP
 NbInDolibarrLinkedToE=Nb dans l'ERP lié à la boutique
 ModuleCustomerOrderDisabled=Non géré (module Commande Client désactivé)
-ECommerceLastCompleteSync=Date de la dernière synchro Magento->Dolibarr réalisée entièrement (=plus d'éléments à synchroniser)
+ECommerceLastCompleteSync=Date de la dernière synchro <strong>de %s vers Dolibarr</strong> réalisée entièrement (=plus d'éléments à synchroniser)
 WithMagentoThirdIsModifiedIfAddressModified=Avec Magento, un tiers sera vue modifié aussi si un de ces contacts/address a été modifié
 SyncSocieteFirst=Synchroniser d'abord les tiers
