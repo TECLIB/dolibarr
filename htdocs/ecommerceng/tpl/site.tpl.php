@@ -10,10 +10,11 @@ if (is_object($site))
     
     print '<br>';
 
+    dol_fiche_head('', '', 'Dolibarr <- Ecommerce');
     
     print '<table class="centpercent nobordernopadding"><tr><td>';
     
-    print $langs->trans("ECommerceLastCompleteSync").': ';
+    print $langs->trans("ECommerceLastCompleteSync", $site->name).': ';
     if ($site->last_update) print '<strong>'.dol_print_date($site->last_update, 'dayhoursec').'</strong>';
     else print $langs->trans("ECommerceNoUpdateSite");
     print '<br>';
@@ -22,7 +23,7 @@ if (is_object($site))
     $soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
     if ($soapwsdlcacheon)
     {
-        print $langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir, $langs->transnoentitiesnoconv("ECommerceSiteAddress")).'<br>';
+        print $langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).'<br>';
     }
     else
     {
@@ -211,14 +212,26 @@ $var=!$var;
 	//print '*** '.$langs->trans("OnlyThirdPartyWithTags", $tagname).'<br>';
 	print '*** '.$langs->trans("OnlyThirdPartyIn", $tagname).'<br>';
 	print '**** '.$langs->trans("WithMagentoThirdIsModifiedIfAddressModified").'<br>';
-	
 
+	dol_fiche_end();
+	
+	print '<br>';
+	
+    dol_fiche_head('', '', 'Dolibarr -> Ecommerce');
+	
+	print $langs->trans("SyncIsAutomaticInRealTime", $site->name)."\n";
+	
+	dol_fiche_end();
+	
+	
 	if ($user->admin)
 	{
-	    print '<br><br><br>';
-	    print '<a style="color: #600" id="submit_reset" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=all">'.$langs->trans('ECommerceReset').'</a>';
+		print '<br><br>';
+   		dol_fiche_head('', '', $langs->trans('DangerZone'));
+		print '<a style="color: #600" id="submit_reset" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=all">'.$langs->trans('ECommerceReset').'</a>';
 	    print '<br><br>';
 	    print '<a style="color: #600" id="submit_reset" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=links">'.$langs->trans('ECommerceResetLink').'</a>';
+		dol_fiche_end();
 	}
 }
 else

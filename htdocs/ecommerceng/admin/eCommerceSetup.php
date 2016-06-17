@@ -221,7 +221,8 @@ $soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');
 $soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
 if ($soapwsdlcacheon)
 {
-    print img_warning('').' '.$langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir, $langs->transnoentitiesnoconv("ECommerceSiteAddress")).'<br>';
+    print img_warning('').' '.$langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).' ';
+    print $langs->trans("WarningSoapCacheIsOn2", $langs->transnoentitiesnoconv("ECommerceSiteAddress")).'<br>';
 }
 else
 {
