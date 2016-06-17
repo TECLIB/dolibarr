@@ -126,3 +126,4 @@ ECommerceStockSyncDirectionDescription=Define if you want to see stock decrease 
 MainSyncSetup=Main synchronization setup
 StockSyncSetup=Stock synchronization setup
 ErrorModuleSoapRequired=Error: PHP module SOAP is required to have this module working.
+SyncAll=Synchronize All

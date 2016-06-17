@@ -31,8 +31,13 @@ if (is_object($site))
     
     print '</td><td align="right">';
     
-    $button.='<a href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'" class="butAction">'.$langs->trans('RefreshCount').'</a>';
+    $button.='<a style="padding-right: 10px" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=refresh" class="butAction">'.$langs->trans('RefreshCount').'</a>';
     print $button;
+    
+    if ($synchRights==true && ($nbCategoriesToUpdate>0 || $nbProductToUpdate>0 || $nbSocieteToUpdate>0 || $nbCommandeToUpdate>0 || $nbFactureToUpdate>0)) $disabled=true;
+    
+    $button2.='<a '.($disabled?'disabled="disabled" ':'').'href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=submit_synchro_all" class="butAction">'.$langs->trans('SyncAll').'</a>';
+    print $button2;
     
     print '</td></tr></table>';
     
@@ -62,7 +67,7 @@ $var=!$var;
 					print $nbCategoriesToUpdate;
 				?>
 			</td>
-			<?php if ($synchRights==true):?>
+			<?php if ($synchRights==true) { ?>
 			<td>
 				<?php if ($nbCategoriesToUpdate>0) { ?>
 				<form name="form_synchro_categories" id="form_synchro_category" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
@@ -72,7 +77,7 @@ $var=!$var;
 				</form>
 				<?php } ?>
 			</td>
-			<?php endif; ?>
+			<?php } ?>
 		</tr>
 <?php
 $var=!$var;
