@@ -890,6 +890,8 @@ class eCommerceSynchro
                         $dBSociete->tva_intra = $societeArray['vatnumber'];
                         $dBSociete->tva_assuj = 1;                              // tva_intra is not saved if this field is not set
                         $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                        $dbSociete->code_client = -1;           // Automatic code
+                        $dbSociete->code_fournisseur = -1;      // Automatic code
                         
                         $result = $dBSociete->create($this->user);
                         if ($result < 0)
@@ -899,7 +901,7 @@ class eCommerceSynchro
                             $this->errors=$dBSociete->errors;
                         }
                     }
-                    
+
                     //if create/update of societe table ok
                     if ($result >= 0)
                     {
@@ -1303,7 +1305,7 @@ class eCommerceSynchro
                         // if not previous synchro exists into link table (we faild to find it from the remote_id 
                         else
                         {
-                            // May be an old record with an old product removed on eCommerce still exists, we delete it before inster.
+                            // May be an old record with an old product removed on eCommerce still exists, we delete it before insert.
                             $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_product WHERE fk_product=".$this->eCommerceProduct->fk_product;
                             $resql = $this->db->query($sql);
                             
@@ -1635,7 +1637,7 @@ class eCommerceSynchro
                             //if not previous synchro exists
                             else
                             {
-                                // May be an old record with an old product removed on eCommerce still exists, we delete it before inster.
+                                // May be an old record with an old product removed on eCommerce still exists, we delete it before insert.
                                 $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_commande WHERE fk_commande=".$this->eCommerceCommande->fk_commande;
                                 $resql = $this->db->query($sql);
                                 
@@ -1966,7 +1968,7 @@ class eCommerceSynchro
                             //if not previous synchro exists
                             else
                             {
-                                // May be an old record with an old product removed on eCommerce still exists, we delete it before inster.
+                                // May be an old record with an old product removed on eCommerce still exists, we delete it before insert.
                                 $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_facture WHERE fk_facture=".$this->eCommerceFacture->fk_facture;
                                 $resql = $this->db->query($sql);
                                 
