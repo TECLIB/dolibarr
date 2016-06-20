@@ -132,4 +132,4 @@ SyncAll=Synchronize All
 DangerZone=Danger Zone
 AreYouSureYouWantToDeleteLinks=Are you sure you want to delete mapping links between Dolibarr and eCommerce objects ?
 AreYouSureYouWantToDeleteAll=Are you sure you want to delete mapping links between Dolibarr and eCommerce objects but also objects found in Dolibarr ?
-
+BackToListOfSites=Back to list of ecommerce sites

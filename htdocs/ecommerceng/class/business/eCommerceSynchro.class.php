@@ -773,7 +773,7 @@ class eCommerceSynchro
                         } 
                         else
                         {
-							if ($result == -4)
+							if ($result == -4)   // duplicate during create
 							{
 								// The category already exists
 								$dBCategorie->fetch(0, $dBCategorie->label, $dBCategorie->type);
@@ -868,6 +868,7 @@ class eCommerceSynchro
                         if ($refExistst >= 0)
                         {
                             $dBSociete->name = $societeArray['name'];
+                            $dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];
                             $dBSociete->email = $societeArray['email'];
                             $dBSociete->client = $societeArray['client'];
                             $dBSociete->tva_intra = $societeArray['vatnumber'];
@@ -884,21 +885,33 @@ class eCommerceSynchro
                     //if societe not exists in eCommerceSociete, societe is created
                     else
                     {
-                        $dBSociete->name = $societeArray['name'];
-                        $dBSociete->email = $societeArray['email'];
-                        $dBSociete->client = $societeArray['client'];
-                        $dBSociete->tva_intra = $societeArray['vatnumber'];
-                        $dBSociete->tva_assuj = 1;                              // tva_intra is not saved if this field is not set
-                        $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
-                        $dbSociete->code_client = -1;           // Automatic code
-                        $dbSociete->code_fournisseur = -1;      // Automatic code
-                        
-                        $result = $dBSociete->create($this->user);
-                        if ($result < 0)
+                        // First, we check thirdparty does not alreay exists. If not, we create it, if it exists, do nothing.
+                        $result = $dBSociete->fetch(0, $societeArray['name']);
+                        if ($result == -2)
                         {
                             $error++;
-                            $this->error=$dBSociete->error;
-                            $this->errors=$dBSociete->errors;
+                            $this->error='Several thirdparties with name '.$societeArray['name'].' were found in Dolibarr. Sync is not possible. Please rename one of it to avoid duplicate.';
+                            $this->errors[]=$this->error;
+                        }
+                        if ($result == 0)
+                        {
+                            $dBSociete->name = $societeArray['name'];
+                            $dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];
+                            $dBSociete->email = $societeArray['email'];
+                            $dBSociete->client = $societeArray['client'];
+                            $dBSociete->tva_intra = $societeArray['vatnumber'];
+                            $dBSociete->tva_assuj = 1;                              // tva_intra is not saved if this field is not set
+                            $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                            $dBSociete->code_client = -1;           // Automatic code
+                            $dBSociete->code_fournisseur = -1;      // Automatic code
+                            
+                            $result = $dBSociete->create($this->user);
+                            if ($result < 0)
+                            {
+                                $error++;
+                                $this->error=$dBSociete->error;
+                                $this->errors=$dBSociete->errors;
+                            }
                         }
                     }
 
@@ -937,7 +950,7 @@ class eCommerceSynchro
                                 $this->errors[] = $this->langs->trans('ECommerceSynchECommerceSocieteCreateError') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'];
                             }
                         }
-                        
+
                         // Sync also people of thirdparty
                         // We can disable this to have contact/address of thirdparty synchronize only when an order or invoice is synchronized
                         $listofaddressids=$this->eCommerceRemoteAccess->getRemoteAddressIdForSociete($societeArray['remote_id']);
@@ -2104,13 +2117,16 @@ class eCommerceSynchro
      * Delete any data linked to synchronization, then delete synchro's datas to clean sync
      * 
      * @param   int     $deletealsoindolibarr       0=Delete only link table, 1=Delete also record in dolibarr
+     * @param   string  $mode                       '' to delete all, 'categories', 'products', 'thirdparties', 'orders', 'invoices'
      * @return  void
      */
-    public function dropImportedAndSyncData($deletealsoindolibarr)
+    public function dropImportedAndSyncData($deletealsoindolibarr, $mode='')
     {
         dol_syslog("***** eCommerceSynchro dropImportedAndSyncData");
         
         // Drop invoices
+        if (empty($mode) || $mode == 'invoices')
+        {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
         $this->initECommerceFacture();
@@ -2139,9 +2155,11 @@ class eCommerceSynchro
         if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolFactureSuccess');
         $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchFactureSuccess');
         unset($this->eCommerceFacture);
-
+        }
 
         //Drop commands
+        if (empty($mode) || $mode == 'orders')
+        {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
         $this->initECommerceCommande();
@@ -2169,9 +2187,11 @@ class eCommerceSynchro
         if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolCommandeSuccess');
         $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchCommandeSuccess');
         unset($this->eCommerceCommande);
-
+        }
 
         //Drop products
+        if (empty($mode) || $mode == 'products')
+        {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
         $this->initECommerceProduct();
@@ -2199,9 +2219,11 @@ class eCommerceSynchro
         if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolProductSuccess');
         $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchProductSuccess');
         unset($this->eCommerceProduct);
-
+        }
 
         //Drop socPeople
+        if (empty($mode) || $mode == 'contacts')
+        {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
         $this->initECommerceSocpeople();
@@ -2229,9 +2251,11 @@ class eCommerceSynchro
         if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolSocpeopleSuccess');
         $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchSocpeopleSuccess');
         unset($this->eCommerceSocpeople);
-
+        }
 
         //Drop societes
+        if (empty($mode) || $mode == 'thirdparties')
+        {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
         $this->initECommerceSociete();
@@ -2259,9 +2283,11 @@ class eCommerceSynchro
         if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolSocieteSuccess');
         $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchSocieteSuccess');
         unset($this->eCommerceSociete);
-
+        }
 
         //Drop categories	
+        if (empty($mode) || $mode == 'categories')
+        {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
         $this->initECommerceCategory();
@@ -2289,8 +2315,10 @@ class eCommerceSynchro
         if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolCategorySuccess');
         $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchCategorySuccess');
         unset($this->eCommerceCategory);
+        }
     }
 
+    
     public function __destruct()
     {
         unset($this->eCommerceRemoteAccess);

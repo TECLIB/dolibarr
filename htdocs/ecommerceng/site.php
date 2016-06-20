@@ -105,6 +105,10 @@ if ($id)
 			{
 			    $synchro->dropImportedAndSyncData(0);
 			}
+			if (in_array(GETPOST('reset_data'), array('categories', 'products', 'thirdparties', 'orders', 'invoices')))
+			{
+			    $synchro->dropImportedAndSyncData(0, GETPOST('reset_data'));
+			}
 				
 			if (GETPOST('submit_synchro_category') || GETPOST('submit_synchro_all'))
 			{

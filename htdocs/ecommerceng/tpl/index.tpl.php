@@ -1,7 +1,7 @@
 <?php
 llxHeader();
 
-$linkback='<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
+$linkback='';
 print load_fiche_titre($langs->trans("ECommerceDashboard"), $linkback, 'eCommerceTitle@ecommerceng');
 
 print '<br>';
