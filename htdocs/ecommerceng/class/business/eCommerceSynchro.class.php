@@ -868,7 +868,7 @@ class eCommerceSynchro
                         if ($refExistst >= 0)
                         {
                             $dBSociete->name = $societeArray['name'];
-                            $dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];
+                            //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
                             $dBSociete->email = $societeArray['email'];
                             $dBSociete->client = $societeArray['client'];
                             $dBSociete->tva_intra = $societeArray['vatnumber'];
@@ -885,7 +885,8 @@ class eCommerceSynchro
                     //if societe not exists in eCommerceSociete, societe is created
                     else
                     {
-                        // First, we check thirdparty does not alreay exists. If not, we create it, if it exists, do nothing.
+                        // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
+                        //$result = $dBSociete->fetch(0, '', $this->eCommerceSite->name.'-'.$societeArray['remote_id']);      // No need of ref_ext, we will search if already exists on name
                         $result = $dBSociete->fetch(0, $societeArray['name']);
                         if ($result == -2)
                         {
@@ -896,7 +897,7 @@ class eCommerceSynchro
                         if ($result == 0)
                         {
                             $dBSociete->name = $societeArray['name'];
-                            $dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];
+                            //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
                             $dBSociete->email = $societeArray['email'];
                             $dBSociete->client = $societeArray['client'];
                             $dBSociete->tva_intra = $societeArray['vatnumber'];
@@ -1157,8 +1158,9 @@ class eCommerceSynchro
                     //check if product exists in eCommerceProduct (with remote id)
                     $synchExists = $this->eCommerceProduct->fetchByRemoteId($productArray['remote_id'], $this->eCommerceSite->id);
 
-                    //check if ref exists in product
                     $dBProduct = new Product($this->db);
+                    
+                    // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
                     $refExists = $dBProduct->fetch('', $productArray['ref']);
                     $result = -1;
 
@@ -1174,6 +1176,7 @@ class eCommerceSynchro
                     $dBProduct->tva_npr = 0;  // Avoiding _log_price's sql blank
                     $dBProduct->country_id = $productArray['fk_country'];
                     $dBProduct->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                    $dBProduct->ref_ext = $this->eCommerceSite->name.'-'.$productArray['remote_id'];
                     
                     if ($refExists > 0 && isset($dBProduct->id))
                     {
@@ -1473,110 +1476,116 @@ class eCommerceSynchro
                         {
                             dol_syslog("synchCommande Order not found in Dolibarr, so we create it");
 
-                            //create commande
-                            $dBCommande->statut=Commande::STATUS_DRAFT;             // STATUS_DRAFT by default
-                            $dBCommande->ref_client = $commandeArray['ref_client'];
-                            $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
-                            $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
-                            $dBCommande->socid = $this->eCommerceSociete->fk_societe;
-                            $dBCommande->source=dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');
-                            $dBCommande->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
-                            
-                            $result = $dBCommande->create($this->user);
-                            if ($result <= 0) 
+                            // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
+                            $result = $dBCommande->fetch(0, '', $this->eCommerceSite->name.'-'.$commandeArray['ref_client']);
+                            if ($result == 0)
                             {
-                                dol_syslog("synchCommande result=".$result." ".$dBCommande->error, LOG_ERR);
-                                $error++;
-                            }
-                            
-                            // Add lines
-                            if (! $error && count($commandeArray['items']))
-                            {
-                                foreach ($commandeArray['items'] as $item)
+                                //create commande
+                                $dBCommande->statut=Commande::STATUS_DRAFT;             // STATUS_DRAFT by default
+                                $dBCommande->ref_client = $commandeArray['ref_client'];
+                                $dBCommande->ref_ext = $this->eCommerceSite->name.'-'.$commandeArray['ref_client'];
+                                $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
+                                $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
+                                $dBCommande->socid = $this->eCommerceSociete->fk_societe;
+                                $dBCommande->source=dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');
+                                $dBCommande->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                                
+                                $result = $dBCommande->create($this->user);
+                                if ($result <= 0) 
                                 {
-                                    if (in_array($item['product_type'], $productsTypesOk))  // sync of "simple", "virtual", "downloadable"
-                                    {
-                                        $this->initECommerceProduct();
-                                        $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-                            
-                                        // Define the buy price for margin calculation
-                                        $buyprice=0;
-                                        $fk_product = $this->eCommerceProduct->fk_product;
-                                        if (isset($conf->global->MARGIN_TYPE) && $conf->global->MARGIN_TYPE == 'pmp')   // If Rule is on PMP
-                                        {
-                                            include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
-                                            $product=new Product($this->db);
-                                            $product->fetch($fk_product);
-                                            $buyprice=$product->pmp;
-                                        }
-                                        if (empty($buyprice))    // Prend meilleur prix si option meilleur prix on (et donc buyprice par encore defini) ou si PMP n'a rien donné
-                                        {
-                                            // by external module, take lowest buying price
-                                            include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
-                                            $productFournisseur = new ProductFournisseur($this->db);
-                                            $productFournisseur->find_min_price_product_fournisseur($fk_product);
-                                            $buyprice = $productFournisseur->fourn_unitprice;
-                                        }
-                            
-                                        $result = $dBCommande->addline($item['description'], $item['price'], $item['qty'], $item['tva_tx'], 0, 0,
-                                            $this->eCommerceProduct->fk_product, //fk_product
-                                            0, //remise_percent
-                                            0, //info_bits
-                                            0, //fk_remise_except
-                                            'HT', //price_base_type
-                                            0, //pu_ttc
-                                            '', //date_start
-                                            '', //date_end
-                                            0, //type 0:product 1:service
-                                            0, //rang
-                                            0, //special_code
-                                            0, // fk_parent_line
-                                            0, // fk_prod four_price
-                                            $buyprice
-                                            );
-                                        dol_syslog("result=".$result);
-                                        if ($result <= 0)
-                                        {
-                                            $this->errors[]=$dBCommande->error;
-                                            $error++;
-                                        }
-                            
-                                        unset($this->eCommerceProduct);
-                                    }
-                                }
-                            }
-                            
-                            // Add specific line for delivery
-                            if (! $error && $commandeArray['delivery']['qty'] > 0)
-                            {
-                                $delivery = $commandeArray['delivery'];
-                            
-                                // TODO Get buy price depending on margin option. No margin on delivery ?
-                                $buyprice=0;
-                            
-                                $result = $dBCommande->addline($delivery['description'], $delivery['price'], $delivery['qty'], $delivery['tva_tx'], 0, 0,
-                                    0, //fk_product
-                                    0, //remise_percent
-                                    0, //info_bits
-                                    0, //fk_remise_except
-                                    'HT', //price_base_type
-                                    0, //pu_ttc
-                                    '', //date_start
-                                    '', //date_end
-                                    1, //type 0:product 1:service
-                                    0, //rang
-                                    0, //special_code
-                                    0, // fk_parent_line
-                                    0, // fk_prod four_price
-                                    $buyprice
-                                    );
-                                if ($result <= 0)
-                                {
-                                    $this->errors[]=$dBCommande->error;
+                                    dol_syslog("synchCommande result=".$result." ".$dBCommande->error, LOG_ERR);
                                     $error++;
                                 }
-                            }                            
-                 
+                                                        
+                                // Add lines
+                                if (! $error && count($commandeArray['items']))
+                                {
+                                    foreach ($commandeArray['items'] as $item)
+                                    {
+                                        if (in_array($item['product_type'], $productsTypesOk))  // sync of "simple", "virtual", "downloadable"
+                                        {
+                                            $this->initECommerceProduct();
+                                            $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
+                                
+                                            // Define the buy price for margin calculation
+                                            $buyprice=0;
+                                            $fk_product = $this->eCommerceProduct->fk_product;
+                                            if (isset($conf->global->MARGIN_TYPE) && $conf->global->MARGIN_TYPE == 'pmp')   // If Rule is on PMP
+                                            {
+                                                include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
+                                                $product=new Product($this->db);
+                                                $product->fetch($fk_product);
+                                                $buyprice=$product->pmp;
+                                            }
+                                            if (empty($buyprice))    // Prend meilleur prix si option meilleur prix on (et donc buyprice par encore defini) ou si PMP n'a rien donné
+                                            {
+                                                // by external module, take lowest buying price
+                                                include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
+                                                $productFournisseur = new ProductFournisseur($this->db);
+                                                $productFournisseur->find_min_price_product_fournisseur($fk_product);
+                                                $buyprice = $productFournisseur->fourn_unitprice;
+                                            }
+                                
+                                            $result = $dBCommande->addline($item['description'], $item['price'], $item['qty'], $item['tva_tx'], 0, 0,
+                                                $this->eCommerceProduct->fk_product, //fk_product
+                                                0, //remise_percent
+                                                0, //info_bits
+                                                0, //fk_remise_except
+                                                'HT', //price_base_type
+                                                0, //pu_ttc
+                                                '', //date_start
+                                                '', //date_end
+                                                0, //type 0:product 1:service
+                                                0, //rang
+                                                0, //special_code
+                                                0, // fk_parent_line
+                                                0, // fk_prod four_price
+                                                $buyprice
+                                                );
+                                            dol_syslog("result=".$result);
+                                            if ($result <= 0)
+                                            {
+                                                $this->errors[]=$dBCommande->error;
+                                                $error++;
+                                            }
+                                
+                                            unset($this->eCommerceProduct);
+                                        }
+                                    }
+                                }
+                                
+                                // Add specific line for delivery
+                                if (! $error && $commandeArray['delivery']['qty'] > 0)
+                                {
+                                    $delivery = $commandeArray['delivery'];
+                                
+                                    // TODO Get buy price depending on margin option. No margin on delivery ?
+                                    $buyprice=0;
+                                
+                                    $result = $dBCommande->addline($delivery['description'], $delivery['price'], $delivery['qty'], $delivery['tva_tx'], 0, 0,
+                                        0, //fk_product
+                                        0, //remise_percent
+                                        0, //info_bits
+                                        0, //fk_remise_except
+                                        'HT', //price_base_type
+                                        0, //pu_ttc
+                                        '', //date_start
+                                        '', //date_end
+                                        1, //type 0:product 1:service
+                                        0, //rang
+                                        0, //special_code
+                                        0, // fk_parent_line
+                                        0, // fk_prod four_price
+                                        $buyprice
+                                        );
+                                    if ($result <= 0)
+                                    {
+                                        $this->errors[]=$dBCommande->error;
+                                        $error++;
+                                    }
+                                }                            
+                            }
+                            
                             // Now update status
                             dol_syslog("synchCommande Status of order = ".$commandeArray['status']." dbCommande = ".$dBCommande->statut);
                             if (! $error)
@@ -1803,7 +1812,7 @@ class eCommerceSynchro
                              * ************************************************************** */
                             if ($refCommandeExists > 0 && $dBCommande->statut == Commande::STATUS_DRAFT)
                             {
-                                $idWareHouse = 0;       // TODO get correct value if option decrease on order validation is on
+                                $idWareHouse = $this->eCommerceSite->fk_warehouse;
                                 $dBCommande->valid($this->user, $idWareHouse);
                             }
                             if ($refCommandeExists > 0 && $dBCommande->statut == Commande::STATUS_VALIDATED)
@@ -1811,7 +1820,7 @@ class eCommerceSynchro
                                 $dBCommande->cloture($this->user);
                             }
                             //var_dump($factureArray);exit;
-                            
+
                             /* **************************************************************
                              * 
                              * create invoice
@@ -1820,113 +1829,119 @@ class eCommerceSynchro
 
                             $settlementTermsId = $this->getSettlementTermsId($factureArray['code_cond_reglement']);
 
-                            $origin = 'commande';
-                            $originid = $dBCommande->id;
-                            
-                            $dBFacture->ref_client = $factureArray['ref_client'];
-                            $dBFacture->date = strtotime($factureArray['date']);
-                            $dBFacture->socid = $this->eCommerceSociete->fk_societe;
-                            $dBFacture->cond_reglement_id = $settlementTermsId;
-                            $dBFacture->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
-
-                            // Add link to order (cut takenf from facture card page)
-                            $dBFacture->origin = $origin;
-                            $dBFacture->origin_id = $originid;
-                            $dBFacture->linked_objects[$dBFacture->origin] = $dBFacture->origin_id;
-
-                            // Now we create invoice
-                            $result = $dBFacture->create($this->user);
-
-                            //add or update contacts of invoice
-                            $factureArray['socpeopleLivraison']['fk_soc'] = $this->eCommerceSociete->fk_societe;
-                            $factureArray['socpeopleFacture']['fk_soc'] = $this->eCommerceSociete->fk_societe;
-
-                            $socpeopleLivraisonId = $this->synchSocpeople($factureArray['socpeopleLivraison']);
-                            $socpeopleFactureId = $this->synchSocpeople($factureArray['socpeopleFacture']);
-
-                            if ($socpeopleLivraisonId > 0)
-                                $dBFacture->add_contact($socpeopleLivraisonId, 'SHIPPING');
-                            if ($socpeopleFactureId > 0)
-                                $dBFacture->add_contact($socpeopleFactureId, 'BILLING');
-
-                            //add items
-                            if (count($factureArray['items']))
-                                foreach ($factureArray['items'] as $item)
-                                {
-                                    $this->initECommerceProduct();
-                                    $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id);
-                                    
-                                    // Define the buy price for margin calculation
-                                    $fk_product = $this->eCommerceProduct->fk_product;
-                                    // TODO Use the defineBuyPrice function instead of following code to define buyprice.                                    
-                                    $buyprice=0;
-                                    if (isset($conf->global->MARGIN_TYPE) && $conf->global->MARGIN_TYPE == 'pmp')   // If Rule is on PMP 
-                                    {
-                        			    include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
-                        			    $product=new Product($this->db);
-                        			    $product->fetch($fk_product);
-                                        $buyprice=$product->pmp;   
-                                    }
-                        			if (empty($buyprice))    // Prend meilleur prix si option meilleur prix on (et donc buyprice par encore defini) ou si PMP n'a rien donné 
-                        			{
-                        			    // by external module, take lowest buying price
-                        			    include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
-                        			    $productFournisseur = new ProductFournisseur($this->db);
-                        			    $productFournisseur->find_min_price_product_fournisseur($fk_product);
-                        			    $buyprice = $productFournisseur->fourn_unitprice;
-                        			}
-
-                                    $dBFacture->addline(
-                                        $item['description'], 
-                                        $item['price'], 
-                                        $item['qty'], 
-                                        $item['tva_tx'], 
-                                        0, 
-                                        0, 
-                                        $this->eCommerceProduct->fk_product,
-                                        0,
-                                        'HT',
-                                        0, //pu_ttc
-                                        1, //type 0:product 1:service
-                                        0, //rang
-                                        0, //special code
-                                        '', // origin
-                                        0, // origin_id
-                                        0, //fk_parent_line
-                                        0, //fk_fourn_price
-                                        $buyprice
-                                        );
-                                    unset($this->eCommerceProduct);
-                                }
-
-                            //add delivery
-                            if ($factureArray['delivery']['qty'] > 0)
+                            // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
+                            $result = $dBFacture->fetch(0, '', $this->eCommerceSite->name.'-'.$factureArray['ref_client']);
+                            if ($result == 0)
                             {
-                                $delivery = $factureArray['delivery'];
+                                $origin = 'commande';
+                                $originid = $dBCommande->id;
                                 
-                                // TODO Get buy price depending on margin option. No margin on delivery ?
-                                $buyprice=0;
-                                
-                                $dBFacture->addline($delivery['description'], $delivery['price'], $delivery['qty'], $delivery['tva_tx'], 0, 0, 0, //fk_product
-                                        0, //remise_percent
-                                        '', //date_start
-                                        '', //date_end
-                                        0, //ventil
-                                        0, //info_bits
-                                        0, //fk_remise_except
-                                        'HT', //price_base_type
-                                        0, //pu_ttc
-                                        1, //type 0:product 1:service
-                                        0, //rang
-                                        0, //special code
-                                        '', // origin
-                                        0, // origin_id
-                                        0, //fk_parent_line
-                                        0, //fk_fourn_price
-                                        $buyprice
-                                );
+                                $dBFacture->ref_client = $factureArray['ref_client'];
+                                $dBFacture->ref_ext = $this->eCommerceSite->name.'-'.$factureArray['ref_client'];
+                                $dBFacture->date = strtotime($factureArray['date']);
+                                $dBFacture->socid = $this->eCommerceSociete->fk_societe;
+                                $dBFacture->cond_reglement_id = $settlementTermsId;
+                                $dBFacture->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+    
+                                // Add link to order (cut takenf from facture card page)
+                                $dBFacture->origin = $origin;
+                                $dBFacture->origin_id = $originid;
+                                $dBFacture->linked_objects[$dBFacture->origin] = $dBFacture->origin_id;
+    
+                                // Now we create invoice
+                                $result = $dBFacture->create($this->user);
+    
+                                //add or update contacts of invoice
+                                $factureArray['socpeopleLivraison']['fk_soc'] = $this->eCommerceSociete->fk_societe;
+                                $factureArray['socpeopleFacture']['fk_soc'] = $this->eCommerceSociete->fk_societe;
+    
+                                $socpeopleLivraisonId = $this->synchSocpeople($factureArray['socpeopleLivraison']);
+                                $socpeopleFactureId = $this->synchSocpeople($factureArray['socpeopleFacture']);
+    
+                                if ($socpeopleLivraisonId > 0)
+                                    $dBFacture->add_contact($socpeopleLivraisonId, 'SHIPPING');
+                                if ($socpeopleFactureId > 0)
+                                    $dBFacture->add_contact($socpeopleFactureId, 'BILLING');
+    
+                                //add items
+                                if (count($factureArray['items']))
+                                    foreach ($factureArray['items'] as $item)
+                                    {
+                                        $this->initECommerceProduct();
+                                        $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id);
+                                        
+                                        // Define the buy price for margin calculation
+                                        $fk_product = $this->eCommerceProduct->fk_product;
+                                        // TODO Use the defineBuyPrice function instead of following code to define buyprice.                                    
+                                        $buyprice=0;
+                                        if (isset($conf->global->MARGIN_TYPE) && $conf->global->MARGIN_TYPE == 'pmp')   // If Rule is on PMP 
+                                        {
+                            			    include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
+                            			    $product=new Product($this->db);
+                            			    $product->fetch($fk_product);
+                                            $buyprice=$product->pmp;   
+                                        }
+                            			if (empty($buyprice))    // Prend meilleur prix si option meilleur prix on (et donc buyprice par encore defini) ou si PMP n'a rien donné 
+                            			{
+                            			    // by external module, take lowest buying price
+                            			    include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
+                            			    $productFournisseur = new ProductFournisseur($this->db);
+                            			    $productFournisseur->find_min_price_product_fournisseur($fk_product);
+                            			    $buyprice = $productFournisseur->fourn_unitprice;
+                            			}
+    
+                                        $dBFacture->addline(
+                                            $item['description'], 
+                                            $item['price'], 
+                                            $item['qty'], 
+                                            $item['tva_tx'], 
+                                            0, 
+                                            0, 
+                                            $this->eCommerceProduct->fk_product,
+                                            0,
+                                            'HT',
+                                            0, //pu_ttc
+                                            1, //type 0:product 1:service
+                                            0, //rang
+                                            0, //special code
+                                            '', // origin
+                                            0, // origin_id
+                                            0, //fk_parent_line
+                                            0, //fk_fourn_price
+                                            $buyprice
+                                            );
+                                        unset($this->eCommerceProduct);
+                                    }
+    
+                                //add delivery
+                                if ($factureArray['delivery']['qty'] > 0)
+                                {
+                                    $delivery = $factureArray['delivery'];
+                                    
+                                    // TODO Get buy price depending on margin option. No margin on delivery ?
+                                    $buyprice=0;
+                                    
+                                    $dBFacture->addline($delivery['description'], $delivery['price'], $delivery['qty'], $delivery['tva_tx'], 0, 0, 0, //fk_product
+                                            0, //remise_percent
+                                            '', //date_start
+                                            '', //date_end
+                                            0, //ventil
+                                            0, //info_bits
+                                            0, //fk_remise_except
+                                            'HT', //price_base_type
+                                            0, //pu_ttc
+                                            1, //type 0:product 1:service
+                                            0, //rang
+                                            0, //special code
+                                            '', // origin
+                                            0, // origin_id
+                                            0, //fk_parent_line
+                                            0, //fk_fourn_price
+                                            $buyprice
+                                    );
+                                }
                             }
-
+                            
                             $dBFacture->validate($this->user);
                             
                             // Now update status
