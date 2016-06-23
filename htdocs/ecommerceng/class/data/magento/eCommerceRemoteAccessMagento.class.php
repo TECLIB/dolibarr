@@ -777,8 +777,8 @@ class eCommerceRemoteAccessMagento
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog($this->client->__getLastRequestHeaders(), LOG_ERROR);
-            dol_syslog($this->client->__getLastRequest(), LOG_ERROR);
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_ERR);
+            dol_syslog($this->client->__getLastRequest(), LOG_ERR);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
