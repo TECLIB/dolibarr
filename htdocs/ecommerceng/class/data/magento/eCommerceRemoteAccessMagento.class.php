@@ -776,8 +776,9 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'catalog_category.tree');
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_ERROR);
+            dol_syslog($this->client->__getLastRequest(), LOG_ERROR);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
