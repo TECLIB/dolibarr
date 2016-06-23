@@ -92,6 +92,8 @@ class eCommerceRemoteAccessMagento
         catch (SoapFault $fault) 
         {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -116,6 +118,8 @@ class eCommerceRemoteAccessMagento
             return $result;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -152,6 +156,8 @@ class eCommerceRemoteAccessMagento
             return $results;            
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -187,6 +193,8 @@ class eCommerceRemoteAccessMagento
             return $result;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -211,6 +219,8 @@ class eCommerceRemoteAccessMagento
             return $result;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -357,6 +367,8 @@ class eCommerceRemoteAccessMagento
                 $results = $this->client->multiCall($this->session, $calls);
             } catch (SoapFault $fault) {
                 $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+                dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+                dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
                 dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
                 return false;
             }
@@ -375,6 +387,8 @@ class eCommerceRemoteAccessMagento
                 $results2 = $this->client->multiCall($this->session, $calls);
             } catch (SoapFault $fault) {
                 $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+                dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+                dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
                 dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
                 return false;
             }
@@ -389,6 +403,8 @@ class eCommerceRemoteAccessMagento
                         $result2 = $this->client->call($this->session, 'cataloginventory_stock_item.list', $product['product_id']);
                     } catch (SoapFault $fault) {
                         $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+                        dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+                        dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
                         dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
                         return false;
                     }
@@ -777,8 +793,8 @@ class eCommerceRemoteAccessMagento
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog($this->client->__getLastRequestHeaders(), LOG_ERR);
-            dol_syslog($this->client->__getLastRequest(), LOG_ERR);
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -799,8 +815,9 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'catalog_category_attribute.list');
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -822,8 +839,9 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'customer_address.list', array('customerId'=>$remote_thirdparty_id));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -846,8 +864,9 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'catalog_category.info', array('categoryId'=>$category_id));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -875,8 +894,9 @@ class eCommerceRemoteAccessMagento
             }
             dol_syslog("getCommande end");
         } catch (SoapFault $fault) {
-            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -922,8 +942,9 @@ class eCommerceRemoteAccessMagento
         	$result = $this->client->call($this->session, 'catalog_product.update', array($remote_id, $productData, null, 'product_id'));
         	//dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -965,8 +986,9 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'cataloginventory_stock_item.update', array($remote_id, $stockItemData));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -1001,8 +1023,9 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'customer.update', array($remote_id, $societeData));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            //dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -1042,8 +1065,9 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'customer_address.update', array($remote_id, $contactData));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -1066,8 +1090,9 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'sales_order_shipment.create', array($remoteCommande['increment_id'], array(), 'Shipment Created from '.$livraison->ref, true, true));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            dol_syslog($this->client->__getLastRequest());
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
