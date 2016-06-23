@@ -67,7 +67,11 @@ $var=!$var;
 			?> *
 			<?php 
 			     if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
-					    print ' (<a style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=categories">'.$langs->trans("Clear").'</a>)';
+			     {
+					    print ' (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=categories_links">'.$langs->trans("ClearLinks").'</a>';
+					    print ' - <a class="submit_reset_data_all" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=categories_all">'.$langs->trans("ClearData").'</a>';
+					    print ')';
+			     }
             ?>
 			</td>
 			<td>
@@ -96,7 +100,11 @@ $var=!$var;
 			<td><?php print $nbProductInDolibarrLinkedToE; ?> **
 			<?php 
 			     if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
-					    print ' (<a style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=products">'.$langs->trans("Clear").'</a>)';
+			     {
+				      print ' (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=products_links">'.$langs->trans("ClearLinks").'</a>';
+			          print ' - <a class="submit_reset_data_all" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=products_all">'.$langs->trans("ClearData").'</a>';
+					  print ')';
+			     }
             ?>
 			</td>
 			<td><?php print $nbProductToUpdate;	?>
@@ -132,7 +140,11 @@ $var=!$var;
 			<td><?php print $nbSocieteInDolibarrLinkedToE; ?> ***
 			<?php 
 			     if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
-					    print ' (<a style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=thirdparties">'.$langs->trans("Clear").'</a>)';
+			     {
+					    print ' (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=thirdparties_links">'.$langs->trans("ClearLinks").'</a>';
+					    print ' - <a class="submit_reset_data_all" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=thirdparties_all">'.$langs->trans("ClearData").'</a>';
+					    print ')';
+			     }
             ?>
 			</td>
 			<td>
@@ -171,7 +183,11 @@ $var=!$var;
     			<td><?php print $nbCommandeInDolibarrLinkedToE; ?>
     			<?php 
     			     if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
-    					    print ' (<a style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=orders">'.$langs->trans("Clear").'</a>)';
+    			     {
+    					    print ' (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=orders_links">'.$langs->trans("ClearLinks").'</a>';
+    					    print ' - <a class="submit_reset_data_all" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=orders_all">'.$langs->trans("ClearData").'</a>';
+    					    print ')';
+    			     }
                 ?>
     			</td>
     			<td><?php print $nbCommandeToUpdate; ?>
@@ -206,7 +222,11 @@ $var=!$var;
 			<td><?php print $nbFactureInDolibarrLinkedToE; ?>
 			<?php 
 			     if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
-					    print ' (<a style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=invoices">'.$langs->trans("Clear").'</a>)';
+			     {
+					    print ' (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=invoices_links">'.$langs->trans("ClearLinks").'</a>';
+					    print ' - <a class="submit_reset_data_all" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=invoices_all">'.$langs->trans("ClearData").'</a>';
+					    print ')';
+			     }
             ?>
 			</td>
 			<td>
@@ -261,18 +281,18 @@ $var=!$var;
 	{
 		print '<br><br>';
    		dol_fiche_head('', '', $langs->trans('DangerZone'));
-	    print '<a style="color: #600" id="submit_reset_data_links" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=links">'.$langs->trans('ECommerceResetLink').'</a>';
+	    print '<a style="color: #600" class="submit_reset_data_links" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=links">'.$langs->trans('ECommerceResetLink').'</a>';
    		print '<br><br>';
-		print '<a style="color: #600" id="submit_reset_data_all" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=all">'.$langs->trans('ECommerceReset').'</a>';
+		print '<a style="color: #600" class="submit_reset_data_all" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=all">'.$langs->trans('ECommerceReset').'</a>';
 		dol_fiche_end();
 		
 		print "
 		<!-- Include jQuery confirm -->
 		<script type=\"text/javascript\">
-		$('#submit_reset_data_links').on('click', function () {
+		$('.submit_reset_data_links').on('click', function () {
 		    return confirm('".dol_escape_js($langs->trans("AreYouSureYouWantToDeleteLinks"))."');
 		});
-        $('#submit_reset_data_all').on('click', function () {
+        $('.submit_reset_data_all').on('click', function () {
 		    return confirm('".dol_escape_js($langs->trans("AreYouSureYouWantToDeleteAll"))."');
 		});
         </script>";

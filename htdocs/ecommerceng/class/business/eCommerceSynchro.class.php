@@ -2140,7 +2140,7 @@ class eCommerceSynchro
         dol_syslog("***** eCommerceSynchro dropImportedAndSyncData");
         
         // Drop invoices
-        if (empty($mode) || $mode == 'invoices')
+        if (empty($mode) || preg_match('/^invoices/', $mode))
         {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
@@ -2173,7 +2173,7 @@ class eCommerceSynchro
         }
 
         //Drop commands
-        if (empty($mode) || $mode == 'orders')
+        if (empty($mode) || preg_match('/^orders/', $mode))
         {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
@@ -2205,7 +2205,7 @@ class eCommerceSynchro
         }
 
         //Drop products
-        if (empty($mode) || $mode == 'products')
+        if (empty($mode) || preg_match('/^products/', $mode))
         {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
@@ -2237,7 +2237,7 @@ class eCommerceSynchro
         }
 
         //Drop socPeople
-        if (empty($mode) || $mode == 'contacts')
+        if (empty($mode) || preg_match('/^contacts/', $mode))
         {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
@@ -2269,7 +2269,7 @@ class eCommerceSynchro
         }
 
         //Drop societes
-        if (empty($mode) || $mode == 'thirdparties')
+        if (empty($mode) || preg_match('/^thirdparties/', $mode))
         {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;
@@ -2301,7 +2301,7 @@ class eCommerceSynchro
         }
 
         //Drop categories	
-        if (empty($mode) || $mode == 'categories')
+        if (empty($mode) || preg_match('/^categories/', $mode))
         {
         $dolObjectsDeleted = 0;
         $synchObjectsDeleted = 0;

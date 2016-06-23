@@ -97,17 +97,21 @@ if ($id)
 		//synch only with write rights
 		if (! $error && $user->rights->ecommerceng->write)
 		{
-			if (GETPOST('reset_data') == 'all')
+			if (in_array(GETPOST('reset_data'), array('categories_links', 'products_links', 'thirdparties_links', 'orders_links', 'invoices_links')))
 			{
-				$synchro->dropImportedAndSyncData(1);
+			    $synchro->dropImportedAndSyncData(0, GETPOST('reset_data'));
+			}
+			if (in_array(GETPOST('reset_data'), array('categories_all', 'products_all', 'thirdparties_all', 'orders_all', 'invoices_all')))
+			{
+			    $synchro->dropImportedAndSyncData(1, GETPOST('reset_data'));
 			}
 			if (GETPOST('reset_data') == 'links')
 			{
 			    $synchro->dropImportedAndSyncData(0);
 			}
-			if (in_array(GETPOST('reset_data'), array('categories', 'products', 'thirdparties', 'orders', 'invoices')))
+			if (GETPOST('reset_data') == 'all')
 			{
-			    $synchro->dropImportedAndSyncData(0, GETPOST('reset_data'));
+			    $synchro->dropImportedAndSyncData(1);
 			}
 				
 			if (GETPOST('submit_synchro_category') || GETPOST('submit_synchro_all'))
