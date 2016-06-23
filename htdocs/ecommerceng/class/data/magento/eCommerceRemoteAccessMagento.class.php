@@ -795,6 +795,8 @@ class eCommerceRemoteAccessMagento
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+            dol_syslog($this->client->__getLastResponseHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastResponse(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
