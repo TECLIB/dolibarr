@@ -108,6 +108,7 @@ ECommerceSyncheCommerceCommandeCreateError=Error creating the link between Dolib
 WarningStockProductNotFilled=Warehouse for stock is not filled. It means you won't be able to create products into Dolibarr from eCommerce if stock is not empty on eCommerce side.
 SyncCategFirst=Synchronize categories first
 SyncSocieteFirst=Synchronize thirdparties first
+SyncCommandeFirst=Synchronize orders first
 OnlyProductsIn=Only products with category <b>%s</b> or sub-categories of '<b>%s</b>' are synchronized from Dolibarr to Magento
 NbInDolibarr=Nb into ERP
 NbInDolibarrLinkedToE=Nb of links between ERP and eCommerce

@@ -239,6 +239,7 @@ class eCommerceRemoteAccessMagento
         $calls = array();
         if (count($remoteObject))
         {
+            dol_syslog("convertRemoteObjectIntoDolibarrSociete Call WS to get detail for the ".count($remoteObject)." objects then create a Dolibarr array for each object");
             foreach ($remoteObject as $rsociete)
             {
                 $calls[] = array('customer.info', $rsociete['customer_id']);
@@ -290,6 +291,7 @@ class eCommerceRemoteAccessMagento
         $calls = array();
         if (count($listofids))
         {
+            dol_syslog("convertRemoteObjectIntoDolibarrSocpeople Call WS to get detail for the ".count($listofids)." objects then create a Dolibarr array for each object");
             foreach ($listofids as $listofid)
             {
                 $calls[] = array('customer_address.info', $listofid['customer_address_id']);
@@ -354,6 +356,7 @@ class eCommerceRemoteAccessMagento
         $nbsynchro = 0;
         if (count($remoteObject))
         {
+            dol_syslog("convertRemoteObjectIntoDolibarrProduct Call WS to get detail for the ".count($remoteObject)." objects then create a Dolibarr array for each object");
             foreach ($remoteObject as $rproduct)
             {
                 if ($rproduct['sku'])
@@ -464,6 +467,7 @@ class eCommerceRemoteAccessMagento
         $calls = array();
         if (count($remoteObject))
         {
+            dol_syslog("convertRemoteObjectIntoDolibarrCommande Call WS to get detail for the ".count($remoteObject)." objects then create a Dolibarr array for each object");
             foreach ($remoteObject as $rcommande)
             {
                 $calls[] = array('sales_order.info', $rcommande['increment_id']);
@@ -639,6 +643,7 @@ class eCommerceRemoteAccessMagento
         $calls = array();
         if (count($remoteObject))
         {
+            dol_syslog("convertRemoteObjectIntoDolibarrFacture Call WS to get detail for the ".count($remoteObject)." objects then create a Dolibarr array for each object");
             foreach ($remoteObject as $rfacture)
             {
                 $calls[] = array('sales_order_invoice.info', $rfacture['increment_id']);
