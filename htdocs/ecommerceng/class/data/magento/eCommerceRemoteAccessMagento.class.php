@@ -543,6 +543,7 @@ class eCommerceRemoteAccessMagento
                             'address' => addslashes((trim($commandeSocpeople['company'])) != '' ? addslashes(trim($commandeSocpeople['company'])) . ', ' : '') . addslashes($commandeSocpeople['street']),
                             'phone' => $commandeSocpeople['telephone']
                     );
+                    
                     //set billing's address
                     $socpeopleFacture = $socpeopleCommande;
                     $socpeopleFacture['type'] = eCommerceSocpeople::CONTACT_TYPE_INVOICE;
@@ -576,7 +577,10 @@ class eCommerceRemoteAccessMagento
                     //define remote id societe : 0 for anonymous
                     $eCommerceTempSoc = new eCommerceSociete($this->db);
                     if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
-                        $remoteIdSociete = 0;
+                    {
+                        dol_syslog("The customer of this order was not found into table link", LOG_WARNING);
+                        $remoteIdSociete = 0;   // If thirdparty was not found into thirdparty table link
+                    }
                     else
                     {
                         $remoteIdSociete = $commande['customer_id'];
@@ -628,6 +632,8 @@ class eCommerceRemoteAccessMagento
             }
             array_multisort($last_update, SORT_ASC, $commandes);
         }
+        
+        dol_syslog("convertRemoteObjectIntoDolibarrCommande Return ".count($commandes)." array of orders filled with complete data from eCommerce");
         return $commandes;
     }
 

@@ -137,6 +137,9 @@ if ($id)
 		}
 	    
 	    
+		dol_syslog("site.php Now we read only database to get counting information");
+		
+		
     	/***************************************************
     	* Vars to build output tpl page
     	****************************************************/
