@@ -242,7 +242,7 @@ $var=!$var;
 					<input type="hidden" name="to_date" value="<?php print $toDate ?>">
 					<input type="submit" name="submit_synchro_facture" id="submit_synchro_facture" class="button" disabled="disabled" value="<?php print $langs->trans('ECommerceSynchronizeFacture').' ('.$langs->trans("SyncSocieteFirst").')'; ?>">
 				</form>
-				<?php if ($nbFactureToUpdate>0 && $nbCommandeToUpdate>0) { ?>
+				<?php } elseif ($nbFactureToUpdate>0 && $nbCommandeToUpdate>0) { ?>
 				<form name="form_synchro_commande" id="form_synchro_facture" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
 					<input type="hidden" name="id" value="<?php print $site->id ?>">
 					<input type="hidden" name="to_date" value="<?php print $toDate ?>">
