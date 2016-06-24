@@ -596,7 +596,7 @@ class eCommerceRemoteAccessMagento
                     $tmp = $commande['status'];                                                  // We choosed to use status (and not state) so value like:  'pending', 'processing', 'holded', ...
                     $status = Commande::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
                     if ($tmp == 'pending')      $status = Commande::STATUS_VALIDATED;            // validated = pending
-                    if ($tmp == 'processing')   $status = Commande::STATUS_SHIPMENTONPROCESS;    // shipment in process = processing
+                    if ($tmp == 'processing')   $status = 2;                                     // shipment in process = processing       // Should be Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9
                     if ($tmp == 'holded')       $status = Commande::STATUS_CANCELED;             // canceled = holded
                     if ($tmp == 'complete')     $status = Commande::STATUS_CLOSED;               // complete
                     

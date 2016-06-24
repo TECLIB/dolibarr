@@ -1456,9 +1456,9 @@ class eCommerceSynchro
                                     {
                                         $dBCommande->valid($user, 0);
                                     }
-                                    if ($commandeArray['status'] == Commande::STATUS_SHIPMENTONPROCESS) 
+                                    if ($commandeArray['status'] == 2)      // Should be Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9 
                                     {
-                                        $dBCommande->setStatut(Commande::STATUS_SHIPMENTONPROCESS, $dbCommande->id, $dbCommande->table_element);
+                                        $dBCommande->setStatut(2, $dbCommande->id, $dbCommande->table_element);
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CANCELED)
                                     {
@@ -1601,9 +1601,9 @@ class eCommerceSynchro
                                     {
                                         $dBCommande->valid($this->user, 0);
                                     }
-                                    if ($commandeArray['status'] == Commande::STATUS_SHIPMENTONPROCESS) 
+                                    if ($commandeArray['status'] == 2)            // Should be Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9 
                                     {
-                                        $dBCommande->setStatut(Commande::STATUS_SHIPMENTONPROCESS, $dbCommande->id, $dbCommande->table_element);
+                                        $dBCommande->setStatut(2, $dbCommande->id, $dbCommande->table_element);
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CANCELED)
                                     {
