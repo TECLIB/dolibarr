@@ -102,6 +102,7 @@ ECommerceSetupTimeoutEmpty=Durée de connexion vide
 ECommerceSetupTimeoutMustBeInt=La durée de connexion doit-être un entier
 ECommerceCategoriesProducts=Catégories de produits
 SyncCategFirst=Synchroniser les catégories d'abord
+ECommerceSynchCommandeError=Erreur durant la synchronisation des commandes
 OnlyThirdPartyWithTags=Nb de tiers ayant le tag '<b>%s</b>' (donc sensé être commun avec la boutique en ligne)
 NbInDolibarr=Nb dans l'ERP
 NbInDolibarrLinkedToE=Nb dans l'ERP lié à la boutique
