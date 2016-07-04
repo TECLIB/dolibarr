@@ -37,7 +37,8 @@ class eCommerceRemoteAccessMagento
 
     /**
      *      Constructor
-     *      @param      $site eCommerceSite
+     *      @param      DoliDB      $db         Database handler
+     *      @param      string      $site       eCommerceSite
      */
     function eCommerceRemoteAccessMagento($db, $site)
     {
@@ -230,8 +231,8 @@ class eCommerceRemoteAccessMagento
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
      * 
-     * @param $remoteObject         Array of ids of objects to convert
-     * @return array societe
+     * @param   array   $remoteObject         Array of ids of objects to convert
+     * @return  array                         societe
      */
     public function convertRemoteObjectIntoDolibarrSociete($remoteObject)
     {
@@ -282,8 +283,8 @@ class eCommerceRemoteAccessMagento
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
      * 
-     * @param   $listofids      List of object with customer_address_id is id of addresss
-     * @return array societe
+     * @param   array       $listofids      List of object with customer_address_id is id of addresss
+     * @return  array                       societe
      */
     public function convertRemoteObjectIntoDolibarrSocpeople($listofids)
     {
@@ -341,8 +342,8 @@ class eCommerceRemoteAccessMagento
     /**
      * Put the remote data into product dolibarr data from instantiated class in the constructor
      * 
-     * @param $remoteObject array
-     * @return array product
+     * @param   array   $remoteObject   array
+     * @return  array                   product
      */
     public function convertRemoteObjectIntoDolibarrProduct($remoteObject)
     {
@@ -458,8 +459,8 @@ class eCommerceRemoteAccessMagento
     /**
      * Put the remote data into commande dolibarr data from instantiated class in the constructor
      * 
-     * @param $remoteObject array
-     * @return array commande
+     * @param   array   $remoteObject       array
+     * @return  array                       commande
      */
     public function convertRemoteObjectIntoDolibarrCommande($remoteObject)
     {
@@ -640,8 +641,8 @@ class eCommerceRemoteAccessMagento
     /**
      * Put the remote data into facture dolibarr data from instantiated class in the constructor
      * 
-     * @param $remoteObject array
-     * @return array facture
+     * @param   array   $remoteObject       array
+     * @return  array                       facture
      */
     public function convertRemoteObjectIntoDolibarrFacture($remoteObject)
     {
@@ -803,7 +804,7 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'catalog_category.tree');
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            $this->errors[]=$this->site.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog($this->client->__getLastResponseHeaders(), LOG_WARNING);
@@ -828,7 +829,7 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'catalog_category_attribute.list');
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            $this->errors[]=$this->site.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
@@ -852,7 +853,7 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'customer_address.list', array('customerId'=>$remote_thirdparty_id));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            $this->errors[]=$this->site.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
@@ -866,8 +867,8 @@ class eCommerceRemoteAccessMagento
     /**
      * Return content of one category
      * 
-     * @param unknown $category_id
-     * @return boolean|unknown
+     * @param   int     $category_id        Remote category id
+     * @return  boolean|unknown             Return
      */
     public function getCategoryData($category_id)
     {
@@ -877,7 +878,7 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'catalog_category.info', array('categoryId'=>$category_id));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            $this->errors[]=$this->site.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
@@ -907,7 +908,7 @@ class eCommerceRemoteAccessMagento
             }
             dol_syslog("getCommande end");
         } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            $this->errors[]=$this->site.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
@@ -955,7 +956,7 @@ class eCommerceRemoteAccessMagento
         	$result = $this->client->call($this->session, 'catalog_product.update', array($remote_id, $productData, null, 'product_id'));
         	//dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            $this->errors[]=$this->site.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
@@ -999,7 +1000,7 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'cataloginventory_stock_item.update', array($remote_id, $stockItemData));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            $this->errors[]=$this->site.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
@@ -1036,7 +1037,7 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'customer.update', array($remote_id, $societeData));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            $this->errors[]=$this->site.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
@@ -1078,7 +1079,7 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'customer_address.update', array($remote_id, $contactData));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            $this->errors[]=$this->site.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
@@ -1103,7 +1104,7 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'sales_order_shipment.create', array($remoteCommande['increment_id'], array(), 'Shipment Created from '.$livraison->ref, true, true));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+            $this->errors[]=$this->site.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
@@ -1120,8 +1121,8 @@ class eCommerceRemoteAccessMagento
     /**
      * Calcul tax rate and return the closest dolibarr tax rate.
      * 
-     * @param float $priceHT
-     * @param float $priceTTC
+     * @param float $priceHT         Price HT
+     * @param float $taxAmount       Tax amount
      */
     private function getTaxRate($priceHT, $taxAmount)
     {
