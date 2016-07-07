@@ -58,7 +58,6 @@ class ActionsAutoattachfile
     	{
     	   $keytoavoidconflict = empty($parameters['trackid'])?'':'-'.$parameters['trackid'];
     	}
-    	var_dump($keytoavoidconflict);
     	
     	$nbFiles=0;
     	
