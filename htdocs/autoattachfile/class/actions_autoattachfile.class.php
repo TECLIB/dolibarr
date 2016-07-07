@@ -52,14 +52,22 @@ class ActionsAutoattachfile
     	global $conf,$langs;
     	$langs->load('sendproductdoc@sendproductdoc');
 
+    	$keytoavoidconflict = '';
+    	include_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
+    	if (versioncompare(versiondolibarrarray(),array(4,0,-3)) >= 0)
+    	{
+    	   $keytoavoidconflict = empty($parameters['trackid'])?'':'-'.$parameters['trackid'];
+    	}
+    	var_dump($keytoavoidconflict);
+    	
     	$nbFiles=0;
     	
     	if (GETPOST('action') == 'presend' && GETPOST('mode') == 'init')
     	{
     		// Get current content of list of files
-			$listofpaths = (! empty($_SESSION["listofpaths"])) ? explode(';',$_SESSION["listofpaths"]) : array();
-			$listofnames = (! empty($_SESSION["listofnames"])) ? explode(';',$_SESSION["listofnames"]) : array();
-			$listofmimes = (! empty($_SESSION["listofmimes"])) ? explode(';',$_SESSION["listofmimes"]) : array();
+			$listofpaths = (! empty($_SESSION["listofpaths".$keytoavoidconflict])) ? explode(';',$_SESSION["listofpaths".$keytoavoidconflict]) : array();
+			$listofnames = (! empty($_SESSION["listofnames".$keytoavoidconflict])) ? explode(';',$_SESSION["listofnames".$keytoavoidconflict]) : array();
+			$listofmimes = (! empty($_SESSION["listofmimes".$keytoavoidconflict])) ? explode(';',$_SESSION["listofmimes".$keytoavoidconflict]) : array();
 			if ($object->param['models'] == 'propal_send')
     		{
     			$nbFiles += $this->_addFiles($object, $listofpaths, $listofnames, $listofmimes, $conf->autoattachfile->dir_output.'/proposals');
@@ -76,9 +84,9 @@ class ActionsAutoattachfile
     		}
 
     		// Now we saved back content of files to have into attachment
-    		$_SESSION["listofpaths"]=join(';',$listofpaths);
-    		$_SESSION["listofnames"]=join(';',$listofnames);
-    		$_SESSION["listofmimes"]=join(';',$listofmimes);
+    		$_SESSION["listofpaths".$keytoavoidconflict]=join(';',$listofpaths);
+    		$_SESSION["listofnames".$keytoavoidconflict]=join(';',$listofnames);
+    		$_SESSION["listofmimes".$keytoavoidconflict]=join(';',$listofmimes);
     	}
     
     	return 0;
