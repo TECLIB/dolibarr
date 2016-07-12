@@ -1510,6 +1510,16 @@ class eCommerceSynchro
                                             // Define the buy price for margin calculation
                                             $buyprice=0;
                                             $fk_product = $this->eCommerceProduct->fk_product;
+                                            if (($result = $dBCommande->defineBuyPrice($item['price'], 0, $fk_product)) < 0)
+                                            {
+                                                $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceCommandeUpdateError');
+                                                return false;
+                                            }
+                                            else
+                                            {
+                                                $buyprice = $result;
+                                            }
+                                            /*                                            
                                             if (isset($conf->global->MARGIN_TYPE) && $conf->global->MARGIN_TYPE == 'pmp')   // If Rule is on PMP
                                             {
                                                 include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
@@ -1524,7 +1534,7 @@ class eCommerceSynchro
                                                 $productFournisseur = new ProductFournisseur($this->db);
                                                 $productFournisseur->find_min_price_product_fournisseur($fk_product);
                                                 $buyprice = $productFournisseur->fourn_unitprice;
-                                            }
+                                            }*/
                                 
                                             $result = $dBCommande->addline($item['description'], $item['price'], $item['qty'], $item['tva_tx'], 0, 0,
                                                 $this->eCommerceProduct->fk_product, //fk_product
@@ -1871,9 +1881,18 @@ class eCommerceSynchro
                                         $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id);
                                         
                                         // Define the buy price for margin calculation
-                                        $fk_product = $this->eCommerceProduct->fk_product;
-                                        // TODO Use the defineBuyPrice function instead of following code to define buyprice.                                    
                                         $buyprice=0;
+                                        $fk_product = $this->eCommerceProduct->fk_product;
+                                        if (($result = $dBFacture->defineBuyPrice($item['price'], 0, $fk_product)) < 0)
+                                        {
+                                            $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceFactureUpdateError');
+                                            return false;
+                                        }
+                                        else
+                                        {
+                                            $buyprice = $result;
+                                        }
+                                        /*
                                         if (isset($conf->global->MARGIN_TYPE) && $conf->global->MARGIN_TYPE == 'pmp')   // If Rule is on PMP 
                                         {
                             			    include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
@@ -1889,7 +1908,7 @@ class eCommerceSynchro
                             			    $productFournisseur->find_min_price_product_fournisseur($fk_product);
                             			    $buyprice = $productFournisseur->fourn_unitprice;
                             			}
-    
+                                        */    
                                         $dBFacture->addline(
                                             $item['description'], 
                                             $item['price'], 
