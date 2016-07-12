@@ -519,9 +519,9 @@ class eCommerceRemoteAccessMagento
                                             'id_remote_product' => $item['product_id'],
                                             'description' => $item['name'],
                                             'product_type' => $item['product_type'], 
-                                            'price' => $configurableItems['price'],
+                                            'price' => $configurableItems[$item['parent_item_id']]['price'],
                                             'qty' => $item['qty_ordered'],
-                                            'tva_tx' => $configurableItems['tax_percent']
+                                            'tva_tx' => $configurableItems[$item['parent_item_id']]['tax_percent']
                                     );
                                 }
                             }
