@@ -747,7 +747,7 @@ class eCommerceRemoteAccessMagento
 
                     if ($tmp == 1)     $status = Facture::STATUS_VALIDATED;            // validated = pending
                     if ($tmp == 2)     $status = Facture::STATUS_CLOSED;               // complete
-                    if ($tmp == 3)     $status = Facture::STATUS_CANCELED;             // canceled = holded
+                    if ($tmp == 3)     $status = Facture::STATUS_ABANDONED;            // canceled = holded
                     
                     //add invoice to invoices
                     $factures[] = array(
