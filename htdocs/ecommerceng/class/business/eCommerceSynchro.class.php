@@ -1787,7 +1787,7 @@ class eCommerceSynchro
                                     }
                                     if ($factureArray['status'] == Facture::STATUS_ABANDONED)
                                     {
-                                        $dBFacture->set_canceled($this->user);
+                                        $dBFacture->set_canceled($this->user, $factureArray['close_code'], $factureArray['close_note']);
                                     }
                                     if ($factureArray['status'] == Facture::STATUS_CLOSED)
                                     {

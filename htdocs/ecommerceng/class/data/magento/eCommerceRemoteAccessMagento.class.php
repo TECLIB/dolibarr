@@ -744,11 +744,19 @@ class eCommerceRemoteAccessMagento
                     // define status of invoice
                     $tmp = $facture['state'];                                                   // state from is 1, 2, 3
                     $status = Facture::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
-
+                    
                     if ($tmp == 1)     $status = Facture::STATUS_VALIDATED;            // validated = pending
                     if ($tmp == 2)     $status = Facture::STATUS_CLOSED;               // complete
                     if ($tmp == 3)     $status = Facture::STATUS_ABANDONED;            // canceled = holded
                     
+                    $close_code = '';
+                    $close_note = '';
+                    if ($tmp == 3)     
+                    {
+                        $close_code = Facture::CLOSECODE_ABANDONED;
+                        $close_note = 'Holded on ECommerce';
+                    }
+
                     //add invoice to invoices
                     $factures[] = array(
                             'last_update' => $facture['updated_at'],
@@ -765,6 +773,8 @@ class eCommerceRemoteAccessMagento
                             'delivery' => $delivery,
                             'items' => $items,
                             'status' => $tmp,
+                            'close_code' => $close_code,
+                            'close_note' => $close_note,
                             'remote_state' => $facture['state']
                             //debug
                             //'remote_commande' => $commande,
