@@ -530,8 +530,8 @@ class eCommerceRemoteAccessMagento
                     $ecommerceurl = preg_replace('/index.php\/api.*$/', '', $this->site->webservice_address);
                     
                     $products[] = array(
-                            //$product['type'] simple, composed, ...  
-                            'fk_product_type' => 0, // 0 (product) or 1 (service)
+                            //$product['type'] simple, grouped (=package), configurable (= variant), downloadable, bundle (on demand defined products), virtual (services)   
+                            'fk_product_type' => ($product['type'] == 'virtual' ? 1 : 0), // 0 (product) or 1 (service)
                             'ref' => dol_sanitizeFileName(stripslashes($product['sku'])),
                             'label' => $product['name'],
                             'description' => $product['description'],
