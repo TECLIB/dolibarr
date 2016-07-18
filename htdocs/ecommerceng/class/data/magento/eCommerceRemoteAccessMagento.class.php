@@ -784,6 +784,44 @@ class eCommerceRemoteAccessMagento
                     if (count($facture['items']))
                         foreach ($facture['items'] as $item)
                         {
+                            // If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
+                            if ($item['product_type'] == 'configurable') {
+                                $configurableItems[$item['item_id']] = array(
+                                    'item_id' => $item['item_id'],
+                                    'id_remote_product' => $item['product_id'],
+                                    'description' => $item['name'],
+                                    'product_type' => $item['product_type'], 
+                                    'price' => $item['price'],
+                                    'qty' => $item['qty_ordered'],
+                                    'tva_tx' => $item['tax_percent']
+                                );
+                            } else {
+                                // If item has a parent item id defined in $configurableItems, get it's price and tax values instead of 0
+                                if (!array_key_exists($item['parent_item_id'], $configurableItems)) {
+                                    $items[] = array(
+                                            'item_id' => $item['item_id'],
+                                            'id_remote_product' => $item['product_id'],
+                                            'description' => $item['name'],
+                                            'product_type' => $item['product_type'], 
+                                            'price' => $item['price'],
+                                            'qty' => $item['qty_ordered'],
+                                            'tva_tx' => $item['tax_percent']
+                                    );
+                                } else {
+                                    $items[] = array(
+                                            'item_id' => $item['item_id'],
+                                            'id_remote_product' => $item['product_id'],
+                                            'description' => $item['name'],
+                                            'product_type' => $item['product_type'], 
+                                            'price' => $configurableItems[$item['parent_item_id']]['price'],
+                                            'qty' => $item['qty_ordered'],
+                                            'tva_tx' => $configurableItems[$item['parent_item_id']]['tva_tx']
+                                    );
+                                }
+                            }
+                        }
+                        /*foreach ($facture['items'] as $item)
+                        {
                             $items[] = array(
                                     'item_id' => $item['item_id'],
                                     'id_remote_product' => $item['product_id'],
@@ -793,7 +831,8 @@ class eCommerceRemoteAccessMagento
                                     'qty' => $item['qty'],
                                     'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
                             );
-                        }
+                        }*/
+
                         
                     //set shipping address
                     $shippingAddress = $commande["shipping_address"];
