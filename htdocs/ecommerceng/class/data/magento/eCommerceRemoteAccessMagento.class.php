@@ -377,26 +377,133 @@ class eCommerceRemoteAccessMagento
                 return false;
             }
 
-            /*
-            $calls = array();
-            foreach ($remoteObject as $rproduct)
-            {
-                if ($rproduct['sku'])
-                {
-                    $calls[] = array('cataloginventory_stock_item.list', $rproduct['sku']);
+            /* Exemple of product array returned by Magento
+               array(52) {
+                  ["product_id"]=>
+                  string(1) "1"
+                  ["sku"]=>
+                  string(4) "aaaa"
+                  ["set"]=>
+                  string(1) "4"
+                  ["type"]=>
+                  string(6) "simple"
+                  ["categories"]=>
+                  array(3) {
+                    [0]=>
+                    string(1) "2"
+                    [1]=>
+                    string(1) "3"
+                    [2]=>
+                    string(1) "6"
+                  }
+                  ["websites"]=>
+                  array(1) {
+                    [0]=>
+                    string(1) "1"
+                  }
+                  ["type_id"]=>
+                  string(6) "simple"
+                  ["name"]=>
+                  string(5) "prod1"
+                  ["description"]=>
+                  string(10) "Prod1 desc"
+                  ["short_description"]=>
+                  string(16) "prod1 desc short"
+                  ["weight"]=>
+                  string(7) "10.0000"
+                  ["old_id"]=>
+                  NULL
+                  ["news_from_date"]=>
+                  NULL
+                  ["news_to_date"]=>
+                  NULL
+                  ["status"]=>
+                  string(1) "1"
+                  ["url_key"]=>
+                  string(5) "prod1"
+                  ["url_path"]=>
+                  string(10) "prod1.html"
+                  ["visibility"]=>
+                  string(1) "4"
+                  ["category_ids"]=>
+                  array(3) {
+                    [0]=>
+                    string(1) "2"
+                    [1]=>
+                    string(1) "3"
+                    [2]=>
+                    string(1) "6"
+                  }
+                  ["required_options"]=>
+                  string(1) "0"
+                  ["has_options"]=>
+                  string(1) "0"
+                  ["image_label"]=>
+                  string(7) "Image 1"
+                  ["small_image_label"]=>
+                  string(7) "Image 1"
+                  ["thumbnail_label"]=>
+                  string(7) "Image 1"
+                  ["created_at"]=>
+                  string(25) "2015-09-23T13:14:50+02:00"
+                  ["updated_at"]=>
+                  string(19) "2016-05-26 16:38:56"
+                  ["country_of_manufacture"]=>
+                  string(2) "DE"
+                  ["price"]=>
+                  string(7) "50.0000"
+                  ["group_price"]=>
+                  array(0) {
+                  }
+                  ["special_price"]=>
+                  NULL
+                  ["special_from_date"]=>
+                  NULL
+                  ["special_to_date"]=>
+                  NULL
+                  ["tier_price"]=>
+                  array(0) {
+                  }
+                  ["minimal_price"]=>
+                  NULL
+                  ["msrp_enabled"]=>
+                  string(1) "2"
+                  ["msrp_display_actual_price_type"]=>
+                  string(1) "4"
+                  ["msrp"]=>
+                  NULL
+                  ["tax_class_id"]=>
+                  string(1) "2"
+                  ["meta_title"]=>
+                  NULL
+                  ["meta_keyword"]=>
+                  NULL
+                  ["meta_description"]=>
+                  NULL
+                  ["is_recurring"]=>
+                  string(1) "0"
+                  ["recurring_profile"]=>
+                  NULL
+                  ["custom_design"]=>
+                  NULL
+                  ["custom_design_from"]=>
+                  NULL
+                  ["custom_design_to"]=>
+                  NULL
+                  ["custom_layout_update"]=>
+                  NULL
+                  ["page_layout"]=>
+                  NULL
+                  ["options_container"]=>
+                  string(10) "container1"
+                  ["gift_message_available"]=>
+                  NULL
+                  ["stock_qty"]=>
+                  string(6) "8.0000"
+                  ["is_in_stock"]=>
+                  string(1) "1"
                 }
-            }
-            
-            try {
-                $results2 = $this->client->multiCall($this->session, $calls);
-            } catch (SoapFault $fault) {
-                $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-                dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
-                dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
-                dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-                return false;
-            }
-            var_dump($results2);exit;*/
+             */
             
             if (count($results))
                 foreach ($results as $cursorproduct => $product)
@@ -419,7 +526,12 @@ class eCommerceRemoteAccessMagento
                         $product['is_in_stock'] = $val['is_in_stock'];
                     }
 
+                    // Try to guess public home page of ecommerce web site from the api url
+                    $ecommerceurl = preg_replace('/index.php\/api.*$/', '', $this->site->webservice_address);
+                    
                     $products[] = array(
+                            //$product['type'] simple, composed, ...  
+                            'fk_product_type' => 0, // 0 (product) or 1 (service)
                             'ref' => dol_sanitizeFileName(stripslashes($product['sku'])),
                             'label' => $product['name'],
                             'description' => $product['description'],
@@ -428,13 +540,13 @@ class eCommerceRemoteAccessMagento
                             'price' => (($this->site->magento_use_special_price && $product['special_price'] != NULL ) ? $product['special_price'] : $product['price']),
                             'envente' => $product['status'] ? 1 : 0,
                             'remote_id' => $product['product_id'],  // id in ecommerce magento
-                            'fk_product_type' => 0, //$product['fk_product_type'] type de produit (manufacturé ou matiere premiere) dépend d'un attribut dynamique
-                            'finished' => 1, //Etat $product['price']
+                            'finished' => 1,    // 1 = manufactured, 0 = raw material
                             'canvas' => $canvas,
-                            'categories' => $product['categories'],
+                            'categories' => $product['categories'],     // Same as property $product['category_ids']
                             'tax_rate' => $product['tax_rate'],
                             'price_min' => $product['minimal_price'],
                             'fk_country' => ($product['country_of_manufacture'] ? getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, '') : null),
+                            'url' => $ecommerceurl.$product['url_path'],  // TODO Add host of ecommerce to get a complete url
                             // Stock
                             'stock_qty' => $product['stock_qty'],
                             'is_in_stock' => $product['is_in_stock'],   // not used

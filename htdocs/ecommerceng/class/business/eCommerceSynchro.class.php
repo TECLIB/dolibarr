@@ -1160,7 +1160,7 @@ class eCommerceSynchro
 
                     $dBProduct = new Product($this->db);
                     
-                    // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
+                    // First, we check object does not alreay exists. If not, we create it, if it exists, update it.
                     $refExists = $dBProduct->fetch('', $productArray['ref']);
                     $result = -1;
 
@@ -1177,6 +1177,7 @@ class eCommerceSynchro
                     $dBProduct->country_id = $productArray['fk_country'];
                     $dBProduct->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
                     $dBProduct->ref_ext = $this->eCommerceSite->name.'-'.$productArray['remote_id'];
+                    $dBProduct->url = $productArray['url'];
                     
                     if ($refExists > 0 && isset($dBProduct->id))
                     {
@@ -1224,6 +1225,8 @@ class eCommerceSynchro
                         //create
                         $dBProduct->ref = $productArray['ref'];
                         $dBProduct->canvas = $productArray['canvas'];
+                        $dBProduct->note = 'Initialy created from '.$this->eCommerceSite->name;
+                        
                         $result = $dBProduct->create($this->user);
                         if ($result >= 0)// rajouter constante TTC/HT
                         {                            
