@@ -526,8 +526,7 @@ class eCommerceRemoteAccessMagento
                         $product['is_in_stock'] = $val['is_in_stock'];
                     }
 
-                    // Try to guess public home page of ecommerce web site from the api url
-                    $ecommerceurl = preg_replace('/index.php\/api.*$/', '', $this->site->webservice_address);
+                    $ecommerceurl =  $this->site->getFrontUrl();
                     
                     $products[] = array(
                             //$product['type'] simple, grouped (=package), configurable (= variant), downloadable, bundle (on demand defined products), virtual (services)   
@@ -1091,6 +1090,8 @@ class eCommerceRemoteAccessMagento
     {
         dol_syslog("eCommerceRemoteAccessMagento updateRemoteProduct session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
 
+        $result = false;
+        
         $new_country_code = getCountry($object->country_id, 2);
 
         try {        
@@ -1138,6 +1139,8 @@ class eCommerceRemoteAccessMagento
     {
         dol_syslog("eCommerceRemoteAccessMagento updateRemoteStockProduct session=".$this->session." product remote_id=".$remote_id." movement object->id=".$object->id.", new qty=".$object->qty_after);
     
+        $result = false;
+        
         // $object->qty is the qty of movement
         try {
             $stockItemData = array(
@@ -1182,6 +1185,8 @@ class eCommerceRemoteAccessMagento
     {
         dol_syslog("eCommerceRemoteAccessMagento updateRemoteSociete session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
     
+        $result = false;
+        
         //$new_country_code = getCountry($object->country_id, 2);
     
         try {
@@ -1219,6 +1224,8 @@ class eCommerceRemoteAccessMagento
     {
         dol_syslog("eCommerceRemoteAccessMagento updateRemoteSocpeople session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
     
+        $result = false;
+        
         $new_country_code = getCountry($object->country_id, 2);
 
         try {
@@ -1251,6 +1258,68 @@ class eCommerceRemoteAccessMagento
     }
     
     /**
+     * Update the remote order
+     * 
+     * @param   int      $remote_id     Id of order on remote ecommerce
+	 * @param   Commande $object        Commande object
+     * @return  boolean                 True or false
+     */
+    public function updateRemoteCommande($remote_id, $object)
+    {
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteCommande session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+
+        $result = false;
+        /*
+        try {        
+			$commandeData = array(
+			    'status' => $object->status,
+			);
+        	
+        	$result = $this->client->call($this->session, 'order.update', array($remote_id, $commandeData, null, 'order_id'));
+        	//dol_syslog($this->client->__getLastRequest());
+        } catch (SoapFault $fault) {
+            $this->errors[]=$this->site->name.': '.$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }*/
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteCommande end");
+        return $result;
+    }
+
+    /**
+     * Update the remote invoice
+     *
+     * @param   int      $remote_id     Id of invoice on remote ecommerce
+     * @param   Facture $object         Invoice object
+     * @return  boolean                 True or false
+     */
+    public function updateRemoteFacture($remote_id, $object)
+    {
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteFacture session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+    
+        $result = false;
+        /*
+        try {
+            $factureData = array(
+                'status' => $object->status,
+            );
+             
+            $result = $this->client->call($this->session, 'invoice.update', array($remote_id, $factureData, null, 'order_id'));
+            //dol_syslog($this->client->__getLastRequest());
+        } catch (SoapFault $fault) {
+            $this->errors[]=$this->site->name.': '.$fault->getMessage().'-'.$fault->getCode();
+            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            return false;
+        }*/
+        dol_syslog("eCommerceRemoteAccessMagento updateRemoteFacture end");
+        return $result;
+    }    
+    
+    /**
      * Create shipment
      * 
      * @param   int     $livraison              Object shipment ?
@@ -1259,6 +1328,8 @@ class eCommerceRemoteAccessMagento
      */
     public function createRemoteLivraison($livraison, $remote_order_id)
     {
+        $result = false;
+        
         dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison session=".$this->session." dolibarr shipment id = ".$livraison->id.", ref = ".$livraison->ref.", order remote id = ".$remote_order_id);
         $remoteCommande = $this->getRemoteCommande($remote_order_id);   // SOAP request to get data
         try {

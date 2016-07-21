@@ -312,6 +312,126 @@ class InterfaceECommerceng
             }
         }
         
+        
+        
+        if ($action == 'ORDER_MODIFY')
+        {
+            $this->db->begin();
+            
+            $eCommerceSite = new eCommerceSite($this->db);
+            $sites = $eCommerceSite->listSites('object');
+            
+            foreach($sites as $site)
+            {
+                if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
+                {
+                    dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
+                    continue;
+                }
+                 
+                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+                dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+                $eCommerceSynchro->connect();
+                if (count($eCommerceSynchro->errors))
+                {
+                    $error++;
+                    setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+                }
+            
+                if (! $error)
+                {
+    				$eCommerceCommande = new eCommerceCommande($this->db);
+    				$eCommerceCommande->fetchByCommandeId($object->id, $site->id);
+
+    				if ($eCommerceCommande->remote_id > 0)
+    				{
+    				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteCommande($eCommerceCommande->remote_id, $object);
+    				    if (! $result)
+    				    {
+    				        $error++;
+    				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+    				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+    				    }
+    				}
+    				else
+    				{
+   				        dol_syslog("Order with id ".$object->id." is not linked to an ecommerce record so we don't sync it.");
+    				}
+                }
+            }
+            	
+            if ($error)
+            {
+                $this->db->rollback();
+                return -1;
+            }
+            else
+            {
+                $this->db->commit();
+                return 1;
+            }
+    	}
+        
+    	if ($action == 'BILL_MODIFY')
+    	{
+    	    $this->db->begin();
+    	
+    	    $eCommerceSite = new eCommerceSite($this->db);
+    	    $sites = $eCommerceSite->listSites('object');
+    	
+    	    foreach($sites as $site)
+    	    {
+    	        if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
+    	        {
+    	            dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
+    	            continue;
+    	        }
+    	         
+    	        $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+    	        dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+    	        $eCommerceSynchro->connect();
+    	        if (count($eCommerceSynchro->errors))
+    	        {
+    	            $error++;
+    	            setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+    	        }
+    	
+    	        if (! $error)
+    	        {
+    	            $eCommerceFacture = new eCommerceFacture($this->db);
+    	            $eCommerceFacture->fetchByFactureId($object->id, $site->id);
+    	
+    	            if ($eCommerceFacture->remote_id > 0)
+    	            {
+    	                $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteFacture($eCommerceFacture->remote_id, $object);
+    	                if (! $result)
+    	                {
+    	                    $error++;
+    	                    $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+    	                    $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+    	                }
+    	            }
+    	            else
+    	            {
+    	                dol_syslog("Order with id ".$object->id." is not linked to an ecommerce record so we don't sync it.");
+    	            }
+    	        }
+    	    }
+    	     
+    	    if ($error)
+    	    {
+    	        $this->db->rollback();
+    	        return -1;
+    	    }
+    	    else
+    	    {
+    	        $this->db->commit();
+    	        return 1;
+    	    }
+    	}
+    	
+    	
+    	
     	/* Delete */
         
     	if ($action == 'CATEGORY_DELETE' && ((int) $object->type == 0))     // Product category
@@ -544,6 +664,8 @@ class InterfaceECommerceng
         	    return 1;
         	}        	
         }
+        
+        
         
         // Stock Movement
         if ($action == 'STOCK_MOVEMENT')

@@ -544,6 +544,33 @@ class eCommerceSite // extends CommonObject
 	{
 		return $this->siteTypes;
 	}
+
+	
+	/**
+	 * Return URL of visitors shop
+	 *
+	 * @return string
+	 */	
+	public function getFrontUrl()
+	{
+        // Try to guess public home page of ecommerce web site from the api url
+	    $url=preg_replace('/index\.php\/api.*$/', '', $this->webservice_address);
+        if ($url && ! preg_match('/\/$/', $url)) $url.='/';
+	    return $url;
+	}
+
+	/**
+	 * Return URL of admin backoffice
+	 *
+	 * @return string
+	 */
+	public function getBackUrl()
+	{
+	    // Try to guess public home page of ecommerce web site from the api url
+	    $url=$this->getFrontUrl();
+	    $url.='index.php/admin';
+	    return $url;
+	}
 	
 }
 

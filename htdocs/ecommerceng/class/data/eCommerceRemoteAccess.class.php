@@ -336,6 +336,36 @@ class eCommerceRemoteAccess
 	}
 	
 	/**
+	 * Update remote order
+	 * 
+	 * @param  int      $remote_order_id      Id of order on remote ecommerce
+	 * @param  Commande $object               Commande object
+	 * @return bool
+	 */
+	public function updateRemoteCommande($remote_order_id, $object)
+	{
+	    $result=$this->class->updateRemoteCommande($remote_order_id, $object);
+	    $this->error=$this->class->error;
+	    $this->errors=$this->class->errors;
+	    return $result;
+	}	
+	
+	/**
+	 * Update remote invoice
+	 * 
+	 * @param  int      $remote_invoice_id    Id of invoice on remote ecommerce
+	 * @param  Facture  $object               Invoice object
+	 * @return bool
+	 */
+	public function updateRemoteFactue($remote_invoice_id, $object)
+	{
+	    $result=$this->class->updateRemoteFacture($remote_invoice_id, $object);
+	    $this->error=$this->class->error;
+	    $this->errors=$this->class->errors;
+	    return $result;
+	}	
+	
+	/**
      * Create a remote livraison from instantiated class in the constructor
      * 
      * @param Object    $livraison              Object livraison

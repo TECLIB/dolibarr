@@ -40,7 +40,11 @@ $var=!$var;
 					<input class="button" type="submit" name="submit_synchro_all" value="<?php print $langs->trans('ECommerceUpdateAll') ?>">
 				</form>
 				</div>
-			</td>			
+			</td>
+			<td>
+				<?php $url=$site->getFrontUrl(); print $langs->trans("FrontOffice").': <a href="'.$url.'" target="_frontsite">'.$url.'</a>'; ?>
+				<?php $url=$site->getBackUrl(); print '<br>'.$langs->trans("BackOffice").': <a href="'.$url.'" target="_backsite">'.$url.'</a>'; ?>
+			</td>	
 		</tr>
 	<?php } ?>
 	</table>
