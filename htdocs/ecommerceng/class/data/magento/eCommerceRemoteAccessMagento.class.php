@@ -230,6 +230,7 @@ class eCommerceRemoteAccessMagento
     
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
+     * Return array of thirdparty by update time.
      * 
      * @param   array   $remoteObject         Array of ids of objects to convert
      * @return  array                         societe
@@ -282,8 +283,9 @@ class eCommerceRemoteAccessMagento
     
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
+     * Return array of people by update time.
      * 
-     * @param   array       $listofids      List of object with customer_address_id is id of addresss
+     * @param   array       $listofids      List of object with customer_address_id that is remote id of addresss
      * @return  array                       societe
      */
     public function convertRemoteObjectIntoDolibarrSocpeople($listofids)
@@ -341,8 +343,9 @@ class eCommerceRemoteAccessMagento
     
     /**
      * Put the remote data into product dolibarr data from instantiated class in the constructor
+     * Return array or products by update time.
      * 
-     * @param   array   $remoteObject   array
+     * @param   array   $remoteObject   array of remote products
      * @return  array                   product
      */
     public function convertRemoteObjectIntoDolibarrProduct($remoteObject)
@@ -377,133 +380,7 @@ class eCommerceRemoteAccessMagento
                 return false;
             }
 
-            /* Exemple of product array returned by Magento
-               array(52) {
-                  ["product_id"]=>
-                  string(1) "1"
-                  ["sku"]=>
-                  string(4) "aaaa"
-                  ["set"]=>
-                  string(1) "4"
-                  ["type"]=>
-                  string(6) "simple"
-                  ["categories"]=>
-                  array(3) {
-                    [0]=>
-                    string(1) "2"
-                    [1]=>
-                    string(1) "3"
-                    [2]=>
-                    string(1) "6"
-                  }
-                  ["websites"]=>
-                  array(1) {
-                    [0]=>
-                    string(1) "1"
-                  }
-                  ["type_id"]=>
-                  string(6) "simple"
-                  ["name"]=>
-                  string(5) "prod1"
-                  ["description"]=>
-                  string(10) "Prod1 desc"
-                  ["short_description"]=>
-                  string(16) "prod1 desc short"
-                  ["weight"]=>
-                  string(7) "10.0000"
-                  ["old_id"]=>
-                  NULL
-                  ["news_from_date"]=>
-                  NULL
-                  ["news_to_date"]=>
-                  NULL
-                  ["status"]=>
-                  string(1) "1"
-                  ["url_key"]=>
-                  string(5) "prod1"
-                  ["url_path"]=>
-                  string(10) "prod1.html"
-                  ["visibility"]=>
-                  string(1) "4"
-                  ["category_ids"]=>
-                  array(3) {
-                    [0]=>
-                    string(1) "2"
-                    [1]=>
-                    string(1) "3"
-                    [2]=>
-                    string(1) "6"
-                  }
-                  ["required_options"]=>
-                  string(1) "0"
-                  ["has_options"]=>
-                  string(1) "0"
-                  ["image_label"]=>
-                  string(7) "Image 1"
-                  ["small_image_label"]=>
-                  string(7) "Image 1"
-                  ["thumbnail_label"]=>
-                  string(7) "Image 1"
-                  ["created_at"]=>
-                  string(25) "2015-09-23T13:14:50+02:00"
-                  ["updated_at"]=>
-                  string(19) "2016-05-26 16:38:56"
-                  ["country_of_manufacture"]=>
-                  string(2) "DE"
-                  ["price"]=>
-                  string(7) "50.0000"
-                  ["group_price"]=>
-                  array(0) {
-                  }
-                  ["special_price"]=>
-                  NULL
-                  ["special_from_date"]=>
-                  NULL
-                  ["special_to_date"]=>
-                  NULL
-                  ["tier_price"]=>
-                  array(0) {
-                  }
-                  ["minimal_price"]=>
-                  NULL
-                  ["msrp_enabled"]=>
-                  string(1) "2"
-                  ["msrp_display_actual_price_type"]=>
-                  string(1) "4"
-                  ["msrp"]=>
-                  NULL
-                  ["tax_class_id"]=>
-                  string(1) "2"
-                  ["meta_title"]=>
-                  NULL
-                  ["meta_keyword"]=>
-                  NULL
-                  ["meta_description"]=>
-                  NULL
-                  ["is_recurring"]=>
-                  string(1) "0"
-                  ["recurring_profile"]=>
-                  NULL
-                  ["custom_design"]=>
-                  NULL
-                  ["custom_design_from"]=>
-                  NULL
-                  ["custom_design_to"]=>
-                  NULL
-                  ["custom_layout_update"]=>
-                  NULL
-                  ["page_layout"]=>
-                  NULL
-                  ["options_container"]=>
-                  string(10) "container1"
-                  ["gift_message_available"]=>
-                  NULL
-                  ["stock_qty"]=>
-                  string(6) "8.0000"
-                  ["is_in_stock"]=>
-                  string(1) "1"
-                }
-             */
+            // See file example_product_array_returned_by_magento.txt 
             
             if (count($results))
                 foreach ($results as $cursorproduct => $product)
@@ -569,8 +446,9 @@ class eCommerceRemoteAccessMagento
 
     /**
      * Put the remote data into commande dolibarr data from instantiated class in the constructor
+     * Return array of orders by update time.
      * 
-     * @param   array   $remoteObject       array
+     * @param   array   $remoteObject       array of remote orders
      * @return  array                       commande
      */
     public function convertRemoteObjectIntoDolibarrCommande($remoteObject)
@@ -593,14 +471,14 @@ class eCommerceRemoteAccessMagento
             {
                 foreach ($results as $commande)
                 {
-                    //var_dump($commande);    // show order as it is from magento
-                    
                     //set each items
                     $items = array();
                     $configurableItems = array();
                     if (count($commande['items']))
                         foreach ($commande['items'] as $item)
                         {
+                            //var_dump($item);    // show item as it is from magento
+                            
                             // If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
                             if ($item['product_type'] == 'configurable') {
                                 $configurableItems[$item['item_id']] = array(
@@ -613,7 +491,7 @@ class eCommerceRemoteAccessMagento
                                     'tva_tx' => $item['tax_percent']
                                 );
                             } else {
-                                // If item has a parent item id defined in $configurableItems, get it's price and tax values instead of 0
+                                // If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
                                 if (!array_key_exists($item['parent_item_id'], $configurableItems)) {
                                     $items[] = array(
                                             'item_id' => $item['item_id'],
@@ -708,7 +586,7 @@ class eCommerceRemoteAccessMagento
                     $tmp = $commande['status'];                                                  // We choosed to use status (and not state) so value like:  'pending', 'processing', 'holded', ...
                     $status = Commande::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
                     if ($tmp == 'pending')      $status = Commande::STATUS_VALIDATED;            // validated = pending
-                    if ($tmp == 'processing')   $status = 2;                                     // shipment in process = processing       // Should be Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9
+                    if ($tmp == 'processing')   $status = 2;                                     // shipment in process or invoice done = processing       // Should be constant Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9
                     if ($tmp == 'holded')       $status = Commande::STATUS_CANCELED;             // canceled = holded
                     if ($tmp == 'complete')     $status = Commande::STATUS_CLOSED;               // complete
                     
@@ -750,9 +628,10 @@ class eCommerceRemoteAccessMagento
     }
 
     /**
-     * Put the remote data into facture dolibarr data from instantiated class in the constructor
+     * Put the remote data into facture dolibarr data from instantiated class
+     * Return array of invoices by update time.
      * 
-     * @param   array   $remoteObject       array
+     * @param   array   $remoteObject       array of remote invoices
      * @return  array                       facture
      */
     public function convertRemoteObjectIntoDolibarrFacture($remoteObject)
@@ -773,8 +652,11 @@ class eCommerceRemoteAccessMagento
             }
             if (count($results))
             {
+                $i=0;
                 foreach ($results as $facture)
                 {
+                    $i++;
+                    
                     $configurableItems = array();
                     //retrive remote order from invoice
                     $commande = $this->getRemoteCommande($facture['order_id']);
@@ -783,55 +665,47 @@ class eCommerceRemoteAccessMagento
                     if (count($facture['items']))
                         foreach ($facture['items'] as $item)
                         {
+                            //var_dump($item);    // show invoice item as it is from magento
+                            
+                            $product_type = $this->getProductTypeOfItem($item, $commande, $facture);
+                            $parent_item_id = $this->getParentItemOfItem($item, $commande, $facture);
+                            
                             // If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
-                            if ($item['product_type'] == 'configurable') {
+                            if ($product_type == 'configurable') {
                                 $configurableItems[$item['item_id']] = array(
                                     'item_id' => $item['item_id'],
                                     'id_remote_product' => $item['product_id'],
                                     'description' => $item['name'],
-                                    'product_type' => $item['product_type'], 
+                                    'product_type' => $product_type, 
                                     'price' => $item['price'],
-                                    'qty' => $item['qty_ordered'],
-                                    'tva_tx' => $item['tax_percent']
+                                    'qty' => $item['qty'],
+                                    'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
                                 );
                             } else {
-                                // If item has a parent item id defined in $configurableItems, get it's price and tax values instead of 0
-                                if (!array_key_exists($item['parent_item_id'], $configurableItems)) {
+                                // If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
+                                if (!array_key_exists($parent_item_id, $configurableItems)) {
                                     $items[] = array(
                                             'item_id' => $item['item_id'],
                                             'id_remote_product' => $item['product_id'],
                                             'description' => $item['name'],
-                                            'product_type' => $item['product_type'], 
+                                            'product_type' => $product_type, 
                                             'price' => $item['price'],
-                                            'qty' => $item['qty_ordered'],
-                                            'tva_tx' => $item['tax_percent']
+                                            'qty' => $item['qty'],
+                                            'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
                                     );
                                 } else {
                                     $items[] = array(
                                             'item_id' => $item['item_id'],
                                             'id_remote_product' => $item['product_id'],
                                             'description' => $item['name'],
-                                            'product_type' => $item['product_type'], 
-                                            'price' => $configurableItems[$item['parent_item_id']]['price'],
-                                            'qty' => $item['qty_ordered'],
-                                            'tva_tx' => $configurableItems[$item['parent_item_id']]['tva_tx']
+                                            'product_type' => $product_type, 
+                                            'price' => $configurableItems[$parent_item_id]['price'],
+                                            'qty' => $item['qty'],
+                                            'tva_tx' => $configurableItems[$parent_item_id]['tva_tx']
                                     );
                                 }
                             }
                         }
-                        /*foreach ($facture['items'] as $item)
-                        {
-                            $items[] = array(
-                                    'item_id' => $item['item_id'],
-                                    'id_remote_product' => $item['product_id'],
-                                    'description' => $item['name'],
-                                    'product_type' => $item['product_type'], 
-                                    'price' => $item['price'],
-                                    'qty' => $item['qty'],
-                                    'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
-                            );
-                        }*/
-
                         
                     //set shipping address
                     $shippingAddress = $commande["shipping_address"];
@@ -943,9 +817,98 @@ class eCommerceRemoteAccessMagento
             }
             array_multisort($last_update, SORT_ASC, $factures);
         }
+        
+        var_dump($factures);exit;
+        
         return $factures;
     }
 
+    
+    /**
+     * Return if type of an item of invoice (information comue from item of order)
+     * 
+     * @param   array   $item       Item of invoice
+     * @param   array   $commande   Commande with items
+     * @param   array   $facture    Facture with items
+     * @return string
+     */
+    function getProductTypeOfItem($item, $commande, $facture)
+    {
+        $product_type = 'notfound';   // By default
+        
+        print "Try to find product type of invoice item_id=".$item['item_id']." (invoice ".$facture['increment_id'].") and order_item_id=".$item['order_item_id']." (order ".$commande['increment_id'].")\n";
+        
+        $order_item_id = $item['order_item_id'];
+        
+        // We scan item of order to find this order item id
+        foreach($commande['items'] as $itemorder)
+        {
+            if ($itemorder['item_id'] == $order_item_id)
+            {
+                // We've got it
+                $product_type = $itemorder['product_type'];
+                break;
+            }
+        }
+
+        print "Found product type = ".$product_type."\n";
+        
+        if ($product_type == 'notfound') $product_type = 'simple';
+        
+        return $product_type;
+    }
+    
+    /**
+     * Return if type of an item of invoice (information comue from item of order)
+     *
+     * @param   array   $item       Item of invoice
+     * @param   array   $commande   Commande with items
+     * @param   array   $facture    Facture with items
+     * @return string
+     */
+    function getParentItemOfItem($item, $commande, $facture)
+    {
+        print "Try to find invoice parent item id of invoice item_id=".$item['item_id']." (invoice ".$facture['increment_id'].") and order_item_id=".$item['order_item_id']." (order ".$commande['increment_id'].")\n";
+        
+        $parent_item_id = 0;   // By default
+        $parent_item_id_in_order = 0;
+        
+        $order_item_id = $item['order_item_id'];
+    
+        // We scan item of order to find this order item id
+        foreach($commande['items'] as $itemorder)
+        {
+            if ($itemorder['item_id'] == $order_item_id)
+            {
+                // We've got it
+                $product_type = $itemorder['product_type'];
+                
+                $parent_item_id_in_order = $itemorder['parent_item_id'];
+                break;
+            }
+        }
+    
+        // If the item is linked to an order item id that has a parent order item id
+        if ($parent_item_id_in_order)
+        {
+            // We scan now invoice items to find the item that is linked to order item id $parent_item_id_in_order
+            foreach($facture['items'] as $itemfacture)
+            {
+                if ($itemfacture['order_item_id'] == $parent_item_id_in_order)
+                {
+                    // We've got it
+                    $parent_item_id = $itemfacture['item_id'];
+                    break;
+                }
+            }
+        }        
+        
+        print "Found invoice parent_item_id=".$parent_item_id." and order parent_item_id=".$parent_item_id_in_order."\n";
+        
+        return $parent_item_id;
+    }
+    
+    
     
     
     // Now functions to get data on remote shop, from the remote id.
