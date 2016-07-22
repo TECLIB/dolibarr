@@ -818,7 +818,7 @@ class eCommerceRemoteAccessMagento
             array_multisort($last_update, SORT_ASC, $factures);
         }
         
-        var_dump($factures);exit;
+        //var_dump($factures);exit;
         
         return $factures;
     }
