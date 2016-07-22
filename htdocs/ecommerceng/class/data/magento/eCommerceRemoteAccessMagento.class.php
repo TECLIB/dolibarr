@@ -836,7 +836,7 @@ class eCommerceRemoteAccessMagento
     {
         $product_type = 'notfound';   // By default
         
-        print "Try to find product type of invoice item_id=".$item['item_id']." (invoice ".$facture['increment_id'].") and order_item_id=".$item['order_item_id']." (order ".$commande['increment_id'].")\n";
+        //print "Try to find product type of invoice item_id=".$item['item_id']." (invoice ".$facture['increment_id'].") and order_item_id=".$item['order_item_id']." (order ".$commande['increment_id'].")\n";
         
         $order_item_id = $item['order_item_id'];
         
@@ -851,7 +851,7 @@ class eCommerceRemoteAccessMagento
             }
         }
 
-        print "Found product type = ".$product_type."\n";
+        //print "Found product type = ".$product_type."\n";
         
         if ($product_type == 'notfound') $product_type = 'simple';
         
@@ -868,7 +868,7 @@ class eCommerceRemoteAccessMagento
      */
     function getParentItemOfItem($item, $commande, $facture)
     {
-        print "Try to find invoice parent item id of invoice item_id=".$item['item_id']." (invoice ".$facture['increment_id'].") and order_item_id=".$item['order_item_id']." (order ".$commande['increment_id'].")\n";
+        //print "Try to find invoice parent item id of invoice item_id=".$item['item_id']." (invoice ".$facture['increment_id'].") and order_item_id=".$item['order_item_id']." (order ".$commande['increment_id'].")\n";
         
         $parent_item_id = 0;   // By default
         $parent_item_id_in_order = 0;
@@ -903,7 +903,7 @@ class eCommerceRemoteAccessMagento
             }
         }        
         
-        print "Found invoice parent_item_id=".$parent_item_id." and order parent_item_id=".$parent_item_id_in_order."\n";
+        //print "Found invoice parent_item_id=".$parent_item_id." and order parent_item_id=".$parent_item_id_in_order."\n";
         
         return $parent_item_id;
     }
