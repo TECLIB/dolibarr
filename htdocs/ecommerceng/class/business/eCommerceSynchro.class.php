@@ -1921,13 +1921,18 @@ class eCommerceSynchro
                                             0, 
                                             $this->eCommerceProduct->fk_product,
                                             0,
+                                            '', //date_start
+                                            '', //date_end
+                                            0, //ventil
+                                            0, //info_bits
+                                            0, //fk_remise_except
                                             'HT',
                                             0, //pu_ttc
-                                            1, //type 0:product 1:service
+                                            0, // FIXME Use type of article   0:product 1:service
                                             0, //rang
                                             0, //special code
-                                            '', // origin
-                                            0, // origin_id
+                                            '', // This field seems not used
+                                            0, // This field seems not used
                                             0, //fk_parent_line
                                             0, //fk_fourn_price
                                             $buyprice
