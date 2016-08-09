@@ -79,9 +79,9 @@ class eCommerceRemoteAccess
     /**
      * Get societe to update from instantiated class in the constructor
      * 
-     * @param $fromDate datetime updates from this date
-     * @param $toDate datetime updates to this date
-     * @return  array       Array of remote societe
+     * @param $fromDate datetime    Updates from this date
+     * @param $toDate   datetime    Updates to this date
+     * @return  array               Array of remote societe
      */
     public function getSocieteToUpdate($fromDate, $toDate)
 	{
@@ -94,9 +94,9 @@ class eCommerceRemoteAccess
     /**
      * Get product to update from instantiated class in the constructor
      * 
-     * @param $fromDate datetime updates from this date
-     * @param $toDate datetime updates to this date
-     * @return array of remote product
+     * @param $fromDate datetime    Updates from this date
+     * @param $toDate   datetime    Updates to this date
+     * @return array                Array of remote product
      */
     public function getProductToUpdate($fromDate, $toDate)
 	{
@@ -109,9 +109,9 @@ class eCommerceRemoteAccess
     /**
      * Get commande to update from instantiated class in the constructor
      * 
-     * @param $fromDate datetime updates from this date
-     * @param $toDate datetime updates to this date
-     * @return array of remote commande
+     * @param $fromDate datetime    Updates from this date
+     * @param $toDate   datetime    Updates to this date
+     * @return array                Array of remote commande
      */
     public function getCommandeToUpdate($fromDate, $toDate)
 	{
@@ -124,9 +124,9 @@ class eCommerceRemoteAccess
     /**
      * Get facture to update from instantiated class in the constructor
      * 
-     * @param $fromDate datetime updates from this date
-     * @param $toDate datetime updates to this date
-     * @return array of remote facture
+     * @param $fromDate datetime    Updates from this date
+     * @param $toDate   datetime    Updates to this date
+     * @return array                Array of remote facture
      */
     public function getFactureToUpdate($fromDate, $toDate)
 	{

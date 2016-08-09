@@ -139,12 +139,12 @@ class eCommerceRemoteAccessMagento
             dol_syslog("getProductToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
             $filter = array(
                 array('updated_at' => array('gt' => dol_print_date($fromDate, 'standard'), 'lt' => dol_print_date($toDate, 'standard'))),
-                //array('type_id', array('eq' => 'downloadable'))
+                //array('type_id', array('in' => array('simple', 'virtual', 'configurable', 'downloadable')))
             );
             $result = $this->client->call($this->session, 'catalog_product.list', $filter);
             
             $results = array();
-            $productsTypesOk = array('simple', 'virtual', 'downloadable');
+            $productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
             foreach ($result as $product) 
             {
                 if (in_array($product['type'], $productsTypesOk))
