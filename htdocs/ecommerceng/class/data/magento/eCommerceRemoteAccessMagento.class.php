@@ -356,7 +356,7 @@ class eCommerceRemoteAccessMagento
        
         $canvas = '';
         
-        $maxsizeofmulticall = 4;      // 1000 seems ok for multicall.
+        $maxsizeofmulticall = 1000;      // 1000 seems ok for multicall.
         $nbsynchro = 0;
         $nbremote = count($remoteObject);
         if ($nbremote)
