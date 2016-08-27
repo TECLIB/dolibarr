@@ -345,7 +345,7 @@ class eCommerceRemoteAccessMagento
      * Put the remote data into product dolibarr data from instantiated class in the constructor
      * Return array or products by update time.
      * 
-     * @param   array   $remoteObject   array of remote products
+     * @param   array   $remoteObject   Array of remote products (got by caller from getProductToUpdate. Only few properties defined)
      * @return  array                   product
      */
     public function convertRemoteObjectIntoDolibarrProduct($remoteObject)
@@ -353,84 +353,103 @@ class eCommerceRemoteAccessMagento
         include_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
         
         $products = array();
-        $calls = array();
        
         $canvas = '';
         
+        $maxsizeofmulticall = 4;      // 1000 seems ok for multicall.
         $nbsynchro = 0;
-        if (count($remoteObject))
+        $nbremote = count($remoteObject);
+        if ($nbremote)
         {
-            dol_syslog("convertRemoteObjectIntoDolibarrProduct Call WS to get detail for the ".count($remoteObject)." objects then create a Dolibarr array for each object");
+            // Create n groups of $maxsizeofmulticall records max to call the multiCall
+            $callsgroup = array();
+            $calls=array();
             foreach ($remoteObject as $rproduct)
             {
+                if (($nbsynchro % $maxsizeofmulticall) == 0) 
+                {
+                    if (count($calls)) $callsgroup[]=$calls;    // Add new group for lot of 1000 call arrays
+                    $calls=array();
+                }
+                
                 if ($rproduct['sku'])
                 {
                     $calls[] = array('catalog_product.info', $rproduct['sku']);
                 }
-                $nbsynchro = $nbsynchro + 1;
+                
+                $nbsynchro++;   // nbsynchro is now number of calls to do
             }
-
-            try {
-                $results = $this->client->multiCall($this->session, $calls);
-            } catch (SoapFault $fault) {
-                $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-                dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
-                dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
-                dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-                return false;
-            }
-
-            // See file example_product_array_returned_by_magento.txt 
+            if (count($calls)) $callsgroup[]=$calls;    // Add new group for the remain lot of calls not yet added
             
-            if (count($results))
-                foreach ($results as $cursorproduct => $product)
-                {
-                    // Complete data with info in stock
-                    // Note: if product is set "do not manage stock" on magento, no information is returned and stock is returned whatever is this option.
-                    try {
-                        $result2 = $this->client->call($this->session, 'cataloginventory_stock_item.list', $product['product_id']);
-                    } catch (SoapFault $fault) {
-                        $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-                        dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
-                        dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
-                        dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-                        return false;
-                    }
-                    //var_dump($result2);exit;
-                    foreach($result2 as $val)
-                    {
-                        $product['stock_qty'] = $val['qty'];
-                        $product['is_in_stock'] = $val['is_in_stock'];
-                    }
+            dol_syslog("convertRemoteObjectIntoDolibarrProduct Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
+            //var_dump($callsgroup);exit;
 
-                    $ecommerceurl =  $this->site->getFrontUrl();
-                    
-                    $products[] = array(
-                            //$product['type'] simple, grouped (=package), configurable (= variant), downloadable, bundle (on demand defined products), virtual (services)   
-                            'fk_product_type' => ($product['type'] == 'virtual' ? 1 : 0), // 0 (product) or 1 (service)
-                            'ref' => dol_sanitizeFileName(stripslashes($product['sku'])),
-                            'label' => $product['name'],
-                            'description' => $product['description'],
-                            'weight' => $product['weight'],
-                            'last_update' => $product['updated_at'],
-                            'price' => (($this->site->magento_use_special_price && $product['special_price'] != NULL ) ? $product['special_price'] : $product['price']),
-                            'envente' => $product['status'] ? 1 : 0,
-                            'remote_id' => $product['product_id'],  // id in ecommerce magento
-                            'finished' => 1,    // 1 = manufactured, 0 = raw material
-                            'canvas' => $canvas,
-                            'categories' => $product['categories'],     // Same as property $product['category_ids']
-                            'tax_rate' => $product['tax_rate'],
-                            'price_min' => $product['minimal_price'],
-                            'fk_country' => ($product['country_of_manufacture'] ? getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, '') : null),
-                            'url' => $ecommerceurl.$product['url_path'],  // TODO Add host of ecommerce to get a complete url
-                            // Stock
-                            'stock_qty' => $product['stock_qty'],
-                            'is_in_stock' => $product['is_in_stock'],   // not used
-                    );
-                    //var_dump($product['country_of_manufacture']);
-                    //var_dump(getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, ''));exit;
-                    // We also get special_price, minimal_price => ?, msrp, 
+            foreach ($callsgroup as $calls)
+            {
+                try {
+                    $results = $this->client->multiCall($this->session, $calls);
+                } catch (SoapFault $fault) {
+                    $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+                    dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+                    dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+                    dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+                    return false;
                 }
+    
+                // See file example_product_array_returned_by_magento.txt 
+                
+                if (count($results))
+                {
+                    $ecommerceurl =  $this->site->getFrontUrl();
+    
+                    foreach ($results as $cursorproduct => $product)
+                    {
+                        // Complete data with info in stock
+                        // Note: if product is set "do not manage stock" on magento, no information is returned and stock is returned whatever is this option.
+                        try {
+                            $result2 = $this->client->call($this->session, 'cataloginventory_stock_item.list', $product['product_id']);
+                        } catch (SoapFault $fault) {
+                            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+                            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+                            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+                            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+                            return false;
+                        }
+                        //var_dump($result2);exit;
+                        foreach($result2 as $val)
+                        {
+                            $product['stock_qty'] = $val['qty'];
+                            $product['is_in_stock'] = $val['is_in_stock'];
+                        }
+    
+                        $products[] = array(
+                                //$product['type'] simple, grouped (=package), configurable (= variant), downloadable, bundle (on demand defined products), virtual (services)   
+                                'fk_product_type' => ($product['type'] == 'virtual' ? 1 : 0), // 0 (product) or 1 (service)
+                                'ref' => dol_sanitizeFileName(stripslashes($product['sku'])),
+                                'label' => $product['name'],
+                                'description' => $product['description'],
+                                'weight' => $product['weight'],
+                                'last_update' => $product['updated_at'],
+                                'price' => (($this->site->magento_use_special_price && $product['special_price'] != NULL ) ? $product['special_price'] : $product['price']),
+                                'envente' => $product['status'] ? 1 : 0,
+                                'remote_id' => $product['product_id'],  // id in ecommerce magento
+                                'finished' => 1,    // 1 = manufactured, 0 = raw material
+                                'canvas' => $canvas,
+                                'categories' => $product['categories'],     // Same as property $product['category_ids']
+                                'tax_rate' => $product['tax_rate'],
+                                'price_min' => $product['minimal_price'],
+                                'fk_country' => ($product['country_of_manufacture'] ? getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, '') : null),
+                                'url' => $ecommerceurl.$product['url_path'],
+                                // Stock
+                                'stock_qty' => $product['stock_qty'],
+                                'is_in_stock' => $product['is_in_stock'],   // not used
+                        );
+                        //var_dump($product['country_of_manufacture']);
+                        //var_dump(getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, ''));exit;
+                        // We also get special_price, minimal_price => ?, msrp, 
+                    }
+                }
+            }
         }
         //important - order by last update
         if (count($products))

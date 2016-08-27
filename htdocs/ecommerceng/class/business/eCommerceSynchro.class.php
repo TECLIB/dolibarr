@@ -20,7 +20,7 @@
 /**
  * Class for synchronize remote sites with Dolibarr
  */
- 
+
 dol_include_once('/ecommerceng/class/data/eCommerceRemoteAccess.class.php');
 dol_include_once('/ecommerceng/class/data/eCommerceCommande.class.php');
 dol_include_once('/ecommerceng/class/data/eCommerceFacture.class.php');
@@ -43,6 +43,7 @@ require_once(DOL_DOCUMENT_ROOT . '/expedition/class/expedition.class.php');
 
 class eCommerceSynchro
 {
+    public $error;
     public $errors;
     public $success;
     public $langs;
@@ -821,7 +822,7 @@ class eCommerceSynchro
             }
             else
             {
-                $this->errors[] = $this->langs->trans('ECommerceSynchCategoryNoImportRoot');
+                $this->error = $this->langs->trans('ECommerceSynchCategoryNoImportRoot');
                 $this->errors[] = $this->error;
                 return -1;
             }
@@ -910,8 +911,8 @@ class eCommerceSynchro
                             if ($result < 0)
                             {
                                 $error++;
-                                $this->error=$dBSociete->error;
-                                $this->errors=$dBSociete->errors;
+                                $this->error=$this->langs->trans('ECommerceSynchSocieteCreateError').' '.$dBSociete->error;
+                                $this->errors[]=$this->error;
                             }
                         }
                     }
@@ -1069,8 +1070,8 @@ class eCommerceSynchro
                     if ($result < 0)
                     {
                         $error++;
-                        $this->error=$dBContact->error;
-                        $this->errors=$dBContact->errors;
+                        $this->error=$this->langs->trans('ECommerceSynchContactCreateError').' '.$dBContact->error;
+                        $this->errors[]=$this->error;
                     }
                 }
                 else if ($refExistst < 0)
@@ -1161,7 +1162,7 @@ class eCommerceSynchro
                     $dBProduct = new Product($this->db);
                     
                     // First, we check object does not alreay exists. If not, we create it, if it exists, update it.
-                    $refExists = $dBProduct->fetch('', $productArray['ref']);
+                    $refExists = $dBProduct->fetch('', dol_string_nospecial(trim($productArray['ref'])));
                     $result = -1;
 
                     //libelle of product object = label into database
@@ -1215,15 +1216,15 @@ class eCommerceSynchro
                             if ($result <= 0)
                             {
                                 $error++;
-                                $this->errors=$movement->error;
-                                $this->errors[]=$movement->errors;
+                                $this->error=$this->langs->trans('ECommerceSynchMouvementStockChangeError').' '.$movement->error;
+                                $this->errors[]=$this->error;
                             }
                         }
                     }
                     else
                     {
                         //create
-                        $dBProduct->ref = $productArray['ref'];
+                        $dBProduct->ref = dol_string_nospecial(trim($productArray['ref']));
                         $dBProduct->canvas = $productArray['canvas'];
                         $dBProduct->note = 'Initialy created from '.$this->eCommerceSite->name;
                         
@@ -1235,8 +1236,9 @@ class eCommerceSynchro
                         else
                         {
                             $error++;
-                            $this->errors=$dBProduct->error;
-                            $this->errors[]=$dBProduct->errors;
+                            if ($dBProduct->error == 'ErrorProductAlreadyExists') $this->error=$this->langs->trans('ECommerceSynchProductCreateError').' '.$this->langs->trans($dBProduct->error, $dBProduct->ref);
+                            else $this->error=$this->langs->trans('ECommerceSynchProductCreateError').' '.$dBProduct->error;
+                            $this->errors[]=$this->error;
                         }
 
                         // We must set the initial stock
@@ -1261,8 +1263,8 @@ class eCommerceSynchro
                             if ($result <= 0)
                             {
                                 $error++;
-                                $this->errors=$movement->error;
-                                $this->errors[]=$movement->errors;
+                                $this->error=$this->langs->trans('ECommerceSynchMouvementStockChangeError').' '.$movement->error;
+                                $this->errors[]=$this->error;
                             }
                         }
                     }
@@ -1895,23 +1897,6 @@ class eCommerceSynchro
                                         {
                                             $buyprice = $result;
                                         }
-                                        /*
-                                        if (isset($conf->global->MARGIN_TYPE) && $conf->global->MARGIN_TYPE == 'pmp')   // If Rule is on PMP 
-                                        {
-                            			    include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
-                            			    $product=new Product($this->db);
-                            			    $product->fetch($fk_product);
-                                            $buyprice=$product->pmp;   
-                                        }
-                            			if (empty($buyprice))    // Prend meilleur prix si option meilleur prix on (et donc buyprice par encore defini) ou si PMP n'a rien donné 
-                            			{
-                            			    // by external module, take lowest buying price
-                            			    include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
-                            			    $productFournisseur = new ProductFournisseur($this->db);
-                            			    $productFournisseur->find_min_price_product_fournisseur($fk_product);
-                            			    $buyprice = $productFournisseur->fourn_unitprice;
-                            			}
-                                        */    
                                         $dBFacture->addline(
                                             $item['description'], 
                                             $item['price'], 
@@ -1945,7 +1930,7 @@ class eCommerceSynchro
                                 {
                                     $delivery = $factureArray['delivery'];
                                     
-                                    // TODO Get buy price depending on margin option. No margin on delivery ?
+                                    // TODO Get buy price depending on margin option. No margin on delivery line ?
                                     $buyprice=0;
                                     
                                     $dBFacture->addline($delivery['description'], $delivery['price'], $delivery['qty'], $delivery['tva_tx'], 0, 0, 0, //fk_product
@@ -2169,194 +2154,200 @@ class eCommerceSynchro
         // Drop invoices
         if (empty($mode) || preg_match('/^invoices/', $mode))
         {
-        $dolObjectsDeleted = 0;
-        $synchObjectsDeleted = 0;
-        $this->initECommerceFacture();
-        $arrayECommerceFactureIds = $this->eCommerceFacture->getAllECommerceFactureIds($this->eCommerceSite->id);
-
-        foreach ($arrayECommerceFactureIds as $idFacture)
-        {
+            $dolObjectsDeleted = 0;
+            $synchObjectsDeleted = 0;
             $this->initECommerceFacture();
-            if ($this->eCommerceFacture->fetch($idFacture) > 0)
+            $arrayECommerceFactureIds = $this->eCommerceFacture->getAllECommerceFactureIds($this->eCommerceSite->id);
+    
+            foreach ($arrayECommerceFactureIds as $idFacture)
             {
-                if ($deletealsoindolibarr)
+                $this->initECommerceFacture();
+                if ($this->eCommerceFacture->fetch($idFacture) > 0)
                 {
-                    $dbFacture = new Facture($this->db);
-                    if ($dbFacture->fetch($this->eCommerceFacture->fk_facture) > 0)
+                    if ($deletealsoindolibarr)
                     {
-                        $idWarehouse = 0;   // We don't want to change stock here
-                        if ($dbFacture->delete($dbFacture->id, 0, $idWarehouse) > 0)
-                            $dolObjectsDeleted++;
+                        $dbFacture = new Facture($this->db);
+                        if ($dbFacture->fetch($this->eCommerceFacture->fk_facture) > 0)
+                        {
+                            $idWarehouse = 0;   // We don't want to change stock here
+                            $resultdelete = $dbFacture->delete($dbFacture->id, 0, $idWarehouse);
+                            if ($resultdelete > 0)
+                                $dolObjectsDeleted++;
+                        }
                     }
+                    if ($this->eCommerceFacture->delete($this->user) > 0)
+                        $synchObjectsDeleted++;
                 }
-                if ($this->eCommerceFacture->delete($this->user) > 0)
-                    $synchObjectsDeleted++;
             }
-        }
-
-        if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolFactureSuccess');
-        $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchFactureSuccess');
-        unset($this->eCommerceFacture);
+    
+            if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolFactureSuccess');
+            $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchFactureSuccess');
+            unset($this->eCommerceFacture);
         }
 
         //Drop commands
         if (empty($mode) || preg_match('/^orders/', $mode))
         {
-        $dolObjectsDeleted = 0;
-        $synchObjectsDeleted = 0;
-        $this->initECommerceCommande();
-        $arrayECommerceCommandeIds = $this->eCommerceCommande->getAllECommerceCommandeIds($this->eCommerceSite->id);
-
-        foreach ($arrayECommerceCommandeIds as $idCommande)
-        {
+            $dolObjectsDeleted = 0;
+            $synchObjectsDeleted = 0;
             $this->initECommerceCommande();
-            if ($this->eCommerceCommande->fetch($idCommande) > 0)
+            $arrayECommerceCommandeIds = $this->eCommerceCommande->getAllECommerceCommandeIds($this->eCommerceSite->id);
+    
+            foreach ($arrayECommerceCommandeIds as $idCommande)
             {
-                if ($deletealsoindolibarr)
+                $this->initECommerceCommande();
+                if ($this->eCommerceCommande->fetch($idCommande) > 0)
                 {
-                    $dbCommande = new Commande($this->db);
-                    if ($dbCommande->fetch($this->eCommerceCommande->fk_commande) > 0)
+                    if ($deletealsoindolibarr)
                     {
-                        if ($dbCommande->delete($this->user) > 0)
-                            $dolObjectsDeleted++;
+                        $dbCommande = new Commande($this->db);
+                        if ($dbCommande->fetch($this->eCommerceCommande->fk_commande) > 0)
+                        {
+                            $resultdelete = $dbCommande->delete($this->user);
+                            if ($resultdelete > 0)
+                                $dolObjectsDeleted++;
+                        }
                     }
+                    if ($this->eCommerceCommande->delete($this->user) > 0)
+                        $synchObjectsDeleted++;
                 }
-                if ($this->eCommerceCommande->delete($this->user) > 0)
-                    $synchObjectsDeleted++;
             }
-        }
-
-        if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolCommandeSuccess');
-        $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchCommandeSuccess');
-        unset($this->eCommerceCommande);
+    
+            if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolCommandeSuccess');
+            $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchCommandeSuccess');
+            unset($this->eCommerceCommande);
         }
 
         //Drop products
         if (empty($mode) || preg_match('/^products/', $mode))
         {
-        $dolObjectsDeleted = 0;
-        $synchObjectsDeleted = 0;
-        $this->initECommerceProduct();
-        $arrayECommerceProductIds = $this->eCommerceProduct->getAllECommerceProductIds($this->eCommerceSite->id);
-
-        foreach ($arrayECommerceProductIds as $idProduct)
-        {
+            $dolObjectsDeleted = 0;
+            $synchObjectsDeleted = 0;
             $this->initECommerceProduct();
-            if ($this->eCommerceProduct->fetch($idProduct) > 0)
+            $arrayECommerceProductIds = $this->eCommerceProduct->getAllECommerceProductIds($this->eCommerceSite->id);
+    
+            foreach ($arrayECommerceProductIds as $idProduct)
             {
-                if ($deletealsoindolibarr)
+                $this->initECommerceProduct();
+                if ($this->eCommerceProduct->fetch($idProduct) > 0)
                 {
-                    $dbProduct = new Product($this->db);
-                    if ($dbProduct->fetch($this->eCommerceProduct->fk_product) > 0)
+                    if ($deletealsoindolibarr)
                     {
-                        if ($dbProduct->delete($dbProduct->id) >= 0)
-                            $dolObjectsDeleted++;
+                        $dbProduct = new Product($this->db);
+                        if ($dbProduct->fetch($this->eCommerceProduct->fk_product) > 0)
+                        {
+                            $resultdelete = $dbProduct->delete();
+                            if ($resultdelete > 0)
+                                $dolObjectsDeleted++;
+                        }
                     }
+                    if ($this->eCommerceProduct->delete($this->user, 0) > 0)
+                        $synchObjectsDeleted++;
                 }
-                if ($this->eCommerceProduct->delete($this->user, 0) > 0)
-                    $synchObjectsDeleted++;
             }
-        }
-
-        if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolProductSuccess');
-        $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchProductSuccess');
-        unset($this->eCommerceProduct);
+    
+            if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolProductSuccess');
+            $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchProductSuccess');
+            unset($this->eCommerceProduct);
         }
 
         //Drop socPeople
         if (empty($mode) || preg_match('/^contacts/', $mode))
         {
-        $dolObjectsDeleted = 0;
-        $synchObjectsDeleted = 0;
-        $this->initECommerceSocpeople();
-        $arrayECommerceSocpeopleIds = $this->eCommerceSocpeople->getAllECommerceSocpeopleIds($this->eCommerceSite->id);
-
-        foreach ($arrayECommerceSocpeopleIds as $idSocpeople)
-        {
+            $dolObjectsDeleted = 0;
+            $synchObjectsDeleted = 0;
             $this->initECommerceSocpeople();
-            if ($this->eCommerceSocpeople->fetch($idSocpeople) > 0)
+            $arrayECommerceSocpeopleIds = $this->eCommerceSocpeople->getAllECommerceSocpeopleIds($this->eCommerceSite->id);
+    
+            foreach ($arrayECommerceSocpeopleIds as $idSocpeople)
             {
-                if ($deletealsoindolibarr)
+                $this->initECommerceSocpeople();
+                if ($this->eCommerceSocpeople->fetch($idSocpeople) > 0)
                 {
-                    $dbSocpeople = new Contact($this->db);
-                    if ($dbSocpeople->fetch($this->eCommerceSocpeople->fk_socpeople) > 0)
+                    if ($deletealsoindolibarr)
                     {
-                        if ($dbSocpeople->delete(0) > 0)
-                            $dolObjectsDeleted++;
+                        $dbSocpeople = new Contact($this->db);
+                        if ($dbSocpeople->fetch($this->eCommerceSocpeople->fk_socpeople) > 0)
+                        {
+                            $resultdelete = $dbSocpeople->delete(0);
+                            if ($resultdelete > 0)
+                                $dolObjectsDeleted++;
+                        }
                     }
+                    if ($this->eCommerceSocpeople->delete($this->user, 0) > 0)
+                        $synchObjectsDeleted++;
                 }
-                if ($this->eCommerceSocpeople->delete($this->user, 0) > 0)
-                    $synchObjectsDeleted++;
             }
-        }
-
-        if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolSocpeopleSuccess');
-        $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchSocpeopleSuccess');
-        unset($this->eCommerceSocpeople);
+    
+            if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolSocpeopleSuccess');
+            $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchSocpeopleSuccess');
+            unset($this->eCommerceSocpeople);
         }
 
         //Drop societes
         if (empty($mode) || preg_match('/^thirdparties/', $mode))
         {
-        $dolObjectsDeleted = 0;
-        $synchObjectsDeleted = 0;
-        $this->initECommerceSociete();
-        $arrayECommerceSocieteIds = $this->eCommerceSociete->getAllECommerceSocieteIds($this->eCommerceSite->id);
-
-        foreach ($arrayECommerceSocieteIds as $idSociete)
-        {
+            $dolObjectsDeleted = 0;
+            $synchObjectsDeleted = 0;
             $this->initECommerceSociete();
-            if ($this->eCommerceSociete->fetch($idSociete) > 0)
+            $arrayECommerceSocieteIds = $this->eCommerceSociete->getAllECommerceSocieteIds($this->eCommerceSite->id);
+    
+            foreach ($arrayECommerceSocieteIds as $idSociete)
             {
-                if ($deletealsoindolibarr)
+                $this->initECommerceSociete();
+                if ($this->eCommerceSociete->fetch($idSociete) > 0)
                 {
-                    $dbSociete = new Societe($this->db);
-                    if ($dbSociete->fetch($this->eCommerceSociete->fk_societe) > 0)
+                    if ($deletealsoindolibarr)
                     {
-                        if ($dbSociete->delete($dbSociete->id, $this->user, 1) > 0)
-                            $dolObjectsDeleted++;
+                        $dbSociete = new Societe($this->db);
+                        if ($dbSociete->fetch($this->eCommerceSociete->fk_societe) > 0)
+                        {
+                            $resultdelete = $dbSociete->delete($dbSociete->id, $this->user, 1);
+                            if ($resultdelete > 0)
+                                $dolObjectsDeleted++;
+                        }
                     }
+                    if ($this->eCommerceSociete->delete($this->user, 0) > 0)
+                        $synchObjectsDeleted++;
                 }
-                if ($this->eCommerceSociete->delete($this->user, 0) > 0)
-                    $synchObjectsDeleted++;
             }
-        }
-
-        if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolSocieteSuccess');
-        $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchSocieteSuccess');
-        unset($this->eCommerceSociete);
+    
+            if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolSocieteSuccess');
+            $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchSocieteSuccess');
+            unset($this->eCommerceSociete);
         }
 
         //Drop categories	
         if (empty($mode) || preg_match('/^categories/', $mode))
         {
-        $dolObjectsDeleted = 0;
-        $synchObjectsDeleted = 0;
-        $this->initECommerceCategory();
-        $arrayECommerceCategoryIds = $this->eCommerceCategory->getAllECommerceCategoryIds($this->eCommerceSite);
-
-        foreach ($arrayECommerceCategoryIds as $idCategory)
-        {
+            $dolObjectsDeleted = 0;
+            $synchObjectsDeleted = 0;
             $this->initECommerceCategory();
-            if ($this->eCommerceCategory->fetch($idCategory) > 0)
+            $arrayECommerceCategoryIds = $this->eCommerceCategory->getAllECommerceCategoryIds($this->eCommerceSite);
+    
+            foreach ($arrayECommerceCategoryIds as $idCategory)
             {
-                if ($deletealsoindolibarr)
+                $this->initECommerceCategory();
+                if ($this->eCommerceCategory->fetch($idCategory) > 0)
                 {
-                    $dbCategory = new Categorie($this->db);
-                    if ($dbCategory->fetch($this->eCommerceCategory->fk_category) > 0)
+                    if ($deletealsoindolibarr)
                     {
-                        if ($dbCategory->delete($this->user) > 0)
-                            $dolObjectsDeleted++;
+                        $dbCategory = new Categorie($this->db);
+                        if ($dbCategory->fetch($this->eCommerceCategory->fk_category) > 0)
+                        {
+                            $resultdelete = $dbCategory->delete($this->user);
+                            if ($resultdelete > 0)
+                                $dolObjectsDeleted++;
+                        }
                     }
+                    if ($this->eCommerceCategory->delete($this->user, 0) > 0)
+                        $synchObjectsDeleted++;
                 }
-                if ($this->eCommerceCategory->delete($this->user, 0) > 0)
-                    $synchObjectsDeleted++;
             }
-        }
-
-        if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolCategorySuccess');
-        $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchCategorySuccess');
-        unset($this->eCommerceCategory);
+    
+            if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolCategorySuccess');
+            $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchCategorySuccess');
+            unset($this->eCommerceCategory);
         }
     }
 

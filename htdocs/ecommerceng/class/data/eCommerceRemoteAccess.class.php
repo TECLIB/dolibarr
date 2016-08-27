@@ -165,7 +165,7 @@ class eCommerceRemoteAccess
 	}
 	
     /**
-     * Put the remote data into societe dolibarr data from instantiated class in the constructor
+     * Put the remote data into product dolibarr data from instantiated class in the constructor
      * 
      * @param $remoteObject array
      * @return $dolibarrObject array
