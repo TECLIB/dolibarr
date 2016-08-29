@@ -433,7 +433,6 @@ class InterfaceECommerceng
     	
     	
     	/* Delete */
-        
     	if ($action == 'CATEGORY_DELETE' && ((int) $object->type == 0))     // Product category
         {
             $this->db->begin();
@@ -445,13 +444,16 @@ class InterfaceECommerceng
             if ($resql) 
             {
                 $obj=$this->db->fetch_object($resql);
-                $remote_parent_id=$obj->remote_parent_id;
-                $remote_id=$obj->remote_id;
-                $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_category SET last_update = NULL, remote_parent_id = ".$remote_parent_id." WHERE remote_parent_id = ".$remote_id;
-                $resql=$this->db->query($sql);
-                if (! $resql)
+                if ($obj)   // If null = we didn't find category, so it is not a category known into ecommerce platform
                 {
-                    $error++;
+                    $remote_parent_id=$obj->remote_parent_id;
+                    $remote_id=$obj->remote_id;
+                    $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_category SET last_update = NULL, remote_parent_id = ".$remote_parent_id." WHERE remote_parent_id = ".$remote_id;
+                    $resql=$this->db->query($sql);
+                    if (! $resql)
+                    {
+                        $error++;
+                    }
                 }
             }
             if (! $error)
