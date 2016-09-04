@@ -240,24 +240,37 @@ class eCommerceSociete // extends CommonObject
   
   
  	/**
-	 *   \brief      Delete object in database
-     *	\param      user        	User that delete
-     *   \param      notrigger	    0=launch triggers after, 1=disable triggers
-	 *	\return		int				<0 if KO, >0 if OK
+	 *  Delete object in database
+	 *  
+     *	@param      $user        	User that delete
+     *  @param      $notrigger	    0=launch triggers after, 1=disable triggers
+     *  @param      $sitename       Site name to update alias
+	 *	@return		int				<0 if KO, >0 if OK
 	 */
-	function delete($user, $notrigger=0)
+	function delete($user, $notrigger=0, $sitename='')
 	{
 		global $conf, $langs;
 		$error=0;
 		
+		dol_syslog("Delete into ecommerce_societe sitename=".$sitename);
+		
 		$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_societe";
 		$sql.= " WHERE rowid=".$this->id;
+	
+		$sql2 = "UPDATE ".MAIN_DB_PREFIX."societe";
+		$sql2.= " SET name_alias = NULL where name_alias = '".$sitename.' id '.$this->remote_id."'";      // Magento id xxx
 	
 		$this->db->begin();
 		
 		dol_syslog(get_class($this)."::delete sql=".$sql);
 		$resql = $this->db->query($sql);
-    	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
+		if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
+		
+		if ($sitename)
+		{
+    		$resql2 = $this->db->query($sql2);
+    		if (! $resql2) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
+		}
 		
 		if (! $error)
 		{

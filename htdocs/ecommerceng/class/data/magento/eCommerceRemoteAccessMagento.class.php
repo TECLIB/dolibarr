@@ -238,36 +238,66 @@ class eCommerceRemoteAccessMagento
     public function convertRemoteObjectIntoDolibarrSociete($remoteObject)
     {
         $societes = array();
-        $calls = array();
-        if (count($remoteObject))
+         
+        $maxsizeofmulticall = 1000;      // 1000 seems ok for multicall.
+        $nbsynchro = 0;
+        $nbremote = count($remoteObject);
+        if ($nbremote)
         {
-            dol_syslog("convertRemoteObjectIntoDolibarrSociete Call WS to get detail for the ".count($remoteObject)." objects then create a Dolibarr array for each object");
+            // Create n groups of $maxsizeofmulticall records max to call the multiCall
+            $callsgroup = array();
+            $calls=array();
             foreach ($remoteObject as $rsociete)
             {
-                $calls[] = array('customer.info', $rsociete['customer_id']);
-            }
-            try {
-                $results = $this->client->multiCall($this->session, $calls);
-            } catch (SoapFault $fault) {
-                //echo 'convertRemoteObjectIntoDolibarrSociete :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
-            }
-            if (count($results))
-            {
-                foreach ($results as $societe)
+                if (($nbsynchro % $maxsizeofmulticall) == 0)
                 {
-                    $newobj=array(
-                            'remote_id' => $societe['customer_id'],
-                            'last_update' => $societe['updated_at'],
-                            'name' =>dolGetFirstLastname($societe['firstname'], $societe['lastname']),
-                            'email' => $societe['email'],
-                            'client' => 3, //for client/prospect
-                            'vatnumber'=> $societe['taxvat']
-                    );
-                    $societes[] = $newobj;
+                    if (count($calls)) $callsgroup[]=$calls;    // Add new group for lot of 1000 call arrays
+                    $calls=array();
+                }
+        
+                if ($rsociete['customer_id'])
+                {
+                    $calls[] = array('customer.info', $rsociete['customer_id']);
+                }
+        
+                $nbsynchro++;   // nbsynchro is now number of calls to do
+            }
+            if (count($calls)) $callsgroup[]=$calls;    // Add new group for the remain lot of calls not yet added
+        
+            dol_syslog("convertRemoteObjectIntoDolibarrSociete Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
+            //var_dump($callsgroup);exit;
+        
+            foreach ($callsgroup as $calls)
+            {
+                try {
+                    $results = $this->client->multiCall($this->session, $calls);
+                } catch (SoapFault $fault) {
+                    $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+                    dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+                    dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+                    dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+                    return false;
+                }
+                
+                if (count($results))
+                {
+                    foreach ($results as $societe)
+                    {
+                        $newobj=array(
+                                'remote_id' => $societe['customer_id'],
+                                'last_update' => $societe['updated_at'],
+                                'name' =>dolGetFirstLastname($societe['firstname'], $societe['lastname']),
+                                'name_alias' =>$this->site->name.' id '.$societe['customer_id'],                // See also the delete in eCommerceSociete
+                                'email' => $societe['email'],
+                                'client' => 3, //for client/prospect
+                                'vatnumber'=> $societe['taxvat']
+                        );
+                        $societes[] = $newobj;
+                    }
                 }
             }
         }
-
+        
         //important - order by last update
         if (count($societes))
         {

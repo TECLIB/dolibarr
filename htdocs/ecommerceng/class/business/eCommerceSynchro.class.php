@@ -869,6 +869,7 @@ class eCommerceSynchro
                         if ($refExistst >= 0)
                         {
                             $dBSociete->name = $societeArray['name'];
+                            $dBSociete->name_alias = $societeArray['name_alias'];
                             //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
                             $dBSociete->email = $societeArray['email'];
                             $dBSociete->client = $societeArray['client'];
@@ -877,6 +878,12 @@ class eCommerceSynchro
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
                             
                             $result = $dBSociete->update($dBSociete->id, $this->user);
+                            if ($result < 0)
+                            {
+                                $error++;
+                                $this->error=$this->langs->trans('ECommerceSynchSocieteUpdateError').' '.$dBSociete->error;
+                                $this->errors[]=$this->error;
+                            }                            
                         } 
                         else
                         {
@@ -898,6 +905,7 @@ class eCommerceSynchro
                         if ($result == 0)
                         {
                             $dBSociete->name = $societeArray['name'];
+                            $dBSociete->name_alias = $societeArray['name_alias'];
                             //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
                             $dBSociete->email = $societeArray['email'];
                             $dBSociete->client = $societeArray['client'];
@@ -914,6 +922,25 @@ class eCommerceSynchro
                                 $this->error=$this->langs->trans('ECommerceSynchSocieteCreateError').' '.$dBSociete->error;
                                 $this->errors[]=$this->error;
                             }
+                        }
+                        else if ($result > 0)
+                        {
+                            $dBSociete->name = $societeArray['name'];
+                            $dBSociete->name_alias = $societeArray['name_alias'];
+                            //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
+                            $dBSociete->email = $societeArray['email'];
+                            $dBSociete->client = $societeArray['client'];
+                            $dBSociete->tva_intra = $societeArray['vatnumber'];
+                            $dBSociete->tva_assuj = 1;      // tba_intra is not saved if this field is not set
+                            $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                            
+                            $result = $dBSociete->update($dBSociete->id, $this->user);
+                            if ($result < 0)
+                            {
+                                $error++;
+                                $this->error=$this->langs->trans('ECommerceSynchSocieteUpdateError').' '.$dBSociete->error;
+                                $this->errors[]=$this->error;
+                            }                            
                         }
                     }
 
@@ -997,7 +1024,7 @@ class eCommerceSynchro
     /**
      * Synchronize socpeople to update for a society: Create or update it into dolibarr, then update the ecommerce_socpeople table.
      * 
-     * @param   array       $socpeople  Array array with all params to synchronize
+     * @param   array       $socpeople  Array with all params to synchronize
      * @return  int                     Id of socpeople into Dolibarr if OK and false if KO
      */
     public function synchSocpeople($socpeopleArray)
@@ -2307,7 +2334,7 @@ class eCommerceSynchro
                                 $dolObjectsDeleted++;
                         }
                     }
-                    if ($this->eCommerceSociete->delete($this->user, 0) > 0)
+                    if ($this->eCommerceSociete->delete($this->user, 0, $this->eCommerceSite->name) > 0)
                         $synchObjectsDeleted++;
                 }
             }
