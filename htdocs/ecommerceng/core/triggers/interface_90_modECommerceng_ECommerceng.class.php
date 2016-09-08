@@ -96,6 +96,16 @@ class InterfaceECommerceng
     {
     	$error=0;
     	
+        if ($action == 'COMPANY_CREATE')
+        {
+        
+        }
+        
+        if ($action == 'CONTACT_CREATE')
+    	{
+    	     
+    	}
+
         if ($action == 'COMPANY_MODIFY')
         {
             $this->db->begin();

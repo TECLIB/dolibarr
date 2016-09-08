@@ -215,6 +215,8 @@ $var=!$var;
 		</tr>
 <?php
 $var=!$var;
+if (! empty($conf->facture->enabled))
+{
 ?>		
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ECommerceFacture') ?></td>
@@ -258,6 +260,7 @@ $var=!$var;
 			</td>
 			<?php endif; ?>
 		</tr>
+<?php } ?>
 	</table>
 	<?php
 	$categorytmpprod=new Categorie($db);
