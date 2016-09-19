@@ -1211,7 +1211,7 @@ class eCommerceRemoteAccessMagento
             /*if ($new_country_code) $productData['country_of_manufacture']=$new_country_code;
             if ($this->site->magento_use_special_price) $productData['special_price']=$object->price;
             else $productData['price']=$object->price;*/
-             
+            
             $result = $this->client->call($this->session, 'customer.update', array($remote_id, $societeData));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
@@ -1280,22 +1280,29 @@ class eCommerceRemoteAccessMagento
     {
         dol_syslog("eCommerceRemoteAccessMagento updateRemoteCommande session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
 
-        $result = false;
-        /*
-        try {        
-			$commandeData = array(
-			    'status' => $object->status,
-			);
-        	
-        	$result = $this->client->call($this->session, 'order.update', array($remote_id, $commandeData, null, 'order_id'));
-        	//dol_syslog($this->client->__getLastRequest());
+        $result = true;
+        
+        try {
+            $message='';
+            if ($object->oldcopy->statut != $object->statut)    // If status has changed
+            {
+                //if ($object->statut == Commande::STATUS_VALIDATED)  $message='sale_order.pending';      // ??? does not exists
+                if ($object->statut == 2) $message='sale_order.unhold'; // ???
+                if ($object->statut == Commande::STATUS_CANCELED) $message='sale_order.cancel';        // Canceled 
+                //if ($object->statut == Commande::STATUS_CLOSED) $message='sale_order.closed'; // ???
+            }
+            if ($message)
+            {
+            	$result = $this->client->call($this->session, $message, array($remote_id));
+            	//dol_syslog($this->client->__getLastRequest());
+            }
         } catch (SoapFault $fault) {
             $this->errors[]=$this->site->name.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
-        }*/
+        }
         dol_syslog("eCommerceRemoteAccessMagento updateRemoteCommande end");
         return $result;
     }
