@@ -68,9 +68,9 @@ $var=!$var;
 			<?php 
 			     if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
 			     {
-					    print ' (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=categories_links">'.$langs->trans("ClearLinks").'</a>';
+					    print '<div class="debugtools inline-block">(<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=categories_links">'.$langs->trans("ClearLinks").'</a>';
 					    print ' - <a class="submit_reset_data_all" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=categories_all">'.$langs->trans("ClearData").'</a>';
-					    print ')';
+					    print ')</div>';
 			     }
             ?>
 			</td>
@@ -101,9 +101,9 @@ $var=!$var;
 			<?php 
 			     if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
 			     {
-				      print ' (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=products_links">'.$langs->trans("ClearLinks").'</a>';
+				      print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=products_links">'.$langs->trans("ClearLinks").'</a>';
 			          print ' - <a class="submit_reset_data_all" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=products_all">'.$langs->trans("ClearData").'</a>';
-					  print ')';
+					  print ')</div>';
 			     }
             ?>
 			</td>
@@ -141,9 +141,9 @@ $var=!$var;
 			<?php 
 			     if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
 			     {
-					    print ' (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=thirdparties_links">'.$langs->trans("ClearLinks").'</a>';
+					    print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=thirdparties_links">'.$langs->trans("ClearLinks").'</a>';
 					    print ' - <a class="submit_reset_data_all" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=thirdparties_all">'.$langs->trans("ClearData").'</a>';
-					    print ')';
+					    print ')</div>';
 			     }
             ?>
 			</td>
@@ -184,9 +184,9 @@ $var=!$var;
     			<?php 
     			     if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
     			     {
-    					    print ' (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=orders_links">'.$langs->trans("ClearLinks").'</a>';
+    					    print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=orders_links">'.$langs->trans("ClearLinks").'</a>';
     					    print ' - <a class="submit_reset_data_all" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=orders_all">'.$langs->trans("ClearData").'</a>';
-    					    print ')';
+    					    print ')</div>';
     			     }
                 ?>
     			</td>
@@ -225,9 +225,9 @@ if (! empty($conf->facture->enabled))
 			<?php 
 			     if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
 			     {
-					    print ' (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=invoices_links">'.$langs->trans("ClearLinks").'</a>';
+					    print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=invoices_links">'.$langs->trans("ClearLinks").'</a>';
 					    print ' - <a class="submit_reset_data_all" style="color: #600" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&reset_data=invoices_all">'.$langs->trans("ClearData").'</a>';
-					    print ')';
+					    print ')</div>';
 			     }
             ?>
 			</td>
@@ -290,21 +290,43 @@ if (! empty($conf->facture->enabled))
 	{
 		print '<br><br>';
    		dol_fiche_head('', '', $langs->trans('DangerZone'));
-	    print '<a style="color: #600" class="submit_reset_data_links" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=links">'.$langs->trans('ECommerceResetLink').'</a>';
+	    print '<div class="nodebugtools inline-block">';
+		print '<a style="color: #600" id="showtools">'.$langs->trans("ShowDebugTools").'</a>';
+		print '</div>';
+   		print '<div class="debugtools">';
+   		print '<a style="color: #600" class="submit_reset_data_links" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=links">'.$langs->trans('ECommerceResetLink').'</a>';
    		print '<br><br>';
 		print '<a style="color: #600" class="submit_reset_data_all" href="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'&to_date='.$toDate.'&reset_data=all">'.$langs->trans('ECommerceReset').'</a>';
 		dol_fiche_end();
+		print '</div>';
 		
 		print "
 		<!-- Include jQuery confirm -->
 		<script type=\"text/javascript\">
+        jQuery(document).ready(function() {
 		$('.submit_reset_data_links').on('click', function () {
 		    return confirm('".dol_escape_js($langs->trans("AreYouSureYouWantToDeleteLinks"))."');
 		});
         $('.submit_reset_data_all').on('click', function () {
 		    return confirm('".dol_escape_js($langs->trans("AreYouSureYouWantToDeleteAll"))."');
 		});
-        </script>";
+		$('#showtools').on('click', function () {
+		    jQuery('.nodebugtools').toggle();
+		    jQuery('.debugtools').toggle();
+        });
+        ";
+		if (empty($_SESSION["showdebugtool"]))
+		{
+		    print " jQuery('.nodebugtools').show();\n";
+		    print " jQuery('.debugtools').hide();\n";
+		}
+		else
+		{
+		    print " jQuery('.nodebugtools').hide();\n";
+		    print " jQuery('.debugtools').show();\n";
+		}
+        print "});";
+		print "</script>";
 	}
 }
 else

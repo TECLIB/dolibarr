@@ -133,3 +133,4 @@ StockSyncSetup=Configuration synchronisation stock
 ErrorModuleSoapRequired=Error: PHP module SOAP is required to have this module working.
 SyncAll=Synchroniser tout
 DangerZone=Zone dangeureuse
+ShowDebugTools=Afficher les outils de debug 

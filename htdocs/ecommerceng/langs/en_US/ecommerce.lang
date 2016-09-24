@@ -137,3 +137,4 @@ AreYouSureYouWantToDeleteAll=Are you sure you want to delete mapping links betwe
 BackToListOfSites=Back to list of ecommerce sites
 ClearLinks=Delete links
 ClearData=Delete dolibarr records
+ShowDebugTools=Show debug tools

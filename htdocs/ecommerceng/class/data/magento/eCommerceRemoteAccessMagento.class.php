@@ -503,161 +503,189 @@ class eCommerceRemoteAccessMagento
     public function convertRemoteObjectIntoDolibarrCommande($remoteObject)
     {
         $commandes = array();
-        $calls = array();
-        if (count($remoteObject))
+        
+        $maxsizeofmulticall = 1000;      // 1000 seems ok for multicall.
+        $nbsynchro = 0;
+        $nbremote = count($remoteObject);
+        if ($nbremote)
         {
-            dol_syslog("convertRemoteObjectIntoDolibarrCommande Call WS to get detail for the ".count($remoteObject)." objects then create a Dolibarr array for each object");
+            // Create n groups of $maxsizeofmulticall records max to call the multiCall
+            $callsgroup = array();
+            $calls=array();
             foreach ($remoteObject as $rcommande)
             {
-                $calls[] = array('sales_order.info', $rcommande['increment_id']);
-            }
-            try {
-                $results = $this->client->multiCall($this->session, $calls);
-            } catch (SoapFault $fault) {
-                //echo 'convertRemoteObjectIntoDolibarrCommande :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
-            }
-            if (count($results))
-            {
-                foreach ($results as $commande)
+                if (($nbsynchro % $maxsizeofmulticall) == 0)
                 {
-                    //set each items
-                    $items = array();
-                    $configurableItems = array();
-                    if (count($commande['items']))
-                        foreach ($commande['items'] as $item)
-                        {
-                            //var_dump($item);    // show item as it is from magento
-                            
-                            // If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
-                            if ($item['product_type'] == 'configurable') {
-                                $configurableItems[$item['item_id']] = array(
-                                    'item_id' => $item['item_id'],
-                                    'id_remote_product' => $item['product_id'],
-                                    'description' => $item['name'],
-                                    'product_type' => $item['product_type'], 
-                                    'price' => $item['price'],
-                                    'qty' => $item['qty_ordered'],
-                                    'tva_tx' => $item['tax_percent']
-                                );
-                            } else {
-                                // If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
-                                if (!array_key_exists($item['parent_item_id'], $configurableItems)) {
-                                    $items[] = array(
-                                            'item_id' => $item['item_id'],
-                                            'id_remote_product' => $item['product_id'],
-                                            'description' => $item['name'],
-                                            'product_type' => $item['product_type'], 
-                                            'price' => $item['price'],
-                                            'qty' => $item['qty_ordered'],
-                                            'tva_tx' => $item['tax_percent']
+                    if (count($calls)) $callsgroup[]=$calls;    // Add new group for lot of 1000 call arrays
+                    $calls=array();
+                }
+        
+                if ($rcommande['increment_id'])
+                {
+                    $calls[] = array('sales_order.info', $rcommande['increment_id']);
+                }
+        
+                $nbsynchro++;   // nbsynchro is now number of calls to do
+            }
+            if (count($calls)) $callsgroup[]=$calls;    // Add new group for the remain lot of calls not yet added
+        
+            dol_syslog("convertRemoteObjectIntoDolibarrCommande Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
+            //var_dump($callsgroup);exit;
+        
+            foreach ($callsgroup as $calls)
+            {
+                try {
+                    $results = $this->client->multiCall($this->session, $calls);
+                } catch (SoapFault $fault) {
+                    $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+                    dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+                    dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+                    dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+                    return false;
+                }
+                if (count($results))
+                {
+                    foreach ($results as $commande)
+                    {
+                        //set each items
+                        $items = array();
+                        $configurableItems = array();
+                        if (count($commande['items']))
+                            foreach ($commande['items'] as $item)
+                            {
+                                //var_dump($item);    // show item as it is from magento
+                                
+                                // If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
+                                if ($item['product_type'] == 'configurable') {
+                                    $configurableItems[$item['item_id']] = array(
+                                        'item_id' => $item['item_id'],
+                                        'id_remote_product' => $item['product_id'],
+                                        'description' => $item['name'],
+                                        'product_type' => $item['product_type'], 
+                                        'price' => $item['price'],
+                                        'qty' => $item['qty_ordered'],
+                                        'tva_tx' => $item['tax_percent']
                                     );
                                 } else {
-                                    $items[] = array(
-                                            'item_id' => $item['item_id'],
-                                            'id_remote_product' => $item['product_id'],
-                                            'description' => $item['name'],
-                                            'product_type' => $item['product_type'], 
-                                            'price' => $configurableItems[$item['parent_item_id']]['price'],
-                                            'qty' => $item['qty_ordered'],
-                                            'tva_tx' => $configurableItems[$item['parent_item_id']]['tva_tx']
-                                    );
+                                    // If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
+                                    if (!array_key_exists($item['parent_item_id'], $configurableItems)) {
+                                        $items[] = array(
+                                                'item_id' => $item['item_id'],
+                                                'id_remote_product' => $item['product_id'],
+                                                'description' => $item['name'],
+                                                'product_type' => $item['product_type'], 
+                                                'price' => $item['price'],
+                                                'qty' => $item['qty_ordered'],
+                                                'tva_tx' => $item['tax_percent']
+                                        );
+                                    } else {
+                                        $items[] = array(
+                                                'item_id' => $item['item_id'],
+                                                'id_remote_product' => $item['product_id'],
+                                                'description' => $item['name'],
+                                                'product_type' => $item['product_type'], 
+                                                'price' => $configurableItems[$item['parent_item_id']]['price'],
+                                                'qty' => $item['qty_ordered'],
+                                                'tva_tx' => $configurableItems[$item['parent_item_id']]['tva_tx']
+                                        );
+                                    }
                                 }
                             }
+    
+                        //set order's address
+                        $commandeSocpeople = $commande['billing_address'];
+                        $socpeopleCommande = array(
+                                'remote_id' => $commandeSocpeople['address_id'],
+                                'type' => eCommerceSocpeople::CONTACT_TYPE_ORDER,
+                                'last_update' => $commandeSocpeople['updated_at'],
+                                'name' => $commandeSocpeople['lastname'],
+                                'lastname' => $commandeSocpeople['lastname'],
+                                'firstname' => $commandeSocpeople['firstname'],
+                                'town' => $commandeSocpeople['city'],
+                                //'fk_pays' => $commandeSocpeople['country_id'],
+                                'fax' => $commandeSocpeople['fax'],
+                                'zip' => $commandeSocpeople['postcode'],
+                                //add wrap
+                                'address' => addslashes((trim($commandeSocpeople['company'])) != '' ? addslashes(trim($commandeSocpeople['company'])) . ', ' : '') . addslashes($commandeSocpeople['street']),
+                                'phone' => $commandeSocpeople['telephone']
+                        );
+                        
+                        //set billing's address
+                        $socpeopleFacture = $socpeopleCommande;
+                        $socpeopleFacture['type'] = eCommerceSocpeople::CONTACT_TYPE_INVOICE;
+    
+                        //set shipping's address
+                        $livraisonSocpeople = $commande['shipping_address'];
+                        $socpeopleLivraison = array(
+                                'remote_id' => $livraisonSocpeople['address_id'],
+                                'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
+                                'last_update' => $livraisonSocpeople['updated_at'],
+                                'name' => $livraisonSocpeople['lastname'],
+                                'lastname' => $livraisonSocpeople['lastname'],
+                                'firstname' => $livraisonSocpeople['firstname'],
+                                'town' => $livraisonSocpeople['city'],
+                                //'fk_pays' => $commandeSocpeople['country_id'],
+                                'fax' => $livraisonSocpeople['fax'],
+                                'zip' => $livraisonSocpeople['postcode'],
+                                //add wrap
+                                'address' => (trim($livraisonSocpeople['company']) != '' ? trim($livraisonSocpeople['company']) . ', ' : '') . $livraisonSocpeople['street'],
+                                'phone' => $livraisonSocpeople['telephone']
+                        );
+    
+                        //set delivery as service
+                        $delivery = array(
+                                'description' => $commande['shipping_description'],
+                                'price' => $commande['shipping_amount'],
+                                'qty' => 1, //0 to not show
+                                'tva_tx' => $this->getTaxRate($commande['shipping_amount'], $commande['shipping_tax_amount'])
+                        );
+    
+                        //define remote id societe : 0 for anonymous
+                        $eCommerceTempSoc = new eCommerceSociete($this->db);
+                        if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
+                        {
+                            dol_syslog("The customer of this order was not found into table link", LOG_WARNING);
+                            $remoteIdSociete = 0;   // If thirdparty was not found into thirdparty table link
                         }
-
-                    //set order's address
-                    $commandeSocpeople = $commande['billing_address'];
-                    $socpeopleCommande = array(
-                            'remote_id' => $commandeSocpeople['address_id'],
-                            'type' => eCommerceSocpeople::CONTACT_TYPE_ORDER,
-                            'last_update' => $commandeSocpeople['updated_at'],
-                            'name' => $commandeSocpeople['lastname'],
-                            'lastname' => $commandeSocpeople['lastname'],
-                            'firstname' => $commandeSocpeople['firstname'],
-                            'town' => $commandeSocpeople['city'],
-                            //'fk_pays' => $commandeSocpeople['country_id'],
-                            'fax' => $commandeSocpeople['fax'],
-                            'zip' => $commandeSocpeople['postcode'],
-                            //add wrap
-                            'address' => addslashes((trim($commandeSocpeople['company'])) != '' ? addslashes(trim($commandeSocpeople['company'])) . ', ' : '') . addslashes($commandeSocpeople['street']),
-                            'phone' => $commandeSocpeople['telephone']
-                    );
-                    
-                    //set billing's address
-                    $socpeopleFacture = $socpeopleCommande;
-                    $socpeopleFacture['type'] = eCommerceSocpeople::CONTACT_TYPE_INVOICE;
-
-                    //set shipping's address
-                    $livraisonSocpeople = $commande['shipping_address'];
-                    $socpeopleLivraison = array(
-                            'remote_id' => $livraisonSocpeople['address_id'],
-                            'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
-                            'last_update' => $livraisonSocpeople['updated_at'],
-                            'name' => $livraisonSocpeople['lastname'],
-                            'lastname' => $livraisonSocpeople['lastname'],
-                            'firstname' => $livraisonSocpeople['firstname'],
-                            'town' => $livraisonSocpeople['city'],
-                            //'fk_pays' => $commandeSocpeople['country_id'],
-                            'fax' => $livraisonSocpeople['fax'],
-                            'zip' => $livraisonSocpeople['postcode'],
-                            //add wrap
-                            'address' => (trim($livraisonSocpeople['company']) != '' ? trim($livraisonSocpeople['company']) . ', ' : '') . $livraisonSocpeople['street'],
-                            'phone' => $livraisonSocpeople['telephone']
-                    );
-
-                    //set delivery as service
-                    $delivery = array(
-                            'description' => $commande['shipping_description'],
-                            'price' => $commande['shipping_amount'],
-                            'qty' => 1, //0 to not show
-                            'tva_tx' => $this->getTaxRate($commande['shipping_amount'], $commande['shipping_tax_amount'])
-                    );
-
-                    //define remote id societe : 0 for anonymous
-                    $eCommerceTempSoc = new eCommerceSociete($this->db);
-                    if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
-                    {
-                        dol_syslog("The customer of this order was not found into table link", LOG_WARNING);
-                        $remoteIdSociete = 0;   // If thirdparty was not found into thirdparty table link
+                        else
+                        {
+                            $remoteIdSociete = $commande['customer_id'];
+                        }
+    
+                        //define delivery date
+                        if (isset($commande['delivery_date']) && $commande['delivery_date'] != null)
+                            $deliveryDate = $commande['delivery_date'];
+                        else
+                            $deliveryDate = $commande['created_at'];
+    
+                        // define status of order
+                        $tmp = $commande['status'];                                                  // We choosed to use status (and not state) so value like:  'pending', 'processing', 'holded', ...
+                        $status = Commande::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
+                        if ($tmp == 'pending')      $status = Commande::STATUS_VALIDATED;            // validated = pending
+                        if ($tmp == 'processing')   $status = 2;                                     // shipment in process or invoice done = processing       // Should be constant Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9
+                        if ($tmp == 'holded')       $status = Commande::STATUS_CANCELED;             // canceled = holded
+                        if ($tmp == 'complete')     $status = Commande::STATUS_CLOSED;               // complete
+                        
+                        // Add order content to array or orders
+                        $commandes[] = array(
+                                'last_update' => $commande['updated_at'],
+                                'remote_id' => $commande['order_id'],
+                                'remote_increment_id' => $commande['increment_id'],
+                                'remote_id_societe' => $remoteIdSociete,
+                                'ref_client' => $commande['increment_id'],
+                                'date_commande' => $commande['created_at'],
+                                'date_livraison' => $deliveryDate,
+                                'items' => $items,
+                                'delivery' => $delivery,
+                                'socpeopleCommande' => $socpeopleCommande,
+                                'socpeopleFacture' => $socpeopleFacture,
+                                'socpeopleLivraison' => $socpeopleLivraison,
+                                'status' => $status,                         // dolibarr status
+                                'remote_status' => $commande['status']       // remote status, for information only
+                                //debug
+                                //'remote_commande' => $commande
+                        );
                     }
-                    else
-                    {
-                        $remoteIdSociete = $commande['customer_id'];
-                    }
-
-                    //define delivery date
-                    if (isset($commande['delivery_date']) && $commande['delivery_date'] != null)
-                        $deliveryDate = $commande['delivery_date'];
-                    else
-                        $deliveryDate = $commande['created_at'];
-
-                    // define status of order
-                    $tmp = $commande['status'];                                                  // We choosed to use status (and not state) so value like:  'pending', 'processing', 'holded', ...
-                    $status = Commande::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
-                    if ($tmp == 'pending')      $status = Commande::STATUS_VALIDATED;            // validated = pending
-                    if ($tmp == 'processing')   $status = 2;                                     // shipment in process or invoice done = processing       // Should be constant Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9
-                    if ($tmp == 'holded')       $status = Commande::STATUS_CANCELED;             // canceled = holded
-                    if ($tmp == 'complete')     $status = Commande::STATUS_CLOSED;               // complete
-                    
-                    // Add order content to array or orders
-                    $commandes[] = array(
-                            'last_update' => $commande['updated_at'],
-                            'remote_id' => $commande['order_id'],
-                            'remote_increment_id' => $commande['increment_id'],
-                            'remote_id_societe' => $remoteIdSociete,
-                            'ref_client' => $commande['increment_id'],
-                            'date_commande' => $commande['created_at'],
-                            'date_livraison' => $deliveryDate,
-                            'items' => $items,
-                            'delivery' => $delivery,
-                            'socpeopleCommande' => $socpeopleCommande,
-                            'socpeopleFacture' => $socpeopleFacture,
-                            'socpeopleLivraison' => $socpeopleLivraison,
-                            'status' => $status,                         // dolibarr status
-                            'remote_status' => $commande['status']       // remote status, for information only
-                            //debug
-                            //'remote_commande' => $commande
-                    );
                 }
             }
         }
@@ -686,173 +714,197 @@ class eCommerceRemoteAccessMagento
     public function convertRemoteObjectIntoDolibarrFacture($remoteObject)
     {
         $factures = array();
-        $calls = array();
-        if (count($remoteObject))
+                 
+        $maxsizeofmulticall = 1000;      // 1000 seems ok for multicall.
+        $nbsynchro = 0;
+        $nbremote = count($remoteObject);
+        if ($nbremote)
         {
-            dol_syslog("convertRemoteObjectIntoDolibarrFacture Call WS to get detail for the ".count($remoteObject)." objects then create a Dolibarr array for each object");
+            // Create n groups of $maxsizeofmulticall records max to call the multiCall
+            $callsgroup = array();
+            $calls=array();
             foreach ($remoteObject as $rfacture)
             {
-                $calls[] = array('sales_order_invoice.info', $rfacture['increment_id']);
-            }
-            try {
-                $results = $this->client->multiCall($this->session, $calls);
-            } catch (SoapFault $fault) {
-                //echo 'convertRemoteObjectIntoDolibarrFacture :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
-            }
-            if (count($results))
-            {
-                $i=0;
-                foreach ($results as $facture)
+                if (($nbsynchro % $maxsizeofmulticall) == 0)
                 {
-                    $i++;
-                    
-                    $configurableItems = array();
-                    //retrive remote order from invoice
-                    $commande = $this->getRemoteCommande($facture['order_id']);
-                    //set each invoice items
-                    $items = array();
-                    if (count($facture['items']))
-                        foreach ($facture['items'] as $item)
-                        {
-                            //var_dump($item);    // show invoice item as it is from magento
-                            
-                            $product_type = $this->getProductTypeOfItem($item, $commande, $facture);
-                            $parent_item_id = $this->getParentItemOfItem($item, $commande, $facture);
-                            
-                            // If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
-                            if ($product_type == 'configurable') {
-                                $configurableItems[$item['item_id']] = array(
-                                    'item_id' => $item['item_id'],
-                                    'id_remote_product' => $item['product_id'],
-                                    'description' => $item['name'],
-                                    'product_type' => $product_type, 
-                                    'price' => $item['price'],
-                                    'qty' => $item['qty'],
-                                    'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
-                                );
-                            } else {
-                                // If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
-                                if (!array_key_exists($parent_item_id, $configurableItems)) {
-                                    $items[] = array(
-                                            'item_id' => $item['item_id'],
-                                            'id_remote_product' => $item['product_id'],
-                                            'description' => $item['name'],
-                                            'product_type' => $product_type, 
-                                            'price' => $item['price'],
-                                            'qty' => $item['qty'],
-                                            'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
+                    if (count($calls)) $callsgroup[]=$calls;    // Add new group for lot of 1000 call arrays
+                    $calls=array();
+                }
+        
+                if ($rfacture['increment_id'])
+                {
+                    $calls[] = array('sales_order_invoice.info', $rfacture['increment_id']);
+                }
+        
+                $nbsynchro++;   // nbsynchro is now number of calls to do
+            }
+            if (count($calls)) $callsgroup[]=$calls;    // Add new group for the remain lot of calls not yet added
+        
+            dol_syslog("convertRemoteObjectIntoDolibarrSociete Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
+            //var_dump($callsgroup);exit;
+        
+            foreach ($callsgroup as $calls)
+            {
+                try {
+                    $results = $this->client->multiCall($this->session, $calls);
+                } catch (SoapFault $fault) {
+                    //echo 'convertRemoteObjectIntoDolibarrFacture :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
+                }
+                if (count($results))
+                {
+                    $i=0;
+                    foreach ($results as $facture)
+                    {
+                        $i++;
+                        
+                        $configurableItems = array();
+                        //retrive remote order from invoice
+                        $commande = $this->getRemoteCommande($facture['order_id']);
+                        //set each invoice items
+                        $items = array();
+                        if (count($facture['items']))
+                            foreach ($facture['items'] as $item)
+                            {
+                                //var_dump($item);    // show invoice item as it is from magento
+                                
+                                $product_type = $this->getProductTypeOfItem($item, $commande, $facture);
+                                $parent_item_id = $this->getParentItemOfItem($item, $commande, $facture);
+                                
+                                // If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
+                                if ($product_type == 'configurable') {
+                                    $configurableItems[$item['item_id']] = array(
+                                        'item_id' => $item['item_id'],
+                                        'id_remote_product' => $item['product_id'],
+                                        'description' => $item['name'],
+                                        'product_type' => $product_type, 
+                                        'price' => $item['price'],
+                                        'qty' => $item['qty'],
+                                        'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
                                     );
                                 } else {
-                                    $items[] = array(
-                                            'item_id' => $item['item_id'],
-                                            'id_remote_product' => $item['product_id'],
-                                            'description' => $item['name'],
-                                            'product_type' => $product_type, 
-                                            'price' => $configurableItems[$parent_item_id]['price'],
-                                            'qty' => $item['qty'],
-                                            'tva_tx' => $configurableItems[$parent_item_id]['tva_tx']
-                                    );
+                                    // If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
+                                    if (!array_key_exists($parent_item_id, $configurableItems)) {
+                                        $items[] = array(
+                                                'item_id' => $item['item_id'],
+                                                'id_remote_product' => $item['product_id'],
+                                                'description' => $item['name'],
+                                                'product_type' => $product_type, 
+                                                'price' => $item['price'],
+                                                'qty' => $item['qty'],
+                                                'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
+                                        );
+                                    } else {
+                                        $items[] = array(
+                                                'item_id' => $item['item_id'],
+                                                'id_remote_product' => $item['product_id'],
+                                                'description' => $item['name'],
+                                                'product_type' => $product_type, 
+                                                'price' => $configurableItems[$parent_item_id]['price'],
+                                                'qty' => $item['qty'],
+                                                'tva_tx' => $configurableItems[$parent_item_id]['tva_tx']
+                                        );
+                                    }
                                 }
                             }
+                            
+                        //set shipping address
+                        $shippingAddress = $commande["shipping_address"];
+                        $billingAddress = $commande["billing_address"];
+                        $socpeopleLivraison = array(
+                                'remote_id' => $shippingAddress['address_id'],
+                                'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
+                                'last_update' => $shippingAddress['updated_at'],
+                                'name' => $shippingAddress['lastname'],
+                                'firstname' => $shippingAddress['firstname'],
+                                'ville' => $shippingAddress['city'],
+                                //'fk_pays' => $commandeSocpeople['country_id'],
+                                'fax' => $shippingAddress['fax'],
+                                'cp' => $shippingAddress['postcode'],
+                                //add wrap
+                                'address' => (trim($shippingAddress['company']) != '' ? trim($shippingAddress['company']) . '
+                                                                                ' : '') . $shippingAddress['street'],
+                                'phone' => $shippingAddress['telephone']
+                        );
+                        //set invoice address		
+                        $socpeopleFacture = array(
+                                'remote_id' => $billingAddress['address_id'],
+                                'type' => eCommerceSocpeople::CONTACT_TYPE_INVOICE,
+                                'last_update' => $billingAddress['updated_at'],
+                                'name' => $billingAddress['lastname'],
+                                'firstname' => $billingAddress['firstname'],
+                                'ville' => $billingAddress['city'],
+                                //'fk_pays' => $commandeSocpeople['country_id'],
+                                'fax' => $billingAddress['fax'],
+                                'cp' => $billingAddress['postcode'],
+                                //add wrap
+                                'address' => (trim($billingAddress['company']) != '' ? trim($billingAddress['company']) . '
+                                                                                ' : '') . $billingAddress['street'],
+                                'phone' => $billingAddress['telephone']
+                        );
+                        //set delivery as service			
+                        $delivery = array(
+                                'description' => $commande['shipping_description'],
+                                'price' => $facture['shipping_amount'],
+                                'qty' => 1, //0 to not show
+                                'tva_tx' => $this->getTaxRate($facture['shipping_amount'], $facture['shipping_tax_amount'])
+                        );
+    
+                        $eCommerceTempSoc = new eCommerceSociete($this->db);
+                        if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
+                        {
+                            $remoteIdSociete = 0;
+                        }
+                        else
+                        {
+                            $remoteIdSociete = $commande['customer_id'];
                         }
                         
-                    //set shipping address
-                    $shippingAddress = $commande["shipping_address"];
-                    $billingAddress = $commande["billing_address"];
-                    $socpeopleLivraison = array(
-                            'remote_id' => $shippingAddress['address_id'],
-                            'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
-                            'last_update' => $shippingAddress['updated_at'],
-                            'name' => $shippingAddress['lastname'],
-                            'firstname' => $shippingAddress['firstname'],
-                            'ville' => $shippingAddress['city'],
-                            //'fk_pays' => $commandeSocpeople['country_id'],
-                            'fax' => $shippingAddress['fax'],
-                            'cp' => $shippingAddress['postcode'],
-                            //add wrap
-                            'address' => (trim($shippingAddress['company']) != '' ? trim($shippingAddress['company']) . '
-                                                                            ' : '') . $shippingAddress['street'],
-                            'phone' => $shippingAddress['telephone']
-                    );
-                    //set invoice address		
-                    $socpeopleFacture = array(
-                            'remote_id' => $billingAddress['address_id'],
-                            'type' => eCommerceSocpeople::CONTACT_TYPE_INVOICE,
-                            'last_update' => $billingAddress['updated_at'],
-                            'name' => $billingAddress['lastname'],
-                            'firstname' => $billingAddress['firstname'],
-                            'ville' => $billingAddress['city'],
-                            //'fk_pays' => $commandeSocpeople['country_id'],
-                            'fax' => $billingAddress['fax'],
-                            'cp' => $billingAddress['postcode'],
-                            //add wrap
-                            'address' => (trim($billingAddress['company']) != '' ? trim($billingAddress['company']) . '
-                                                                            ' : '') . $billingAddress['street'],
-                            'phone' => $billingAddress['telephone']
-                    );
-                    //set delivery as service			
-                    $delivery = array(
-                            'description' => $commande['shipping_description'],
-                            'price' => $facture['shipping_amount'],
-                            'qty' => 1, //0 to not show
-                            'tva_tx' => $this->getTaxRate($facture['shipping_amount'], $facture['shipping_tax_amount'])
-                    );
-
-                    $eCommerceTempSoc = new eCommerceSociete($this->db);
-                    if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
-                    {
-                        $remoteIdSociete = 0;
+                        // load local order to be used to retreive some data for invoice
+                        $eCommerceTempCommande = new eCommerceCommande($this->db);
+                        $eCommerceTempCommande->fetchByRemoteId($commande['order_id'], $this->site->id);
+                        $dbCommande = new Commande($this->db);
+                        $dbCommande->fetch($eCommerceTempCommande->fk_commande);
+    
+                        // define status of invoice
+                        $tmp = $facture['state'];                                                   // state from is 1, 2, 3
+                        $status = Facture::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
+                        
+                        if ($tmp == 1)     $status = Facture::STATUS_VALIDATED;            // validated = pending
+                        if ($tmp == 2)     $status = Facture::STATUS_CLOSED;               // complete
+                        if ($tmp == 3)     $status = Facture::STATUS_ABANDONED;            // canceled = holded
+                        
+                        $close_code = '';
+                        $close_note = '';
+                        if ($tmp == 3)     
+                        {
+                            $close_code = Facture::CLOSECODE_ABANDONED;
+                            $close_note = 'Holded on ECommerce';
+                        }
+    
+                        //add invoice to invoices
+                        $factures[] = array(
+                                'last_update' => $facture['updated_at'],
+                                'remote_id' => $facture['invoice_id'],
+                                'remote_increment_id' => $facture['increment_id'],
+                                'ref_client' => $facture['increment_id'],
+                                'remote_order_id' => $facture['order_id'],
+                                'remote_order_increment_id' => $facture['order_increment_id'],
+                                'remote_id_societe' => $remoteIdSociete,
+                                'socpeopleLivraison' => $socpeopleLivraison,
+                                'socpeopleFacture' => $socpeopleFacture,
+                                'date' => $facture['created_at'],
+                                'code_cond_reglement' => $dbCommande->cond_reglement_code,      // Take for local order
+                                'delivery' => $delivery,
+                                'items' => $items,
+                                'status' => $tmp,
+                                'close_code' => $close_code,
+                                'close_note' => $close_note,
+                                'remote_state' => $facture['state']
+                                //debug
+                                //'remote_commande' => $commande,
+                                //'remote_facture' => $facture
+                        );
                     }
-                    else
-                    {
-                        $remoteIdSociete = $commande['customer_id'];
-                    }
-                    
-                    // load local order to be used to retreive some data for invoice
-                    $eCommerceTempCommande = new eCommerceCommande($this->db);
-                    $eCommerceTempCommande->fetchByRemoteId($commande['order_id'], $this->site->id);
-                    $dbCommande = new Commande($this->db);
-                    $dbCommande->fetch($eCommerceTempCommande->fk_commande);
-
-                    // define status of invoice
-                    $tmp = $facture['state'];                                                   // state from is 1, 2, 3
-                    $status = Facture::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
-                    
-                    if ($tmp == 1)     $status = Facture::STATUS_VALIDATED;            // validated = pending
-                    if ($tmp == 2)     $status = Facture::STATUS_CLOSED;               // complete
-                    if ($tmp == 3)     $status = Facture::STATUS_ABANDONED;            // canceled = holded
-                    
-                    $close_code = '';
-                    $close_note = '';
-                    if ($tmp == 3)     
-                    {
-                        $close_code = Facture::CLOSECODE_ABANDONED;
-                        $close_note = 'Holded on ECommerce';
-                    }
-
-                    //add invoice to invoices
-                    $factures[] = array(
-                            'last_update' => $facture['updated_at'],
-                            'remote_id' => $facture['invoice_id'],
-                            'remote_increment_id' => $facture['increment_id'],
-                            'ref_client' => $facture['increment_id'],
-                            'remote_order_id' => $facture['order_id'],
-                            'remote_order_increment_id' => $facture['order_increment_id'],
-                            'remote_id_societe' => $remoteIdSociete,
-                            'socpeopleLivraison' => $socpeopleLivraison,
-                            'socpeopleFacture' => $socpeopleFacture,
-                            'date' => $facture['created_at'],
-                            'code_cond_reglement' => $dbCommande->cond_reglement_code,      // Take for local order
-                            'delivery' => $delivery,
-                            'items' => $items,
-                            'status' => $tmp,
-                            'close_code' => $close_code,
-                            'close_note' => $close_note,
-                            'remote_state' => $facture['state']
-                            //debug
-                            //'remote_commande' => $commande,
-                            //'remote_facture' => $facture
-                    );
                 }
             }
         }
