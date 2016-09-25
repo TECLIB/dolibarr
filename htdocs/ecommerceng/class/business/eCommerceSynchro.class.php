@@ -436,6 +436,8 @@ class eCommerceSynchro
     
     /**
      * Return list o categories to update
+     * 
+     * @param   boolean     $force      Force analysis of list, event if array list $this->categoryToUpdate is already defined
      */
     public function getCategoriesToUpdate($force = false)
     {
@@ -451,20 +453,29 @@ class eCommerceSynchro
                     $resanswer = array();
                     eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
                     
+                    $this->initECommerceCategory(); // Initialise 2 properties eCommerceCategory and eCommerceMotherCategory
+                    
                     // $resanswer is array with all categories
                     // We must loop on each categorie to make a WS call to get updated_at info.
+                    // TODO This is very long if there is a lot of categories
                     foreach ($resanswer as $remoteCatToCheck) // Check update for each entry into $resanswer -> $remoteCatToCheck = array('category_id'=>, 'parent_id'=>...)
                     {
-                        dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id']);
-                        $this->initECommerceCategory(); // Initialise 2 properties eCommerceCategory and eCommerceMotherCategory
-                        
-                        // Complete info of $remoteCatToCheck['category_id']
-                        $tmp=$this->eCommerceRemoteAccess->getCategoryData($remoteCatToCheck['category_id']);
-                        
-                        $remoteCatToCheck['updated_at']=$tmp['updated_at'];
-
+                        if (! isset($remoteCatToCheck['updated_at'])) {   // The api that return list of category did not return the updated_at
+                            
+                            dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id'].", updated_at unknow.");
+                            
+                            // Complete info of $remoteCatToCheck['category_id']
+                            $tmp=$this->eCommerceRemoteAccess->getCategoryData($remoteCatToCheck['category_id']);   // This make a SOAP call
+                            
+                            $remoteCatToCheck['updated_at']=$tmp['updated_at']; // Complete data we are missing
+                        }
+                        else
+                        {
+                            dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id'].", updated_at is defined.");
+                            
+                        }
                         // Check into link table ecommerce_category if record has been modified on magento or not 
-                        if ($this->eCommerceCategory->checkForUpdate($this->eCommerceSite->id, $this->toDate, $remoteCatToCheck))
+                        if ($this->eCommerceCategory->checkForUpdate($this->eCommerceSite->id, $this->toDate, $remoteCatToCheck))   // compare date in remoteCatToCheck and date in sync table. $this->toDate is not used.
                             $this->categoryToUpdate[] = $remoteCatToCheck;
                         
                     }
@@ -584,7 +595,8 @@ class eCommerceSynchro
     }
 
     /**
-     * Get count of modified societe since the last update
+     * Get count of modified categories since the last update
+     * 
      * @param $force    Bool to force update
      * @return int      <0 if KO, >=0 if OK
      */

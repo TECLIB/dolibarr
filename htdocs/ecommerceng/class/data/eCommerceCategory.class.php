@@ -369,11 +369,12 @@ class eCommerceCategory // extends CommonObject
     }
 
     /** 		
-     * 		\brief		Function to check changes doesn't considerated by magento in last update date
-     * 		\param		$site				site id from eCommerceSynchro
-     * 		\param		$toDate				$toDate is now from eCommerceSynchro
-     * 		\param		$remoteCatToCheck	magento category cutted from magento tree (isArray)
-     * 		\return		1 to add this category to update array, 0 to not add this category	 * 
+     * 		Function to compare date in remoteCatToCheck and date into sync table to see if category was changed on Magento side
+     * 
+     * 		@param		$site				site id from eCommerceSynchro
+     * 		@param		$toDate				$toDate is now from eCommerceSynchro. Not used.
+     * 		@param		$remoteCatToCheck	magento category cutted from magento tree (is an array)
+     * 		@return		1 to add this category to update array, 0 to not add this category	 * 
      */
     public function checkForUpdate($siteId, $toDate, $remoteCatToCheck)
     {
@@ -405,7 +406,7 @@ class eCommerceCategory // extends CommonObject
         else
         {
             $this->error = "Error " . $this->db->lasterror();
-            dol_syslog(get_class($this) . "::getLastUpdate " . $this->error, LOG_ERR);
+            dol_syslog(get_class($this) . "::checkForUpdate " . $this->error, LOG_ERR);
             return -1;
         }
         return $updateRequired;

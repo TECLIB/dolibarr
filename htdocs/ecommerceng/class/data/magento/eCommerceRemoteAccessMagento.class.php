@@ -1036,7 +1036,8 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
-        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree end");
+        //var_dump($result);
+        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree end. Nb of record of result = ".count($result));
         return $result;
     }
     
@@ -1091,8 +1092,8 @@ class eCommerceRemoteAccessMagento
     /**
      * Return content of one category
      * 
-     * @param   int     $category_id        Remote category id
-     * @return  boolean|unknown             Return
+     * @param   int             $category_id        Remote category id
+     * @return  boolean|unknown                     Return
      */
     public function getCategoryData($category_id)
     {
