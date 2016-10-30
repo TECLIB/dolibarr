@@ -652,6 +652,18 @@ class InterfaceECommerceng
                                 $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
                                 $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
                             }
+                            else
+                            {
+                                // $result is id of shipment created in magento, we update ref_customer with it.
+                                
+                                // Update ref customer. Do not use update here, we want to update only one field with no side effect on others.
+                                $sqlupdaterefcustmer = "UPDATE ".MAIN_DB_PREFIX."expedition SET";
+                                $sqlupdaterefcustmer.= " ref_customer='".$result."'";
+                                $sqlupdaterefcustmer.= " WHERE rowid = ".$object->id;
+                                $this->db->query($sqlupdaterefcustmer);
+                                
+                                $object->ref_customer = $result;
+                            }
     		            }
     	            }
     	            else

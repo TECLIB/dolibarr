@@ -1401,23 +1401,38 @@ class eCommerceRemoteAccessMagento
     public function createRemoteLivraison($livraison, $remote_order_id)
     {
         $result = false;
-        
-        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison session=".$this->session." dolibarr shipment id = ".$livraison->id.", ref = ".$livraison->ref.", order remote id = ".$remote_order_id);
-        $remoteCommande = $this->getRemoteCommande($remote_order_id);   // SOAP request to get data
+
+        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison session=" . $this->session . " dolibarr shipment id = " . $livraison->id . ", ref = " . $livraison->ref . ", order remote id = " . $remote_order_id);
+        $remoteCommande = $this->getRemoteCommande($remote_order_id); // SOAP request to get data
+        $livraisonArray = get_object_vars($livraison);
         try {
-            $result = $this->client->call($this->session, 'sales_order_shipment.create', array($remoteCommande['increment_id'], array(), 'Shipment Created from '.$livraison->ref, true, true));
-            //dol_syslog($this->client->__getLastRequest());
+            $orderItemQty = array();
+            foreach ($remoteCommande['items'] as $productMagento) {
+                foreach ($livraisonArray['lines'] as $lines) {
+                    if ($lines->product_ref == $productMagento['sku']) {
+                        $orderItemQty[$productMagento['item_id']] = $lines->qty_shipped;
+                    }
+                }
+            }
+            $result = $this->client->call($this->session, 'sales_order_shipment.create', array(
+                $remoteCommande['increment_id'],
+                $orderItemQty,
+                'Shipment Created from ' . ($livraison->newref ? $livraison->newref : $livraison->ref),
+                true,
+                true
+            ));
+            //dol_syslog($this->client->__getLastResponse());
         } catch (SoapFault $fault) {
-            $this->errors[]=$this->site->name.': '.$fault->getMessage().'-'.$fault->getCode();
+            $this->errors[] = $this->site->name . ': ' . $fault->getMessage() . ' - ' . $fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            dol_syslog(__METHOD__ . ': ' . $fault->getMessage() . '-' . $fault->getCode() . '-' . $fault->getTraceAsString(), LOG_WARNING);
+            dol_syslog($this->client->__getLastResponse(),LOG_WARNING);
             return false;
         }
         dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison end");
         return $result;
-    }    
-    
+    }
     
     
     
