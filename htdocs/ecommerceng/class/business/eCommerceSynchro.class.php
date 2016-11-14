@@ -866,11 +866,14 @@ class eCommerceSynchro
 
             if (count($societes))
             {
+                $error=0;
+                
                 $this->db->begin();
                 
                 foreach ($societes as $societeArray)
                 {
                     //check if societe exists in eCommerceSociete
+                    dol_syslog("-- Start thirdparty remote_id=".$societeArray['remote_id']." site=".$this->eCommerceSite->id);
                     $synchExists = $this->eCommerceSociete->fetchByRemoteId($societeArray['remote_id'], $this->eCommerceSite->id);
                     $dBSociete = new Societe($this->db);
 
@@ -988,24 +991,28 @@ class eCommerceSynchro
                             if ($this->eCommerceSociete->create($this->user) < 0)
                             {
                                 $error++;
-                                $this->errors[] = $this->langs->trans('ECommerceSynchECommerceSocieteCreateError') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'];
+                                $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceSocieteCreateError') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'].' '.$this->eCommerceSociete->error;
                             }
                         }
 
                         // Sync also people of thirdparty
                         // We can disable this to have contact/address of thirdparty synchronize only when an order or invoice is synchronized
-                        $listofaddressids=$this->eCommerceRemoteAccess->getRemoteAddressIdForSociete($societeArray['remote_id']);
-                        if (is_array($listofaddressids))
+                        if (! $error)
                         {
-                            $socpeoples = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSocpeople($listofaddressids);
-                            foreach($socpeoples as $tmpsocpeople)
+                            $listofaddressids=$this->eCommerceRemoteAccess->getRemoteAddressIdForSociete($societeArray['remote_id']);   // Ask contacts to magento
+                            if (is_array($listofaddressids))
                             {
-                                $tmpsocpeople['fk_soc']=$dBSociete->id;
-                                $tmpsocpeople['type']=1;    // address of company
-                                $socpeopleCommandeId = $this->synchSocpeople($tmpsocpeople);
+                                $socpeoples = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSocpeople($listofaddressids);
+                                foreach($socpeoples as $tmpsocpeople)
+                                {
+                                    $tmpsocpeople['fk_soc']=$dBSociete->id;
+                                    $tmpsocpeople['type']=1;    // address of company
+                                    $socpeopleCommandeId = $this->synchSocpeople($tmpsocpeople);
+                                }
                             }
+                        
+                            $nbgoodsunchronize = $nbgoodsunchronize + 1;
                         }
-                        $nbgoodsunchronize = $nbgoodsunchronize + 1;
                     } 
                     else
                     {

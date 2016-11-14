@@ -65,19 +65,15 @@ class eCommerceSociete // extends CommonObject
 		
         // Insert request
 		$sql = "INSERT INTO ".MAIN_DB_PREFIX."ecommerce_societe(";
-		
 		$sql.= "fk_societe,";
 		$sql.= "fk_site,";
 		$sql.= "remote_id,";
 		$sql.= "last_update";
-		
         $sql.= ") VALUES (";
-       
 		$sql.= " ".(isset($this->fk_societe)?intval($this->fk_societe):0).",";
 		$sql.= " ".(isset($this->fk_site)?intval($this->fk_site):0).",";
 		$sql.= " ".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
 		$sql.= " ".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
-        
 		$sql.= ")";
 
 		$this->db->begin();
@@ -89,7 +85,8 @@ class eCommerceSociete // extends CommonObject
 		if (! $error)
         {
             $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX."ecommerce_societe");
-    
+            if (! ($this->id > 0)) dol_syslog("last_insert_id did not return an int", LOG_ERR);
+            
 			if (! $notrigger)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
