@@ -237,9 +237,11 @@ class eCommerceRemoteAccessMagento
      */
     public function convertRemoteObjectIntoDolibarrSociete($remoteObject)
     {
+        global $conf;
+        
         $societes = array();
          
-        $maxsizeofmulticall = 1000;      // 1000 seems ok for multicall.
+        $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?1000:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);      // 1000 seems ok for multicall.
         $nbsynchro = 0;
         $nbremote = count($remoteObject);
         if ($nbremote)
@@ -380,13 +382,15 @@ class eCommerceRemoteAccessMagento
      */
     public function convertRemoteObjectIntoDolibarrProduct($remoteObject)
     {
+        global $conf;
+        
         include_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
         
         $products = array();
        
         $canvas = '';
         
-        $maxsizeofmulticall = 1000;      // 1000 seems ok for multicall.
+        $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?1000:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);      // 1000 seems ok for multicall.
         $nbsynchro = 0;
         $nbremote = count($remoteObject);
         if ($nbremote)
@@ -502,9 +506,11 @@ class eCommerceRemoteAccessMagento
      */
     public function convertRemoteObjectIntoDolibarrCommande($remoteObject)
     {
+        global $conf;
+        
         $commandes = array();
         
-        $maxsizeofmulticall = 1000;      // 1000 seems ok for multicall.
+        $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?1000:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);      // 1000 seems ok for multicall.
         $nbsynchro = 0;
         $nbremote = count($remoteObject);
         if ($nbremote)
@@ -713,9 +719,11 @@ class eCommerceRemoteAccessMagento
      */
     public function convertRemoteObjectIntoDolibarrFacture($remoteObject)
     {
+        global $conf;
+        
         $factures = array();
                  
-        $maxsizeofmulticall = 1000;      // 1000 seems ok for multicall.
+        $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?1000:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);      // 1000 seems ok for multicall.
         $nbsynchro = 0;
         $nbremote = count($remoteObject);
         if ($nbremote)
