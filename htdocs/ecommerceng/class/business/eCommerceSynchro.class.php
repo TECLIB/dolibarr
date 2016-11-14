@@ -917,6 +917,24 @@ class eCommerceSynchro
                             $this->error='Several thirdparties with name '.$societeArray['name'].' were found in Dolibarr. Sync is not possible. Please rename one of it to avoid duplicate.';
                             $this->errors[]=$this->error;
                         }
+
+                        if ($result > 0)    // We did not found with remote id but we found one with the fetch on name. 
+                        {
+                            $eCommerceSocieteBis=new eCommerceSociete($this->db);
+                            $synchExistsBis = $eCommerceSocieteBis->fetchByFkSociete($dBSociete->id, $this->eCommerceSite->id);
+                            dol_syslog("Warning: we did not found the remote id into dolibarr eCommerceSociete table but we found a record with the name.");
+                            if ($synchExistsBis > 0 && $eCommerceSocieteBis->id != $this->eCommerceSociete->id)
+                            {
+                                // We found a dolibarr record with name, but this one is alreayd linked and we know it is linked with another remote id because
+                                // the current remote_id was not found  when we previously did the fetchByRemoteId
+                                // So we make as if we didn't found the thirdparty. It may be a duplicate name created in same transaction from Magento
+                                dol_syslog("Warning: the record found with the name already has a remote_id in the eCommerceSite. So what we found is not what we want. We forget the find.");
+                                unset($dBSociete);  // Clear object, fetch was not what we wanted
+                                $dBSociete = new Societe($this->db);
+                                $result = 0;
+                            }
+                        }                        
+                        
                         if ($result == 0)
                         {
                             $dBSociete->name = $societeArray['name'];
@@ -1049,7 +1067,7 @@ class eCommerceSynchro
     public function synchSocpeople($socpeopleArray)
     {
         try {
-            dol_syslog("***** eCommerceSynchro synchSocPeople");
+            dol_syslog("***** eCommerceSynchro synchSocPeople remote_id=".$socpeopleArray['remote_id']." site=".$this->eCommerceSite->id);
             
             if (!isset($this->eCommerceSocpeople))
                 $this->initECommerceSocpeople();
