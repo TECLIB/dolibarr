@@ -121,15 +121,6 @@ class InterfaceECommerceng
                     continue;
                 }
 			    
-                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
-			    dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
-			    $eCommerceSynchro->connect();
-			    if (count($eCommerceSynchro->errors))
-			    {
-			        $error++;
-			        setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
-			    }
-			
 			    if (! $error)
 			    {
     				$eCommerceSociete = new eCommerceSociete($this->db);
@@ -137,13 +128,25 @@ class InterfaceECommerceng
     
     				if ($eCommerceSociete->remote_id > 0)
     				{
-    				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSociete($eCommerceSociete->remote_id, $object);
-    				    if (! $result)
-    				    {
-    				        $error++;
-    				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
-    				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
-    				    }
+		                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+        			    dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+        			    $eCommerceSynchro->connect();
+        			    if (count($eCommerceSynchro->errors))
+        			    {
+        			        $error++;
+        			        setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+        			    }
+			
+        			    if (! $error)
+        			    {
+        				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSociete($eCommerceSociete->remote_id, $object);
+        				    if (! $result)
+        				    {
+        				        $error++;
+        				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+        				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+        				    }
+        			    }
     				}
     				else
     				{
@@ -156,7 +159,19 @@ class InterfaceECommerceng
     				    {
     				        dol_syslog("Societe with id ".$object->id." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
     				        // TODO
-    				        //$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
+    				        /*$eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+    				        dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+    				        $eCommerceSynchro->connect();
+    				        if (count($eCommerceSynchro->errors))
+    				        {
+    				            $error++;
+    				            setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+    				        }
+    				        
+    				        if (! $error)
+    				        {
+    				            $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
+    				        }*/
     				    }
     				    else
     				    {
@@ -193,15 +208,6 @@ class InterfaceECommerceng
                     continue;
                 }
                  
-                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
-                dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
-                $eCommerceSynchro->connect();
-                if (count($eCommerceSynchro->errors))
-                {
-                    $error++;
-                    setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
-                }
-                	
                 if (! $error)
                 {
                     $eCommerceSocpeople = new eCommerceSocpeople($this->db);
@@ -209,13 +215,25 @@ class InterfaceECommerceng
         
                     if ($eCommerceSocpeople->remote_id > 0)
                     {
-                        $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSocpeople($eCommerceSocpeople->remote_id, $object);
-                        if (! $result)
-    				    {
-    				        $error++;
-    				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
-    				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
-    				    }
+                        $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+                        dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+                        $eCommerceSynchro->connect();
+                        if (count($eCommerceSynchro->errors))
+                        {
+                            $error++;
+                            setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+                        }
+                        
+                        if (! $error)
+                        {
+                            $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSocpeople($eCommerceSocpeople->remote_id, $object);
+                            if (! $result)
+        				    {
+        				        $error++;
+        				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+        				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+        				    }
+                        }
                     }
                     else
                     {
@@ -265,15 +283,6 @@ class InterfaceECommerceng
                     continue;
                 }
 			    
-                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
-				dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
-				$eCommerceSynchro->connect();
-				if (count($eCommerceSynchro->errors))
-				{
-				    $error++;
-				    setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
-				}
-				
 				if (! $error)
 				{
     				$eCommerceProduct = new eCommerceProduct($this->db);
@@ -281,13 +290,25 @@ class InterfaceECommerceng
     				
     				if ($eCommerceProduct->remote_id > 0)
     				{
-                		$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id, $object);
-    				    if (! $result)
-    				    {
-    				        $error++;
-    				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
-    				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
-    				    }
+		                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+        				dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+        				$eCommerceSynchro->connect();
+        				if (count($eCommerceSynchro->errors))
+        				{
+        				    $error++;
+        				    setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+        				}
+
+        				if (! $error)
+        				{
+        				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id, $object);
+        				    if (! $result)
+        				    {
+        				        $error++;
+        				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+        				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+        				    }
+        				}
     				}
     				else
     				{
@@ -339,15 +360,6 @@ class InterfaceECommerceng
                     continue;
                 }
                  
-                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
-                dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
-                $eCommerceSynchro->connect();
-                if (count($eCommerceSynchro->errors))
-                {
-                    $error++;
-                    setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
-                }
-            
                 if (! $error)
                 {
     				$eCommerceCommande = new eCommerceCommande($this->db);
@@ -355,15 +367,27 @@ class InterfaceECommerceng
 
     				if ($eCommerceCommande->remote_id > 0)
     				{
-    				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteCommande($eCommerceCommande->remote_id, $object);
-    				    if (! $result)
-    				    {
-    				        $error++;
-    				        var_dump($eCommerceSynchro->eCommerceRemoteAccess->error);
-    				        var_dump($eCommerceSynchro->eCommerceRemoteAccess->errors);exit;
-    				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
-    				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
-    				    }
+		                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+                        dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+                        $eCommerceSynchro->connect();
+                        if (count($eCommerceSynchro->errors))
+                        {
+                            $error++;
+                            setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+                        }
+                    
+                        if (! $error)
+                        {
+        				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteCommande($eCommerceCommande->remote_id, $object);
+        				    if (! $result)
+        				    {
+        				        $error++;
+        				        var_dump($eCommerceSynchro->eCommerceRemoteAccess->error);
+        				        var_dump($eCommerceSynchro->eCommerceRemoteAccess->errors);exit;
+        				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+        				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+        				    }
+                        }
     				}
     				else
     				{
@@ -399,15 +423,6 @@ class InterfaceECommerceng
     	            continue;
     	        }
     	         
-    	        $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
-    	        dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
-    	        $eCommerceSynchro->connect();
-    	        if (count($eCommerceSynchro->errors))
-    	        {
-    	            $error++;
-    	            setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
-    	        }
-    	
     	        if (! $error)
     	        {
     	            $eCommerceFacture = new eCommerceFacture($this->db);
@@ -415,12 +430,24 @@ class InterfaceECommerceng
     	
     	            if ($eCommerceFacture->remote_id > 0)
     	            {
-    	                $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteFacture($eCommerceFacture->remote_id, $object);
-    	                if (! $result)
+    	                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+    	                dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+    	                $eCommerceSynchro->connect();
+    	                if (count($eCommerceSynchro->errors))
     	                {
     	                    $error++;
-    	                    $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
-    	                    $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+    	                    setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+    	                }
+    	                
+    	                if (! $error)
+    	                {
+        	                $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteFacture($eCommerceFacture->remote_id, $object);
+        	                if (! $result)
+        	                {
+        	                    $error++;
+        	                    $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+        	                    $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+        	                }
     	                }
     	            }
     	            else
@@ -713,15 +740,6 @@ class InterfaceECommerceng
             
                 try
                 {
-                    $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
-                    dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
-                    $eCommerceSynchro->connect();
-                    if (count($eCommerceSynchro->errors))
-                    {
-                        $error++;
-                        setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
-                    }
-                    
                     // Do we sync the stock ?
                     if (! $error && $site->stock_sync_direction == 'dolibarr2ecommerce')
                     {
@@ -736,12 +754,25 @@ class InterfaceECommerceng
                         
                         if ($eCommerceProduct->remote_id > 0)
                         {
-                            $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($eCommerceProduct->remote_id, $object);
-                            if (! $result)
+                            // Connect to magento
+                            $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+                            dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
+                            $eCommerceSynchro->connect();
+                            if (count($eCommerceSynchro->errors))
                             {
                                 $error++;
-                                $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
-                                $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+                                setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+                            }
+                            
+                            if (! $error)
+                            {
+                                $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($eCommerceProduct->remote_id, $object);
+                                if (! $result)
+                                {
+                                    $error++;
+                                    $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+                                    $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+                                }
                             }
                         }
                         else
