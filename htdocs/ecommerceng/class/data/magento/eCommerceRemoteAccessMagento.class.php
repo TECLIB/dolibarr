@@ -719,7 +719,7 @@ class eCommerceRemoteAccessMagento
                                 'billed'=> $billed,
                                 'remote_state' => $commande['state'],        // remote state, for information only (less accurate than status)
                                 'remote_status' => $commande['status'],      // remote status, for information only (more accurate than state)
-                                'remote_order' => (empty($conf->global->ECOMMERCENG_DISABLE_LOG_IN_NOTE) ? ("Last eCommerce object received:\n".serialize(var_export($commande, true))) : '')
+                                'remote_order' => $commande
                         );
                     }
                 }
@@ -950,8 +950,8 @@ class eCommerceRemoteAccessMagento
                                 'close_code' => $close_code,
                                 'close_note' => $close_note,
                                 'remote_state' => $facture['state'],
-                                'remote_order' => (empty($conf->global->ECOMMERCENG_DISABLE_LOG_IN_NOTE) ? ("Last eCommerce order received\n".serialize(var_export($commande, true))) : ''),
-                                'remote_invoice' => (empty($conf->global->ECOMMERCENG_DISABLE_LOG_IN_NOTE) ? ("Last eCommerce invoice received\n".serialize(var_export($facture, true))) : '')
+                                'remote_order' => $commande,
+                                'remote_invoice' => $facture
                         );
                     }
                 }

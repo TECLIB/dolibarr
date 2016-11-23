@@ -35,6 +35,7 @@ require_once(DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/product/class/product.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php');
+require_once(DOL_DOCUMENT_ROOT . '/compta/paiement/class/paiement.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/expedition/class/expedition.class.php');
@@ -82,9 +83,10 @@ class eCommerceSynchro
      * Constructor
      * 
      * @param Database          $db           Database handler
-     * @param eCommerceSite     $site         Object eCommerceSite       
+     * @param eCommerceSite     $site         Object eCommerceSite
+     * @param datetime          $toDate       Ending date to synch all data modified before this date (null by default = until now)       
      */
-    function eCommerceSynchro($db, $site)
+    function eCommerceSynchro($db, $site, $toDate=null)
     {
         global $langs, $user;
         
@@ -96,7 +98,8 @@ class eCommerceSynchro
             
             $this->eCommerceRemoteAccess = new eCommerceRemoteAccess($this->db, $this->eCommerceSite);
         
-            $this->toDate = dol_now();      // Set date to use as last update date
+            if (empty($toDate)) $this->toDate = dol_now();      // Set date to use as last update date
+            else $this->toDate = $toDate;
         } 
         catch (Exception $e) 
         {
@@ -1517,26 +1520,68 @@ class eCommerceSynchro
                                 if ($dBCommande->statut != $commandeArray['status'])
                                 {
                                     dol_syslog("Status of order has changed, we update order from status ".$dBCommande->statut." to status ".$commandeArray['status']);
+                                    
+                                    // Draft or not draft
                                     if ($commandeArray['status'] == Commande::STATUS_DRAFT)
                                     {
-                                        $dBCommande->set_draft($user, 0);
+                                        // Target status is status draft. Should not happen with magento.
+                                        // Nothing to do
+                                    }
+                                    else
+                                    {
+                                        // Target status is not draft. We validate if current status is still draft to get correct ref.
+                                        if ($dBCommande->statut == Commande::STATUS_DRAFT)
+                                        {
+                                            $idWareHouse = 0;
+                                            // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
+                                            //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                            $dBCommande->valid($this->user, $idWareHouse);
+                                        }
+                                    }
+                                    
+                                    // Which target status ?
+                                    if ($commandeArray['status'] == Commande::STATUS_DRAFT)
+                                    {
+                                        if ($dBCommande->statut != Commande::STATUS_DRAFT)
+                                        {
+                                            $dBCommande->set_draft($user, 0);
+                                        }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_VALIDATED)
                                     {
-                                        $dBCommande->valid($user, 0);
+                                        if ($dBCommande->statut != Commande::STATUS_VALIDATED)
+                                        {
+                                            $dBCommande->setStatut(Commande::STATUS_VALIDATED, $dbCommande->id, $dbCommande->table_element);
+                                        }
                                     }
                                     if ($commandeArray['status'] == 2)      // Should be Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9 
                                     {
-                                        $dBCommande->setStatut(2, $dbCommande->id, $dbCommande->table_element);
+                                        if ($dBCommande->statut != 2)
+                                        {
+                                            $dBCommande->setStatut(2, $dbCommande->id, $dbCommande->table_element);
+                                        }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CANCELED)
                                     {
-                                        $dBCommande->cancel(0);
+                                        if ($dBCommande->statut != Commande::STATUS_CANCELED)
+                                        {
+                                            $idWareHouse = 0;
+                                            // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
+                                            //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                            $dBCommande->cancel(0, $idWarehouse);
+                                        }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CLOSED)
                                     {
-                                        $dBCommande->cloture($user);
-                                        $dBCommande->classifyBilled($user);
+                                        if ($dBCommande->statut != Commande::STATUS_CLOSED)
+                                        {
+                                            $dBCommande->cloture($user);
+                                        }
+                                        // order in Dolibarr not yet billed and billed status in ecommerce is done
+                                        if (! $dBCommande->billed && $commandeArray['billed'] == 1)
+                                        {
+                                            $dBCommande->classifyBilled($this->user);
+                                        }
                                     }
                                 }
                             }
@@ -1559,7 +1604,11 @@ class eCommerceSynchro
                                 $input_method_id = dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');  // Order mode. Not visible with some Dolibarr versions
                                 $dBCommande->source=$input_method_id;
                                 $dBCommande->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
-                                $dBCommande->note_private=$commandeArray['remote_order'];
+                                $dBCommande->note_private="";
+                                if (empty($conf->global->ECOMMERCENG_DISABLE_LOG_IN_NOTE))
+                                {
+                                    $dBCommande->note_private.="Last eCommerce order received:\n".serialize(var_export($commandeArray['remote_order'], true));
+                                }
                                 
                                 $result = $dBCommande->create($this->user);
                                 if ($result <= 0) 
@@ -1584,7 +1633,8 @@ class eCommerceSynchro
                                             if (($result = $dBCommande->defineBuyPrice($item['price'], 0, $fk_product)) < 0)
                                             {
                                                 $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceCommandeUpdateError');
-                                                return false;
+                                                $error++;
+                                                break;
                                             }
                                             else
                                             {
@@ -1628,6 +1678,7 @@ class eCommerceSynchro
                                             {
                                                 $this->errors[]=$dBCommande->error;
                                                 $error++;
+                                                break;
                                             }
                                 
                                             unset($this->eCommerceProduct);
@@ -1793,9 +1844,9 @@ class eCommerceSynchro
                         }
                         else
                         {
+                            $error++;
                             $this->errors[] = $this->langs->trans('ECommerceSynchCommandeError');
                         }
-                        $nbgoodsunchronize = $nbgoodsunchronize + 1;
                     } 
                     else
                     {
@@ -1810,6 +1861,10 @@ class eCommerceSynchro
                     {
                         $nbrecorderror++;
                         break;      // We decide to stop on first error
+                    }
+                    else
+                    {
+                        $nbgoodsunchronize = $nbgoodsunchronize + 1;
                     }
                 }
                 
@@ -1835,6 +1890,7 @@ class eCommerceSynchro
     {
         global $conf, $user;
         
+        $error = 0;
         $factures = array();
         
         try {
@@ -1848,17 +1904,15 @@ class eCommerceSynchro
                 
             if (count($factures))
             {
-                $this->db->begin();
-                
                 // Local filter to exclude bundles and other complex types
 //                $productsTypesOk = array('simple', 'virtual', 'downloadable');
                 
+                $this->db->begin();
+                
                 foreach ($factures as $factureArray)
                 {
-                    if (isset($this->errors))
-                        return false;
+                    if (isset($this->errors)) break;
                     
-                    $result;
                     $this->initECommerceCommande();
                     $this->initECommerceFacture();
                     $this->initECommerceSociete();
@@ -1888,34 +1942,75 @@ class eCommerceSynchro
                             if ($refFactureExists > 0)
                             {
                                 //update
-                                $result = 1;
-
                                 if ($dBFacture->statut != $factureArray['status'])
                                 {
                                     dol_syslog("Status of invoice has changed, we update invoice from status ".$dBFacture->statut." to status ".$factureArray['status']);
+
+                                    // Draft or not draft
                                     if ($factureArray['status'] == Facture::STATUS_DRAFT)   // status draft. Should not happen with magento
                                     {
+                                        // Target status is status draft. Should not happen with magento.
                                         // Nothing to do
                                     }
-                                    if ($factureArray['status'] == Facture::STATUS_VALIDATED)   // status validated done previously.
+                                    else
                                     {
-                                        // Nothing to do
+                                        // Target status is not draft. We validate if current status is still draft to get correct ref.
+                                        if ($dBFacture->statut == Facture::STATUS_DRAFT)
+                                        {
+                                            $idWareHouse = 0;
+                                            // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
+                                            //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                            $dBFacture->validate($this->user, '', $idWareHouse);
+                                        }
+                                    }
+                                    
+                                    // Which target status ?
+                                    if ($factureArray['status'] == Facture::STATUS_VALIDATED)
+                                    {
+                                        if ($dBFacture->statut != Facture::STATUS_VALIDATED)
+                                        {
+                                            $dBFacture->setStatut(Facture::STATUS_VALIDATED, $dBFacture->id, $dBFacture->table_element);
+                                        }
                                     }
                                     if ($factureArray['status'] == Facture::STATUS_ABANDONED)
                                     {
-                                        $dBFacture->set_canceled($this->user, $factureArray['close_code'], $factureArray['close_note']);
+                                        if ($dBFacture->statut != Facture::STATUS_ABANDONED)
+                                        {
+                                            $dBFacture->set_canceled($this->user, $factureArray['close_code'], $factureArray['close_note']);
+                                        }
                                     }
                                     if ($factureArray['status'] == Facture::STATUS_CLOSED)
                                     {
-                                        // Enter payment
-                                        // TODO
-                                    }
+                                        if ($dBFacture->statut != Facture::STATUS_CLOSED)
+                                        {
+                                            // Enter payments
+                                            //$dBFacture->cloture($this->user);
+                                            $payment = new Paiement($this->db);
+                                            /*
+                                             $payment->datepaye = 'ee';
+                                             $payment->paiementid = 0;
+                                             $payment->num_paiement = 0;
+                                             $payment->amounts=array();
+                                             $resultpayment = $payment->create($user);
+                                             if ($resultpayment < 0)
+                                             {
+                                             $error++;
+                                             $this->errors[] = "Failed to create payment";
+                                             }
+                                             */
+                                
+                                            $dBFacture->set_paid($this->user, '', '');
+                                        }
+                                    }                                    
+                                    
                                 }
                                 
-                            } else
+                            } 
+                            else
                             {
+                                $error++;
                                 $this->errors[] = $this->langs->trans('ECommerceSynchFactureErrorFactureSynchExistsButNotFacture');
-                                return false;
+                                break;
                             }
                         } 
                         else
@@ -1952,7 +2047,13 @@ class eCommerceSynchro
                                 $dBFacture->socid = $this->eCommerceSociete->fk_societe;
                                 $dBFacture->cond_reglement_id = $settlementTermsId;
                                 $dBFacture->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
-                                $dBFacture->note_private=$factureArray['remote_invoice'];
+                                $dBFacture->note_private="";
+                                if (empty($conf->global->ECOMMERCENG_DISABLE_LOG_IN_NOTE))
+                                {
+                                    $dBFacture->note_private .= "Last eCommerce invoice received:\n".serialize(var_export($factureArray['remote_invoice'], true));
+                                    $dBFacture->note_private .= "\n\n";
+                                    $dBFacture->note_private .= "Last eCommerce order received:\n".serialize(var_export($factureArray['remote_order'], true));
+                                }
                                 
                                 // Add link to order (cut takenf from facture card page)
                                 $dBFacture->origin = $origin;
@@ -1987,8 +2088,9 @@ class eCommerceSynchro
                                         $fk_product = $this->eCommerceProduct->fk_product;
                                         if (($result = $dBFacture->defineBuyPrice($item['price'], 0, $fk_product)) < 0)
                                         {
+                                            $error++;
                                             $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceFactureUpdateError');
-                                            return false;
+                                            break;
                                         }
                                         else
                                         {
@@ -2023,7 +2125,7 @@ class eCommerceSynchro
                                     }
     
                                 //add delivery
-                                if ($factureArray['delivery']['qty'] > 0)
+                                if (! $error && $factureArray['delivery']['qty'] > 0)
                                 {
                                     $delivery = $factureArray['delivery'];
                                     
@@ -2051,33 +2153,75 @@ class eCommerceSynchro
                                 }
                             }
                             
-                            $dBFacture->validate($this->user);
-                            
                             // Now update status
-                            dol_syslog("synchFacture Status of invoice = ".$factureArray['state']." dbFacture = ".$dBFacture->statut);
                             if (! $error)
                             {
                                 //if ($dBFacture->statut != $factureArray['status'])      // Always when creating
                                 //{
-                                dol_syslog("synchFacture Status of invoice must be now set, we update invoice from status ".$dBFacture->statut." to status ".$factureArray['status']);
+                                dol_syslog("synchFacture Status of invoice must be now set: we update invoice id=".$dBFacture->id." ref_client=".$dBFacture->ref_client." from status ".$dBFacture->statut." to status ".$factureArray['status']);
+                               
+                                // Draft or not draft
                                 if ($factureArray['status'] == Facture::STATUS_DRAFT)   // status draft. Should not happen with magento
                                 {
-                                    // Nothing to do
+                                        // Target status is status draft. Should not happen with magento.
+                                        // Nothing to do
                                 }
-                                if ($factureArray['status'] == Facture::STATUS_VALIDATED)   // status validated done previously.
+                                else
                                 {
-                                    // Nothing to do
+                                    // Target status is not draft. We validate if current status is still draft to get correct ref.
+                                    if ($dBFacture->statut == Facture::STATUS_DRAFT)
+                                    {
+                                        $idWareHouse = 0;
+                                        // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
+                                        //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                        $dBFacture->validate($this->user, '', $idWareHouse);
+                                    }
+                                }
+
+                                // Which target status ?
+                                if ($factureArray['status'] == Facture::STATUS_VALIDATED)
+                                {
+                                    if ($dBFacture->statut != Facture::STATUS_VALIDATED)
+                                    {
+                                        $dBFacture->setStatut(Facture::STATUS_VALIDATED, $dBFacture->id, $dBFacture->table_element);
+                                    }
                                 }
                                 if ($factureArray['status'] == Facture::STATUS_ABANDONED)
                                 {
-                                    $dBFacture->set_canceled($this->user);
+                                    if ($dBFacture->statut != Facture::STATUS_ABANDONED)
+                                    {
+                                        $dBFacture->set_canceled($this->user, $factureArray['close_code'], $factureArray['close_note']);
+                                    }
                                 }
                                 if ($factureArray['status'] == Facture::STATUS_CLOSED)
                                 {
-                                    // Enter payment
-                                    // TODO
+                                    if ($dBFacture->statut != Facture::STATUS_CLOSED)
+                                    {
+                                        // Enter payment
+                                        // Magento seems to do one payment for one invoice
+                                        
+                                        $payment = new Paiement($this->db);
+                                        /*
+                                        $payment->datepaye = 'ee';
+                                        $payment->paiementid = 0;
+                                        $payment->num_paiement = 0;
+                                        $payment->amounts=array();
+                                        $resultpayment = $payment->create($user);
+                                        if ($resultpayment < 0)
+                                        {
+                                            $error++;
+                                            $this->errors[] = "Failed to create payment";
+                                        }
+                                        */
+                                        
+                                        //$factureArray['remote_order']["payment"] is one record with summ of different payments/invoices.
+                                        
+                                        //exit;
+                                        
+                                        $dBFacture->set_paid($this->user, '', '');                                  
+                                    }
                                 }
-                                //}
+                                
                             }                            
                             
                         }
@@ -2088,7 +2232,7 @@ class eCommerceSynchro
                          * 
                          * ************************************************************** */
                         //if synchro invoice ok
-                        if ($result >= 0)
+                        if (! $error)
                         {
                             $this->eCommerceFacture->last_update = $factureArray['last_update'];
                             $this->eCommerceFacture->fk_facture = $dBFacture->id;
@@ -2098,8 +2242,8 @@ class eCommerceSynchro
                                 //eCommerce update
                                 if ($this->eCommerceFacture->update($this->user) < 0)
                                 {
+                                    $error++;
                                     $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceFactureUpdateError');
-                                    return false;
                                 }
                             }
                             //if not previous synchro exists
@@ -2114,22 +2258,22 @@ class eCommerceSynchro
                                 $this->eCommerceFacture->remote_id = $factureArray['remote_id'];
                                 if ($this->eCommerceFacture->create($this->user) < 0)
                                 {
+                                    $error++;
                                     $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceFactureCreateError').' '.$dBFacture->id.', '.$this->eCommerceFacture->error;
                                     dol_syslog($this->langs->trans('ECommerceSyncheCommerceFactureCreateError') . ' ' . $dBFacture->id.', '.$this->eCommerceFacture->error, LOG_WARNING);
-                                    return false;
                                 }
                             }
-                            $nbgoodsunchronize = $nbgoodsunchronize + 1;
                         } 
                         else
                         {
+                            $error++;
                             $this->errors[] = $this->langs->trans('ECommerceSynchCommandeError');
-                            return false;
                         }
-                    } else
+                    } 
+                    else
                     {
+                        $error++;
                         $this->errors[] = $this->langs->trans('ECommerceSynchFactureErrorSocieteOrCommandeNotExists');
-                        return false;
                     }
 
                     unset($dBFacture);
@@ -2138,6 +2282,16 @@ class eCommerceSynchro
                     unset($this->eCommerceSociete);
                     unset($this->eCommerceFacture);
                     unset($this->eCommerceCommande);
+                    
+                    if ($error)
+                    {
+                        $nbrecorderror++;
+                        break;      // We decide to stop on first error
+                    }
+                    else
+                    {
+                        $nbgoodsunchronize = $nbgoodsunchronize + 1;
+                    }
                 }
                 
                 if (! $error)
@@ -2268,7 +2422,9 @@ class eCommerceSynchro
                         {
                             $idWarehouse = 0;
                             // We don't change stock here, it's a clean of database that don't change stock
-                            $resultdelete = $dbFacture->delete($dbFacture->id, 0, $idWarehouse);
+                            if ((float) DOL_VERSION < 5.0) $resultdelete = $dbFacture->delete($dbFacture->id, 0, $idWarehouse);
+                            else $resultdelete = $dbFacture->delete($this->user, 0, $idWarehouse);
+                            
                             if ($resultdelete > 0)
                                 $dolObjectsDeleted++;
                         }
