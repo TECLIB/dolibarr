@@ -1550,14 +1550,16 @@ class eCommerceSynchro
                             if ($result == 0)
                             {
                                 //create commande
-                                $dBCommande->statut=Commande::STATUS_DRAFT;             // STATUS_DRAFT by default
+                                $dBCommande->statut=Commande::STATUS_DRAFT;             // STATUS_DRAFT by default at creation
                                 $dBCommande->ref_client = $commandeArray['ref_client'];
                                 $dBCommande->ref_ext = $this->eCommerceSite->name.'-'.$commandeArray['ref_client'];
                                 $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
                                 $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
                                 $dBCommande->socid = $this->eCommerceSociete->fk_societe;
-                                $dBCommande->source=dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');
+                                $input_method_id = dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');  // Order mode. Not visible with some Dolibarr versions
+                                $dBCommande->source=$input_method_id;
                                 $dBCommande->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                                $dBCommande->note_private=$commandeArray['remote_order'];
                                 
                                 $result = $dBCommande->create($this->user);
                                 if ($result <= 0) 
@@ -1666,36 +1668,67 @@ class eCommerceSynchro
                             }
                             
                             // Now update status
-                            dol_syslog("synchCommande Status of order = ".$commandeArray['status']." dbCommande = ".$dBCommande->statut);
                             if (! $error)
                             {
                                 //if ($dBCommande->statut != $commandeArray['status'])      // Always when creating
                                 //{
-                                    dol_syslog("synchCommande Status of order must be now set, we update order from status ".$dBCommande->statut." to status ".$commandeArray['status']);
-                                    if ($commandeArray['status'] == Commande::STATUS_DRAFT)   // status draft. Should not happen with magento
+                                    dol_syslog("synchCommande Status of order must be now set: we update order id=".$dBCommande->id." ref_client=".$dBCommande->ref_client." from status ".$dBCommande->statut." to status ".$commandeArray['status']);
+                                    
+                                    // Draft or not draft
+                                    if ($commandeArray['status'] == Commande::STATUS_DRAFT)
                                     {
+                                        // Target status is status draft. Should not happen with magento.
                                         // Nothing to do
                                     }
+                                    else
+                                    {
+                                        // Target status is not draft. We validate if current status is still draft to get correct ref.
+                                        if ($dBCommande->statut == Commande::STATUS_DRAFT)
+                                        {
+                                            $idWareHouse = 0;
+                                            // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
+                                            //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                            $dBCommande->valid($this->user, $idWareHouse);
+                                        }
+                                    }
+                                    
+                                    // Which target status ?
                                     if ($commandeArray['status'] == Commande::STATUS_VALIDATED) 
                                     {
-                                        $dBCommande->valid($this->user, 0);
+                                        if ($dBCommande->statut != Commande::STATUS_VALIDATED)
+                                        {
+                                            $dBCommande->setStatut(Commande::STATUS_VALIDATED, $dbCommande->id, $dbCommande->table_element);
+                                        }
                                     }
                                     if ($commandeArray['status'] == 2)            // Should be Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9 
                                     {
-                                        $dBCommande->setStatut(2, $dbCommande->id, $dbCommande->table_element);
+                                        if ($dBCommande->statut != 2) 
+                                        {
+                                            $dBCommande->setStatut(2, $dbCommande->id, $dbCommande->table_element);
+                                        }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CANCELED)
                                     {
-                                        $dBCommande->cancel(0);
+                                        if ($dBCommande->statut != Commande::STATUS_CANCELED)
+                                        {
+                                            $idWareHouse = 0;
+                                            // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
+                                            //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                            $dBCommande->cancel(0, $idWarehouse);
+                                        }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CLOSED)
                                     {
-                                        $dBCommande->cloture($this->user);
-                                        $dBCommande->classifyBilled($this->user);
+                                        if ($dBCommande->statut != Commande::STATUS_CLOSED)
+                                        {
+                                            $dBCommande->cloture($this->user);
+                                            // TODO Do we have to set to paid or not ?
+                                            $dBCommande->classifyBilled($this->user);
+                                        }
                                     }
                                 //}
                             }
-                            
+
                             //add or update contacts of order
                             $commandeArray['socpeopleCommande']['fk_soc'] = $this->eCommerceSociete->fk_societe;
                             $commandeArray['socpeopleFacture']['fk_soc'] = $this->eCommerceSociete->fk_societe;
@@ -1883,15 +1916,14 @@ class eCommerceSynchro
                         } 
                         else
                         {
-                            //create
-                            /* **************************************************************
-                             * 
-                             * valid order
-                             * 
-                             * ************************************************************** */
+                            //create invoice
+                            
+                            // If we create invoice, we can force status of order in some cases
                             if ($refCommandeExists > 0 && $dBCommande->statut == Commande::STATUS_DRAFT)
                             {
-                                $idWareHouse = $this->eCommerceSite->fk_warehouse;
+                                $idWareHouse = 0;
+                                // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
+                                //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
                                 $dBCommande->valid($this->user, $idWareHouse);
                             }
                             if ($refCommandeExists > 0 && $dBCommande->statut == Commande::STATUS_VALIDATED)
@@ -1900,11 +1932,6 @@ class eCommerceSynchro
                             }
                             //var_dump($factureArray);exit;
 
-                            /* **************************************************************
-                             * 
-                             * create invoice
-                             * 
-                             * ************************************************************** */
 
                             $settlementTermsId = $this->getSettlementTermsId($factureArray['code_cond_reglement']);
 
@@ -1921,12 +1948,14 @@ class eCommerceSynchro
                                 $dBFacture->socid = $this->eCommerceSociete->fk_societe;
                                 $dBFacture->cond_reglement_id = $settlementTermsId;
                                 $dBFacture->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
-    
+                                $dBFacture->note_private=$factureArray['remote_order'];
+                                
                                 // Add link to order (cut takenf from facture card page)
                                 $dBFacture->origin = $origin;
                                 $dBFacture->origin_id = $originid;
                                 $dBFacture->linked_objects[$dBFacture->origin] = $dBFacture->origin_id;
     
+                                
                                 // Now we create invoice
                                 $result = $dBFacture->create($this->user);
     
@@ -2233,7 +2262,8 @@ class eCommerceSynchro
                         $dbFacture = new Facture($this->db);
                         if ($dbFacture->fetch($this->eCommerceFacture->fk_facture) > 0)
                         {
-                            $idWarehouse = 0;   // We don't want to change stock here
+                            $idWarehouse = 0;
+                            // We don't change stock here, it's a clean of database that don't change stock
                             $resultdelete = $dbFacture->delete($dbFacture->id, 0, $idWarehouse);
                             if ($resultdelete > 0)
                                 $dolObjectsDeleted++;

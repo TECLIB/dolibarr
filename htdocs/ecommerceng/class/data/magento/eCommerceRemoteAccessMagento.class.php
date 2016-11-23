@@ -665,12 +665,36 @@ class eCommerceRemoteAccessMagento
                             $deliveryDate = $commande['created_at'];
     
                         // define status of order
-                        $tmp = $commande['status'];                                                  // We choosed to use status (and not state) so value like:  'pending', 'processing', 'holded', ...
-                        $status = Commande::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
-                        if ($tmp == 'pending')      $status = Commande::STATUS_VALIDATED;            // validated = pending
-                        if ($tmp == 'processing')   $status = 2;                                     // shipment in process or invoice done = processing       // Should be constant Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9
-                        if ($tmp == 'holded')       $status = Commande::STATUS_CANCELED;             // canceled = holded
-                        if ($tmp == 'complete')     $status = Commande::STATUS_CLOSED;               // complete
+                        // $commande['state'] is: 'pending', 'closed', 'complete', 'processing', 'canceled'
+                        // $commande['status'] is more accurate: 'pending_...', 'canceled_...'
+                        $tmp = $commande['status'];
+                        
+                        // try to match dolibarr status
+                        $status = '';
+                        if (preg_match('/^pending/', $tmp))         $status = Commande::STATUS_VALIDATED;           // manage 'pending', 'pending_payment', 'pending_paypal', 'pending_...'
+                        elseif ($tmp == 'fraud')                    $status = Commande::STATUS_VALIDATED;
+                        elseif ($tmp == 'payment_review')           $status = Commande::STATUS_VALIDATED;
+                        elseif ($tmp == 'paypal_canceled_reversal') $status = Commande::STATUS_VALIDATED;
+                        elseif ($tmp == 'processing')               $status = 2;                                     // shipment in process or invoice done = processing       // Should be constant Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9
+                        elseif ($tmp == 'holded')                   $status = Commande::STATUS_CANCELED;
+                        elseif (preg_match('/^canceled/', $tmp))    $status = Commande::STATUS_CANCELED;             // manage 'canceled', 'canceled_bnpmercanetcw', 'canceled_...'
+                        elseif ($tmp == 'paypal_reversed')          $status = Commande::STATUS_CANCELED;
+                        elseif ($tmp == 'complete')                 $status = Commande::STATUS_CLOSED;
+                        elseif ($tmp == 'closed')                   $status = Commande::STATUS_CLOSED;
+                        if ($status == '') 
+                        {
+                            dol_syslog("Status: We found an order id ".$commande['increment_id']." with ecommerce status '".$tmp."' that is unknown, not supported. We will use '0' for Dolibarr", LOG_WARNING);
+                            $status = Commande::STATUS_DRAFT;   // draft by default (draft does not exists with magento, so next line will set correct status)    
+                        }
+                        else
+                        {
+                            dol_syslog("Status: We found an order id ".$commande['increment_id']." with ecommerce status '".$tmp."'. We convert it into Dolibarr status '".$status."'");
+                        }
+                            
+                        // try to match dolibarr billed status (payed or not)
+                        $billed = '';
+                        // Seems to not be provided by order.
+                        
                         
                         // Add order content to array or orders
                         $commandes[] = array(
@@ -687,9 +711,9 @@ class eCommerceRemoteAccessMagento
                                 'socpeopleFacture' => $socpeopleFacture,
                                 'socpeopleLivraison' => $socpeopleLivraison,
                                 'status' => $status,                         // dolibarr status
-                                'remote_status' => $commande['status']       // remote status, for information only
-                                //debug
-                                //'remote_commande' => $commande
+                                'remote_state' => $commande['state'],        // remote state, for information only (less accurate than status)
+                                'remote_status' => $commande['status'],      // remote status, for information only (more accurate than state)
+                                'remote_order' => (empty($conf->global->ECOMMERCENG_DISABLE_PUBLIC_NOTE) ? ("Last eCommerce object received:\n".serialize(var_export($commande, true))) : '')
                         );
                     }
                 }
@@ -873,13 +897,25 @@ class eCommerceRemoteAccessMagento
                         $dbCommande = new Commande($this->db);
                         $dbCommande->fetch($eCommerceTempCommande->fk_commande);
     
+                        
                         // define status of invoice
                         $tmp = $facture['state'];                                                   // state from is 1, 2, 3
-                        $status = Facture::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
                         
+                        // try to match dolibarr status
+                        $status = '';
                         if ($tmp == 1)     $status = Facture::STATUS_VALIDATED;            // validated = pending
                         if ($tmp == 2)     $status = Facture::STATUS_CLOSED;               // complete
                         if ($tmp == 3)     $status = Facture::STATUS_ABANDONED;            // canceled = holded
+                        if ($status == '')
+                        {
+                            dol_syslog("Status: We found an invoice id ".$commande['increment_id']." with ecommerce status '".$tmp."' that is unknown, not supported. We will use '0' for Dolibarr", LOG_WARNING);
+                            $status = Facture::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
+                        }
+                        else
+                        {
+                            dol_syslog("Status: We found an invoice id ".$commande['increment_id']." with ecommerce status '".$tmp."'. We convert it into Dolibarr status '".$status."'");
+                        }
+                        
                         
                         $close_code = '';
                         $close_note = '';
@@ -907,10 +943,9 @@ class eCommerceRemoteAccessMagento
                                 'status' => $tmp,
                                 'close_code' => $close_code,
                                 'close_note' => $close_note,
-                                'remote_state' => $facture['state']
-                                //debug
-                                //'remote_commande' => $commande,
-                                //'remote_facture' => $facture
+                                'remote_state' => $facture['state'],
+                                'remote_order' => (empty($conf->global->ECOMMERCENG_DISABLE_PUBLIC_NOTE) ? ("Last eCommerce order received\n".serialize(var_export($commande, true))) : ''),
+                                'remote_invoice' => (empty($conf->global->ECOMMERCENG_DISABLE_PUBLIC_NOTE) ? ("Last eCommerce invoice received\n".serialize(var_export($facture, true))) : '')
                         );
                     }
                 }
