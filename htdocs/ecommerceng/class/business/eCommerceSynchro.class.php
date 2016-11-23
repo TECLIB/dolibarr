@@ -1952,7 +1952,7 @@ class eCommerceSynchro
                                 $dBFacture->socid = $this->eCommerceSociete->fk_societe;
                                 $dBFacture->cond_reglement_id = $settlementTermsId;
                                 $dBFacture->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
-                                $dBFacture->note_private=$factureArray['remote_order'];
+                                $dBFacture->note_private=$factureArray['remote_invoice'];
                                 
                                 // Add link to order (cut takenf from facture card page)
                                 $dBFacture->origin = $origin;
