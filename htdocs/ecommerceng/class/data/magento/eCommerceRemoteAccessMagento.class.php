@@ -665,13 +665,13 @@ class eCommerceRemoteAccessMagento
                             $deliveryDate = $commande['created_at'];
     
                         // define status of order
-                        // $commande['state'] is: 'pending', 'closed', 'complete', 'processing', 'canceled'
+                        // $commande['state'] is: 'pending', 'processing', 'closed', 'complete', 'canceled'
                         // $commande['status'] is more accurate: 'pending_...', 'canceled_...'
                         $tmp = $commande['status'];
                         
                         // try to match dolibarr status
                         $status = '';
-                        if (preg_match('/^pending/', $tmp))         $status = Commande::STATUS_VALIDATED;           // manage 'pending', 'pending_payment', 'pending_paypal', 'pending_...'
+                        if (preg_match('/^pending/', $tmp))         $status = Commande::STATUS_VALIDATED;           // manage 'pending', 'pending_payment', 'pending_paypal', 'pending_ogone', 'pending_...'
                         elseif ($tmp == 'fraud')                    $status = Commande::STATUS_VALIDATED;
                         elseif ($tmp == 'payment_review')           $status = Commande::STATUS_VALIDATED;
                         elseif ($tmp == 'paypal_canceled_reversal') $status = Commande::STATUS_VALIDATED;
@@ -692,8 +692,13 @@ class eCommerceRemoteAccessMagento
                         }
                             
                         // try to match dolibarr billed status (payed or not)
-                        $billed = '';
-                        // Seems to not be provided by order.
+                        $billed = -1;   // unknown
+                        if ($commande['state'] == 'pending') $billed = 0;
+                        if ($commande['state'] == 'payment_review') $billed = 0;    // Error in payment
+                        if ($commande['state'] == 'complete') $billed = 1;          // We are sure for complete that order is payed
+                        if ($commande['state'] == 'closed') $billed = 1;            // We are sure for closed that order was payed but refund
+                        if ($commande['state'] == 'canceled') $billed = 0;          // We are sure for canceled that order was not payed
+                        // Note: with processing, billed can be 0 or 1, so we keep -1
                         
                         
                         // Add order content to array or orders
@@ -711,6 +716,7 @@ class eCommerceRemoteAccessMagento
                                 'socpeopleFacture' => $socpeopleFacture,
                                 'socpeopleLivraison' => $socpeopleLivraison,
                                 'status' => $status,                         // dolibarr status
+                                'billed'=> $billed,
                                 'remote_state' => $commande['state'],        // remote state, for information only (less accurate than status)
                                 'remote_status' => $commande['status'],      // remote status, for information only (more accurate than state)
                                 'remote_order' => (empty($conf->global->ECOMMERCENG_DISABLE_LOG_IN_NOTE) ? ("Last eCommerce object received:\n".serialize(var_export($commande, true))) : '')

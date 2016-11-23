@@ -1722,9 +1722,13 @@ class eCommerceSynchro
                                         if ($dBCommande->statut != Commande::STATUS_CLOSED)
                                         {
                                             $dBCommande->cloture($this->user);
-                                            // TODO Do we have to set to paid or not ?
+                                        }
+                                        // order in Dolibarr not yet billed and billed status in ecommerce is done
+                                        if (! $dBCommande->billed && $commandeArray['billed'] == 1)
+                                        {
                                             $dBCommande->classifyBilled($this->user);
                                         }
+                                        
                                     }
                                 //}
                             }
