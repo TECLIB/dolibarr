@@ -239,7 +239,7 @@ JS;
 		print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" value="' . $notes->fields['note_title'] . '" /></p>';
 
 		print '<p>';
-		$doleditor=new DolEditor('note_value',$notes->fields['note_value'],'',180,'dolibarr_notes','In',true, false, true, 90, 50);
+		$doleditor=new DolEditor('note_value',$notes->fields['note_value'],'',180,'dolibarr_notes','In',true, false, true, 90, '90%');
 		print $doleditor->Create();
 		//print '<textarea name="note_value" rows="20" cols="100">'. $notes->fields['note_value'] . '</textarea>';
 		print '</p>';
