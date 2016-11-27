@@ -7,6 +7,7 @@ print load_fiche_titre($langs->trans("ECommerceDashboard"), $linkback, 'eCommerc
 print '<br>';
 
 if (count($sites)): ?>
+	<div class="div-table-responsive">
 	<table class="noborder" width="100%">
 		<tr class="liste_titre">
 			<td><?php print $langs->trans('ECommerceSite') ?></td>
@@ -48,6 +49,7 @@ $var=!$var;
 		</tr>
 	<?php } ?>
 	</table>
+	</div>
 <?php else: ?>
 <p><?php $langs->trans('ECommerceNoSite') ?></p>
 <?php endif;

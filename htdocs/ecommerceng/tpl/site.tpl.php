@@ -46,6 +46,7 @@ if (is_object($site))
     
     print '<br>'."\n";
 ?>
+	<div class="div-table-responsive">
 	<table class="noborder" width="100%">
 		<tr class="liste_titre">
 			<td><?php print $langs->trans('ECommerceObjectToUpdate') ?></td>
@@ -262,6 +263,7 @@ if (! empty($conf->facture->enabled))
 		</tr>
 <?php } ?>
 	</table>
+	</div>
 	<?php
 	$categorytmpprod=new Categorie($db);
 	$categorytmpprod->fetch($site->fk_cat_product);
