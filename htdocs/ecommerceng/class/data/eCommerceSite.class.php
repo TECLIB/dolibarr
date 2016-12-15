@@ -140,10 +140,10 @@ class eCommerceSite // extends CommonObject
 		$sql.= " ".(! isset($this->user_password)?'NULL':"'".addslashes($this->user_password)."'").",";
 		$sql.= " ".(! isset($this->filter_label)?'NULL':"'".addslashes($this->filter_label)."'").",";
 		$sql.= " ".(! isset($this->filter_value)?'NULL':"'".addslashes($this->filter_value)."'").",";
-		$sql.= " ".($this->fk_cat_societe > 0 ? 'NULL':"'".$this->fk_cat_societe."'").",";
-		$sql.= " ".($this->fk_cat_product > 0 ? 'NULL':"'".$this->fk_cat_product."'").",";
-		$sql.= " ".($this->fk_warehouse > 0 ? 'NULL':"'".$this->fk_warehouse."'").",";
-		$sql.= " ".($this->stock_sync_direction ? "'none'":"'".$this->stock_sync_direction."'").",";
+		$sql.= " ".($this->fk_cat_societe > 0 ? $this->fk_cat_societe : "NULL").",";
+		$sql.= " ".($this->fk_cat_product > 0 ? $this->fk_cat_product : "NULL").",";
+		$sql.= " ".($this->fk_warehouse > 0 ? $this->fk_warehouse : "NULL").",";
+		$sql.= " ".($this->stock_sync_direction ? "'".$this->stock_sync_direction."'" : "'none'").",";
 		$sql.= " ".(! isset($this->last_update) || strlen($this->last_update)==0?'NULL':"'".$this->db->idate($this->last_update)."'").",";
 		$sql.= " ".(! isset($this->timeout)?'300':"'".intval($this->timeout)."'").",";
 		$sql.= " ".(! isset($this->magento_use_special_price)?'0':"'".intval($this->magento_use_special_price)."'").",";

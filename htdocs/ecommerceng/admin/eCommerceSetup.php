@@ -93,7 +93,7 @@ if ($_POST['site_form_detail_action'] == 'save')
         $siteDb->magento_use_special_price = ($_POST['ecommerce_magento_use_special_price'] ? 1 : 0);
         $siteDb->magento_price_type = $_POST['ecommerce_magento_price_type'];
 
-        $result;
+        $result = 0;
         if (intval($_POST['ecommerce_id']))
         {            
             $siteDb->id = $_POST['ecommerce_id'];
