@@ -117,7 +117,6 @@ class eCommerceSite // extends CommonObject
 		
         // Insert request
 		$sql = "INSERT INTO ".MAIN_DB_PREFIX."ecommerce_site(";
-		
 		$sql.= "name,";
 		$sql.= "type,";
 		$sql.= "webservice_address,";
@@ -144,13 +143,11 @@ class eCommerceSite // extends CommonObject
 		$sql.= " ".($this->fk_cat_societe > 0 ? 'NULL':"'".$this->fk_cat_societe."'").",";
 		$sql.= " ".($this->fk_cat_product > 0 ? 'NULL':"'".$this->fk_cat_product."'").",";
 		$sql.= " ".($this->fk_warehouse > 0 ? 'NULL':"'".$this->fk_warehouse."'").",";
-		$sql.= " ".($this->stock_sync_direction ? 'none':"'".$this->stock_sync_direction."'").",";
+		$sql.= " ".($this->stock_sync_direction ? "'none'":"'".$this->stock_sync_direction."'").",";
 		$sql.= " ".(! isset($this->last_update) || strlen($this->last_update)==0?'NULL':"'".$this->db->idate($this->last_update)."'").",";
 		$sql.= " ".(! isset($this->timeout)?'300':"'".intval($this->timeout)."'").",";
 		$sql.= " ".(! isset($this->magento_use_special_price)?'0':"'".intval($this->magento_use_special_price)."'").",";
 		$sql.= " ".(! isset($this->magento_price_type)?'HT':"'".$this->magento_price_type."'")."";
-
-        
 		$sql.= ")";
 
 		$this->db->begin();
@@ -306,7 +303,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " fk_cat_societe=".($this->fk_cat_societe > 0 ? $this->fk_cat_societe:"null").",";
 		$sql.= " fk_cat_product=".($this->fk_cat_product > 0 ? $this->fk_cat_product:"null").",";
 		$sql.= " fk_warehouse=".($this->fk_warehouse > 0 ? $this->fk_warehouse:"null").",";
-		$sql.= " stock_sync_direction=".($this->stock_sync_direction ? "'".$this->stock_sync_direction."'":"none").",";
+		$sql.= " stock_sync_direction=".($this->stock_sync_direction ? "'".$this->stock_sync_direction."'":"'none'").",";
 		$sql.= " last_update=".((isset($this->last_update) && $this->last_update != '') ? "'".$this->db->idate($this->last_update)."'" : 'null').",";
 		$sql.= " timeout=".(isset($this->timeout)? "'".intval($this->timeout)."'" : '300').",";
 		$sql.= " magento_use_special_price=".(isset($this->magento_use_special_price)? "'".intval($this->magento_use_special_price)."'" : '0').",";
