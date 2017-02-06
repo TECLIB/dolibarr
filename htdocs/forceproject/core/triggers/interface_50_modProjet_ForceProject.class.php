@@ -249,6 +249,19 @@ class InterfaceForceProject
 
         // Suppliers
 
+    
+        if (($action == 'SUPPLIER_PROPOSAL_VALIDATE' || $action == 'PROPOSAL_SUPPLIER_VALIDATE') && (! empty($conf->global->FORCEPROJECT_ON_PROPOSAL_SUPPLIER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
+        {
+            dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
+
+            if (empty($object->fk_project))
+            {
+				$langs->load("forceproject@forceproject");	// So files is loaded for function to show error message
+            	$this->errors[]=$langs->trans("ProposalMustBeLinkedToProject");
+            	return -1;
+            }
+        }
+        
         if ($action == 'ORDER_SUPPLIER_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_ORDER_SUPPLIER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
         {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
@@ -272,9 +285,8 @@ class InterfaceForceProject
             	return -1;
             }
         }
-
         return $ok;
     }
 
 }
-?>
+
