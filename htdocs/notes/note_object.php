@@ -43,7 +43,6 @@ dol_include_once("/notes/class/note.class.php");
 
 $action = GETPOST('action');
 
-if (!$user->rights->commande->lire) accessforbidden();
 
 $langs->load("companies");
 $langs->load("bills");
