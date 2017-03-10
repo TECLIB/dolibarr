@@ -59,6 +59,7 @@ $item_type = GETPOST('mode');
 if ($item_type == 'invoice') $item_type = 'facture';
 elseif ($item_type == 'order') $item_type = 'commande';
 elseif ($item_type == 'propal') $item_type = 'propal';
+elseif ($item_type == 'projet') $item_type = 'projet';
 
 $result=restrictedArea($user,$item_type,$id,'');
 
@@ -153,6 +154,15 @@ if ($id > 0)
     	$head = commande_prepare_head($object);
 		$title = $langs->trans("CustomerOrder");
 		$picto='order';
+    }
+    if ($item_type == 'projet')
+    {
+		require_once(DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php');
+    	$object = new Project($db);
+    	$object->fetch($id);
+    	$head = project_prepare_head($object);
+		$title = $langs->trans("Project");
+		$picto='project';
     }
 
 	dol_fiche_head($head, 'noteteclib', $title, 0, $picto);
