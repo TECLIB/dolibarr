@@ -198,7 +198,7 @@ JS;
 		print '<input type="hidden" name="item_id" value="'.$notes->fields['item_id'].'" />';
 
 		print '<input type="hidden" name="action" value="edit_note_go" />';
-/
+
 		print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90"
 		value="' . $notes->fields['note_title'] . '" /></p>';
 
