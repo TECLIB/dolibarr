@@ -1,6 +1,7 @@
 <?php
 /* Copyright (C) 2010      Franck Charpentier - Auguria <franck.charpentier@auguria.net>
  * Copyright (C) 2013-2016 Laurent Destailleur          <eldy@users.sourceforge.net>
+ * Copyright (C) 2017      Open-DSI                     <support@open-dsi.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -213,7 +214,7 @@ class InterfaceECommerceng
                     $eCommerceSocpeople = new eCommerceSocpeople($this->db);
                     $eCommerceSocpeople->fetchByFkSocpeople($object->id, $site->id);
         
-                    if ($eCommerceSocpeople->remote_id > 0)
+                    if (!empty($eCommerceSocpeople->remote_id))
                     {
                         $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
                         dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
@@ -301,6 +302,9 @@ class InterfaceECommerceng
 
         				if (! $error)
         				{
+                            if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+                                $object->price = $object->multiprices[$site->price_level];
+                            }
         				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id, $object);
         				    if (! $result)
         				    {
@@ -345,7 +349,7 @@ class InterfaceECommerceng
         
         
         
-        if ($action == 'ORDER_MODIFY')
+        if ($action == 'ORDER_MODIFY' || $action == 'ORDER_CLOSE' || $action == 'ORDER_CLASSIFY_BILLED')
         {
             $this->db->begin();
             
@@ -801,8 +805,72 @@ class InterfaceECommerceng
                 return 1;
             }            
         }
-        
-		return 0;
+
+        if ($action == 'ECOMMERCE_PRICE_LEVEL_MODIFY')
+        {
+            $this->db->begin();
+
+            $sql = 'SELECT p.rowid';
+            $sql.= ' FROM '.MAIN_DB_PREFIX.'product as p';
+            $sql.= ' LEFT JOIN '.MAIN_DB_PREFIX."categorie_product as cp ON p.rowid = cp.fk_product";
+            $sql.= ' WHERE p.entity IN ('.getEntity('product', 1).')';
+            $sql.= ' AND cp.fk_categorie = '.$object->fk_cat_product;
+            $sql.= ' GROUP BY p.rowid';
+            $resql = $this->db->query($sql);
+            if ($resql) {
+                $product = new Product($this->db);
+                $eCommerceProduct = new eCommerceProduct($this->db);
+                while ($obj = $this->db->fetch_object($resql)) {
+                    $product->fetch($obj->rowid);
+                    $eCommerceProduct->fetchByProductId($obj->rowid, $object->id);
+
+                    if ($eCommerceProduct->remote_id > 0)
+                    {
+                        $eCommerceSynchro = new eCommerceSynchro($this->db, $object);
+                        dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$object->name);
+                        $eCommerceSynchro->connect();
+                        if (count($eCommerceSynchro->errors))
+                        {
+                            $error++;
+                            setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+                        }
+
+                        if (! $error)
+                        {
+                            if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+                                $product->price = $product->multiprices[$object->price_level];
+                            }
+                            $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id, $product);
+                            if (! $result)
+                            {
+                                $error++;
+                                $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
+                                $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        dol_syslog("Product with id ".$product->id." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
+                        // TODO
+                        //$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
+                    }
+                }
+            }
+
+            if ($error)
+            {
+                $this->db->rollback();
+                return -1;
+            }
+            else
+            {
+                $this->db->commit();
+                return 1;
+            }
+        }
+
+        return 0;
     }
 
 }

@@ -1,6 +1,7 @@
 <?php
 /* Copyright (C) 2010 Franck Charpentier - Auguria <franck.charpentier@auguria.net>
  * Copyright (C) 2016 Laurent Destailleur          <eldy@users.sourceforge.net>
+ * Copyright (C) 2017 Open-DSI                     <support@open-dsi.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +37,7 @@ dol_include_once('/ecommerceng/admin/class/gui/eCommerceMenu.class.php');
 
 
 $langs->load('admin');
+$langs->load('companies');
 $langs->load('ecommerce@ecommerceng');
 
 $siteId = null;
@@ -48,8 +50,30 @@ if (!$user->admin || !$user->rights->ecommerceng->site)
 //DATABASE ACCESS
 $siteDb = new eCommerceSite($db);
 
+$sites = $siteDb->listSites();
+$siteTypes = $siteDb->getSiteTypes();
 $site_form_select_site = 0;
 
+// Set $site_form_select_site on first site.
+if (count($sites))
+{
+    foreach ($sites as $option)
+    {
+        $site_form_select_site = $option['id'];
+        break;
+    }
+}
+
+//LOAD SELECTED SITE
+if (isset($_POST['site_form_select_site']))
+    $siteId = $_POST['site_form_select_site'];
+elseif (isset($_POST['ecommerce_id']))
+    $siteId = $_POST['ecommerce_id'];
+elseif ($site_form_select_site)
+    $siteId = $site_form_select_site;
+
+if ($siteId != null)
+    $siteDb->fetch($siteId);
 
 /*
  * Actions
@@ -77,11 +101,13 @@ if ($_POST['site_form_detail_action'] == 'save')
     if ($errors == array())
     {
         $db->begin();
+        $last_price_level = $siteDb->price_level;
         $siteDb->name = $_POST['ecommerce_name'];
         $siteDb->type = $_POST['ecommerce_type'];
         $siteDb->webservice_address = $_POST['ecommerce_webservice_address'];
         $siteDb->user_name = $_POST['ecommerce_user_name'];
         $siteDb->user_password = $_POST['ecommerce_user_password'];
+        $siteDb->price_level = $_POST['ecommerce_price_level'];
         $siteDb->filter_label = $_POST['ecommerce_filter_label'];
         $siteDb->filter_value = $_POST['ecommerce_filter_value'];
         $siteDb->fk_cat_societe = $_POST['ecommerce_fk_cat_societe'];
@@ -108,6 +134,16 @@ if ($_POST['site_form_detail_action'] == 'save')
             $eCommerceMenu = new eCommerceMenu($db, $siteDb);
             $eCommerceMenu->updateMenu();
             $db->commit();
+
+            if (!empty($conf->global->PRODUIT_MULTIPRICES) && $siteDb->price_level != $last_price_level) {
+                include_once DOL_DOCUMENT_ROOT . '/core/class/interfaces.class.php';
+                $interface=new Interfaces($db);
+                $result=$interface->run_triggers('ECOMMERCE_PRICE_LEVEL_MODIFY',$siteDb,$user,$langs,$conf);
+                if ($result < 0) {
+                    setEventMessages('', $interface->errors, 'errors');
+                }
+            }
+
             setEventMessages($langs->trans('ECommerceSetupSaved'), null);
         } else
         {
@@ -154,34 +190,18 @@ if (! extension_loaded('soap'))
     llxFooter();
     exit;
 }
-    
-$sites = $siteDb->listSites();
-$siteTypes = $siteDb->getSiteTypes();
-
-// Set $site_form_select_site on first site.
-if (count($sites))
-{
-    foreach ($sites as $option)
-    {
-        $site_form_select_site = $option['id'];
-        break;
-    }
-}
-
-//LOAD SELECTED SITE
-if (isset($_POST['site_form_select_site']))
-    $siteId = $_POST['site_form_select_site'];
-elseif (isset($_POST['ecommerce_id']))
-    $siteId = $_POST['ecommerce_id'];
-elseif ($site_form_select_site)
-    $siteId = $site_form_select_site;
-
-if ($siteId != null)
-    $siteDb->fetch($siteId);
 
 $classCategorie = new Categorie($db);
 $productCategories = $classCategorie->get_full_arbo('product');
 $societeCategories = $classCategorie->get_full_arbo('customer');
+
+if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+    $priceLevels = array();
+	for ($i = 1; $i <= $conf->global->PRODUIT_MULTIPRICES_LIMIT; $i++) {
+        $keyforlabel = 'PRODUIT_MULTIPRICES_LABEL'.$i;
+        $priceLevels[$i] = !empty($conf->global->$keyforlabel) ? $langs->trans($conf->global->$keyforlabel) : $i;
+    }
+}
 
 //SET VARIABLES
 $ecommerceId = ($_POST['ecommerce_id'] ? $_POST['ecommerce_id'] : $siteDb->id);
@@ -190,6 +210,7 @@ $ecommerceType = ($_POST['ecommerce_type'] ? $_POST['ecommerce_type'] : intval($
 $ecommerceWebserviceAddress = ($_POST['ecommerce_webservice_address'] ? $_POST['ecommerce_webservice_address'] : $siteDb->webservice_address);
 $ecommerceUserName = ($_POST['ecommerce_user_name'] ? $_POST['ecommerce_user_name'] : $siteDb->user_name);
 $ecommerceUserPassword = ($_POST['ecommerce_user_password'] ? $_POST['ecommerce_user_password'] : $siteDb->user_password);
+$ecommercePriceLevel = ($_POST['ecommerce_price_level'] ? $_POST['ecommerce_price_level'] : $siteDb->price_level);
 $ecommerceFilterLabel = ($_POST['ecommerce_filter_label'] ? $_POST['ecommerce_filter_label'] : $siteDb->filter_label);
 $ecommerceFilterValue = ($_POST['ecommerce_filter_value'] ? $_POST['ecommerce_filter_value'] : $siteDb->filter_value);
 $ecommerceFkCatSociete = ($_POST['ecommerce_fk_cat_societe'] ? $_POST['ecommerce_fk_cat_societe'] : intval($siteDb->fk_cat_societe));

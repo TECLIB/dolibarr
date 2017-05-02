@@ -1,6 +1,7 @@
 <?php
 /* Copyright (C) 2010 Franck Charpentier - Auguria <franck.charpentier@auguria.net>
  * Copyright (C) 2013 Laurent Destailleur          <eldy@users.sourceforge.net>
+ * Copyright (C) 2017 Open-DSI                     <support@open-dsi.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +36,7 @@ class eCommerceSite // extends CommonObject
 	var $webservice_address;
 	var $user_name;
 	var $user_password;
+	var $price_level;
 	var $filter_label;
 	var $filter_value;
 	var $fk_cat_societe;
@@ -47,7 +49,7 @@ class eCommerceSite // extends CommonObject
 	var $magento_price_type;
 
 	//The site type name is used to define class name in eCommerceRemoteAccess class
-    private $siteTypes = array(1=>'magento');
+    private $siteTypes = array(1=>'magento', 2=>'woocommerce');
 	
     /**
      * Constructor
@@ -104,6 +106,7 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->webservice_address)) $this->webservice_address=trim($this->webservice_address);
 		if (isset($this->user_name)) $this->user_name=trim($this->user_name);
 		if (isset($this->user_password)) $this->user_password=trim($this->user_password);
+        if (isset($this->price_level)) $this->price_level=trim($this->price_level);
 		if (isset($this->filter_label)) $this->filter_label=trim($this->filter_label);
 		if (isset($this->filter_value)) $this->filter_value=trim($this->filter_value);
 		if (isset($this->fk_cat_societe)) $this->fk_cat_societe=trim($this->fk_cat_societe);
@@ -122,6 +125,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= "webservice_address,";
 		$sql.= "user_name,";
 		$sql.= "user_password,";
+        $sql.= "price_level,";
 		$sql.= "filter_label,";
 		$sql.= "filter_value,";
 		$sql.= "fk_cat_societe,";
@@ -138,6 +142,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " ".(! isset($this->webservice_address)?'NULL':"'".addslashes($this->webservice_address)."'").",";
 		$sql.= " ".(! isset($this->user_name)?'NULL':"'".addslashes($this->user_name)."'").",";
 		$sql.= " ".(! isset($this->user_password)?'NULL':"'".addslashes($this->user_password)."'").",";
+        $sql.= " ".(! isset($this->price_level)?'NULL':"'".addslashes($this->price_level)."'").",";
 		$sql.= " ".(! isset($this->filter_label)?'NULL':"'".addslashes($this->filter_label)."'").",";
 		$sql.= " ".(! isset($this->filter_value)?'NULL':"'".addslashes($this->filter_value)."'").",";
 		$sql.= " ".($this->fk_cat_societe > 0 ? $this->fk_cat_societe : "NULL").",";
@@ -207,6 +212,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.webservice_address,";
 		$sql.= " t.user_name,";
 		$sql.= " t.user_password,";
+        $sql.= " t.price_level,";
 		$sql.= " t.filter_label,";
 		$sql.= " t.filter_value,";
 		$sql.= " t.fk_cat_societe,";
@@ -235,6 +241,7 @@ class eCommerceSite // extends CommonObject
 				$this->webservice_address = $obj->webservice_address;
 				$this->user_name = $obj->user_name;
 				$this->user_password = $obj->user_password;
+                $this->price_level = $obj->price_level;
 				$this->filter_label = $obj->filter_label;
 				$this->filter_value = $obj->filter_value;
 				$this->fk_cat_societe = $obj->fk_cat_societe;
@@ -280,6 +287,7 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->webservice_address)) $this->webservice_address=trim($this->webservice_address);
 		if (isset($this->user_name)) $this->user_name=trim($this->user_name);
 		if (isset($this->user_password)) $this->user_password=trim($this->user_password);
+        if (isset($this->price_level)) $this->price_level=trim($this->price_level);
 		if (isset($this->filter_label)) $this->filter_label=trim($this->filter_label);
 		if (isset($this->filter_value)) $this->filter_value=trim($this->filter_value);
 		if (isset($this->fk_cat_societe)) $this->fk_cat_societe=trim($this->fk_cat_societe);
@@ -298,6 +306,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " webservice_address=".(isset($this->webservice_address)?"'".addslashes($this->webservice_address)."'":"null").",";
 		$sql.= " user_name=".(isset($this->user_name)?"'".addslashes($this->user_name)."'":"null").",";
 		$sql.= " user_password=".(isset($this->user_password)?"'".addslashes($this->user_password)."'":"null").",";
+        $sql.= " price_level=".(isset($this->price_level)?"'".addslashes($this->price_level)."'":"null").",";
 		$sql.= " filter_label=".(isset($this->filter_label)?"'".addslashes($this->filter_label)."'":"null").",";
 		$sql.= " filter_value=".(isset($this->filter_value)?"'".addslashes($this->filter_value)."'":"null").",";
 		$sql.= " fk_cat_societe=".($this->fk_cat_societe > 0 ? $this->fk_cat_societe:"null").",";
@@ -478,6 +487,7 @@ class eCommerceSite // extends CommonObject
 		$this->webservice_address='';
 		$this->user_name='';
 		$this->user_password='';
+        $this->price_level='';
 		$this->filter_label='';
 		$this->filter_value='';
 		$this->fk_cat_societe='';
