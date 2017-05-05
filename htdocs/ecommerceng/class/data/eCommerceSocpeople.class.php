@@ -1,6 +1,7 @@
 <?php
 /* Copyright (C) 2010 Franck Charpentier - Auguria <franck.charpentier@auguria.net>
  * Copyright (C) 2013 Laurent Destailleur          <eldy@users.sourceforge.net>
+ * Copyright (C) 2017 Open-DSI                     <support@open-dsi.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -330,7 +331,7 @@ class eCommerceSocpeople // extends CommonObject
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_socpeople as t";
         $sql.= " WHERE t.fk_site = ".$siteId;
         $sql.= " AND t.type = ".$typeId;
-        $sql.= " AND t.remote_id = ".$remoteId;
+        $sql.= " AND t.remote_id = '".$remoteId."'";
     	dol_syslog(get_class($this)."::fetchByRemoteId sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)

@@ -1,6 +1,7 @@
 <?php
 /* Copyright (C) 2010 Franck Charpentier - Auguria <franck.charpentier@auguria.net>
  * Copyright (C) 2013 Laurent Destailleur          <eldy@users.sourceforge.net>
+ * Copyright (C) 2017 Open-DSI                     <support@open-dsi.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -679,6 +680,7 @@ class eCommerceSynchro
     {
         try {
             $nbgoodsunchronize = 0;
+            $error=0;
 
             dol_syslog("***** eCommerceSynchro synchCategory");
             
@@ -884,7 +886,7 @@ class eCommerceSynchro
                     if ($synchExists > 0 && isset($this->eCommerceSociete->fk_societe))
                     {
                         $refExists = $dBSociete->fetch($this->eCommerceSociete->fk_societe);
-                        if ($refExistst >= 0)
+                        if ($refExists >= 0)
                         {
                             $dBSociete->name = $societeArray['name'];
                             $dBSociete->name_alias = $societeArray['name_alias'];
@@ -1088,8 +1090,9 @@ class eCommerceSynchro
             $dBContact = new Contact($this->db);
 
             $contactExists = 0;
+            $error=0;
             
-            if ($syncExists > 0)
+            if ($synchExists > 0)
             {
                 $test = $dBContact->fetch($this->eCommerceSocpeople->fk_socpeople);
                 if ($test > 0)
@@ -1141,7 +1144,7 @@ class eCommerceSynchro
                         $this->errors[]=$this->error;
                     }
                 }
-                else if ($refExistst < 0)
+                else if ($refExists < 0)
                 {
                     $this->errors[] = $this->langs->trans('ECommerceSynchSocieteErrorBetweenECommerceSocpeopleAndContact');
                     return false;
@@ -1200,6 +1203,8 @@ class eCommerceSynchro
      */
     public function synchProduct()
     {
+        global $conf;
+
         try {
             $nbgoodsunchronize = 0;
             $products = array();
@@ -1239,8 +1244,11 @@ class eCommerceSynchro
                     $dBProduct->type = $productArray['fk_product_type'];
                     $dBProduct->finished = $productArray['finished'];
                     $dBProduct->status = $productArray['envente'];
-                    $dBProduct->price = $productArray['price'];             // New price, later we will save/update price with price_base_type (TE/TI)
-                    $dBProduct->tva_tx = $productArray['tax_rate'];
+                    if (empty($conf->global->PRODUIT_MULTIPRICES)) {
+                        $dBProduct->price = $productArray['price'];             // New price, later we will save/update price with price_base_type (TE/TI)
+                        $dBProduct->price_min = $productArray['price_min'];
+                        $dBProduct->tva_tx = $productArray['tax_rate'];
+                    }
                     $dBProduct->tva_npr = 0;  // Avoiding _log_price's sql blank
                     $dBProduct->country_id = $productArray['fk_country'];
                     $dBProduct->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
@@ -1253,11 +1261,21 @@ class eCommerceSynchro
                         $result = $dBProduct->update($dBProduct->id, $this->user);
                         if ($result >= 0)// rajouter constante TTC/HT
                         {
+                            if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+                                $price_level = $this->eCommerceSite->price_level;
+                                $dBProduct->updatePrice($productArray['price'], $dBProduct->multiprices_base_type[$price_level], $this->user, $productArray['tax_rate'], $productArray['price_min'], $price_level);
+                            }
+
                             // If eCommerce setup hase change and now prices are switch TI/TE (Tax Include / Tax Excluded)
-                            if ($dBProduct->price_base_type != $this->eCommerceSite->magento_price_type)
+                            if ($dBProduct->price_base_type != $this->eCommerceSite->magento_price_type && empty($conf->global->ECOMMERCENG_DISABLE_MAGENTO_PRICE_TYPE))
                             {
                                 dol_syslog("Setup price for eCommerce are switched from TE toTI or TI to TE, we update price of product");
-                                $dBProduct->updatePrice($dBProduct->price, $this->eCommerceSite->magento_price_type, $this->user);
+                                if (empty($conf->global->PRODUIT_MULTIPRICES)) {
+                                    $dBProduct->updatePrice($dBProduct->price, $this->eCommerceSite->magento_price_type, $this->user);
+                                } else {
+                                    $price_level = $this->eCommerceSite->price_level;
+                                    $dBProduct->updatePrice($dBProduct->multiprices[$price_level], $this->eCommerceSite->magento_price_type, $this->user, $dBProduct->multiprices_tva_tx[$price_level], $dBProduct->multiprices_min[$price_level], $price_level);
+                                }
                             }
                         }
 
@@ -1297,8 +1315,23 @@ class eCommerceSynchro
                         
                         $result = $dBProduct->create($this->user);
                         if ($result >= 0)// rajouter constante TTC/HT
-                        {                            
-                            $dBProduct->updatePrice($dBProduct->price, $this->eCommerceSite->magento_price_type, $this->user);                            
+                        {
+                            if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+                                $price_level = $this->eCommerceSite->price_level;
+                                $dBProduct->updatePrice($productArray['price'], $dBProduct->multiprices_base_type[$price_level], $this->user, $productArray['tax_rate'], $productArray['price_min'], $price_level);
+                            }
+
+                            // If eCommerce setup hase change and now prices are switch TI/TE (Tax Include / Tax Excluded)
+                            if (empty($conf->global->ECOMMERCENG_DISABLE_MAGENTO_PRICE_TYPE))
+                            {
+                                dol_syslog("Setup price for eCommerce are switched from TE toTI or TI to TE, we update price of product");
+                                if (empty($conf->global->PRODUIT_MULTIPRICES)) {
+                                    $dBProduct->updatePrice($dBProduct->price, $this->eCommerceSite->magento_price_type, $this->user);
+                                } else {
+                                    $price_level = $this->eCommerceSite->price_level;
+                                    $dBProduct->updatePrice($dBProduct->multiprices[$price_level], $this->eCommerceSite->magento_price_type, $this->user, $dBProduct->multiprices_tva_tx[$price_level], $dBProduct->multiprices_min[$price_level], $price_level);
+                                }
+                            }
                         }
                         else
                         {
@@ -1358,7 +1391,7 @@ class eCommerceSynchro
                             {
                                 if (! in_array($catId, $listofexistingcatsforproduct))
                                 {
-                                    dol_syslog("The product id=".$dbProduct->id." seems to no be linked yet to category id=".$catId.", so we link it.");
+                                    dol_syslog("The product id=".$dBProduct->id." seems to no be linked yet to category id=".$catId.", so we link it.");
                                     $cat = new Categorie($this->db); // Instanciate a new cat without id (to avoid fetch)
                                     $cat->id = $catId;     // Affecting id (for calling add_type)
                                     $cat->add_type($dBProduct, 'product');
@@ -1604,7 +1637,7 @@ class eCommerceSynchro
                                 $input_method_id = dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');  // Order mode. Not visible with some Dolibarr versions
                                 $dBCommande->source=$input_method_id;
                                 $dBCommande->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
-                                $dBCommande->note_private="";
+                                $dBCommande->note_private=isset($commandeArray['note'])?$commandeArray['note']:"";
                                 if (empty($conf->global->ECOMMERCENG_DISABLE_LOG_IN_NOTE))
                                 {
                                     $dBCommande->note_private.="Last eCommerce order received:\n".serialize(var_export($commandeArray['remote_order'], true));
@@ -1748,14 +1781,14 @@ class eCommerceSynchro
                                     {
                                         if ($dBCommande->statut != Commande::STATUS_VALIDATED)
                                         {
-                                            $dBCommande->setStatut(Commande::STATUS_VALIDATED, $dbCommande->id, $dbCommande->table_element);
+                                            $dBCommande->setStatut(Commande::STATUS_VALIDATED, $dBCommande->id, $dBCommande->table_element);
                                         }
                                     }
                                     if ($commandeArray['status'] == 2)            // Should be Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9 
                                     {
                                         if ($dBCommande->statut != 2) 
                                         {
-                                            $dBCommande->setStatut(2, $dbCommande->id, $dbCommande->table_element);
+                                            $dBCommande->setStatut(2, $dBCommande->id, $dBCommande->table_element);
                                         }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CANCELED)
@@ -1765,7 +1798,7 @@ class eCommerceSynchro
                                             $idWareHouse = 0;
                                             // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
                                             //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
-                                            $dBCommande->cancel(0, $idWarehouse);
+                                            $dBCommande->cancel(0, $idWareHouse);
                                         }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CLOSED)
@@ -1848,10 +1881,11 @@ class eCommerceSynchro
                             $this->errors[] = $this->langs->trans('ECommerceSynchCommandeError');
                         }
                     } 
-                    else
-                    {
-                        $error++;
-                        $this->errors[] = $this->langs->trans('ECommerceSynchCommandeErrorSocieteNotExists') . ' ' . $commandeArray['remote_id_societe'];
+                    else {
+                        if ($commandeArray['remote_id_societe'] == 0 && empty($conf->global->ECOMMERCENG_DISABLED_ERROR_FOR_SOCIETE_ID_0)) {
+                            $error++;
+                            $this->errors[] = $this->langs->trans('ECommerceSynchCommandeErrorSocieteNotExists') . ' ' . $commandeArray['remote_id_societe'];
+                        }
                     }
                     unset($dBCommande);
                     unset($this->eCommerceSociete);
@@ -1860,7 +1894,7 @@ class eCommerceSynchro
                     if ($error) 
                     {
                         $nbrecorderror++;
-                        break;      // We decide to stop on first error
+                        //break;      // We decide to stop on first error
                     }
                     else
                     {
@@ -1875,7 +1909,8 @@ class eCommerceSynchro
                 }
                 else
                 {
-                    $this->db->rollback();
+                    $this->db->commit();
+                    //$this->db->rollback();
                 }
             }
         } catch (Exception $e) {
