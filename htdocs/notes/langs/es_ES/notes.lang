@@ -1,0 +1,21 @@
+# Dolibarr language file - es_ES - notes
+CHARSET= UTF-8
+SUBSTITUTION_NotesNbTeclib=Notas
+NoNotes=No hay notas
+NoteId=n°
+NoteDate=Fecha
+NoteUser=Autor
+NoteContent=Contenido
+AreYouSureYouWantToDeleteThisNote=Esta seguro que desea eliminar esta nota?
+AddNote=Nuevo nota
+EditNote=Editar nota
+DeleteNote=Eliminar nota
+AreYouSure=Esta seguro
+NotesSetup=Configuración de marca de tiempo de las notas
+NotesNoSetup=No existen opciones de configuración. Este módulo estará inmediatamente disponible tras la activación.
+AboutInfoTecLib=Este módulo está desarrollado y distribuido por Laurent Destailleur para TecLib, <a href="http://www.teclib.com">www.teclib.com</a> (A Dolibarr Preferred Partner company).
+MoreModules=Otros módulos del mismo autor están disponibles en la web oficial de DoliStore ...
+MoreModulesLink=<a target="_blank" href="http://www.dolistore.com/search.php?search_query=teclib">Haga clic aquí para ver la lista completa</a>  
+MoreCloudHosting=Para utilizar Dolibarr en línea, elija el hosting seguro DoliCloud.
+MoreCloudHostingLink=<a target="_blank" href="http://www.dolicloud.com">Haga clic aquí para mas información</a>
+CompatibleWithDoliDroid=Estos módulos también son compatibles con DoliDroid, la aplicación Android de Dolibarr.    
