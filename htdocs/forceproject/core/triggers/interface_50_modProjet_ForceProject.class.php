@@ -137,7 +137,9 @@ class InterfaceForceProject
 	            	$obj=$this->db->fetch_object($resql);
 	            	$newref=$obj->ref;
 	            	$newref=preg_replace('/projectref/',$projectref,$newref);
-
+	            	$newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);
+	            	$newref=preg_replace('/%%+/',$projectref,$newref);
+	            	
 	            	// If we want counter is started to 1 for each project
 	            	if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
 	            	{
