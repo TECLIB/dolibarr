@@ -201,14 +201,14 @@ class modECommerceNg extends DolibarrModules
 	 *					It also creates data directories.
 	 *      \return     int             1 if OK, 0 if KO
 	 */
-	function init()
+	function init($options = '')
 	{
 		$sql = array();
 
 		$result=$this->load_tables();
 		$this->addSettlementTerms();
 		$this->addAnonymousCompany();
-		return $this->_init($sql);
+		return $this->_init($sql, $options);
 	}
 
 	/**
@@ -217,11 +217,11 @@ class modECommerceNg extends DolibarrModules
 	 *					Data directories are not deleted.
 	 *      \return     int             1 if OK, 0 if KO
 	 */
-	function remove()
+	function remove($options = '')
 	{
 		$sql = array();
 
-		return $this->_remove($sql);
+		return $this->_remove($sql, $options);
 	}
 
 
