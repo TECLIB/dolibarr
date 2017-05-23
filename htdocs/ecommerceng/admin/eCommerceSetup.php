@@ -34,6 +34,7 @@ require_once(DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php');
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerceng/admin/class/gui/eCommerceMenu.class.php');
+dol_include_once('/ecommerceng/lib/eCommerce.lib.php');
 
 
 $langs->load('admin');
@@ -136,12 +137,7 @@ if ($_POST['site_form_detail_action'] == 'save')
             $db->commit();
 
             if (!empty($conf->global->PRODUIT_MULTIPRICES) && $siteDb->price_level != $last_price_level) {
-                include_once DOL_DOCUMENT_ROOT . '/core/class/interfaces.class.php';
-                $interface=new Interfaces($db);
-                $result=$interface->run_triggers('ECOMMERCE_PRICE_LEVEL_MODIFY',$siteDb,$user,$langs,$conf);
-                if ($result < 0) {
-                    setEventMessages('', $interface->errors, 'errors');
-                }
+                updatePriceLevel($siteDb);
             }
 
             setEventMessages($langs->trans('ECommerceSetupSaved'), null);

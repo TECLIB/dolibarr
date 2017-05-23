@@ -29,6 +29,8 @@ dol_include_once('/ecommerceng/includes/WooCommerce/HttpClient/Options.php');
 dol_include_once('/ecommerceng/includes/WooCommerce/HttpClient/Request.php');
 dol_include_once('/ecommerceng/includes/WooCommerce/HttpClient/Response.php');
 
+require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
+
 use Automattic\WooCommerce\Client;
 use Automattic\WooCommerce\HttpClient\HttpClientException;
 
