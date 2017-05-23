@@ -59,6 +59,7 @@ $item_type = GETPOST('mode');
 if ($item_type == 'invoice') $item_type = 'facture';
 elseif ($item_type == 'order') $item_type = 'commande';
 elseif ($item_type == 'propal') $item_type = 'propal';
+elseif ($item_type == 'projet') $item_type = 'projet';
 
 $result=restrictedArea($user,$item_type,$id,'');
 
@@ -154,6 +155,15 @@ if ($id > 0)
 		$title = $langs->trans("CustomerOrder");
 		$picto='order';
     }
+    if ($item_type == 'projet')
+    {
+		require_once(DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php');
+    	$object = new Project($db);
+    	$object->fetch($id);
+    	$head = project_prepare_head($object);
+		$title = $langs->trans("Project");
+		$picto='project';
+    }
 
 	dol_fiche_head($head, 'noteteclib', $title, 0, $picto);
 
@@ -208,11 +218,11 @@ JS;
 	print '<input type="hidden" name="id" value="'.$id.'" />';
 	print '<input type="hidden" name="action" value="add_note" />';
 	print '<input type="hidden" name="mode" value="'.$item_type.'" />';
-	print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" /></p>';
+	print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" style="width:98%;" /></p>';
 	print '<p>';
 	//$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',180,'dolibarr_notes');
 	//print $doleditor->Create();
-	print '<textarea name="note_value" rows="20" cols="100"></textarea>';
+	print '<textarea name="note_value" rows="20" cols="100" style="width:98%;max-height: 280px;"></textarea>';
 	print '</p>';
 	print '<p><input type="submit" value="'.$langs->trans("Save").'" class="button" /></p>';
 	print '</form>';
