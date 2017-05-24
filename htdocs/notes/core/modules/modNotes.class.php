@@ -115,6 +115,12 @@ class modNotes extends DolibarrModules
 			$this->tabs[]='propal:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=propal&id=__ID__';	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
 			$this->tabs[]='propal:-note:NU:1';
 		}
+                if (empty($conf->global->TECLIB_NOTES_NOT_ON_PROJET))
+                {
+                        $this->tabs[]='project:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=projet&id=__ID__';        // With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
+                        $this->tabs[]='project:-notes:NU:1';
+                }
+
 		// where entity can be
 		// 'thirdparty'       to add a tab in third party view
 		// 'intervention'     to add a tab in intervention view

@@ -69,6 +69,11 @@ function notes_completesubstitutionarray(&$substitutionarray,$langs,$object)
     	$nbofnotes = $note->countNb($object->element, $object->id);
 	    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
     }
-
+    if ($object->element == 'project')
+    {
+        $note=new Note($db);
+        $nbofnotes = $note->countNb($object->element, $object->id);
+            if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
+    }
 }
 
