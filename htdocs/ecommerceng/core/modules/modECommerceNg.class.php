@@ -32,11 +32,13 @@ class modECommerceNg extends DolibarrModules
 {
 	/**
 	 *   Constructor. Define names, constants, directories, boxes, permissions
-	 *   
+	 *
 	 *   @param    DoliDB      $db      Database handler
 	 */
 	function __construct($db)
 	{
+	    global $conf;
+
 		$this->db = $db;
 
 		// Id for module (must be unique).
@@ -55,7 +57,7 @@ class modECommerceNg extends DolibarrModules
 		$this->descriptionlong = "See page https://wiki.dolibarr.org/index.php/Module_Magento_EN for more information";
 		$this->editor_name = 'TecLib';
 		$this->editor_url = 'http://www.teclib.com';
-		
+
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
 		$this->version = '3.9.0.2';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
@@ -66,7 +68,7 @@ class modECommerceNg extends DolibarrModules
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/images directory, use this->picto=DOL_URL_ROOT.'/module/images/file.png'
 		$this->picto='eCommerce.png@ecommerceng';
-                
+
         // Defined all module parts (triggers, login, substitutions, menus, css, etc...)
 		// for default path (eg: /mymodule/core/xxxxx) (0=disable, 1=enable)
 		// for specific path of parts (eg: /mymodule/core/modules/barcode)
@@ -156,7 +158,7 @@ class modECommerceNg extends DolibarrModules
 		$this->rights[$r][1] = 'Configure websites';
 		$this->rights[$r][3] = 0;
 		$this->rights[$r][4] = 'site';
-		
+
 		$r=0;
 
 		// Add here list of permission defined by an id, a label, a boolean and two constant strings.
@@ -174,9 +176,12 @@ class modECommerceNg extends DolibarrModules
 		$r=0;
 
 		// Add here entries to declare new menus
-		$eCommerceMenu = new eCommerceMenu($this->db,null,$this);
-		$this->menu = $eCommerceMenu->getMenu();
-
+		if (! empty($conf->modules['ecommerceng']))
+		{
+		    // Do not run this code if module is not yet enabled (tables does not exists yet)
+    		$eCommerceMenu = new eCommerceMenu($this->db,null,$this);
+	        $this->menu = $eCommerceMenu->getMenu();
+		}
 
 		// Exports
 		$r=1;
@@ -205,7 +210,7 @@ class modECommerceNg extends DolibarrModules
 	{
 		$sql = array();
 
-		$result=$this->load_tables();
+		$result=$this->load_tables($options);
 		$this->addSettlementTerms();
 		$this->addAnonymousCompany();
 		return $this->_init($sql, $options);
@@ -236,37 +241,37 @@ class modECommerceNg extends DolibarrModules
 	{
 		return $this->_load_tables('/ecommerceng/sql/');
 	}
-	
+
 	/**
 	 * Add anonymous company for anonymous orders
 	 */
 	private function addAnonymousCompany()
 	{
 	    global $user;
-	    
+
 		$idCompany = dolibarr_get_const($this->db, 'ECOMMERCE_COMPANY_ANONYMOUS');
-		
+
 		// Check for const existing but company deleted from dB
 		if ($idCompany)
 		{
 			$dBSociete = new Societe($this->db);
-			$idCompany = $dBSociete->fetch($idCompany) < 0 ? null:$idCompany ; 
+			$idCompany = $dBSociete->fetch($idCompany) < 0 ? null:$idCompany ;
 		}
-		
+
 		if ($idCompany == null)
 		{
 			$dBSociete = new Societe($this->db);
 			$dBSociete->nom = 'Anonymous';
 			$dBSociete->client = 3;//for client/prospect
 			$dBSociete->create($user);
-			
+
 			if (dolibarr_set_const($this->db, 'ECOMMERCE_COMPANY_ANONYMOUS', $dBSociete->id) < 0)
 			{
 				dolibarr_print_error($this->db);
 			}
 		}
 	}
-	
+
 	/**
 	 * Add settlement terms if not exists
 	 */
@@ -279,42 +284,44 @@ class modECommerceNg extends DolibarrModules
 		{
 			// Get free rowid to insert
 			$newid = 0;
-			$sql = "SELECT max(`rowid`) newid from `".$table."`";
+			$sql = "SELECT max(rowid) newid from ".$table;
 			$maxId = $this->db->query($sql);
 			if ($maxId)
 			{
 				$obj = $this->db->fetch_object($maxId);
-				$newid = ($obj->newid + 1);	
+				$newid = ($obj->newid + 1);
 			}
 			else
 			{
 				dol_print_error($this->db);
 			}
-			
+
 			// Get free sortorder to insert
 			$newSort = 0;
-			$sql = "SELECT max(`sortorder`) newsortorder from `".$table."`";
+			$sql = "SELECT max(sortorder) newsortorder from ".$table;
 			$maxSort = $this->db->query($sql);
 			if ($maxSort)
 			{
 				$obj = $this->db->fetch_object($maxSort);
-				$newSort = ($obj->newsortorder + 1);	
+				$newSort = ($obj->newsortorder + 1);
 			}
 			else
 			{
 				dol_print_error($this->db);
 			}
-			
+
 			if ($newid != 0 && $newSort != 0)
 			{
-				$sql = "INSERT INTO `".$table."`
-							(`rowid`, `code`, `sortorder`, `active`, `libelle`, `libelle_facture`, `fdm`, `nbjour`, `decalage`)
-						VALUES
-							(".$newid.", 'CASH', ".$newSort.", 1, 'Au comptant', 'A la commande', 0, 0, NULL)";
-				$insert = $this->db->query($sql);
+			    if ((float) DOL_VERSION < 5.0)
+			    {
+    				$sql = "INSERT INTO ".$table."
+    							(rowid, code, sortorder, active, libelle, libelle_facture, fdm, nbjour, decalage)
+    						VALUES
+    							(".$newid.", 'CASH', ".$newSort.", 1, 'Au comptant', 'A la commande', 0, 0, NULL)";
+    				$insert = $this->db->query($sql);
+			    }
 			}
 		}
 	}
 }
 
-?>

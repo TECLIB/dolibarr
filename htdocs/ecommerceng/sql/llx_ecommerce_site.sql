@@ -30,7 +30,7 @@ CREATE TABLE llx_ecommerce_site (
   fk_warehouse integer NULL,
   stock_sync_direction varchar(24) DEFAULT 'none',
   last_update datetime DEFAULT NULL,
-  timeout int(11) NOT NULL DEFAULT 300,
-  magento_use_special_price INT( 1 ) NOT NULL DEFAULT '0',
+  timeout integer NOT NULL DEFAULT 300,
+  magento_use_special_price INTEGER NOT NULL DEFAULT 0,
   magento_price_type VARCHAR(3) NOT NULL DEFAULT 'HT'
 ) ENGINE=InnoDB;

@@ -25,23 +25,23 @@ class eCommerceDict
 {
 	private $db;
 	private $table;
-	
+
     function eCommerceDict($db, $table)
     {
     	$this->db = $db;
     	$this->table = $table;
         return 1;
     }
-    
+
     /**
      * Get object from database
-     * @param $code string 
+     * @param $code string
      * @return array of table fields values
      */
     public function fetchByCode($code)
 	{
 		$object = array();
-		$sql = "SELECT * FROM `".$this->table."` WHERE `code` = '".$code."'";
+		$sql = "SELECT * FROM ".$this->table." WHERE code = '".$code."'";
 		$result = $this->db->query($sql);
 		if ($result)
 		{
@@ -69,7 +69,7 @@ class eCommerceDict
     public function getAll()
     {
     	$lines = array();
-		$sql = "SELECT * FROM `".$this->table."`";
+		$sql = "SELECT * FROM ".$this->table;
 		$result = $this->db->query($sql);
 		if ($result)
 		{
@@ -92,7 +92,7 @@ class eCommerceDict
 		}
 		return $lines;
     }
-    
+
     /**
      * Get the value of ECOMMERCE_COMPANY_ANONYMOUS from db
      * @return int > 0 if OK, 0 if KO
@@ -109,6 +109,6 @@ class eCommerceDict
 		}
 		return $result;
     }*/
-    
+
 }
 
