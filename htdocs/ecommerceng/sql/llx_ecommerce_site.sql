@@ -23,6 +23,7 @@ CREATE TABLE llx_ecommerce_site (
   webservice_address varchar(255) NOT NULL,
   user_name varchar(255) DEFAULT NULL,
   user_password varchar(255) DEFAULT NULL,
+  price_level integer NULL DEFAULT 1,
   filter_label varchar(255) DEFAULT NULL,
   filter_value varchar(255) DEFAULT NULL,
   fk_cat_societe integer NOT NULL,

@@ -138,3 +138,7 @@ BackToListOfSites=Back to list of ecommerce sites
 ClearLinks=Delete links
 ClearData=Delete links and Dolibarr linked records
 ShowDebugTools=Show init/purge/debug tools
+ECommerceShipping=Shipping
+ECommercePriceLevel=Price level
+ECommercePriceLevelDescription=Only this price level are synchronized between Dolibarr and eCommerce
+ECommerceConfirmUpdatePriceLevel=You have changed the price level and the products on the eCommerce will be updated.\nThis may take a long time, please confirm.

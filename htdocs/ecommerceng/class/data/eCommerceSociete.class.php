@@ -25,24 +25,24 @@ class eCommerceSociete // extends CommonObject
 	var $errors=array();				//!< To return several error codes (or messages)
 	//var $element='ecommerce_societe';			//!< Id that identify managed objects
 	//var $table_element='ecommerce_societe';	//!< Name of table without prefix where object is stored
-    
+
     var $id;
     var $fk_societe;
     var $fk_site;
     var $remote_id;
     var $last_update;
-	
+
     /**
      *    Database access to ecommerce_societe
      *    @param      DoliDB 		$db      Database handler
      */
-    function eCommerceSociete($db) 
+    function eCommerceSociete($db)
     {
         $this->db = $db;
         return 1;
     }
 
-	
+
     /**
      *      Create in database
      *      @param      user        	User that create
@@ -53,16 +53,16 @@ class eCommerceSociete // extends CommonObject
     {
     	global $conf, $langs;
 		$error=0;
-    	
+
 		// Clean parameters
 		if (isset($this->fk_societe)) $this->fk_societe=intval($this->fk_societe);
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
 		if (isset($this->remote_id)) $this->remote_id=trim($this->remote_id);
 		if (isset($this->last_update)) $this->last_update=trim($this->last_update);
-		
+
 		// Check parameters
 		// Put here code to add control on parameters values
-		
+
         // Insert request
 		$sql = "INSERT INTO ".MAIN_DB_PREFIX."ecommerce_societe(";
 		$sql.= "fk_societe,";
@@ -77,21 +77,21 @@ class eCommerceSociete // extends CommonObject
 		$sql.= ")";
 
 		$this->db->begin();
-		
+
 	   	dol_syslog(get_class($this)."::create sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-        
+
 		if (! $error)
         {
             $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX."ecommerce_societe");
             if (! ($this->id > 0)) dol_syslog("last_insert_id did not return an int", LOG_ERR);
-            
+
 			if (! $notrigger)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
 	            // want this action call a trigger.
-	            
+
 	            //// Call triggers
 	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 	            //$interface=new Interfaces($this->db);
@@ -108,7 +108,7 @@ class eCommerceSociete // extends CommonObject
 			{
 	            dol_syslog(get_class($this)."::create ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -119,10 +119,10 @@ class eCommerceSociete // extends CommonObject
 		}
     }
 
-    
+
     /**
      *    Load object in memory from database
-     *    
+     *
      *    @param    int				$id         id object
      *    @return   int         				<0 if KO, >0 if OK
      */
@@ -137,7 +137,7 @@ class eCommerceSociete // extends CommonObject
 		$sql.= " t.last_update";
 		$sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_societe as t";
         $sql.= " WHERE t.rowid = ".$id;
-        
+
     	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
@@ -145,7 +145,7 @@ class eCommerceSociete // extends CommonObject
             if ($this->db->num_rows($resql))
             {
                 $obj = $this->db->fetch_object($resql);
-    
+
                 $this->id = $obj->rowid;
                 $this->fk_societe = $obj->fk_societe;
                 $this->fk_site = $obj->fk_site;
@@ -153,7 +153,7 @@ class eCommerceSociete // extends CommonObject
                 $this->last_update = $obj->last_update;
             }
             $this->db->free($resql);
-            
+
             return 1;
         }
         else
@@ -163,7 +163,7 @@ class eCommerceSociete // extends CommonObject
             return -1;
         }
     }
-    
+
 
     /**
      *      \brief      Update database
@@ -175,7 +175,7 @@ class eCommerceSociete // extends CommonObject
     {
     	global $conf, $langs;
 		$error=0;
-    	
+
 		// Clean parameters
 		if (isset($this->fk_societe)) $this->fk_societe=intval($this->fk_societe);
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
@@ -187,27 +187,27 @@ class eCommerceSociete // extends CommonObject
 
         // Update request
         $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_societe SET";
-        
+
 		$sql.= " fk_societe=".(isset($this->fk_societe)?intval($this->fk_societe):0).",";
 		$sql.= " fk_site=".(isset($this->fk_site)?intval($this->fk_site):0).",";
 		$sql.= " remote_id=".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
 		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
-        
+
         $sql.= " WHERE rowid=".$this->id;
 
 		$this->db->begin();
-        
+
 		dol_syslog(get_class($this)."::update sql=".$sql, LOG_DEBUG);
         $resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-        
+
 		if (! $error)
 		{
 			if (! $notrigger)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
 	            // want this action call a trigger.
-				
+
 	            //// Call triggers
 	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 	            //$interface=new Interfaces($this->db);
@@ -216,7 +216,7 @@ class eCommerceSociete // extends CommonObject
 	            //// End call triggers
 	    	}
 		}
-		
+
         // Commit or rollback
 		if ($error)
 		{
@@ -224,7 +224,7 @@ class eCommerceSociete // extends CommonObject
 			{
 	            dol_syslog(get_class($this)."::update ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -232,13 +232,13 @@ class eCommerceSociete // extends CommonObject
 		{
 			$this->db->commit();
 			return 1;
-		}		
+		}
     }
-  
-  
+
+
  	/**
 	 *  Delete object in database
-	 *  
+	 *
      *	@param      $user        	User that delete
      *  @param      $notrigger	    0=launch triggers after, 1=disable triggers
      *  @param      $sitename       Site name to update alias
@@ -248,43 +248,43 @@ class eCommerceSociete // extends CommonObject
 	{
 		global $conf, $langs;
 		$error=0;
-		
+
 		dol_syslog("Delete into ecommerce_societe sitename=".$sitename);
-		
+
 		$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_societe";
 		$sql.= " WHERE rowid=".$this->id;
-	
+
 		$sql2 = "UPDATE ".MAIN_DB_PREFIX."societe";
 		$sql2.= " SET name_alias = NULL where name_alias = '".$sitename.' id '.$this->remote_id."'";      // Magento id xxx
-	
+
 		$this->db->begin();
-		
+
 		dol_syslog(get_class($this)."::delete sql=".$sql);
 		$resql = $this->db->query($sql);
 		if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-		
+
 		if ($sitename)
 		{
     		$resql2 = $this->db->query($sql2);
     		if (! $resql2) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
 		}
-		
+
 		if (! $error)
 		{
 			if (! $notrigger)
 			{
 				// Uncomment this and change MYOBJECT to your own tag if you
 		        // want this action call a trigger.
-				
+
 		        //// Call triggers
 		        //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 		        //$interface=new Interfaces($this->db);
 		        //$result=$interface->run_triggers('MYOBJECT_DELETE',$this,$user,$langs,$conf);
 		        //if ($result < 0) { $error++; $this->errors=$interface->errors; }
 		        //// End call triggers
-			}	
+			}
 		}
-		
+
         // Commit or rollback
 		if ($error)
 		{
@@ -292,7 +292,7 @@ class eCommerceSociete // extends CommonObject
 			{
 	            dol_syslog(get_class($this)."::delete ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -302,23 +302,23 @@ class eCommerceSociete // extends CommonObject
 			return 1;
 		}
 	}
-	
+
 	/**
 	 * Get the last date of the last updated society
-	 * 
+	 *
 	 * @param $site eCommerceSite id | * for each sites
 	 * @return datetime
 	 */
 	public function getLastUpdate($site)
 	{
 		global $langs;
-		
+
         $sql = "SELECT MAX(t.last_update) as lastdate FROM ".MAIN_DB_PREFIX."ecommerce_societe as t";
         $sql.= " WHERE t.fk_site = ".$site;
     	dol_syslog(get_class($this)."::getLastUpdate sql=".$sql, LOG_DEBUG);
-    	
+
     	$lastdate = null;
-    	
+
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -326,7 +326,7 @@ class eCommerceSociete // extends CommonObject
             {
                 $obj = $this->db->fetch_object($resql);
 				if ($obj->lastdate != null)
-                	$lastdate = $this->db->jdate($obj->lastdate);                	              
+                	$lastdate = $this->db->jdate($obj->lastdate);
             }
             $this->db->free($resql);
         }
@@ -337,10 +337,10 @@ class eCommerceSociete // extends CommonObject
         }
         return $lastdate;
 	}
-	
+
 	/**
      *    Load object in memory from database by remote_id
-     *    
+     *
      *    @param	$remoteId string remote_id
      *    @param	$siteId int fk_site
      *    @return	int <0 if KO, >0 if OK
@@ -382,7 +382,7 @@ class eCommerceSociete // extends CommonObject
             return -1;
         }
     }
-    
+
 	/**
      *    Load object in memory from database by fk_societe
      *    @param	$fkSociete int fk_societe
@@ -427,9 +427,9 @@ class eCommerceSociete // extends CommonObject
         }
     }
 
-	/**	
+	/**
      * 		Select all the ids from eCommerceSociete for a site
-     * 
+     *
      * 		@param int		siteId
      * 		@return array	synchObject ids for this site
      */
@@ -437,7 +437,7 @@ class eCommerceSociete // extends CommonObject
     {
    		global $langs;
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."ecommerce_societe";
-        $sql.= " WHERE fk_site = ".$siteId;       
+        $sql.= " WHERE fk_site = ".$siteId;
     	dol_syslog(get_class($this)."::getAllECommerceSocieteIds sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
 
@@ -451,7 +451,7 @@ class eCommerceSociete // extends CommonObject
             	$obj = $this->db->fetch_object($resql);
             	$idsArray[] = intval($obj->rowid);
             	$ii++;
-            }            
+            }
             $this->db->free($resql);
             return $idsArray;
         	return $num;
@@ -464,4 +464,3 @@ class eCommerceSociete // extends CommonObject
         }
     }
 }
-?>

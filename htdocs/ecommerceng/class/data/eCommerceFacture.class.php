@@ -25,24 +25,24 @@ class eCommerceFacture // extends CommonObject
 	var $errors=array();				//!< To return several error codes (or messages)
 	//var $element='ecommerce_facture';			//!< Id that identify managed objects
 	//var $table_element='ecommerce_facture';	//!< Name of table without prefix where object is stored
-    
+
     var $id;
     var $fk_facture;
     var $fk_site;
     var $remote_id;
     var $last_update;
-	
+
     /**
      *      \brief      Constructor
      *      \param      DB      Database handler
      */
-    function eCommerceFacture($DB) 
+    function eCommerceFacture($DB)
     {
         $this->db = $DB;
         return 1;
     }
 
-	
+
     /**
      *      \brief      Create in database
      *      \param      user        	User that create
@@ -53,7 +53,7 @@ class eCommerceFacture // extends CommonObject
     {
     	global $conf, $langs;
 		$error=0;
-    	
+
 		// Clean parameters
 		if (isset($this->fk_facture)) $this->fk_facture=intval($this->fk_facture);
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
@@ -61,39 +61,39 @@ class eCommerceFacture // extends CommonObject
 		if (isset($this->last_update)) $this->last_update=trim($this->last_update);
 		// Check parameters
 		// Put here code to add control on parameters values
-		
+
         // Insert request
 		$sql = "INSERT INTO ".MAIN_DB_PREFIX."ecommerce_facture(";
-		
+
 		$sql.= "fk_facture,";
 		$sql.= "fk_site,";
 		$sql.= "remote_id,";
 		$sql.= "last_update";
-		
+
         $sql.= ") VALUES (";
-       
+
 		$sql.= " ".(isset($this->fk_facture)?intval($this->fk_facture):0).",";
 		$sql.= " ".(isset($this->fk_site)?intval($this->fk_site):0).",";
 		$sql.= " ".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
 		$sql.= " ".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
-		
+
 		$sql.= ")";
 
 		$this->db->begin();
-		
+
 	   	dol_syslog(get_class($this)."::create sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-        
+
 		if (! $error)
         {
             $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX."ecommerce_facture");
-    
+
 			if (! $notrigger)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
 	            // want this action call a trigger.
-	            
+
 	            //// Call triggers
 	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 	            //$interface=new Interfaces($this->db);
@@ -110,7 +110,7 @@ class eCommerceFacture // extends CommonObject
 			{
 	            dol_syslog(get_class($this)."::create ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -121,11 +121,12 @@ class eCommerceFacture // extends CommonObject
 		}
     }
 
-    
+
     /**
-     *    \brief      Load object in memory from database
-     *    \param      id          id object
-     *    \return     int         <0 if KO, >0 if OK
+     *    Load object in memory from database
+     *
+     *    @param      int   $id          id object
+     *    @return     int                <0 if KO, >0 if OK
      */
     function fetch($id)
     {
@@ -138,7 +139,7 @@ class eCommerceFacture // extends CommonObject
 		$sql.= " t.last_update";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_facture as t";
         $sql.= " WHERE t.rowid = ".$id;
-    
+
     	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
@@ -146,7 +147,7 @@ class eCommerceFacture // extends CommonObject
             if ($this->db->num_rows($resql))
             {
                 $obj = $this->db->fetch_object($resql);
-    
+
                 $this->id = $obj->rowid;
                 $this->fk_facture = $obj->fk_facture;
                 $this->fk_site = $obj->fk_site;
@@ -154,7 +155,7 @@ class eCommerceFacture // extends CommonObject
                 $this->last_update = $obj->last_update;
             }
             $this->db->free($resql);
-            
+
             return 1;
         }
         else
@@ -164,7 +165,7 @@ class eCommerceFacture // extends CommonObject
             return -1;
         }
     }
-    
+
 
     /**
      *      \brief      Update database
@@ -176,19 +177,19 @@ class eCommerceFacture // extends CommonObject
     {
     	global $conf, $langs;
 		$error=0;
-    	
+
 		// Clean parameters
 		if (isset($this->fk_facture)) $this->fk_facture=intval($this->fk_facture);
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
 		if (isset($this->remote_id)) $this->remote_id=trim($this->remote_id);
 		if (isset($this->last_update)) $this->last_update=trim($this->last_update);
-		
+
 		// Check parameters
 		// Put here code to add control on parameters values
 
         // Update request
         $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_facture SET";
-        
+
 		$sql.= " fk_facture=".(isset($this->fk_facture)?intval($this->fk_facture):0).",";
 		$sql.= " fk_site=".(isset($this->fk_site)?intval($this->fk_site):0).",";
 		$sql.= " remote_id=".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
@@ -197,18 +198,18 @@ class eCommerceFacture // extends CommonObject
         $sql.= " WHERE rowid=".$this->id;
 
 		$this->db->begin();
-        
+
 		dol_syslog(get_class($this)."::update sql=".$sql, LOG_DEBUG);
         $resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-        
+
 		if (! $error)
 		{
 			if (! $notrigger)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
 	            // want this action call a trigger.
-				
+
 	            //// Call triggers
 	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 	            //$interface=new Interfaces($this->db);
@@ -217,7 +218,7 @@ class eCommerceFacture // extends CommonObject
 	            //// End call triggers
 	    	}
 		}
-		
+
         // Commit or rollback
 		if ($error)
 		{
@@ -225,7 +226,7 @@ class eCommerceFacture // extends CommonObject
 			{
 	            dol_syslog(get_class($this)."::update ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -233,13 +234,13 @@ class eCommerceFacture // extends CommonObject
 		{
 			$this->db->commit();
 			return 1;
-		}		
+		}
     }
-  
-  
+
+
  	/**
 	 *  Delete object in database
-	 *  
+	 *
      *	@param      User    $user        	User that delete
      *  @param      int     $notrigger	    0=launch triggers after, 1=disable triggers
 	 *	@return		int				        <0 if KO, >0 if OK
@@ -248,32 +249,32 @@ class eCommerceFacture // extends CommonObject
 	{
 		global $conf, $langs;
 		$error=0;
-		
+
 		$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_facture";
 		$sql.= " WHERE rowid=".$this->id;
-	
+
 		$this->db->begin();
-		
+
 		dol_syslog(get_class($this)."::delete sql=".$sql);
 		$resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-		
+
 		if (! $error)
 		{
 			if (! $notrigger)
 			{
 				// Uncomment this and change MYOBJECT to your own tag if you
 		        // want this action call a trigger.
-				
+
 		        //// Call triggers
 		        //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 		        //$interface=new Interfaces($this->db);
 		        //$result=$interface->run_triggers('MYOBJECT_DELETE',$this,$user,$langs,$conf);
 		        //if ($result < 0) { $error++; $this->errors=$interface->errors; }
 		        //// End call triggers
-			}	
+			}
 		}
-		
+
         // Commit or rollback
 		if ($error)
 		{
@@ -281,7 +282,7 @@ class eCommerceFacture // extends CommonObject
 			{
 	            dol_syslog(get_class($this)."::delete ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -291,7 +292,7 @@ class eCommerceFacture // extends CommonObject
 			return 1;
 		}
 	}
-	
+
 	/**
 	 * Get the last date of the last updated facture
 	 * @param $siteId eCommerceSite id | * for each sites
@@ -313,7 +314,7 @@ class eCommerceFacture // extends CommonObject
                 {
                     $obj = $this->db->fetch_object($resql);
                     if ($obj->lastdate != null)
-                            $lastdate = $this->db->jdate($obj->lastdate);                	              
+                            $lastdate = $this->db->jdate($obj->lastdate);
                 }
                 $this->db->free($resql);
             }
@@ -324,10 +325,10 @@ class eCommerceFacture // extends CommonObject
             }
             return $lastdate;
 	}
-	
+
 	/**
      *    Load object in memory from database by remote_id
-     *    
+     *
      *    @param	$remoteId string remote_id
      *    @param	$siteId int fk_site
      *    @return	int <0 if KO, >0 if OK
@@ -369,7 +370,7 @@ class eCommerceFacture // extends CommonObject
             return -1;
         }
     }
-   
+
     /**
      *    Load object in memory from database by remote_id
      *    @param	int    $factureId     Invoice id in Dolibarr
@@ -413,8 +414,8 @@ class eCommerceFacture // extends CommonObject
             return -1;
         }
     }
-    
-    /**	
+
+    /**
      * 		Select all the ids from eCommerceFacture for a site
      * 		@param int		siteId
      * 		@return array	synchObject ids for this site
@@ -423,7 +424,7 @@ class eCommerceFacture // extends CommonObject
     {
    		global $langs;
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."ecommerce_facture";
-        $sql.= " WHERE fk_site = ".$siteId;       
+        $sql.= " WHERE fk_site = ".$siteId;
     	dol_syslog(get_class($this)."::getAllECommerceFactureIds sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
 
@@ -437,7 +438,7 @@ class eCommerceFacture // extends CommonObject
             	$obj = $this->db->fetch_object($resql);
             	$idsArray[] = intval($obj->rowid);
             	$ii++;
-            }            
+            }
             $this->db->free($resql);
             return $idsArray;
         	return $num;

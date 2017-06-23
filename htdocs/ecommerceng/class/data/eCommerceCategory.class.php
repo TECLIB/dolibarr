@@ -148,9 +148,10 @@ class eCommerceCategory // extends CommonObject
     }
 
     /**
-     *    \brief      Load object in memory from database
-     *    \param      id          id object
-     *    \return     int         <0 if KO, >0 if OK
+     *    Load object in memory from database
+     *
+     *    @param      int   $id          id object
+     *    @return     int                <0 if KO, >0 if OK
      */
     function fetch($id)
     {
@@ -368,18 +369,18 @@ class eCommerceCategory // extends CommonObject
         return $lastdate;
     }
 
-    /** 		
+    /**
      * 		Function to compare date in remoteCatToCheck and date into sync table to see if category was changed on Magento side
-     * 
+     *
      * 		@param		$site				site id from eCommerceSynchro
      * 		@param		$toDate				$toDate is now from eCommerceSynchro. Not used.
      * 		@param		$remoteCatToCheck	magento category cutted from magento tree (is an array)
-     * 		@return		1 to add this category to update array, 0 to not add this category	 * 
+     * 		@return		1 to add this category to update array, 0 to not add this category	 *
      */
     public function checkForUpdate($siteId, $toDate, $remoteCatToCheck)
     {
         global $langs;
-        $updateRequired = 0;  // If any error occurs, category won't appears in update array		
+        $updateRequired = 0;  // If any error occurs, category won't appears in update array
 
         $sql = "SELECT t.last_update as lastdate, t.remote_parent_id as parentid FROM " . MAIN_DB_PREFIX . $this->table_element . " as t";
         $sql.= " WHERE t.remote_id=" . $remoteCatToCheck['category_id'] . " AND t.fk_site = " . $siteId;
@@ -391,7 +392,7 @@ class eCommerceCategory // extends CommonObject
             {
                 $obj = $this->db->fetch_object($resql);
 
-                $now = $toDate;  // Dolibarr's category time 
+                $now = $toDate;  // Dolibarr's category time
                 $lu = $this->db->jdate($obj->lastdate);                 // date of last update process
                 $lumage = strtotime($remoteCatToCheck['updated_at']);
                 //var_dump($lu);
@@ -402,7 +403,7 @@ class eCommerceCategory // extends CommonObject
                 $updateRequired = 1;
             }
             $this->db->free($resql);
-        } 
+        }
         else
         {
             $this->error = "Error " . $this->db->lasterror();
@@ -414,7 +415,7 @@ class eCommerceCategory // extends CommonObject
 
     /**
      *    Load object in memory from database by remote_id
-     *    
+     *
      *    @param	$remoteId string remote_id
      *    @param	$siteId int fk_site
      *    @return	int <0 if KO, >0 if OK
@@ -470,7 +471,7 @@ class eCommerceCategory // extends CommonObject
     }
 
     /**
-     * 		\brief		function used to call a fetchByRemoteId by fKCat (to check if an eCommerceCat 
+     * 		\brief		function used to call a fetchByRemoteId by fKCat (to check if an eCommerceCat
      * 					exists corresponding with the importRoot defined in eCommerceSite)
      * 		\param		fk_cat from eCommerceSite, eCommerceSite Id
      * 		\return		fetchByRemoteId's result, -2 if error in this method
@@ -528,7 +529,7 @@ class eCommerceCategory // extends CommonObject
             // $subres is a one-leveled array, so we iterate over it and put each cat it contains in $res
             if ($subRes)
             {
-                array_reverse($subRes); // For children of a child to be position-ordered after its parent	   				   			
+                array_reverse($subRes); // For children of a child to be position-ordered after its parent
                 foreach ($subRes as $cat)
                     $res[] = $cat; // We add children behind parent
             }
@@ -545,20 +546,20 @@ class eCommerceCategory // extends CommonObject
     {
         $tmp=$tree;
         if (isset($tmp['level']) && $tmp['level']==0) $tmp=$tree['children'];
-        
+
         foreach ($tmp as $subCat)
         {
             $savchildren = null;
-            if (isset($subCat['children'])) 
+            if (isset($subCat['children']))
             {
                 $savchildren=$subCat['children'];
                 unset($subCat['children']);
             }
-            
+
             //var_dump($subCat);
-            
+
             $resanswer[] = $subCat;   // We add the popped $subcat to $res
-            
+
             // For each child, we check if it has children to, and call this function again in this case
             if (!empty($savchildren))
             {
@@ -567,12 +568,12 @@ class eCommerceCategory // extends CommonObject
             }
         }
     }
-    
+
     /**
      * 		Function to return list of id of Dolibarr categories from a list of remoteCategoriesIds
-     * 
+     *
      * 		@param		array		        Array of remote ids
-     * 		@return		array	            Array of categories' ids 
+     * 		@return		array	            Array of categories' ids
      */
     public function getDolibarrCategoryFromRemoteIds($ids)
     {
@@ -613,7 +614,7 @@ class eCommerceCategory // extends CommonObject
         }
     }
 
-    /** 	
+    /**
      * 		Select all the ids from eCommerceCategory for a site
      * 		@param 	object	ECommerceSite
      * 		@return array	synchObject ids for this site

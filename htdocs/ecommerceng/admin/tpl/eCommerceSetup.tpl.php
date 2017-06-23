@@ -1,6 +1,7 @@
 <?php
 /* Copyright (C) 2010 Franck Charpentier - Auguria <franck.charpentier@auguria.net>
  * Copyright (C) 2013 Laurent Destailleur          <eldy@users.sourceforge.net>
+ * Copyright (C) 2017 Open-DSI                     <support@open-dsi.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -188,14 +189,37 @@ $var=!$var;
 <?php
 $var=!$var;
 ?>
-				<tr <?php print $bc[$var] ?>>
-					<td class="fieldrequired"><?php print $langs->trans('ECommerceUserPassword') ?></td>
-					<td>
-						<input type="password" class="flat" name="ecommerce_user_password" value="<?php print $ecommerceUserPassword ?>" size="20">
-					</td>
-					<td><?php print $langs->trans('ECommerceUserPasswordDescription') ?></td>
-				</tr>
+        <tr <?php print $bc[$var] ?>>
+          <td class="fieldrequired"><?php print $langs->trans('ECommerceUserPassword') ?></td>
+          <td>
+            <input type="password" class="flat" name="ecommerce_user_password" value="<?php print $ecommerceUserPassword ?>" size="20">
+          </td>
+          <td><?php print $langs->trans('ECommerceUserPasswordDescription') ?></td>
+        </tr>
 <?php
+if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+  $var = !$var;
+?>
+  <tr <?php print $bc[$var] ?>>
+    <td class="fieldrequired"><?php print $langs->trans('ECommercePriceLevel') ?></td>
+    <td>
+      <select class="flat" name="ecommerce_price_level">
+        <?php
+        foreach ($priceLevels as $idx => $priceLevel) {
+          print '<option value="' . $idx . '"' . ($ecommercePriceLevel == $idx ? ' selected="selected"' : '') . '">' . $idx . '</option>';
+        }
+        ?>
+      </select>
+    </td>
+    <td><?php print $langs->trans('ECommercePriceLevelDescription') ?></td>
+  </tr>
+  <script type="text/javascript">
+    jQuery(document).ready(function (){
+      eCommerceConfirmUpdatePriceLevel("site_form_detail", "<?php print $langs->transnoentities('ECommerceConfirmUpdatePriceLevel') ?>", <?php print $siteDb->price_level ?>);
+    });
+  </script>
+<?php
+}
 /*
 $var=!$var;
 ?>
@@ -310,4 +334,3 @@ if ($success != array())
 		print '<p class="ok">'.$succes.'</p>';
 ?>
 		<br>
-				

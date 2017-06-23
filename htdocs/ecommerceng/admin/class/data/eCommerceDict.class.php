@@ -35,8 +35,9 @@ class eCommerceDict
 
     /**
      * Get object from database
-     * @param $code string
-     * @return array of table fields values
+     *
+     * @param   string    $code     Code
+     * @return  array               Aray of table fields values
      */
     public function fetchByCode($code)
 	{
