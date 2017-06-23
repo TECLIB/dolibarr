@@ -94,7 +94,7 @@ if ($_POST['site_form_detail_action'] == 'save')
         $errors[] = $langs->trans('ECommerceSetupCatSocieteEmpty');
     if ($_POST['ecommerce_type'] == 0)
         $errors[] = $langs->trans('ECommerceSetupTypeEmpty');
-    if (! ($_POST['ecommerce_fk_warehouse'] > 0))
+    if (! ($_POST['ecommerce_fk_warehouse'] > 0) && $_POST['ecommerce_stock_sync_direction'] == 'ecommerce2dolibarr')
         setEventMessages($langs->trans('WarningStockProductNotFilled'), null, 'warnings');
     if (trim($_POST['ecommerce_webservice_address']) == '')
         $errors[] = $langs->trans('ECommerceSetupAddressEmpty');
