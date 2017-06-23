@@ -25,24 +25,24 @@ class eCommerceCommande
 	var $errors=array();				//!< To return several error codes (or messages)
 	//var $element='ecommerce_commande.sql';			//!< Id that identify managed objects
 	//var $table_element='ecommerce_commande.sql';	//!< Name of table without prefix where object is stored
-    
+
     var $id;
     var $fk_commande;
     var $fk_site;
     var $remote_id;
     var $last_update;
-	
+
     /**
      *      \brief      Constructor
      *      \param      DB      Database handler
      */
-    function eCommerceCommande($DB) 
+    function eCommerceCommande($DB)
     {
         $this->db = $DB;
         return 1;
     }
 
-	
+
     /**
      *      \brief      Create in database
      *      \param      user        	User that create
@@ -53,48 +53,48 @@ class eCommerceCommande
     {
     	global $conf, $langs;
 		$error=0;
-    	
+
 		// Clean parameters
 		if (isset($this->fk_commande)) $this->fk_commande=intval($this->fk_commande);
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
 		if (isset($this->remote_id)) $this->remote_id=trim($this->remote_id);
 		if (isset($this->last_update)) $this->last_update=trim($this->last_update);
-		
+
 		// Check parameters
 		// Put here code to add control on parameters values
-		
+
         // Insert request
 		$sql = "INSERT INTO ".MAIN_DB_PREFIX."ecommerce_commande(";
-		
+
 		$sql.= "fk_commande,";
 		$sql.= "fk_site,";
 		$sql.= "remote_id,";
 		$sql.= "last_update";
-		
+
         $sql.= ") VALUES (";
-       
+
 		$sql.= " ".(isset($this->fk_commande)?intval($this->fk_commande):0).",";
 		$sql.= " ".(isset($this->fk_site)?intval($this->fk_site):0).",";
 		$sql.= " ".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
 		$sql.= " ".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
-        
+
 		$sql.= ")";
 
 		$this->db->begin();
-		
+
 	   	dol_syslog(get_class($this)."::create sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-        
+
 		if (! $error)
         {
             $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX."ecommerce_commande");
-    
+
 			if (! $notrigger)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
 	            // want this action call a trigger.
-	            
+
 	            //// Call triggers
 	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 	            //$interface=new Interfaces($this->db);
@@ -111,7 +111,7 @@ class eCommerceCommande
 			{
 	            dol_syslog(get_class($this)."::create ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -122,11 +122,12 @@ class eCommerceCommande
 		}
     }
 
-    
+
     /**
-     *    \brief      Load object in memory from database
-     *    \param      id          id object
-     *    \return     int         <0 if KO, >0 if OK
+     *    Load object in memory from database
+     *
+     *    @param      int   $id          id object
+     *    @return     int                <0 if KO, >0 if OK
      */
     function fetch($id)
     {
@@ -139,7 +140,7 @@ class eCommerceCommande
 		$sql.= " t.last_update";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_commande as t";
         $sql.= " WHERE t.rowid = ".$id;
-    
+
     	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
@@ -147,7 +148,7 @@ class eCommerceCommande
             if ($this->db->num_rows($resql))
             {
                 $obj = $this->db->fetch_object($resql);
-    
+
                 $this->id = $obj->rowid;
                 $this->fk_commande = $obj->fk_commande;
                 $this->fk_site = $obj->fk_site;
@@ -155,7 +156,7 @@ class eCommerceCommande
                 $this->last_update = $obj->last_update;
             }
             $this->db->free($resql);
-            
+
             return 1;
         }
         else
@@ -165,7 +166,7 @@ class eCommerceCommande
             return -1;
         }
     }
-    
+
 
     /**
      *      \brief      Update database
@@ -177,7 +178,7 @@ class eCommerceCommande
     {
     	global $conf, $langs;
 		$error=0;
-    	
+
 		// Clean parameters
 		if (isset($this->fk_commande)) $this->fk_commande=intval($this->fk_commande);
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
@@ -189,7 +190,7 @@ class eCommerceCommande
 
         // Update request
         $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_commande SET";
-        
+
 		$sql.= " fk_commande=".(isset($this->fk_commande)?intval($this->fk_commande):0).",";
 		$sql.= " fk_site=".(isset($this->fk_site)?intval($this->fk_site):0).",";
 		$sql.= " remote_id=".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
@@ -198,18 +199,18 @@ class eCommerceCommande
         $sql.= " WHERE rowid=".$this->id;
 
 		$this->db->begin();
-        
+
 		dol_syslog(get_class($this)."::update sql=".$sql, LOG_DEBUG);
         $resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-        
+
 		if (! $error)
 		{
 			if (! $notrigger)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
 	            // want this action call a trigger.
-				
+
 	            //// Call triggers
 	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 	            //$interface=new Interfaces($this->db);
@@ -218,7 +219,7 @@ class eCommerceCommande
 	            //// End call triggers
 	    	}
 		}
-		
+
         // Commit or rollback
 		if ($error)
 		{
@@ -226,7 +227,7 @@ class eCommerceCommande
 			{
 	            dol_syslog(get_class($this)."::update ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -234,10 +235,10 @@ class eCommerceCommande
 		{
 			$this->db->commit();
 			return 1;
-		}		
+		}
     }
-  
-  
+
+
  	/**
 	 *   \brief      Delete object in database
      *	\param      user        	User that delete
@@ -248,32 +249,32 @@ class eCommerceCommande
 	{
 		global $conf, $langs;
 		$error=0;
-		
+
 		$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_commande";
 		$sql.= " WHERE rowid=".$this->id;
-	
+
 		$this->db->begin();
-		
+
 		dol_syslog(get_class($this)."::delete sql=".$sql);
 		$resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-		
+
 		if (! $error)
 		{
 			if (! $notrigger)
 			{
 				// Uncomment this and change MYOBJECT to your own tag if you
 		        // want this action call a trigger.
-				
+
 		        //// Call triggers
 		        //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 		        //$interface=new Interfaces($this->db);
 		        //$result=$interface->run_triggers('MYOBJECT_DELETE',$this,$user,$langs,$conf);
 		        //if ($result < 0) { $error++; $this->errors=$interface->errors; }
 		        //// End call triggers
-			}	
+			}
 		}
-		
+
         // Commit or rollback
 		if ($error)
 		{
@@ -281,7 +282,7 @@ class eCommerceCommande
 			{
 	            dol_syslog(get_class($this)."::delete ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -291,7 +292,7 @@ class eCommerceCommande
 			return 1;
 		}
 	}
-	
+
 	/**
 	 * Get the last date of the last updated commande
 	 * @param $siteId eCommerceSite id | * for each sites
@@ -303,9 +304,9 @@ class eCommerceCommande
         $sql = "SELECT MAX(t.last_update) as lastdate FROM ".MAIN_DB_PREFIX."ecommerce_commande as t";
         $sql.= " WHERE t.fk_site = ".$siteId;
     	dol_syslog(get_class($this)."::getLastUpdate sql=".$sql, LOG_DEBUG);
-    	
+
     	$lastdate = null;
-    	
+
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -313,7 +314,7 @@ class eCommerceCommande
             {
                 $obj = $this->db->fetch_object($resql);
 				if ($obj->lastdate != null)
-                	$lastdate = $this->db->jdate($obj->lastdate);                	              
+                	$lastdate = $this->db->jdate($obj->lastdate);
             }
             $this->db->free($resql);
         }
@@ -324,7 +325,7 @@ class eCommerceCommande
         }
         return $lastdate;
 	}
-	
+
 	/**
      *    Load object in memory from database by remote_id
      *    @param	$remoteId string remote_id
@@ -368,10 +369,10 @@ class eCommerceCommande
             return -1;
         }
     }
-	
+
 	/**
      *    Load object in memory from database by dolibarr commande_id
-     *    
+     *
      *    @param	int    $commandeId     Order id in dolibarr
      *    @param	int    $siteId         ID fk_site
      *    @return	int                    <0 if KO, >0 if OK
@@ -413,8 +414,8 @@ class eCommerceCommande
             return -1;
         }
     }
-    
-    /**	
+
+    /**
      * 		Select all the ids from eCommerceCommande for a site
      * 		@param int		siteId
      * 		@return array	synchObject ids for this site
@@ -423,7 +424,7 @@ class eCommerceCommande
     {
    		global $langs;
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."ecommerce_commande";
-        $sql.= " WHERE fk_site = ".$siteId;       
+        $sql.= " WHERE fk_site = ".$siteId;
     	dol_syslog(get_class($this)."::getAllECommerceCommandeIds sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
 
@@ -437,7 +438,7 @@ class eCommerceCommande
             	$obj = $this->db->fetch_object($resql);
             	$idsArray[] = intval($obj->rowid);
             	$ii++;
-            }            
+            }
             $this->db->free($resql);
             return $idsArray;
         	return $num;

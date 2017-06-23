@@ -53,13 +53,13 @@ class modECommerceNg extends DolibarrModules
 		// Module label (no space allowed), used if translation string 'ModuleXXXName' not found (where XXX is value of numeric property 'numero' of module)
 		$this->name = 'EcommerceNg';        //  Must be same than value used for if $conf->ecommerceng->enabled
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
-		$this->description = "Module to synchronise Dolibarr with ECommerce platform (currently ecommerce supported: Magento)";
+		$this->description = "Module to synchronise Dolibarr with ECommerce platform (currently ecommerce supported: Magento, WooCommerce)";
 		$this->descriptionlong = "See page https://wiki.dolibarr.org/index.php/Module_Magento_EN for more information";
 		$this->editor_name = 'TecLib';
 		$this->editor_url = 'http://www.teclib.com';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '3.9.0.2';
+		$this->version = '3.9.1.0';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -201,10 +201,12 @@ class modECommerceNg extends DolibarrModules
 	}
 
 	/**
-	 *		\brief      Function called when module is enabled.
-	 *					The init function add constants, boxes, permissions and menus (defined in constructor) into Dolibarr database.
-	 *					It also creates data directories.
-	 *      \return     int             1 if OK, 0 if KO
+	 *	Function called when module is enabled.
+	 *	The init function add constants, boxes, permissions and menus (defined in constructor) into Dolibarr database.
+	 *	It also creates data directories.
+	 *
+	 *  @param     string  $options    Options
+	 *  @return    int                 1 if OK, 0 if KO
 	 */
 	function init($options = '')
 	{
@@ -217,10 +219,12 @@ class modECommerceNg extends DolibarrModules
 	}
 
 	/**
-	 *		\brief		Function called when module is disabled.
-	 *              	Remove from database constants, boxes and permissions from Dolibarr database.
-	 *					Data directories are not deleted.
-	 *      \return     int             1 if OK, 0 if KO
+	 *	Function called when module is disabled.
+	 *  Remove from database constants, boxes and permissions from Dolibarr database.
+	 *	Data directories are not deleted.
+	 *
+	 *  @param     string  $options    Options
+	 *  @return    int                 1 if OK, 0 if KO
 	 */
 	function remove($options = '')
 	{

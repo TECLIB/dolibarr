@@ -1,6 +1,7 @@
 <?php
 /* Copyright (C) 2010      Franck Charpentier - Auguria <franck.charpentier@auguria.net>
  * Copyright (C) 2013-2016 Laurent Destailleur          <eldy@users.sourceforge.net>
+ * Copyright (C) 2017      Open-DSI                     <support@open-dsi.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,26 +29,26 @@ class InterfaceECommerceng
     private $name;
     private $description;
     private $version;
-    
+
     public $family;
     public $errors;
-    
+
     /**
      *   This class is a trigger on delivery to update delivery on eCommerce Site
-     *   
+     *
      *   @param      DoliDB		$db      Handler database access
      */
     function __construct($db)
     {
         $this->db = $db;
-    
+
         $this->name = preg_replace('/^Interface/i','',get_class($this));
         $this->family = "eCommerce";
         $this->description = "Triggers of this module update delivery on eCommerce Site according to order status.";
         $this->version = '1.0';
     }
-    
-    
+
+
     /**
      *   Renvoi nom du lot de triggers
      *   @return     string      Nom du lot de triggers
@@ -56,7 +57,7 @@ class InterfaceECommerceng
     {
         return $this->name;
     }
-    
+
     /**
      *   Renvoi descriptif du lot de triggers
      *   @return     string      Descriptif du lot de triggers
@@ -81,29 +82,30 @@ class InterfaceECommerceng
         elseif ($this->version) return $this->version;
         else return $langs->trans("Unknown");
     }
-    
+
     /**
      *      Fonction appelee lors du declenchement d'un evenement Dolibarr.
      *      D'autres fonctions run_trigger peuvent etre presentes dans includes/triggers
-     *      @param      action      Code de l'evenement
-     *      @param      object      Objet concerne
-     *      @param      user        Objet user
-     *      @param      lang        Objet lang
-     *      @param      conf        Objet conf
-     *      @return     int         <0 if fatal error, 0 si nothing done, >0 if ok
+     *
+     *      @param      string      $action      Code de l'evenement
+     *      @param      Object      $object      Objet concerne
+     *      @param      User        $user        Objet user
+     *      @param      Translate   $langs       Objet lang
+     *      @param      Conf        $conf        Objet conf
+     *      @return     int                      <0 if fatal error, 0 si nothing done, >0 if ok
      */
 	function run_trigger($action,$object,$user,$langs,$conf)
     {
     	$error=0;
-    	
+
         if ($action == 'COMPANY_CREATE')
         {
-        
+
         }
-        
+
         if ($action == 'CONTACT_CREATE')
     	{
-    	     
+
     	}
 
         if ($action == 'COMPANY_MODIFY')
@@ -112,7 +114,7 @@ class InterfaceECommerceng
 
 			$eCommerceSite = new eCommerceSite($this->db);
 			$sites = $eCommerceSite->listSites('object');
-			
+
 			foreach($sites as $site)
 			{
 		        if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
@@ -120,12 +122,12 @@ class InterfaceECommerceng
                     dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
                     continue;
                 }
-			    
+
 			    if (! $error)
 			    {
     				$eCommerceSociete = new eCommerceSociete($this->db);
     				$eCommerceSociete->fetchByFkSociete($object->id, $site->id);
-    
+
     				if ($eCommerceSociete->remote_id > 0)
     				{
 		                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
@@ -136,7 +138,7 @@ class InterfaceECommerceng
         			        $error++;
         			        setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
         			    }
-			
+
         			    if (! $error)
         			    {
         				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSociete($eCommerceSociete->remote_id, $object);
@@ -154,7 +156,7 @@ class InterfaceECommerceng
     				    require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
     				    $c = new Categorie($this->db);
     				    $catids = $c->containing($object->id, Categorie::TYPE_CUSTOMER, 'id');
-    
+
     				    if (in_array($site->fk_cat_societe, $catids))
     				    {
     				        dol_syslog("Societe with id ".$object->id." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
@@ -167,7 +169,7 @@ class InterfaceECommerceng
     				            $error++;
     				            setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
     				        }
-    				        
+
     				        if (! $error)
     				        {
     				            $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
@@ -180,7 +182,7 @@ class InterfaceECommerceng
     				}
 			    }
 			}
-				
+
 			if ($error)
 			{
 			    $this->db->rollback();
@@ -192,14 +194,14 @@ class InterfaceECommerceng
 			    return 1;
 			}
         }
-        
+
         if ($action == 'CONTACT_MODIFY')
         {
             $this->db->begin();
-        
+
             $eCommerceSite = new eCommerceSite($this->db);
             $sites = $eCommerceSite->listSites('object');
-            	
+
             foreach($sites as $site)
             {
                 if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
@@ -207,13 +209,13 @@ class InterfaceECommerceng
                     dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
                     continue;
                 }
-                 
+
                 if (! $error)
                 {
                     $eCommerceSocpeople = new eCommerceSocpeople($this->db);
                     $eCommerceSocpeople->fetchByFkSocpeople($object->id, $site->id);
-        
-                    if ($eCommerceSocpeople->remote_id > 0)
+
+                    if (!empty($eCommerceSocpeople->remote_id) && $eCommerceSocpeople->remote_id > 0)
                     {
                         $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
                         dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
@@ -223,7 +225,7 @@ class InterfaceECommerceng
                             $error++;
                             setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
                         }
-                        
+
                         if (! $error)
                         {
                             $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSocpeople($eCommerceSocpeople->remote_id, $object);
@@ -241,7 +243,7 @@ class InterfaceECommerceng
                         require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
                         $c = new Categorie($this->db);
                         $catids = $c->containing($object->fk_soc, Categorie::TYPE_CUSTOMER, 'id');
-        
+
                         if (in_array($site->fk_cat_societe, $catids))
                         {
                             dol_syslog("Contact with id ".$object->id." of societe with id ".$object->fk_soc." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
@@ -255,7 +257,7 @@ class InterfaceECommerceng
                     }
                 }
             }
-        
+
             if ($error)
             {
                 $this->db->rollback();
@@ -267,7 +269,7 @@ class InterfaceECommerceng
                 return 1;
             }
         }
-        
+
         if ($action == 'PRODUCT_MODIFY')
         {
             $this->db->begin();
@@ -282,12 +284,12 @@ class InterfaceECommerceng
                     dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
                     continue;
                 }
-			    
+
 				if (! $error)
 				{
     				$eCommerceProduct = new eCommerceProduct($this->db);
     				$eCommerceProduct->fetchByProductId($object->id, $site->id);
-    				
+
     				if ($eCommerceProduct->remote_id > 0)
     				{
 		                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
@@ -301,6 +303,9 @@ class InterfaceECommerceng
 
         				if (! $error)
         				{
+                            if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+                                $object->price = $object->multiprices[$site->price_level];
+                            }
         				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id, $object);
         				    if (! $result)
         				    {
@@ -316,7 +321,7 @@ class InterfaceECommerceng
     				    require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
     				    $c = new Categorie($this->db);
     				    $catids = $c->containing($object->id, Categorie::TYPE_PRODUCT, 'id');
-    				    
+
     				    if (in_array($site->fk_cat_product, $catids))
     				    {
     				        dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
@@ -330,8 +335,8 @@ class InterfaceECommerceng
     				}
 				}
 			}
-			
-            if ($error) 
+
+            if ($error)
             {
                 $this->db->rollback();
                 return -1;
@@ -342,16 +347,16 @@ class InterfaceECommerceng
                 return 1;
             }
         }
-        
-        
-        
-        if ($action == 'ORDER_MODIFY')
+
+
+
+        if ($action == 'ORDER_MODIFY' || $action == 'ORDER_CLOSE' || $action == 'ORDER_CLASSIFY_BILLED')
         {
             $this->db->begin();
-            
+
             $eCommerceSite = new eCommerceSite($this->db);
             $sites = $eCommerceSite->listSites('object');
-            
+
             foreach($sites as $site)
             {
                 if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
@@ -359,7 +364,7 @@ class InterfaceECommerceng
                     dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
                     continue;
                 }
-                 
+
                 if (! $error)
                 {
     				$eCommerceCommande = new eCommerceCommande($this->db);
@@ -375,7 +380,7 @@ class InterfaceECommerceng
                             $error++;
                             setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
                         }
-                    
+
                         if (! $error)
                         {
         				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteCommande($eCommerceCommande->remote_id, $object);
@@ -395,7 +400,7 @@ class InterfaceECommerceng
     				}
                 }
             }
-            	
+
             if ($error)
             {
                 $this->db->rollback();
@@ -407,14 +412,14 @@ class InterfaceECommerceng
                 return 1;
             }
     	}
-        
+
     	if ($action == 'BILL_MODIFY')
     	{
     	    $this->db->begin();
-    	
+
     	    $eCommerceSite = new eCommerceSite($this->db);
     	    $sites = $eCommerceSite->listSites('object');
-    	
+
     	    foreach($sites as $site)
     	    {
     	        if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
@@ -422,12 +427,12 @@ class InterfaceECommerceng
     	            dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
     	            continue;
     	        }
-    	         
+
     	        if (! $error)
     	        {
     	            $eCommerceFacture = new eCommerceFacture($this->db);
     	            $eCommerceFacture->fetchByFactureId($object->id, $site->id);
-    	
+
     	            if ($eCommerceFacture->remote_id > 0)
     	            {
     	                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
@@ -438,7 +443,7 @@ class InterfaceECommerceng
     	                    $error++;
     	                    setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
     	                }
-    	                
+
     	                if (! $error)
     	                {
         	                $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteFacture($eCommerceFacture->remote_id, $object);
@@ -456,7 +461,7 @@ class InterfaceECommerceng
     	            }
     	        }
     	    }
-    	     
+
     	    if ($error)
     	    {
     	        $this->db->rollback();
@@ -468,19 +473,19 @@ class InterfaceECommerceng
     	        return 1;
     	    }
     	}
-    	
-    	
-    	
+
+
+
     	/* Delete */
     	if ($action == 'CATEGORY_DELETE' && ((int) $object->type == 0))     // Product category
         {
             $this->db->begin();
 
             // TODO If product category and oldest parent is category for magento then delete category into magento.
-            
+
             $sql = "SELECT remote_id, remote_parent_id FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE label ='".$this->db->escape($object->label)."' AND type = 0";
             $resql=$this->db->query($sql);
-            if ($resql) 
+            if ($resql)
             {
                 $obj=$this->db->fetch_object($resql);
                 if ($obj)   // If null = we didn't find category, so it is not a category known into ecommerce platform
@@ -498,15 +503,15 @@ class InterfaceECommerceng
             if (! $error)
             {
                 $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE label ='".$this->db->escape($object->label)."' AND type = 0";
-    
+
                 $resql=$this->db->query($sql);
                 if (! $resql)
                 {
                     $error++;
                 }
             }
-            
-            if ($error) 
+
+            if ($error)
             {
                 $this->db->rollback();
                 return -1;
@@ -517,8 +522,8 @@ class InterfaceECommerceng
                 return 1;
             }
         }
-        
-        
+
+
         if ($action == 'COMPANY_DELETE')
         {
             $this->db->begin();
@@ -530,7 +535,7 @@ class InterfaceECommerceng
                 $this->error=$this->db->lasterror();
                 $error++;
             }
-            
+
             $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_societe WHERE fk_societe ='".$this->db->escape($object->id)."'";
             $resql=$this->db->query($sql);
             if (! $resql)
@@ -538,8 +543,8 @@ class InterfaceECommerceng
                 $this->error=$this->db->lasterror();
                 $error++;
             }
-            
-            if ($error) 
+
+            if ($error)
             {
                 $this->db->rollback();
                 return -1;
@@ -549,8 +554,8 @@ class InterfaceECommerceng
                 $this->db->commit();
                 return 1;
             }
-        } 
-        
+        }
+
         if ($action == 'CONTACT_DELETE')
         {
             $this->db->begin();
@@ -562,8 +567,8 @@ class InterfaceECommerceng
                 $this->error=$this->db->lasterror();
                 $error++;
             }
-            
-            if ($error) 
+
+            if ($error)
             {
                 $this->db->rollback();
                 return -1;
@@ -573,8 +578,8 @@ class InterfaceECommerceng
                 $this->db->commit();
                 return 1;
             }
-        } 
-        
+        }
+
         if ($action == 'ORDER_DELETE')
         {
             $this->db->begin();
@@ -586,8 +591,8 @@ class InterfaceECommerceng
                 $this->error=$this->db->lasterror();
                 $error++;
             }
-            
-            if ($error) 
+
+            if ($error)
             {
                 $this->db->rollback();
                 return -1;
@@ -597,7 +602,7 @@ class InterfaceECommerceng
                 $this->db->commit();
                 return 1;
             }
-        }        
+        }
 
         if ($action == 'BILL_DELETE')
         {
@@ -610,8 +615,8 @@ class InterfaceECommerceng
                 $this->error=$this->db->lasterror();
                 $error++;
             }
-            
-            if ($error) 
+
+            if ($error)
             {
                 $this->db->rollback();
                 return -1;
@@ -621,21 +626,21 @@ class InterfaceECommerceng
                 $this->db->commit();
                 return 1;
             }
-        }        
-        
-        
-        
-        
+        }
+
+
+
+
         // A shipment is validated, it means order has status "In process"
         if ($action == 'SHIPPING_VALIDATE')
         {
 	        dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
-	        
+
             $this->db->begin();
 
 	        $eCommerceSite = new eCommerceSite($this->db);
             $sites = $eCommerceSite->listSites('object');
-            	
+
             foreach($sites as $site)
             {
                 if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
@@ -647,13 +652,13 @@ class InterfaceECommerceng
             	try
             	{
             		//retrieve shipping id
-            		$shippingId = $object->id;        		
-            	
+            		$shippingId = $object->id;
+
             		$origin = $object->origin;
             		$origin_id = $object->origin_id;
-    
+
     				$orderId = $origin_id;
-    				
+
             		//load eCommerce Commande by order id
     	            $eCommerceCommande = new eCommerceCommande($this->db);
     	            $eCommerceCommande->fetchByCommandeId($orderId, $site->id);
@@ -682,13 +687,13 @@ class InterfaceECommerceng
                             else
                             {
                                 // $result is id of shipment created in magento, we update ref_customer with it.
-                                
+
                                 // Update ref customer. Do not use update here, we want to update only one field with no side effect on others.
                                 $sqlupdaterefcustmer = "UPDATE ".MAIN_DB_PREFIX."expedition SET";
                                 $sqlupdaterefcustmer.= " ref_customer='".$result."'";
                                 $sqlupdaterefcustmer.= " WHERE rowid = ".$object->id;
                                 $this->db->query($sqlupdaterefcustmer);
-                                
+
                                 $object->ref_customer = $result;
                             }
     		            }
@@ -705,7 +710,7 @@ class InterfaceECommerceng
                 	break;
             	}
             }
-            
+
         	if ($error)
         	{
         	    $this->db->rollback();
@@ -715,18 +720,18 @@ class InterfaceECommerceng
         	{
         	    $this->db->commit();
         	    return 1;
-        	}        	
+        	}
         }
-        
-        
-        
+
+
+
         // Stock Movement
         if ($action == 'STOCK_MOVEMENT')
         {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
-             
+
             $this->db->begin();
-        
+
             $eCommerceSite = new eCommerceSite($this->db);
             $sites = $eCommerceSite->listSites('object');
 
@@ -737,7 +742,7 @@ class InterfaceECommerceng
                     dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
                     continue;
                 }
-            
+
                 try
                 {
                     // Do we sync the stock ?
@@ -746,12 +751,12 @@ class InterfaceECommerceng
                         $eCommerceProduct = new eCommerceProduct($this->db);
                         $eCommerceProduct->fetchByProductId($object->product_id, $site->id);
 
-                        // Get new qty. We read stock_reel of product. Trigger is called after creating movement and updating table product, so we get total after move. 
+                        // Get new qty. We read stock_reel of product. Trigger is called after creating movement and updating table product, so we get total after move.
                         $dbProduct = new Product($this->db);
                         $dbProduct->fetch($object->product_id);
-                        
+
                         $object->qty_after = $dbProduct->stock_reel;
-                        
+
                         if ($eCommerceProduct->remote_id > 0)
                         {
                             // Connect to magento
@@ -763,7 +768,7 @@ class InterfaceECommerceng
                                 $error++;
                                 setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
                             }
-                            
+
                             if (! $error)
                             {
                                 $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($eCommerceProduct->remote_id, $object);
@@ -787,8 +792,8 @@ class InterfaceECommerceng
                     $this->errors[] = 'Trigger exception : '.$e->getMessage();
                     dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id." ".'Trigger exception : '.$e->getMessage());
                     break;
-                }                    
-            }                    
+                }
+            }
 
             if ($error)
             {
@@ -799,10 +804,10 @@ class InterfaceECommerceng
             {
                 $this->db->commit();
                 return 1;
-            }            
+            }
         }
-        
-		return 0;
+
+        return 0;
     }
 
 }
