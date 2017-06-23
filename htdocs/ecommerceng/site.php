@@ -19,15 +19,18 @@
 
 
 $res=0;
+// Try main.inc.php into web root known defined into CONTEXT_DOCUMENT_ROOT (not always defined)
 if (! $res && ! empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])) $res=@include($_SERVER["CONTEXT_DOCUMENT_ROOT"]."/main.inc.php");
-if (! $res && file_exists("../main.inc.php")) $res=@include("../main.inc.php");
+// Try main.inc.php into web root detected using web root caluclated from SCRIPT_FILENAME
+$tmp=empty($_SERVER['SCRIPT_FILENAME'])?'':$_SERVER['SCRIPT_FILENAME'];$tmp2=realpath(__FILE__); $i=strlen($tmp)-1; $j=strlen($tmp2)-1;
+while($i > 0 && $j > 0 && isset($tmp[$i]) && isset($tmp2[$j]) && $tmp[$i]==$tmp2[$j]) { $i--; $j--; }
+if (! $res && $i > 0 && file_exists(substr($tmp, 0, ($i+1))."/main.inc.php")) $res=@include(substr($tmp, 0, ($i+1))."/main.inc.php");
+if (! $res && $i > 0 && file_exists(substr($tmp, 0, ($i+1))."/../main.inc.php")) $res=@include(substr($tmp, 0, ($i+1))."/../main.inc.php");
+// Try main.inc.php using relative path
 if (! $res && file_exists("../../main.inc.php")) $res=@include("../../main.inc.php");
 if (! $res && file_exists("../../../main.inc.php")) $res=@include("../../../main.inc.php");
-if (! $res && file_exists("../../../../main.inc.php")) $res=@include("../../../../main.inc.php");
-if (! $res && file_exists("../../../../../main.inc.php")) $res=@include("../../../../../main.inc.php");
-if (! $res && preg_match('/\/nltechno([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
-if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res) die("Include of main fails");
+
 dol_include_once("/ecommerceng/class/business/eCommerceSynchro.class.php");
 $langs->load("ecommerce@ecommerceng");
 $errors = array();
@@ -39,7 +42,7 @@ $nbProductInDolibarr=0;
 $nbSocieteInDolibarr = 0;
 $nbCommandeInDolibarr = 0;
 $nbFactureInDolibarr = 0;
-		
+
 $langs->load("admin");
 $langs->load("ecommerce");
 
@@ -63,15 +66,15 @@ if ($id)
 	{
 		$site= new eCommerceSite($db);
 		$site->fetch($id);
-		
-		$site->cleanOrphelins();	
-		
+
+		$site->cleanOrphelins();
+
 		require_once(DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php');
 		$params=getSoapParams();
 		if (! empty($params['response_timeout'])) set_time_limit($params['response_timeout']);
-		
+
 	    $synchro = new eCommerceSynchro($db, $site);
-	    
+
 	    dol_syslog("site.php Try to connect to eCommerce site ".$site->name);
 		$synchro->connect();
 		if (count($synchro->errors))
@@ -81,19 +84,19 @@ if ($id)
 		}
 
 		/*$result=0;
-		
+
 		if (! $error)
 		{
 		  $result=$synchro->checkAnonymous();
 		}
-		
+
 		if ($result <= 0)
 		{
 		  $errors = $synchro->errors;
 		  $errors[] = $synchro->error;
 		  $error++;
 		}*/
-		
+
 		//synch only with write rights
 		if (! $error && $user->rights->ecommerceng->write)
 		{
@@ -113,7 +116,7 @@ if ($id)
 			{
 			    $synchro->dropImportedAndSyncData(1);
 			}
-				
+
 			if (GETPOST('submit_synchro_category') || GETPOST('submit_synchro_all'))
 			{
 				$synchro->synchCategory();
@@ -135,28 +138,28 @@ if ($id)
 				$synchro->synchFacture();
 			}
 		}
-	    
-	    
+
+
 		dol_syslog("site.php Now we read only database to get counting information");
-		
-		
+
+
     	/***************************************************
     	* Vars to build output tpl page
     	****************************************************/
-        
+
 		// Count into Dolibarr
 		$nbCategoriesInDolibarr = $synchro->getNbCategoriesInDolibarr(true);
 		if ($nbCategoriesInDolibarr < 0) $error++;
         $nbCategoriesInDolibarrLinkedToE = $synchro->getNbCategoriesInDolibarrLinkedToE($site->fk_cat_product);
-		
+
         $nbProductInDolibarr = $synchro->getNbProductInDolibarr(true);
 		if ($nbProductInDolibarr < 0) $error++;
 		$nbProductInDolibarrLinkedToE = $synchro->getNbProductInDolibarrLinkedToE(true);
-		
+
 		$nbSocieteInDolibarr = $synchro->getNbSocieteInDolibarr(true);
 		if ($nbSocieteInDolibarr < 0) $error++;
 		$nbSocieteInDolibarrLinkedToE = $synchro->getNbSocieteInDolibarrLinkedToE(true);
-		
+
 		if (! empty($conf->commande->enabled))
 		{
             $nbCommandeInDolibarr = $synchro->getNbCommandeInDolibarr(true);
@@ -193,13 +196,13 @@ if ($id)
 			    $site->last_update = $synchro->toDate;
 			    $site->update($user);
 			}
-			
+
 			if ($user->rights->ecommerceng->write)
 				$synchRights = true;
-			
+
 			if (count($synchro->success))
 				$success = $synchro->success;
-			
+
 			if (count($synchro->errors))
 				$errors = $synchro->errors;
 		}
