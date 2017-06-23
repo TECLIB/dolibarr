@@ -463,24 +463,31 @@ class eCommerceSynchro
                     // TODO This is very long if there is a lot of categories
                     foreach ($resanswer as $remoteCatToCheck) // Check update for each entry into $resanswer -> $remoteCatToCheck = array('category_id'=>, 'parent_id'=>...)
                     {
-                        if (! isset($remoteCatToCheck['updated_at'])) {   // The api that return list of category did not return the updated_at
-
-                            dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id'].", updated_at unknow.");
-
-                            // Complete info of $remoteCatToCheck['category_id']
-                            $tmp=$this->eCommerceRemoteAccess->getCategoryData($remoteCatToCheck['category_id']);   // This make a SOAP call
-
-                            $remoteCatToCheck['updated_at']=$tmp['updated_at']; // Complete data we are missing
+                        // Test if category is disabled or not
+                        if (isset($remoteCatToCheck['is_active']) && empty($remoteCatToCheck['is_active']))
+                        {
+                            dol_syslog("Discard category remote_id=".$remoteCatToCheck['category_id'].", category is disabled.");
                         }
                         else
                         {
-                            dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id'].", updated_at is defined.");
+                            if (! isset($remoteCatToCheck['updated_at'])) {   // The api that return list of category did not return the updated_at
 
+                                dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id'].", updated_at unknow.");
+
+                                // Complete info of $remoteCatToCheck['category_id']
+                                $tmp=$this->eCommerceRemoteAccess->getCategoryData($remoteCatToCheck['category_id']);   // This make a SOAP call
+
+                                $remoteCatToCheck['updated_at']=$tmp['updated_at']; // Complete data we are missing
+                            }
+                            else
+                            {
+                                dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id'].", updated_at is defined to ".$remoteCatToCheck['updated_at']);
+
+                            }
+                            // Check into link table ecommerce_category if record has been modified on magento or not
+                            if ($this->eCommerceCategory->checkForUpdate($this->eCommerceSite->id, $this->toDate, $remoteCatToCheck))   // compare date in remoteCatToCheck and date in sync table. $this->toDate is not used.
+                                $this->categoryToUpdate[] = $remoteCatToCheck;
                         }
-                        // Check into link table ecommerce_category if record has been modified on magento or not
-                        if ($this->eCommerceCategory->checkForUpdate($this->eCommerceSite->id, $this->toDate, $remoteCatToCheck))   // compare date in remoteCatToCheck and date in sync table. $this->toDate is not used.
-                            $this->categoryToUpdate[] = $remoteCatToCheck;
-
                     }
 
                     //var_dump($this->categoryToUpdate);exit;
