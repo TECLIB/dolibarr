@@ -110,7 +110,7 @@ class modECommerceNg extends DolibarrModules
 		// List of particular constants to add when module is enabled
 		$this->const = array(
 		    0=>array('ECOMMERCENG_SHOW_DEBUG_TOOLS', 'chaine', '1', 'Enable button to clean database for debug purpose', 1, 'allentities', 1),
-		    1=>array('ECOMMERCENG_DEBUG', 'chaine', '1', 'This is to enable ECommerceng log of web services requests', 1, 'allentities', 1),
+		    1=>array('ECOMMERCENG_DEBUG', 'chaine', '0', 'This is to enable ECommerceng log of web services requests', 1, 'allentities', 1),
 		    2=>array('ECOMMERCENG_MAXSIZE_MULTICALL', 'chaine', '1000', 'Max size for multicall', 1, 'allentities', 1),
 		);
 
