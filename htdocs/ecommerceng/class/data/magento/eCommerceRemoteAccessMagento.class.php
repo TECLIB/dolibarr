@@ -122,7 +122,7 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'customer.list', $filter);
 
             // Add debug
-            if (! empty($conf->global->MODULE_ECOMMERCENG_DEBUG))
+            if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
@@ -172,7 +172,7 @@ class eCommerceRemoteAccessMagento
             }
 
             // Add debug
-            if (! empty($conf->global->MODULE_ECOMMERCENG_DEBUG))
+            if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
@@ -210,7 +210,7 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'sales_order.list', $filter);
 
             // Add debug
-            if (! empty($conf->global->MODULE_ECOMMERCENG_DEBUG))
+            if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
@@ -229,7 +229,7 @@ class eCommerceRemoteAccessMagento
             }
 
             // Add debug
-            if (! empty($conf->global->MODULE_ECOMMERCENG_DEBUG))
+            if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
@@ -267,7 +267,7 @@ class eCommerceRemoteAccessMagento
             $result = $this->client->call($this->session, 'sales_order_invoice.list', $filter);
 
             // Add debug
-            if (! empty($conf->global->MODULE_ECOMMERCENG_DEBUG))
+            if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
