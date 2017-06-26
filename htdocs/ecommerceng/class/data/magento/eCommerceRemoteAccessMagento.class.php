@@ -112,12 +112,24 @@ class eCommerceRemoteAccessMagento
      */
     public function getSocieteToUpdate($fromDate, $toDate)
     {
+        global $conf;
+
         try {
             dol_syslog("getSocieteToUpdate start gt = ".dol_print_date($fromDate, 'standard').", lt = ".dol_print_date($toDate, 'standard'));
             $filter = array(
-                array('updated_at' => array('gt' => dol_print_date($fromDate, 'standard'), 'lt' => dol_print_date($toDate, 'standard')))
+                array('updated_at' => array('from' => dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard')))
             );
             $result = $this->client->call($this->session, 'customer.list', $filter);
+
+            // Add debug
+            if (! empty($conf->global->MODULE_ECOMMERCENG_DEBUG))
+            {
+                $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                fwrite($h, $this->client->__getLastRequestHeaders());
+                fwrite($h, $this->client->__getLastRequest());
+                fclose($h);
+            }
+
             dol_syslog("getSocieteToUpdate end");
             return $result;
         } catch (SoapFault $fault) {
@@ -138,12 +150,15 @@ class eCommerceRemoteAccessMagento
      */
     public function getProductToUpdate($fromDate, $toDate)
     {
+        global $conf;
+
         try {
             dol_syslog("getProductToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
             $filter = array(
-                array('updated_at' => array('gt' => dol_print_date($fromDate, 'standard'), 'lt' => dol_print_date($toDate, 'standard'))),
+                array('updated_at' => array('from'=> dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard'))),
                 //array('type_id', array('in' => array('simple', 'virtual', 'configurable', 'downloadable')))
             );
+
             $result = $this->client->call($this->session, 'catalog_product.list', $filter);
 
             $results = array();
@@ -154,6 +169,15 @@ class eCommerceRemoteAccessMagento
                 {
                     $results[] = $product;
                 }
+            }
+
+            // Add debug
+            if (! empty($conf->global->MODULE_ECOMMERCENG_DEBUG))
+            {
+                $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                fwrite($h, $this->client->__getLastRequestHeaders());
+                fwrite($h, $this->client->__getLastRequest());
+                fclose($h);
             }
 
             dol_syslog("getProductToUpdate end");
@@ -176,14 +200,25 @@ class eCommerceRemoteAccessMagento
      */
     public function getCommandeToUpdate($fromDate, $toDate)
     {
+        global $conf;
+
         try {
             dol_syslog("getCommandeToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
             $filter = array(
-                array('updated_at' => array('gt' => dol_print_date($fromDate, 'standard'), 'lt' => dol_print_date($toDate, 'standard'))),
+                array('updated_at' => array('from' => dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard'))),
             );
             $result = $this->client->call($this->session, 'sales_order.list', $filter);
 
-            foreach ($result as $rcommande)
+            // Add debug
+            if (! empty($conf->global->MODULE_ECOMMERCENG_DEBUG))
+            {
+                $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                fwrite($h, $this->client->__getLastRequestHeaders());
+                fwrite($h, $this->client->__getLastRequest());
+                fclose($h);
+            }
+
+            /*foreach ($result as $rcommande)
             {
                 $calls[] = array('sales_order.info', $rcommande['increment_id']);
             }
@@ -192,6 +227,15 @@ class eCommerceRemoteAccessMagento
             } catch (SoapFault $fault) {
                 //echo 'getCommandeToUpdate :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
             }
+
+            // Add debug
+            if (! empty($conf->global->MODULE_ECOMMERCENG_DEBUG))
+            {
+                $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                fwrite($h, $this->client->__getLastRequestHeaders());
+                fwrite($h, $this->client->__getLastRequest());
+                fclose($h);
+            }*/
 
             dol_syslog("getCommandeToUpdate end");
             return $result;
@@ -213,12 +257,24 @@ class eCommerceRemoteAccessMagento
      */
     public function getFactureToUpdate($fromDate, $toDate)
     {
+        global $conf;
+
         try {
             dol_syslog("getFactureToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
             $filter = array(
-                array('updated_at' => array('gt' => dol_print_date($fromDate, 'standard'), 'lt' => dol_print_date($toDate, 'standard'))),
+                array('updated_at' => array('from' => dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard'))),
             );
             $result = $this->client->call($this->session, 'sales_order_invoice.list', $filter);
+
+            // Add debug
+            if (! empty($conf->global->MODULE_ECOMMERCENG_DEBUG))
+            {
+                $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                fwrite($h, $this->client->__getLastRequestHeaders());
+                fwrite($h, $this->client->__getLastRequest());
+                fclose($h);
+            }
+
             dol_syslog("getFactureToUpdate end");
             return $result;
         } catch (SoapFault $fault) {

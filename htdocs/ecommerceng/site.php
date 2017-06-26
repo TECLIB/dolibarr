@@ -31,6 +31,7 @@ if (! $res && $i > 0 && file_exists(dirname(substr($tmp, 0, ($i+1)))."/main.inc.
 if (! $res && file_exists("../../main.inc.php")) $res=@include("../../main.inc.php");
 if (! $res && file_exists("../../../main.inc.php")) $res=@include("../../../main.inc.php");
 if (! $res) die("Include of main fails");
+include_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
 
 dol_include_once("/ecommerceng/class/business/eCommerceSynchro.class.php");
 $langs->load("ecommerce@ecommerceng");
@@ -53,7 +54,9 @@ if ($user->societe_id > 0 || !$user->rights->ecommerceng->read)
 	accessforbidden();
 }
 
-$id=GETPOST('id','int');
+$id = GETPOST('id','int');
+$to_date = GETPOST('to_date','aZ09');
+
 $error=0;
 
 
@@ -74,7 +77,10 @@ if ($id)
 		$params=getSoapParams();
 		if (! empty($params['response_timeout'])) set_time_limit($params['response_timeout']);
 
-	    $synchro = new eCommerceSynchro($db, $site);
+		// Define date max (synch is done for element modified before)
+		$toDate=null;
+		if (! empty($to_date)) $toDate=dol_stringtotime($to_date);
+	    $synchro = new eCommerceSynchro($db, $site, $toDate);          // $synchro->toDate will be set to dol_now if toDate no defined.
 
 	    dol_syslog("site.php Try to connect to eCommerce site ".$site->name);
 		$synchro->connect();
@@ -118,23 +124,23 @@ if ($id)
 			    $synchro->dropImportedAndSyncData(1);
 			}
 
-			if (GETPOST('submit_synchro_category') || GETPOST('submit_synchro_all'))
+			if (GETPOST('submit_synchro_category') || GETPOST('submit_synchro_category_ajax') || GETPOST('submit_synchro_all'))
 			{
 				$synchro->synchCategory();
 			}
-			if (GETPOST('submit_synchro_product') || GETPOST('submit_synchro_all'))
+			if (GETPOST('submit_synchro_product') || GETPOST('submit_synchro_product_ajax') || GETPOST('submit_synchro_all'))
 			{
 				$synchro->synchProduct();
 			}
-			if (GETPOST('submit_synchro_societe') || GETPOST('submit_synchro_all'))
+			if (GETPOST('submit_synchro_societe') || GETPOST('submit_synchro_societe_ajax') ||  GETPOST('submit_synchro_all'))
 			{
 				$synchro->synchSociete();
 			}
-			if (GETPOST('submit_synchro_commande') || GETPOST('submit_synchro_all'))
+			if (GETPOST('submit_synchro_commande') || GETPOST('submit_synchro_commande_ajax') || GETPOST('submit_synchro_all'))
 			{
 				$synchro->synchCommande();
 			}
-			if (GETPOST('submit_synchro_facture') || GETPOST('submit_synchro_all'))
+			if (GETPOST('submit_synchro_facture') || GETPOST('submit_synchro_facture_ajax') ||GETPOST('submit_synchro_all'))
 			{
 				$synchro->synchFacture();
 			}
@@ -214,10 +220,20 @@ if ($id)
 	}
 }
 
-/***************************************************
-* Show page
-****************************************************/
-$urltpl=dol_buildpath('/ecommerceng/tpl/site.tpl.php',0);
-include($urltpl);
+/*
+ * View
+ */
+
+if (GETPOST('submit_synchro_category_ajax') || GETPOST('submit_synchro_product_ajax') || GETPOST('submit_synchro_societe_ajax')
+    || GETPOST('submit_synchro_commande_ajax') || GETPOST('submit_synchro_facture_ajax'))
+{
+    // Return ajax content
+}
+else
+{
+    // Return HTML page content
+    $urltpl=dol_buildpath('/ecommerceng/tpl/site.tpl.php',0);
+    include($urltpl);
+}
 
 $db->close();

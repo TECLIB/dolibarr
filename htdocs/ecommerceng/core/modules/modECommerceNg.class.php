@@ -107,7 +107,11 @@ class modECommerceNg extends DolibarrModules
 		$this->langfiles = array("ecommerce@ecommerceng");
 
 		// Constants
-		$this->const = array(0=>array('ECOMMERCENG_SHOW_DEBUG_TOOLS', 'chaine', '1', 'Enable button to clean database for debug purpose', 1, 'allentities', 1));	// List of particular constants to add when module is enabled
+		// List of particular constants to add when module is enabled
+		$this->const = array(
+		    0=>array('ECOMMERCENG_SHOW_DEBUG_TOOLS', 'chaine', '1', 'Enable button to clean database for debug purpose', 1, 'allentities', 1),
+		    1=>array('MODULE_ECOMMERCENG_DEBUG', 'chaine', '1', 'This is to enable ECommerceng log of web services requests', 1, 'allentities', 1)
+		);
 
 		// Array to add new pages in new tabs
 		//$this->tabs = array('entity:Title:@mymodule:/mymodule/mynewtab.php?id=__ID__');

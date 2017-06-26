@@ -463,8 +463,7 @@ class eCommerceSynchro
                     $this->initECommerceCategory(); // Initialise 2 properties eCommerceCategory and eCommerceMotherCategory
 
                     // $resanswer is array with all categories
-                    // We must loop on each categorie to make a WS call to get updated_at info.
-                    // TODO This is very long if there is a lot of categories
+                    // We must loop on each categorie.
                     foreach ($resanswer as $remoteCatToCheck) // Check update for each entry into $resanswer -> $remoteCatToCheck = array('category_id'=>, 'parent_id'=>...)
                     {
                         // Test if category is disabled or not
@@ -474,8 +473,8 @@ class eCommerceSynchro
                         }
                         else
                         {
-                            if (! isset($remoteCatToCheck['updated_at'])) {   // The api that return list of category did not return the updated_at
-
+                            if (! isset($remoteCatToCheck['updated_at'])) {   // The api that returns list of category did not return the updated_at property
+                                // This is very long if there is a lot of categories because we make a WS call to get the 'updated_at' info at each loop pass.
                                 dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id'].", updated_at unknow.");
 
                                 // Complete info of $remoteCatToCheck['category_id']
@@ -486,11 +485,15 @@ class eCommerceSynchro
                             else
                             {
                                 dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id'].", updated_at is defined to ".$remoteCatToCheck['updated_at']);
-
                             }
-                            // Check into link table ecommerce_category if record has been modified on magento or not
-                            if ($this->eCommerceCategory->checkForUpdate($this->eCommerceSite->id, $this->toDate, $remoteCatToCheck))   // compare date in remoteCatToCheck and date in sync table. $this->toDate is not used.
-                                $this->categoryToUpdate[] = $remoteCatToCheck;
+
+                            // If the category was updated before the max limit date this->toDate
+                            if (strtotime($remoteCatToCheck['updated_at']) <= $this->toDate)
+                            {
+                                // Check into link table ecommerce_category if record is older (so if has been modified on magento or not)
+                                if ($this->eCommerceCategory->checkForUpdate($this->eCommerceSite->id, $this->toDate, $remoteCatToCheck))   // compare date in remoteCatToCheck and date in sync table. $this->toDate is not used.
+                                    $this->categoryToUpdate[] = $remoteCatToCheck;
+                            }
                         }
                     }
 
