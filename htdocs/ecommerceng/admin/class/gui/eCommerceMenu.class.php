@@ -30,19 +30,19 @@ class eCommerceMenu
 	private $module;
 	private $db;
 	private $siteDb;
-	
+
     function eCommerceMenu($db, $siteDb=null, $modECommerce=null)
     {
     	$this->db = $db;
-    	
+
     	if ($siteDb==null)
     		$this->siteDb = new eCommerceSite($this->db);
     	else
     		$this->siteDb = $siteDb;
-    	
+
     	if ($modECommerce!=null)
         	$this->module = $modECommerce;
-        
+
         return 1;
     }
     /**
@@ -51,7 +51,7 @@ class eCommerceMenu
     function getMenu()
     {
     	$menu = array();
-    	
+
     	//define top menu
     	$menu[0]=array(	'fk_menu'=>'',
     					'type'=>'top',
@@ -78,7 +78,7 @@ class eCommerceMenu
     					'perms'=>'$user->rights->ecommerceng->read',
     					'target'=>'',
     					'user'=>2);
-    	
+
     	//add link to configuration
     	$menu[2]=array(	'fk_menu'=>'fk_mainmenu=ecommerceng',
     					'type'=>'left',
@@ -92,8 +92,9 @@ class eCommerceMenu
     					'perms'=>'$user->rights->ecommerceng->site',
     					'target'=>'',
     					'user'=>2);
-    	
+
     	//add submenu foreach site
+    	/* We can't return content of menu that depends on tables, because we must know menus entries when we activate menu, and this must not change.
     	$sites = $this->siteDb->listSites();
     	if (count($this->siteDb))
     		foreach ($sites as $site)
@@ -109,9 +110,10 @@ class eCommerceMenu
     							'perms'=>'$user->rights->ecommerceng->read',
     							'target'=>'',
     							'user'=>2);
+    	*/
     	return $menu;
     }
-    
+
     /**
      * Update menu into database
      */
@@ -119,7 +121,7 @@ class eCommerceMenu
     {
     	if ($this->module == null)
         	$this->module = new modECommerceNg($this->db);
-        	
+
     	$this->module->menu = $this->getMenu();
     	$this->module->db->begin();
 		$this->module->delete_menus();

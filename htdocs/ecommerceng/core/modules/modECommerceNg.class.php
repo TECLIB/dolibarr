@@ -181,12 +181,11 @@ class modECommerceNg extends DolibarrModules
 		$r=0;
 
 		// Add here entries to declare new menus
-		if (! empty($conf->modules['ecommerceng']))
-		{
-		    // Do not run this code if module is not yet enabled (tables does not exists yet)
+		//if (! empty($conf->modules['ecommerceng']))     // Do not run this code if module is not yet enabled (tables does not exists yet)
+		//{
     		$eCommerceMenu = new eCommerceMenu($this->db,null,$this);
 	        $this->menu = $eCommerceMenu->getMenu();
-		}
+		//}
 
 		// Exports
 		$r=1;

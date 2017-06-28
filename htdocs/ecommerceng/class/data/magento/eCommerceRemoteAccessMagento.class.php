@@ -372,6 +372,8 @@ class eCommerceRemoteAccessMagento
             }
             array_multisort($last_update, SORT_ASC, $societes);
         }
+
+        dol_syslog("convertRemoteObjectIntoDolibarrSociete return array of ".count($societes)." societes.");
         return $societes;
     }
 
@@ -432,6 +434,8 @@ class eCommerceRemoteAccessMagento
             }
             array_multisort($last_update, SORT_ASC, $socpeoples);
         }
+
+        dol_syslog("convertRemoteObjectIntoDolibarrSocPeople return array of ".count($socpeoples)." socpeople.");
         return $socpeoples;
     }
 
@@ -1037,6 +1041,7 @@ class eCommerceRemoteAccessMagento
 
         //var_dump($factures);exit;
 
+        dol_syslog("convertRemoteObjectIntoDolibarrFacture return array of ".count($products)." products.");
         return $factures;
     }
 

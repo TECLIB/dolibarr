@@ -56,6 +56,7 @@ if ($user->societe_id > 0 || !$user->rights->ecommerceng->read)
 
 $id = GETPOST('id','int');
 $to_date = GETPOST('to_date','aZ09');
+$from_date = GETPOST('from_date','aZ09');
 
 $error=0;
 

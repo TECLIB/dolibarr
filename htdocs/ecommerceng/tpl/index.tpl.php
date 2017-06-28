@@ -17,7 +17,7 @@ if (count($sites)): ?>
 <?php
 $var=!$var;
 	foreach ($sites as $site)
-	{ ?>		
+	{ ?>
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $site->name ?></td>
 			<td>
@@ -34,7 +34,7 @@ $var=!$var;
 			<td><div style="inline-block">
 				<form class="inline-block" style="margin-right: 10px" name="form_index" id="form_detailed" action="<?php print dol_buildpath('/ecommerceng/site.php',1); ?>?id=<?php echo $site->id ?>" method="post">
 					<input type="hidden" name="id" value="<?php print $site->id ?>">
-					<input class="button" type="submit" name="submit_detailed" value="<?php print $langs->trans('ECommerceUpdateSite') ?>">					
+					<input class="button" type="submit" name="submit_detailed" value="<?php print $langs->trans('ECommerceUpdateSite') ?>">
 				</form>
 				<form class="inline-block" name="form_index" id="form_global" action="<?php print dol_buildpath('/ecommerceng/site.php', 1); ?>?id=<?php echo $site->id; ?>" method="post">
 					<input type="hidden" name="id" value="<?php print $site->id ?>">
@@ -44,8 +44,11 @@ $var=!$var;
 			</td>
 			<td>
 				<?php $url=$site->getFrontUrl(); print $langs->trans("FrontOffice").': <a href="'.$url.'" target="_frontsite">'.$url.'</a>'; ?>
-				<?php $url=$site->getBackUrl(); print '<br>'.$langs->trans("BackOffice").': <a href="'.$url.'" target="_backsite">'.$url.'</a>'; ?>
-			</td>	
+				<?php $url=$site->getBackUrl();
+				print '<br>';
+				print $form->textwithpicto($langs->trans("BackOffice"), $langs->trans("SeeECommerceConfFileIfKo",'app/etc/local.xml'));
+				print ': <a href="'.$url.'" target="_backsite">'.$url.'</a>'; ?>
+			</td>
 		</tr>
 	<?php } ?>
 	</table>
