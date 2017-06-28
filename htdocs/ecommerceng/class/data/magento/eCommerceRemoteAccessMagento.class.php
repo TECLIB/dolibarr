@@ -127,6 +127,7 @@ class eCommerceRemoteAccessMagento
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
+                fwrite($h, $this->client->__getLastResponse());
                 fclose($h);
             }
 
@@ -177,6 +178,7 @@ class eCommerceRemoteAccessMagento
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
+                fwrite($h, $this->client->__getLastResponse());
                 fclose($h);
             }
 
@@ -215,6 +217,7 @@ class eCommerceRemoteAccessMagento
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
+                fwrite($h, $this->client->__getLastResponse());
                 fclose($h);
             }
 
@@ -272,6 +275,7 @@ class eCommerceRemoteAccessMagento
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
+                fwrite($h, $this->client->__getLastResponse());
                 fclose($h);
             }
 
@@ -481,6 +485,8 @@ class eCommerceRemoteAccessMagento
             {
                 try {
                     $results = $this->client->multiCall($this->session, $calls);
+
+
                 } catch (SoapFault $fault) {
                     $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
                     dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
@@ -518,8 +524,8 @@ class eCommerceRemoteAccessMagento
                         $products[] = array(
                                 //$product['type'] simple, grouped (=package), configurable (= variant), downloadable, bundle (on demand defined products), virtual (services)
                                 'fk_product_type' => ($product['type'] == 'virtual' ? 1 : 0), // 0 (product) or 1 (service)
-                                'ref' => dol_sanitizeFileName(stripslashes($product['sku'])),
-                                'label' => $product['name'],
+                                'ref' => dol_string_nospecial($product['sku']),
+                                'label' => ($product['name']?$product['name']:dol_string_nospecial($product['sku'])),
                                 'description' => $product['description'],
                                 'weight' => $product['weight'],
                                 'last_update' => $product['updated_at'],
