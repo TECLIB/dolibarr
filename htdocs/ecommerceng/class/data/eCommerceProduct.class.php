@@ -44,10 +44,11 @@ class eCommerceProduct // extends CommonObject
 
 
     /**
-     *      \brief      Create in database
-     *      \param      user        	User that create
-     *      \param      notrigger	    0=launch triggers after, 1=disable triggers
-     *      \return     int         	<0 if KO, Id of created object if OK
+     *      Create in database
+     *
+     *      @param      User    $user        	User that create
+     *      @param      int     $notrigger	    0=launch triggers after, 1=disable triggers
+     *      @return     int                    	<0 if KO, Id of created object if OK
      */
     function create($user, $notrigger=0)
     {
@@ -65,19 +66,15 @@ class eCommerceProduct // extends CommonObject
 
         // Insert request
 		$sql = "INSERT INTO ".MAIN_DB_PREFIX."ecommerce_product(";
-
 		$sql.= "fk_product,";
 		$sql.= "fk_site,";
 		$sql.= "remote_id,";
 		$sql.= "last_update";
-
         $sql.= ") VALUES (";
-
 		$sql.= " ".(isset($this->fk_product)?intval($this->fk_product):0).",";
 		$sql.= " ".(isset($this->fk_site)?intval($this->fk_site):0).",";
-		$sql.= " ".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
+		$sql.= " ".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
 		$sql.= " ".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
-
 		$sql.= ")";
 
 		$this->db->begin();
@@ -193,7 +190,7 @@ class eCommerceProduct // extends CommonObject
 
 		$sql.= " fk_product=".(isset($this->fk_product)?intval($this->fk_product):0).",";
 		$sql.= " fk_site=".(isset($this->fk_site)?intval($this->fk_site):0).",";
-		$sql.= " remote_id=".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
+		$sql.= " remote_id=".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
 		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
 
         $sql.= " WHERE rowid=".$this->id;
@@ -296,7 +293,8 @@ class eCommerceProduct // extends CommonObject
 
 	/**
 	 * Get the last date of the last updated product
-	 * @param $siteId eCommerceSite id | * for each sites
+	 *
+	 * @param  int         $siteId         eCommerceSite id | * for each sites
 	 * @return datetime
 	 */
 	public function getLastUpdate($siteId)
@@ -330,9 +328,9 @@ class eCommerceProduct // extends CommonObject
 	/**
      *    Load object in memory from database by remote_id
      *
-     *    @param	$remoteId string remote_id
-     *    @param	$siteId int fk_site
-     *    @return	int <0 if KO, >0 if OK
+     *    @param	int    $remoteId       string remote_id
+     *    @param	int    $siteId         int fk_site
+     *    @return	int                    <0 if KO, >0 if OK
      */
 	public function fetchByRemoteId($remoteId, $siteId)
     {
@@ -375,9 +373,9 @@ class eCommerceProduct // extends CommonObject
 	/**
      *    Load object in memory from database by remote_id
      *
-     *    @param	$productId string product_id
-     *    @param	$siteId int fk_site
-     *    @return	int <0 if KO, >0 if OK
+     *    @param	int    $productId  string product_id
+     *    @param	int    $siteId     int fk_site
+     *    @return	int                <0 if KO, >0 if OK
      */
 	public function fetchByProductId($productId, $siteId)
     {
@@ -419,8 +417,9 @@ class eCommerceProduct // extends CommonObject
 
     /**
      * 		Select all the ids from eCommerceProduct for a site
-     * 		@param int		siteId
-     * 		@return array	synchObject ids for this site
+     *
+     * 		@param int		$siteId    Id site
+     * 		@return array	           synchObject ids for this site
      */
     public function getAllECommerceProductIds($siteId)
     {
