@@ -553,6 +553,8 @@ class eCommerceRemoteAccessMagento
             }
             array_multisort($last_update, SORT_ASC, $products);
         }
+
+        dol_syslog("convertRemoteObjectIntoDolibarrProduct return array of ".count($products)." products.");
         return $products;
     }
 
