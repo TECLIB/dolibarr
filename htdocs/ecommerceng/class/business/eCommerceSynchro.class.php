@@ -937,7 +937,41 @@ class eCommerceSynchro
                     {
                         // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
                         //$result = $dBSociete->fetch(0, '', $this->eCommerceSite->name.'-'.$societeArray['remote_id']);      // No need of ref_ext, we will search if already exists on name
-                        $result = $dBSociete->fetch(0, $societeArray['name']);
+
+                        $unicity='name';
+                        if (! empty($conf->global->ECOMMERCENG_THIRDPARTY_UNIQUE_ON) && $conf->global->ECOMMERCENG_THIRDPARTY_UNIQUE_ON == 'email')
+                        {
+                            $unicity='email';
+                        }
+
+                        $result = 0;
+                        // If unicity is on NAME
+                        if ($unicity == 'name')
+                        {
+                            $result = $dBSociete->fetch(0, $societeArray['name']);
+                        }
+                        // If unicity is on EMAIL
+                        if ($unicity == 'email')
+                        {
+                            $sql = 'SELECT s.rowid FROM '.MAIN_DB_PREFIX."societe as s where email like '".$this->db->escape($societeArray['email'])."'";
+                            $resqlid = $this->db->query($sql);
+                            if ($resqlid)
+                            {
+                                $obj = $this->db->fetch_object($resqlid);
+                                if ($obj)
+                                {
+                                    $thirdpartyid = $obj->rowid;
+                                    $result = $dBSociete->fetch(0, $thirdpartyid);
+                                }
+                            }
+                            else
+                            {
+                                $error++;
+                                $this->error='Error in getting id from email.';
+                                $this->errors[]=$this->error;
+                            }
+                        }
+
                         if ($result == -2)
                         {
                             $error++;
