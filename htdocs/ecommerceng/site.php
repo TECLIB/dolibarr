@@ -184,22 +184,39 @@ if ($id)
 		// Count into Magento
 		if (! $error)
 		{
-			if (! $error) $nbCategoriesToUpdate = $synchro->getNbCategoriesToUpdate(true);
-			if ($nbCategoriesToUpdate < 0) $error++;
-			if (! $error) $nbProductToUpdate = $synchro->getNbProductToUpdate(true);
-			if ($nbProductToUpdate < 0) $error++;
-			if (! $error) $nbSocieteToUpdate = $synchro->getNbSocieteToUpdate(true);
-			if ($nbSocieteToUpdate < 0) $error++;
-			if (! empty($conf->commande->enabled))
-            {
-                if (! $error) $nbCommandeToUpdate = $synchro->getNbCommandeToUpdate(true);
-                if ($nbCommandeToUpdate < 0) $error++;
-            }
-            //exit;
-			if (! $error) $nbFactureToUpdate = $synchro->getNbFactureToUpdate(true);
-			if ($nbFactureToUpdate < 0) $error++;
+		    if (! GETPOST('test_with_no_categ_count'))
+		    {
+				if (! $error) $nbCategoriesToUpdate = $synchro->getNbCategoriesToUpdate(true);
+				if ($nbCategoriesToUpdate < 0) $error++;
+		    }
+		    if (! GETPOST('test_with_no_product_count'))
+		    {
+		    	if (! $error) $nbProductToUpdate = $synchro->getNbProductToUpdate(true);
+				if ($nbProductToUpdate < 0) $error++;
+		    }
+		    if (! GETPOST('test_with_no_thirdparty_count'))
+		    {
+		    	if (! $error) $nbSocieteToUpdate = $synchro->getNbSocieteToUpdate(true);
+				if ($nbSocieteToUpdate < 0) $error++;
+		    }
+		    if (! GETPOST('test_with_no_order_count'))
+		    {
+			    if (! empty($conf->commande->enabled))
+    	        {
+        	        if (! $error) $nbCommandeToUpdate = $synchro->getNbCommandeToUpdate(true);
+            	    if ($nbCommandeToUpdate < 0) $error++;
+	            }
+		    }
+		    if (! GETPOST('test_with_no_invoice_count'))
+		    {
+				if (! $error) $nbFactureToUpdate = $synchro->getNbFactureToUpdate(true);
+				if ($nbFactureToUpdate < 0) $error++;
+		    }
 
-			if ($nbCategoriesToUpdate == 0 && $nbProductToUpdate == 0 && $nbSocieteToUpdate == 0 && $nbCommandeToUpdate == 0 && $nbFactureToUpdate == 0)
+			if ($nbCategoriesToUpdate == 0 && $nbProductToUpdate == 0 && $nbSocieteToUpdate == 0 && $nbCommandeToUpdate == 0 && $nbFactureToUpdate == 0
+			   && ! GETPOST('test_with_no_categ_count') && GETPOST('test_with_no_product_count') && GETPOST('test_with_no_thirdparty_count')
+			    && ! GETPOST('test_with_no_order_count') && ! GETPOST('test_with_no_invoice_count')
+			    )
 			{
 			    $site->last_update = $synchro->toDate;
 			    $site->update($user);

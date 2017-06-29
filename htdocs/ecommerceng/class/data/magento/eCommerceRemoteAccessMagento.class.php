@@ -95,8 +95,18 @@ class eCommerceRemoteAccessMagento
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             if (! empty($this->client))
             {
-                dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
-                dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+                dol_syslog("Failed to login. Enable option ECOMMERCENG_DEBUG to get more information in dolibarr_ecommerceng.log", LOG_WARNING);
+
+                // Add debug
+                if (! empty($conf->global->ECOMMERCENG_DEBUG))
+                {
+                    $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                    fwrite($h, $this->client->__getLastRequestHeaders());
+                    fwrite($h, $this->client->__getLastRequest());
+                    fwrite($h, $this->client->__getLastResponseHeaders());
+                    fwrite($h, $this->client->__getLastResponse());
+                    fclose($h);
+                }
             }
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
@@ -127,6 +137,7 @@ class eCommerceRemoteAccessMagento
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
+                fwrite($h, $this->client->__getLastResponseHeaders());
                 fwrite($h, $this->client->__getLastResponse());
                 fclose($h);
             }
@@ -178,6 +189,7 @@ class eCommerceRemoteAccessMagento
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
+                fwrite($h, $this->client->__getLastResponseHeaders());
                 fwrite($h, $this->client->__getLastResponse());
                 fclose($h);
             }
@@ -210,6 +222,7 @@ class eCommerceRemoteAccessMagento
                 array('updated_at' => array('from' => dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard'))),
             );
             $result = $this->client->call($this->session, 'sales_order.list', $filter);
+            //$result = $this->client->call($this->session, 'order.list');
 
             // Add debug
             if (! empty($conf->global->ECOMMERCENG_DEBUG))
@@ -217,11 +230,14 @@ class eCommerceRemoteAccessMagento
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
+                fwrite($h, $this->client->__getLastResponseHeaders());
                 fwrite($h, $this->client->__getLastResponse());
                 fclose($h);
             }
+            //var_dump($result);
 
-            /*foreach ($result as $rcommande)
+            /* Get more details
+            foreach ($result as $rcommande)
             {
                 $calls[] = array('sales_order.info', $rcommande['increment_id']);
             }
@@ -275,6 +291,7 @@ class eCommerceRemoteAccessMagento
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
+                fwrite($h, $this->client->__getLastResponseHeaders());
                 fwrite($h, $this->client->__getLastResponse());
                 fclose($h);
             }

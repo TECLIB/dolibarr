@@ -1089,7 +1089,7 @@ class eCommerceSynchro
             }
             else
             {
-                $this->error=$this->langs->trans('ECommerceErrorsynchSociete').' FailToGetDetailsOfRecord';
+                $this->error=$this->langs->trans('ECommerceErrorsynchSociete').' (Code FailToGetDetailsOfRecord)';
                 $this->errors[] = $this->error;
             }
         } catch (Exception $e) {
@@ -1260,6 +1260,28 @@ class eCommerceSynchro
 
             dol_syslog("***** eCommerceSynchro synchProduct");
             $resulttoupdate=$this->getProductToUpdate();
+            /*$resulttoupdate=array( 0 =>
+            array (
+            'product_id' => '27',
+            'sku' => 'QSINCP01384',
+            'name' => 'xxxxx',
+            'set' => '85',
+            'type' => 'simple',
+            'category_ids' =>  array (0 => '98', 1 => '225'),
+            'website_ids' => array (0 => '1')
+            ));*/
+
+            /*$resulttoupdate=array( 0 =>array (
+            'product_id' => '52',
+            'sku' => '11115',
+            'type' => 'simple',
+            'category_ids' =>  array (0 => '98', 1 => '225'),
+            'website_ids' => array (0 => '1')
+            ));
+
+            var_dump($resulttoupdate);
+            */
+
             // Return an array like  array([product_id]=>27, [sku]=>'QSINCP01384', [name]=>'Name of product', [set]=>85, [type]=>simple, [category_ids]=>Array([0]=>98, [1]=>225), [website_ids] => Array([0]=>1))
             if (is_array($resulttoupdate))
             {
@@ -1316,6 +1338,10 @@ class eCommerceSynchro
                 {
                     $error++;
                     $this->errors[]="Record with following ref were not returned: ".join(',', $listofrefnotfound);
+                    if (is_numeric($listofrefnotfound[0]))
+                    {
+                        $this->errors[]="With some eCommerce platform, like Magento, the API to get data of product may fails if the Reference (Sku) contains only numbers. Try to introduce a letter (A-Z) into reference on your eCommerce products";
+                    }
                 }
             }
 
@@ -1583,7 +1609,7 @@ class eCommerceSynchro
             }
             else
             {
-                $this->error=$this->langs->trans('ECommerceErrorsynchProduct').' FailToGetDetailsOfRecord';
+                $this->error=$this->langs->trans('ECommerceErrorsynchProduct').' (Code FailToGetDetailsOfRecord)';
                 $this->errors[] = $this->error;
             }
         } catch (Exception $e) {
@@ -2044,7 +2070,7 @@ class eCommerceSynchro
             }
             else
             {
-                $this->error=$this->langs->trans('ECommerceErrorsynchCommande').' FailToGetDetailsOfRecord';
+                $this->error=$this->langs->trans('ECommerceErrorsynchCommande').' (Code FailToGetDetailsOfRecord)';
                 $this->errors[] = $this->error;
             }
         } catch (Exception $e) {
@@ -2474,7 +2500,7 @@ class eCommerceSynchro
             }
             else
             {
-                $this->error=$this->langs->trans('ECommerceErrorsynchProduct').' FailToGetDetailsOfRecord';
+                $this->error=$this->langs->trans('ECommerceErrorsynchProduct').' (Code FailToGetDetailsOfRecord)';
                 $this->errors[] = $this->error;
             }
         } catch (Exception $e) {
