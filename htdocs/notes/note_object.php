@@ -41,7 +41,7 @@ require_once(DOL_DOCUMENT_ROOT."/comm/propal/class/propal.class.php");
 require_once(DOL_DOCUMENT_ROOT."/core/class/doleditor.class.php");
 dol_include_once("/notes/class/note.class.php");
 
-$action = GETPOST('action');
+$action = GETPOST('action','aZ09');
 
 
 $langs->load("companies");
