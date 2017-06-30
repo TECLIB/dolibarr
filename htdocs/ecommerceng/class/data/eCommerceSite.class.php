@@ -137,14 +137,14 @@ class eCommerceSite // extends CommonObject
 		$sql.= "magento_use_special_price,";
 		$sql.= "magento_price_type";
         $sql.= ") VALUES (";
-		$sql.= " ".(! isset($this->name)?'NULL':"'".addslashes($this->name)."'").",";
+		$sql.= " ".(! isset($this->name)?'NULL':"'".$this->db->escape($this->name)."'").",";
 		$sql.= " ".(! isset($this->type)?'NULL':"'".$this->type."'").",";
-		$sql.= " ".(! isset($this->webservice_address)?'NULL':"'".addslashes($this->webservice_address)."'").",";
-		$sql.= " ".(! isset($this->user_name)?'NULL':"'".addslashes($this->user_name)."'").",";
-		$sql.= " ".(! isset($this->user_password)?'NULL':"'".addslashes($this->user_password)."'").",";
-        $sql.= " ".(! isset($this->price_level)?'NULL':"'".addslashes($this->price_level)."'").",";
-		$sql.= " ".(! isset($this->filter_label)?'NULL':"'".addslashes($this->filter_label)."'").",";
-		$sql.= " ".(! isset($this->filter_value)?'NULL':"'".addslashes($this->filter_value)."'").",";
+		$sql.= " ".(! isset($this->webservice_address)?'NULL':"'".$this->db->escape($this->webservice_address)."'").",";
+		$sql.= " ".(! isset($this->user_name)?'NULL':"'".$this->db->escape($this->user_name)."'").",";
+		$sql.= " ".(! isset($this->user_password)?'NULL':"'".$this->db->escape($this->user_password)."'").",";
+        $sql.= " ".(! isset($this->price_level)?'NULL':"'".$this->db->escape($this->price_level)."'").",";
+		$sql.= " ".(! isset($this->filter_label)?'NULL':"'".$this->db->escape($this->filter_label)."'").",";
+		$sql.= " ".(! isset($this->filter_value)?'NULL':"'".$this->db->escape($this->filter_value)."'").",";
 		$sql.= " ".($this->fk_cat_societe > 0 ? $this->fk_cat_societe : "NULL").",";
 		$sql.= " ".($this->fk_cat_product > 0 ? $this->fk_cat_product : "NULL").",";
 		$sql.= " ".($this->fk_warehouse > 0 ? $this->fk_warehouse : "NULL").",";
@@ -301,14 +301,14 @@ class eCommerceSite // extends CommonObject
         // Update request
         $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_site SET";
 
-		$sql.= " name=".(isset($this->name)?"'".addslashes($this->name)."'":"null").",";
+		$sql.= " name=".(isset($this->name)?"'".$this->db->escape($this->name)."'":"null").",";
 		$sql.= " type=".(isset($this->type)?$this->type:"null").",";
-		$sql.= " webservice_address=".(isset($this->webservice_address)?"'".addslashes($this->webservice_address)."'":"null").",";
-		$sql.= " user_name=".(isset($this->user_name)?"'".addslashes($this->user_name)."'":"null").",";
-		$sql.= " user_password=".(isset($this->user_password)?"'".addslashes($this->user_password)."'":"null").",";
-        $sql.= " price_level=".(isset($this->price_level)?"'".addslashes($this->price_level)."'":"null").",";
-		$sql.= " filter_label=".(isset($this->filter_label)?"'".addslashes($this->filter_label)."'":"null").",";
-		$sql.= " filter_value=".(isset($this->filter_value)?"'".addslashes($this->filter_value)."'":"null").",";
+		$sql.= " webservice_address=".(isset($this->webservice_address)?"'".$this->db->escape($this->webservice_address)."'":"null").",";
+		$sql.= " user_name=".(isset($this->user_name)?"'".$this->db->escape($this->user_name)."'":"null").",";
+		$sql.= " user_password=".(isset($this->user_password)?"'".$this->db->escape($this->user_password)."'":"null").",";
+        $sql.= " price_level=".(isset($this->price_level)?"'".$this->db->escape($this->price_level)."'":"null").",";
+		$sql.= " filter_label=".(isset($this->filter_label)?"'".$this->db->escape($this->filter_label)."'":"null").",";
+		$sql.= " filter_value=".(isset($this->filter_value)?"'".$this->db->escape($this->filter_value)."'":"null").",";
 		$sql.= " fk_cat_societe=".($this->fk_cat_societe > 0 ? $this->fk_cat_societe:"null").",";
 		$sql.= " fk_cat_product=".($this->fk_cat_product > 0 ? $this->fk_cat_product:"null").",";
 		$sql.= " fk_warehouse=".($this->fk_warehouse > 0 ? $this->fk_warehouse:"null").",";

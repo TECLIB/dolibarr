@@ -33,7 +33,6 @@ if (! $res && file_exists("../../../main.inc.php")) $res=@include("../../../main
 if (! $res) die("Include of main fails");
 
 dol_include_once("/ecommerceng/class/data/eCommerceSite.class.php");
-set_time_limit(600);
 
 $langs->load("admin");
 $langs->load("ecommerce@ecommerceng");

@@ -12,40 +12,39 @@ if (is_object($site))
 
     dol_fiche_head('', '', 'Dolibarr <- Ecommerce');
 
+    print '<form name="form_count" id="form_count" action="'.$_SERVER['PHP_SELF'].'" method="post">';
+    print '<input type="hidden" name="id" value="'.$site->id.'">';
+
     print '<table class="centpercent nobordernopadding"><tr><td>';
 
     print $langs->trans("ECommerceLastCompleteSync", $site->name).': ';
     if ($site->last_update) print '<strong>'.dol_print_date($site->last_update, 'dayhoursec').'</strong>';
     else print $langs->trans("ECommerceNoUpdateSite");
-    print '<br>';
 
-    $soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');
-    $soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
-    if ($soapwsdlcacheon)
-    {
-        print $langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).'<br>';
-    }
-    else
-    {
-        print $langs->trans("SoapCacheIsOff", $soapwsdlcachedir).'<br>';
-    }
+    print '</td><td align="right"></td></tr>';
 
-    print '</td><td align="right">';
+    print '<tr><td>';
 
-    $button.='<a class="button" style="margin-right: 15px" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=refresh" class="butAction">'.$langs->trans('RefreshCount').'</a>';
+    print $langs->trans("RestrictCountAndSynchForRecordBefore");
+    print ' (YYYYMMDDHHMMSS) ';
+    print '<input type="text" name="to_date" value="'.dol_escape_htmltag($to_date).'">';
+
+    print '</td><td>';
+    $button.='<input type="submit" class="button" name="refresh" style="margin-right: 15px" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=refresh" value="'.$langs->trans('RefreshCount').'">';
     print $button;
 
     $disabled=true;
     if ($synchRights != true || ($nbCategoriesToUpdate>0 || $nbProductToUpdate>0 || $nbSocieteToUpdate>0 || $nbCommandeToUpdate>0 || $nbFactureToUpdate>0)) $disabled=false;
 
-    $button2.='<a class="button'.($disabled?' buttonRefused':'').'" href="'.($disabled?'#':$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=submit_synchro_all&submit_synchro_all=1').'" class="butAction">'.$langs->trans('SyncAll').'</a>';
+    $button2.='<input type="submit" class="button'.($disabled?' buttonRefused':'').'" name="submit_synchro_all" href="'.($disabled?'#':$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=submit_synchro_all&submit_synchro_all=1').'" value="'.$langs->trans('SyncAll').'">';
     print $button2;
 
-    print '</td></tr></table>';
+    print '</td></tr>';
+    print '</table>';
 
 
     print '<br>'."\n";
-?>
+    ?>
 	<div class="div-table-responsive">
 	<table class="noborder" width="100%">
 		<tr class="liste_titre">
@@ -54,16 +53,15 @@ if (is_object($site))
 			<td><?php print $langs->trans('NbInDolibarrLinkedToE') ?></td>
 			<td><?php
 			print $langs->trans('ECommerceCountToUpdate');
-			if (! empty($to_date)) print ' ('.$langs->trans("Before").' '.$to_date.')';
 			?></td>
 			<?php if ($synchRights==true):?>
 			<td>&nbsp;</td>
 			<?php endif; ?>
 		</tr>
 
-<?php
-$var=!$var;
-?>
+    <?php
+    $var=!$var;
+    ?>
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ECommerceCategoriesProducts') ?></td>
 			<td><?php print $nbCategoriesInDolibarr; ?> *</td>
@@ -86,18 +84,14 @@ $var=!$var;
 			<?php if ($synchRights==true) { ?>
 			<td>
 				<?php if ($nbCategoriesToUpdate>0) { ?>
-				<form name="form_synchro_categories" id="form_synchro_category" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
-					<input type="hidden" name="id" value="<?php print $site->id ?>">
-					<input type="hidden" name="to_date" value="<?php print $to_date ?>">
 					<input type="submit" name="submit_synchro_category" id="submit_synchro_category" class="button" value="<?php print $langs->trans('ECommerceSynchronizeCategoryProduct') ?>">
-				</form>
 				<?php } ?>
 			</td>
 			<?php } ?>
 		</tr>
-<?php
-$var=!$var;
-?>
+    <?php
+    $var=!$var;
+    ?>
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ProductsOrServices') ?></td>
 			<td><?php print $nbProductInDolibarr; ?> **</td>
@@ -118,26 +112,18 @@ $var=!$var;
 				<?php
 				if ($nbProductToUpdate>0 && $nbCategoriesToUpdate>0) {
 				    ?>
-				<form name="form_synchro_product" id="form_synchro_product" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
-					<input type="hidden" name="id" value="<?php print $site->id ?>">
-					<input type="hidden" name="to_date" value="<?php print $to_date ?>">
 					<input type="submit" name="submit_synchro_product" id="submit_synchro_product" class="button" disabled="disabled" value="<?php print $langs->trans('ECommerceSynchronizeProduct').' ('.$langs->trans("SyncCategFirst").")"; ?>">
-				</form>
 				<?php
 				}
 				elseif ($nbProductToUpdate>0) { ?>
-				<form name="form_synchro_product" id="form_synchro_product" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
-					<input type="hidden" name="id" value="<?php print $site->id ?>">
-					<input type="hidden" name="to_date" value="<?php print $to_date ?>">
 					<input type="submit" name="submit_synchro_product" id="submit_synchro_product" class="button" value="<?php print $langs->trans('ECommerceSynchronizeProduct') ?>">
-				</form>
 				<?php } ?>
 			</td>
 			<?php endif; ?>
 		</tr>
-<?php
-$var=!$var;
-?>
+    <?php
+    $var=!$var;
+    ?>
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ECommerceSociete') ?></td>
 			<td><?php print $nbSocieteInDolibarr; ?> ***</td>
@@ -159,18 +145,14 @@ $var=!$var;
 			<?php if ($synchRights==true):?>
 			<td>
 				<?php if ($nbSocieteToUpdate>0): ?>
-				<form name="form_synchro_societe" id="form_synchro_societe" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
-					<input type="hidden" name="id" value="<?php print $site->id ?>">
-					<input type="hidden" name="to_date" value="<?php print $to_date ?>">
 					<input type="submit" name="submit_synchro_societe" id="submit_synchro_societe" class="button" value="<?php print $langs->trans('ECommerceSynchronizeSociete') ?>">
-				</form>
 				<?php endif; ?>
 			</td>
 			<?php endif; ?>
 		</tr>
-<?php
-$var=!$var;
-?>
+    <?php
+    $var=!$var;
+    ?>
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ECommerceCommande') ?></td>
 			<?php
@@ -200,28 +182,20 @@ $var=!$var;
     			<td>
                         <?php
     				if ($nbCommandeToUpdate>0 && $nbSocieteToUpdate>0) { ?>
-    				<form name="form_synchro_commande" id="form_synchro_commande" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
-    					<input type="hidden" name="id" value="<?php print $site->id ?>">
-    					<input type="hidden" name="to_date" value="<?php print $to_date ?>">
     					<input type="submit" name="submit_synchro_commande" id="submit_synchro_commande" class="button" disabled="disabled" value="<?php print $langs->trans('ECommerceSynchronizeCommande').' ('.$langs->trans("SyncSocieteFirst").')'; ?>">
-    				</form>
     				<?php } elseif ($nbCommandeToUpdate>0) { ?>
-    				<form name="form_synchro_commande" id="form_synchro_commande" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
-    					<input type="hidden" name="id" value="<?php print $site->id ?>">
-    					<input type="hidden" name="to_date" value="<?php print $to_date ?>">
     					<input type="submit" name="submit_synchro_commande" id="submit_synchro_commande" class="button" value="<?php print $langs->trans('ECommerceSynchronizeCommande') ?>">
-    				</form>
     				<?php } ?>
     			</td>
     			<?php endif;
             }
             ?>
 		</tr>
-<?php
-$var=!$var;
-if (! empty($conf->facture->enabled))
-{
-?>
+    <?php
+    $var=!$var;
+    if (! empty($conf->facture->enabled))
+    {
+    ?>
 		<tr <?php print $bc[$var] ?>>
 			<td><?php print $langs->trans('ECommerceFacture') ?></td>
 			<td><?php print $nbFactureInDolibarr; ?></td>
@@ -243,28 +217,16 @@ if (! empty($conf->facture->enabled))
 			<?php if ($synchRights==true):?>
 			<td>
 				<?php if ($nbFactureToUpdate>0 && $nbSocieteToUpdate>0) { ?>
-				<form name="form_synchro_commande" id="form_synchro_facture" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
-					<input type="hidden" name="id" value="<?php print $site->id ?>">
-					<input type="hidden" name="to_date" value="<?php print $to_date ?>">
 					<input type="submit" name="submit_synchro_facture" id="submit_synchro_facture" class="button" disabled="disabled" value="<?php print $langs->trans('ECommerceSynchronizeFacture').' ('.$langs->trans("SyncSocieteFirst").')'; ?>">
-				</form>
 				<?php } elseif ($nbFactureToUpdate>0 && $nbCommandeToUpdate>0) { ?>
-				<form name="form_synchro_commande" id="form_synchro_facture" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
-					<input type="hidden" name="id" value="<?php print $site->id ?>">
-					<input type="hidden" name="to_date" value="<?php print $to_date ?>">
 					<input type="submit" name="submit_synchro_facture" id="submit_synchro_facture" class="button" disabled="disabled" value="<?php print $langs->trans('ECommerceSynchronizeFacture').' ('.$langs->trans("SyncCommandeFirst").')'; ?>">
-				</form>
 				<?php } elseif ($nbFactureToUpdate>0) { ?>
-				<form name="form_synchro_facture" id="form_synchro_facture" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
-					<input type="hidden" name="id" value="<?php print $site->id ?>">
-					<input type="hidden" name="to_date" value="<?php print $to_date ?>">
 					<input type="submit" name="submit_synchro_facture" id="submit_synchro_facture" class="button" value="<?php print $langs->trans('ECommerceSynchronizeFacture') ?>">
-				</form>
 				<?php } ?>
 			</td>
 			<?php endif; ?>
 		</tr>
-<?php } ?>
+	<?php } ?>
 	</table>
 	</div>
 	<?php
@@ -289,6 +251,21 @@ if (! empty($conf->facture->enabled))
 	print $langs->trans("SyncIsAutomaticInRealTime", $site->name)."\n";
 
 	dol_fiche_end();
+
+	print '<br>';
+	$soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');
+	$soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
+	if ($soapwsdlcacheon)
+	{
+	    print $langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).'<br>';
+	}
+	else
+	{
+	    print $langs->trans("SoapCacheIsOff", $soapwsdlcachedir).'<br>';
+	}
+	print '<br>';
+
+	print '</form>';
 
 
 	if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
@@ -333,6 +310,7 @@ if (! empty($conf->facture->enabled))
         print "});";
 		print "</script>";
 	}
+
 }
 else
 {

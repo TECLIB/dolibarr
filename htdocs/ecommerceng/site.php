@@ -61,6 +61,24 @@ $from_date = GETPOST('from_date','aZ09');
 $error=0;
 
 
+// Increase limit of time. Works only if we are not in safe mode
+$ExecTimeLimit=600;    // 10 mn
+if (!empty($ExecTimeLimit))
+{
+    $err=error_reporting();
+    error_reporting(0);     // Disable all errors
+    //error_reporting(E_ALL);
+    @set_time_limit($ExecTimeLimit);   // Need more than 240 on Windows 7/64
+    error_reporting($err);
+}
+
+$MemoryLimit='512M';
+if (!empty($MemoryLimit))
+{
+    @ini_set('memory_limit', $MemoryLimit);
+}
+
+
 /*******************************************************************
 * ACTIONS
 ********************************************************************/
@@ -209,8 +227,11 @@ if ($id)
 		    }
 		    if (! GETPOST('test_with_no_invoice_count'))
 		    {
-				if (! $error) $nbFactureToUpdate = $synchro->getNbFactureToUpdate(true);
-				if ($nbFactureToUpdate < 0) $error++;
+			    if (! empty($conf->facture->enabled))
+    	        {
+		            if (! $error) $nbFactureToUpdate = $synchro->getNbFactureToUpdate(true);
+				    if ($nbFactureToUpdate < 0) $error++;
+    	        }
 		    }
 
 			if ($nbCategoriesToUpdate == 0 && $nbProductToUpdate == 0 && $nbSocieteToUpdate == 0 && $nbCommandeToUpdate == 0 && $nbFactureToUpdate == 0
@@ -218,19 +239,23 @@ if ($id)
 			    && ! GETPOST('test_with_no_order_count') && ! GETPOST('test_with_no_invoice_count')
 			    )
 			{
+			    $lastupdatedate = $synchro->toDate;
+			    // If there is at least one error, we take date less one second, so we are sure to not forget record next time (because we stop at first error
+			    // and we process in order of update_at)
+			    if ($error) $lastupdatedate = $lastupdatedate -1;    // Remove 1 second
 			    $site->last_update = $synchro->toDate;
 			    $site->update($user);
 			}
 
 			if ($user->rights->ecommerceng->write)
-				$synchRights = true;
-
-			if (count($synchro->success))
-				$success = $synchro->success;
-
-			if (count($synchro->errors))
-				$errors = $synchro->errors;
+				$synchRights = true;                // Set permission ok for .tpl
 		}
+
+		if (count($synchro->success))
+			$success = $synchro->success;
+
+		if (count($synchro->errors))
+			$errors = $synchro->errors;
 	}
 	catch (Exception $e)
 	{

@@ -57,6 +57,7 @@ class eCommerceRemoteAccessMagento
         try {
             require_once(DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php');
             $params=getSoapParams();
+
             @ini_set('default_socket_timeout', $params['response_timeout']);
             @ini_set("memory_limit", "1024M");
 
@@ -101,6 +102,7 @@ class eCommerceRemoteAccessMagento
                 if (! empty($conf->global->ECOMMERCENG_DEBUG))
                 {
                     $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                    fwrite($h, "----- eCommerceRemoteAccessMagento this->client->login(...");
                     fwrite($h, $this->client->__getLastRequestHeaders());
                     fwrite($h, $this->client->__getLastRequest());
                     fwrite($h, $this->client->__getLastResponseHeaders());
@@ -135,6 +137,7 @@ class eCommerceRemoteAccessMagento
             if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                fwrite($h, "----- getSocieteToUpdate this->client->call(...");
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
                 fwrite($h, $this->client->__getLastResponseHeaders());
@@ -187,6 +190,7 @@ class eCommerceRemoteAccessMagento
             if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                fwrite($h, "----- getProductToUpdate this->client->call(...");
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
                 fwrite($h, $this->client->__getLastResponseHeaders());
@@ -228,6 +232,7 @@ class eCommerceRemoteAccessMagento
             if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                fwrite($h, "----- getCommandeToUpdate this->client->call(...");
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
                 fwrite($h, $this->client->__getLastResponseHeaders());
@@ -263,6 +268,19 @@ class eCommerceRemoteAccessMagento
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
             dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+
+            // Add debug
+            if (! empty($conf->global->ECOMMERCENG_DEBUG))
+            {
+                $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                fwrite($h, "----- getCommandeToUpdate this->client->call(...");
+                fwrite($h, $this->client->__getLastRequestHeaders());
+                fwrite($h, $this->client->__getLastRequest());
+                fwrite($h, $this->client->__getLastResponseHeaders());
+                fwrite($h, $this->client->__getLastResponse());
+                fclose($h);
+            }
+
             return false;
         }
     }
@@ -289,6 +307,7 @@ class eCommerceRemoteAccessMagento
             if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                fwrite($h, "----- getFactureToUpdate this->client->call(...");
                 fwrite($h, $this->client->__getLastRequestHeaders());
                 fwrite($h, $this->client->__getLastRequest());
                 fwrite($h, $this->client->__getLastResponseHeaders());
@@ -513,6 +532,19 @@ class eCommerceRemoteAccessMagento
                     dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
                     dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
                     dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+
+                    // Add debug
+                    if (! empty($conf->global->ECOMMERCENG_DEBUG))
+                    {
+                        $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
+                        fwrite($h, "----- convertRemoteObjectIntoDolibarrProduct this->client->multiCall(this->session...");
+                        fwrite($h, $this->client->__getLastRequestHeaders());
+                        fwrite($h, $this->client->__getLastRequest());
+                        fwrite($h, $this->client->__getLastResponseHeaders());
+                        fwrite($h, $this->client->__getLastResponse());
+                        fclose($h);
+                    }
+
                     return false;
                 }
 
@@ -1625,7 +1657,7 @@ class eCommerceRemoteAccessMagento
     public function __destruct()
     {
         if (is_object($this->client)) $this->client->endSession($this->session);
-        ini_set("memory_limit", "528M");
+        //ini_set("memory_limit", "528M");
     }
 
 }

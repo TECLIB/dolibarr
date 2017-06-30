@@ -74,7 +74,7 @@ class eCommerceFacture // extends CommonObject
 
 		$sql.= " ".(isset($this->fk_facture)?intval($this->fk_facture):0).",";
 		$sql.= " ".(isset($this->fk_site)?intval($this->fk_site):0).",";
-		$sql.= " ".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
+		$sql.= " ".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
 		$sql.= " ".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
 
 		$sql.= ")";
@@ -192,7 +192,7 @@ class eCommerceFacture // extends CommonObject
 
 		$sql.= " fk_facture=".(isset($this->fk_facture)?intval($this->fk_facture):0).",";
 		$sql.= " fk_site=".(isset($this->fk_site)?intval($this->fk_site):0).",";
-		$sql.= " remote_id=".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
+		$sql.= " remote_id=".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
 		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
 
         $sql.= " WHERE rowid=".$this->id;

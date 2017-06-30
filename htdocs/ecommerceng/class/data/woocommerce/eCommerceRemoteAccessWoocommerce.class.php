@@ -264,6 +264,11 @@ class eCommerceRemoteAccessWoocommerce
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
+        catch (Exception $e) {
+            $this->errors[]=$e->getMessage().'-'.$e->getCode();
+            dol_syslog(__METHOD__.': '.$e->getMessage().'-'.$e->getCode().'-'.$e->getTraceAsString(), LOG_WARNING);
+            return false;
+        }
     }
 
     /**
@@ -1871,7 +1876,7 @@ class eCommerceRemoteAccessWoocommerce
 
     public function __destruct()
     {
-        ini_set("memory_limit", "528M");
+        //ini_set("memory_limit", "528M");
     }
 
 }

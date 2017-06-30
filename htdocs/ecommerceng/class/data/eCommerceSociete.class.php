@@ -45,9 +45,10 @@ class eCommerceSociete // extends CommonObject
 
     /**
      *      Create in database
-     *      @param      user        	User that create
-     *      @param      notrigger	    0=launch triggers after, 1=disable triggers
-     *      @return     int         	<0 if KO, Id of created object if OK
+     *
+     *      @param      User    $user        	User that create
+     *      @param      int     $notrigger	    0=launch triggers after, 1=disable triggers
+     *      @return     int         	        <0 if KO, Id of created object if OK
      */
     function create($user, $notrigger=0)
     {
@@ -72,7 +73,7 @@ class eCommerceSociete // extends CommonObject
         $sql.= ") VALUES (";
 		$sql.= " ".(isset($this->fk_societe)?intval($this->fk_societe):0).",";
 		$sql.= " ".(isset($this->fk_site)?intval($this->fk_site):0).",";
-		$sql.= " ".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
+		$sql.= " ".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
 		$sql.= " ".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
 		$sql.= ")";
 
@@ -190,7 +191,7 @@ class eCommerceSociete // extends CommonObject
 
 		$sql.= " fk_societe=".(isset($this->fk_societe)?intval($this->fk_societe):0).",";
 		$sql.= " fk_site=".(isset($this->fk_site)?intval($this->fk_site):0).",";
-		$sql.= " remote_id=".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
+		$sql.= " remote_id=".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
 		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
 
         $sql.= " WHERE rowid=".$this->id;

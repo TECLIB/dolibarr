@@ -28,11 +28,11 @@ class eCommerceRemoteAccess
 	private $dirName;
 	private $class;
 	private $db;
-	
+
     /**
      * Class for access remote sites
      * Creates an instance of the appropriate class according to type of site
-     * 
+     *
      * @param   Database            $db         Databse handler
      * @param   eCommerceSite       $site       eCommerceSite
      */
@@ -40,16 +40,16 @@ class eCommerceRemoteAccess
     {
     	$this->db = $db;
         $this->site = $site;
-                
+
         $this->setName();
 
         dol_include_once('/ecommerceng/class/data/'.$this->dirName.'/eCommerceRemoteAccess'.$this->className.'.class.php');
-        
-        $this->setClass();        
-        
+
+        $this->setClass();
+
         return 1;
     }
-    
+
 	private function setName()
 	{
 		$types = $this->site->getSiteTypes();
@@ -64,7 +64,7 @@ class eCommerceRemoteAccess
     	$class = new $className($this->db, $this->site);
     	$this->class = $class;
     }
-    
+
     /**
      * Call the connect method of the class instantiated in the constructor
      */
@@ -75,10 +75,10 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
     	return $result;
     }
-    
+
     /**
      * Get societe to update from instantiated class in the constructor
-     * 
+     *
      * @param $fromDate datetime    Updates from this date
      * @param $toDate   datetime    Updates to this date
      * @return  array               Array of remote societe
@@ -93,7 +93,7 @@ class eCommerceRemoteAccess
 
     /**
      * Get product to update from instantiated class in the constructor
-     * 
+     *
      * @param $fromDate datetime    Updates from this date
      * @param $toDate   datetime    Updates to this date
      * @return array                Array of remote product
@@ -105,13 +105,13 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
-    
+
     /**
      * Get commande to update from instantiated class in the constructor
-     * 
+     *
      * @param $fromDate datetime    Updates from this date
      * @param $toDate   datetime    Updates to this date
-     * @return array                Array of remote commande
+     * @return array                Array of remote commande or false if error
      */
     public function getCommandeToUpdate($fromDate, $toDate)
 	{
@@ -120,10 +120,10 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 		return $result;
 	}
-    
+
     /**
      * Get facture to update from instantiated class in the constructor
-     * 
+     *
      * @param $fromDate datetime    Updates from this date
      * @param $toDate   datetime    Updates to this date
      * @return array                Array of remote facture
@@ -135,10 +135,10 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
-	
+
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
-     * 
+     *
      * @param $remoteObject array
      * @return $dolibarrObject array
      */
@@ -152,7 +152,7 @@ class eCommerceRemoteAccess
 
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
-     * 
+     *
      * @param $remoteObject array
      * @return $dolibarrObject array
      */
@@ -163,10 +163,10 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
-	
+
     /**
      * Put the remote data into product dolibarr data from instantiated class in the constructor
-     * 
+     *
      * @param $remoteObject array
      * @return $dolibarrObject array
      */
@@ -177,10 +177,10 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
-	
+
     /**
      * Put the remote data into commande dolibarr data from instantiated class in the constructor
-     * 
+     *
      * @param $remoteObject array
      * @return $dolibarrObject array
      */
@@ -191,10 +191,10 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
-	
+
     /**
      * Put the remote data into facture dolibarr data from instantiated class in the constructor
-     * 
+     *
      * @param $remoteObject array
      * @return $dolibarrObject array
      */
@@ -205,11 +205,11 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
-	
-	
+
+
     /**
      * Get a commande from instantiated class in the constructor
-     * 
+     *
      * @param   int     $remoteCommandeId   string
      * @return  array                       dolibarrObject array
      */
@@ -220,10 +220,10 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
-	
-	/**	
+
+	/**
 	 * Get a remote category tree from magento
-	 * 
+	 *
 	 * @return	array	An array containing magento's categories as arrays
 	 */
 	public function getRemoteCategoryTree()
@@ -236,7 +236,7 @@ class eCommerceRemoteAccess
 
 	/**
 	 * Get a remote category att from magento
-	 * 
+	 *
 	 * @return	array	An array containing magento's categories as arrays
 	 */
 	/*public function getRemoteCategoryAtt()
@@ -246,10 +246,10 @@ class eCommerceRemoteAccess
 	    $this->errors=$this->class->errors;
 	    return $result;
 	}*/
-	
+
     /**
      * Get list of address id for a customer
-     * 
+     *
      * @param   int     $remote_thirdparty_id
      * @return $dolibarrObject array
      */
@@ -260,10 +260,10 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
-	
-	/**	
+
+	/**
 	 *  Get a remote category tree from magento
-	 * 
+	 *
 	 * 	@return	array	An array containing magento's categories as arrays
 	 */
 	public function getCategoryData($category_id)
@@ -273,11 +273,11 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 	    return $result;
 	}
-	
-	
+
+
 	/**
 	 * Update remote product
-	 * 
+	 *
 	 * @param  int     $remote_product_id    Id of product on remote ecommerce
 	 * @param  Product $object               Product object
 	 * @return bool
@@ -288,11 +288,11 @@ class eCommerceRemoteAccess
 	    $this->error=$this->class->error;
 	    $this->errors=$this->class->errors;
 	    return $result;
-	}	
-	
+	}
+
 	/**
 	 * Update remote stock of product
-	 * 
+	 *
 	 * @param  int     $remote_product_id    Id of product on remote ecommerce
 	 * @param  Product $object               Product object
 	 * @return bool
@@ -303,11 +303,11 @@ class eCommerceRemoteAccess
 	    $this->error=$this->class->error;
 	    $this->errors=$this->class->errors;
 	    return $result;
-	}	
-	
+	}
+
 	/**
 	 * Update remote societe
-	 * 
+	 *
 	 * @param  int     $remote_societe_id    Id of societe on remote ecommerce
 	 * @param  Societe $object               Societe object
 	 * @return bool
@@ -319,7 +319,7 @@ class eCommerceRemoteAccess
 	    $this->errors=$this->class->errors;
 	    return $result;
 	}
-	
+
 	/**
 	 * Update remote contact
 	 *
@@ -334,10 +334,10 @@ class eCommerceRemoteAccess
 	    $this->errors=$this->class->errors;
 	    return $result;
 	}
-	
+
 	/**
 	 * Update remote order
-	 * 
+	 *
 	 * @param  int      $remote_order_id      Id of order on remote ecommerce
 	 * @param  Commande $object               Commande object
 	 * @return bool
@@ -348,11 +348,11 @@ class eCommerceRemoteAccess
 	    $this->error=$this->class->error;
 	    $this->errors=$this->class->errors;
 	    return $result;
-	}	
-	
+	}
+
 	/**
 	 * Update remote invoice
-	 * 
+	 *
 	 * @param  int      $remote_invoice_id    Id of invoice on remote ecommerce
 	 * @param  Facture  $object               Invoice object
 	 * @return bool
@@ -363,11 +363,11 @@ class eCommerceRemoteAccess
 	    $this->error=$this->class->error;
 	    $this->errors=$this->class->errors;
 	    return $result;
-	}	
-	
+	}
+
 	/**
      * Create a remote livraison from instantiated class in the constructor
-     * 
+     *
      * @param Object    $livraison              Object livraison
      * @param int       $remote_order_id        String id remote order
      * @return bool
