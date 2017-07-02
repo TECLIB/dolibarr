@@ -145,7 +145,7 @@ class eCommerceRemoteAccessMagento
                 fclose($h);
             }
 
-            dol_syslog("getSocieteToUpdate end");
+            dol_syslog("getSocieteToUpdate end (found ".count($result)." record)");
             return $result;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -173,6 +173,8 @@ class eCommerceRemoteAccessMagento
                 array('updated_at' => array('from'=> dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard'))),
                 //array('type_id', array('in' => array('simple', 'virtual', 'configurable', 'downloadable')))
             );
+            //$filter = array(array('sku' => 'B-561801'));
+            //$filter = array(array('product_id' => 1148));
 
             $result = $this->client->call($this->session, 'catalog_product.list', $filter);
 
@@ -198,7 +200,7 @@ class eCommerceRemoteAccessMagento
                 fclose($h);
             }
 
-            dol_syslog("getProductToUpdate end");
+            dol_syslog("getProductToUpdate end (found ".count($results)." record)");
             return $results;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -225,6 +227,7 @@ class eCommerceRemoteAccessMagento
             $filter = array(
                 array('updated_at' => array('from' => dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard'))),
             );
+
             $result = $this->client->call($this->session, 'sales_order.list', $filter);
             //$result = $this->client->call($this->session, 'order.list');
 
@@ -261,7 +264,7 @@ class eCommerceRemoteAccessMagento
                 fclose($h);
             }*/
 
-            dol_syslog("getCommandeToUpdate end");
+            dol_syslog("getCommandeToUpdate end (found ".count($result)." record)");
             return $result;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -315,7 +318,7 @@ class eCommerceRemoteAccessMagento
                 fclose($h);
             }
 
-            dol_syslog("getFactureToUpdate end");
+            dol_syslog("getFactureToUpdate end (found ".count($result)." record)");
             return $result;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -409,7 +412,7 @@ class eCommerceRemoteAccessMagento
             array_multisort($last_update, SORT_ASC, $societes);
         }
 
-        dol_syslog("convertRemoteObjectIntoDolibarrSociete return array of ".count($societes)." societes.");
+        dol_syslog("convertRemoteObjectIntoDolibarrSociete end (found ".count($societes)." record)");
         return $societes;
     }
 
@@ -471,7 +474,7 @@ class eCommerceRemoteAccessMagento
             array_multisort($last_update, SORT_ASC, $socpeoples);
         }
 
-        dol_syslog("convertRemoteObjectIntoDolibarrSocPeople return array of ".count($socpeoples)." socpeople.");
+        dol_syslog("convertRemoteObjectIntoDolibarrSocPeople end (found ".count($socpeoples)." record)");
         return $socpeoples;
     }
 
@@ -492,6 +495,8 @@ class eCommerceRemoteAccessMagento
         $products = array();
 
         $canvas = '';
+
+        $ecommerceurl =  $this->site->getFrontUrl();
 
         $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?1000:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);      // 1000 seems ok for multicall.
         $nbsynchro = 0;
@@ -521,12 +526,13 @@ class eCommerceRemoteAccessMagento
             dol_syslog("convertRemoteObjectIntoDolibarrProduct Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
             //var_dump($callsgroup);exit;
 
+            $nbcall=0;
             foreach ($callsgroup as $calls)
             {
                 try {
+                    $nbcall++;
+                    dol_syslog("convertRemoteObjectIntoDolibarrProduct Call WS nb ".$nbcall." (".count($calls)." record)");
                     $results = $this->client->multiCall($this->session, $calls);
-
-
                 } catch (SoapFault $fault) {
                     $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
                     dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
@@ -552,26 +558,31 @@ class eCommerceRemoteAccessMagento
 
                 if (count($results))
                 {
-                    $ecommerceurl =  $this->site->getFrontUrl();
-
                     foreach ($results as $cursorproduct => $product)
                     {
                         // Complete data with info in stock
-                        // Note: if product is set "do not manage stock" on magento, no information is returned and stock is returned whatever is this option.
-                        try {
-                            $result2 = $this->client->call($this->session, 'cataloginventory_stock_item.list', $product['product_id']);
-                        } catch (SoapFault $fault) {
-                            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-                            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
-                            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
-                            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-                            return false;
-                        }
-                        //var_dump($result2);exit;
-                        foreach($result2 as $val)
+                        $product['stock_qty'] = null;
+                        $product['is_in_stock'] = null;
+
+                        if ($this->site->stock_sync_direction == 'ecommerce2dolibarr')  // Ask stock to magento, but only if option to sync stock from magento is on.
                         {
-                            $product['stock_qty'] = $val['qty'];
-                            $product['is_in_stock'] = $val['is_in_stock'];
+                            // This may be slow because it is a remote access done for each product (into the loop of products)
+                            // Note: if product is set "do not manage stock" on magento, no information is returned and stock is returned whatever is this option.
+                            try {
+                                $result2 = $this->client->call($this->session, 'cataloginventory_stock_item.list', $product['product_id']);
+                            } catch (SoapFault $fault) {
+                                $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
+                                dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
+                                dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+                                dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+                                return false;
+                            }
+                            //var_dump($result2);exit;
+                            foreach($result2 as $val)
+                            {
+                                $product['stock_qty'] = $val['qty'];
+                                $product['is_in_stock'] = $val['is_in_stock'];
+                            }
                         }
 
                         $products[] = array(
@@ -592,7 +603,7 @@ class eCommerceRemoteAccessMagento
                                 'price_min' => $product['minimal_price'],
                                 'fk_country' => ($product['country_of_manufacture'] ? getCountry($product['country_of_manufacture'], 3, $this->db, '', 0, '') : null),
                                 'url' => $ecommerceurl.$product['url_path'],
-                                // Stock
+                                // Stock (defined only if $this->site->stock_sync_direction == 'ecommerce2dolibarr' is on)
                                 'stock_qty' => $product['stock_qty'],
                                 'is_in_stock' => $product['is_in_stock'],   // not used
                         );
@@ -613,7 +624,7 @@ class eCommerceRemoteAccessMagento
             array_multisort($last_update, SORT_ASC, $products);
         }
 
-        dol_syslog("convertRemoteObjectIntoDolibarrProduct return array of ".count($products)." products.");
+        dol_syslog("convertRemoteObjectIntoDolibarrProduct end (found ".count($products)." record)");
         return $products;
     }
 
@@ -673,10 +684,14 @@ class eCommerceRemoteAccessMagento
                 {
                     foreach ($results as $commande)
                     {
+                        // Process order
+                        dol_syslog("- Process order remote_id=".$commande['order_id']." last_update=".$commande['updated_at']." societe remote_id=".$commande['customer_id']);
+
                         //set each items
                         $items = array();
                         $configurableItems = array();
                         if (count($commande['items']))
+                        {
                             foreach ($commande['items'] as $item)
                             {
                                 //var_dump($item);    // show item as it is from magento
@@ -718,9 +733,9 @@ class eCommerceRemoteAccessMagento
                                 }
                             }
 
-                        //set order's address
-                        $commandeSocpeople = $commande['billing_address'];
-                        $socpeopleCommande = array(
+                            //set order's address
+                            $commandeSocpeople = $commande['billing_address'];
+                            $socpeopleCommande = array(
                                 'remote_id' => $commandeSocpeople['address_id'],
                                 'type' => eCommerceSocpeople::CONTACT_TYPE_ORDER,
                                 'last_update' => $commandeSocpeople['updated_at'],
@@ -734,113 +749,118 @@ class eCommerceRemoteAccessMagento
                                 //add wrap
                                 'address' => addslashes((trim($commandeSocpeople['company'])) != '' ? addslashes(trim($commandeSocpeople['company'])) . ', ' : '') . addslashes($commandeSocpeople['street']),
                                 'phone' => $commandeSocpeople['telephone']
-                        );
+                                );
 
-                        //set billing's address
-                        $socpeopleFacture = $socpeopleCommande;
-                        $socpeopleFacture['type'] = eCommerceSocpeople::CONTACT_TYPE_INVOICE;
+                            //set billing's address
+                            $socpeopleFacture = $socpeopleCommande;
+                            $socpeopleFacture['type'] = eCommerceSocpeople::CONTACT_TYPE_INVOICE;
 
-                        //set shipping's address
-                        $livraisonSocpeople = $commande['shipping_address'];
-                        $socpeopleLivraison = array(
-                                'remote_id' => $livraisonSocpeople['address_id'],
-                                'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
-                                'last_update' => $livraisonSocpeople['updated_at'],
-                                'name' => $livraisonSocpeople['lastname'],
-                                'lastname' => $livraisonSocpeople['lastname'],
-                                'firstname' => $livraisonSocpeople['firstname'],
-                                'town' => $livraisonSocpeople['city'],
-                                //'fk_pays' => $commandeSocpeople['country_id'],
-                                'fax' => $livraisonSocpeople['fax'],
-                                'zip' => $livraisonSocpeople['postcode'],
-                                //add wrap
-                                'address' => (trim($livraisonSocpeople['company']) != '' ? trim($livraisonSocpeople['company']) . ', ' : '') . $livraisonSocpeople['street'],
-                                'phone' => $livraisonSocpeople['telephone']
-                        );
+                            //set shipping's address
+                            $livraisonSocpeople = $commande['shipping_address'];
+                            $socpeopleLivraison = array(
+                                    'remote_id' => $livraisonSocpeople['address_id'],
+                                    'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
+                                    'last_update' => $livraisonSocpeople['updated_at'],
+                                    'name' => $livraisonSocpeople['lastname'],
+                                    'lastname' => $livraisonSocpeople['lastname'],
+                                    'firstname' => $livraisonSocpeople['firstname'],
+                                    'town' => $livraisonSocpeople['city'],
+                                    //'fk_pays' => $commandeSocpeople['country_id'],
+                                    'fax' => $livraisonSocpeople['fax'],
+                                    'zip' => $livraisonSocpeople['postcode'],
+                                    //add wrap
+                                    'address' => (trim($livraisonSocpeople['company']) != '' ? trim($livraisonSocpeople['company']) . ', ' : '') . $livraisonSocpeople['street'],
+                                    'phone' => $livraisonSocpeople['telephone']
+                            );
 
-                        //set delivery as service
-                        $delivery = array(
-                                'description' => $commande['shipping_description'],
-                                'price' => $commande['shipping_amount'],
-                                'qty' => 1, //0 to not show
-                                'tva_tx' => $this->getTaxRate($commande['shipping_amount'], $commande['shipping_tax_amount'])
-                        );
+                            //set delivery as service
+                            $delivery = array(
+                                    'description' => $commande['shipping_description'],
+                                    'price' => $commande['shipping_amount'],
+                                    'qty' => 1, //0 to not show
+                                    'tva_tx' => $this->getTaxRate($commande['shipping_amount'], $commande['shipping_tax_amount'])
+                            );
 
-                        //define remote id societe : 0 for anonymous
-                        $eCommerceTempSoc = new eCommerceSociete($this->db);
-                        if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
-                        {
-                            dol_syslog("The customer of this order was not found into table link", LOG_WARNING);
-                            $remoteIdSociete = 0;   // If thirdparty was not found into thirdparty table link
+                            //define remote id societe : 0 for anonymous
+                            $eCommerceTempSoc = new eCommerceSociete($this->db);
+                            if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
+                            {
+                                dol_syslog("The customer of this order with customer remote_id = ".$commande['customer_id']." was not found into table link", LOG_WARNING);
+                                $remoteIdSociete = 0;   // If thirdparty was not found into thirdparty table link
+                            }
+                            else
+                            {
+                                $remoteIdSociete = $commande['customer_id'];
+                            }
+
+                            //define delivery date
+                            if (isset($commande['delivery_date']) && $commande['delivery_date'] != null)
+                                $deliveryDate = $commande['delivery_date'];
+                            else
+                                $deliveryDate = $commande['created_at'];
+
+                            // define status of order
+                            // $commande['state'] is: 'pending', 'processing', 'closed', 'complete', 'canceled'
+                            // $commande['status'] is more accurate: 'pending_...', 'canceled_...'
+                            $tmp = $commande['status'];
+
+                            // try to match dolibarr status
+                            $status = '';
+                            if (preg_match('/^pending/', $tmp))         $status = Commande::STATUS_VALIDATED;           // manage 'pending', 'pending_payment', 'pending_paypal', 'pending_ogone', 'pending_...'
+                            elseif ($tmp == 'fraud')                    $status = Commande::STATUS_VALIDATED;
+                            elseif ($tmp == 'payment_review')           $status = Commande::STATUS_VALIDATED;
+                            elseif ($tmp == 'paypal_canceled_reversal') $status = Commande::STATUS_VALIDATED;
+                            elseif ($tmp == 'processing')               $status = 2;                                     // shipment in process or invoice done = processing       // Should be constant Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9
+                            elseif ($tmp == 'holded')                   $status = Commande::STATUS_CANCELED;
+                            elseif (preg_match('/^canceled/', $tmp))    $status = Commande::STATUS_CANCELED;             // manage 'canceled', 'canceled_bnpmercanetcw', 'canceled_...'
+                            elseif ($tmp == 'paypal_reversed')          $status = Commande::STATUS_CANCELED;
+                            elseif ($tmp == 'complete')                 $status = Commande::STATUS_CLOSED;
+                            elseif ($tmp == 'closed')                   $status = Commande::STATUS_CLOSED;
+                            if ($status == '')
+                            {
+                                dol_syslog("Status: We found an order id ".$commande['increment_id']." with ecommerce status '".$tmp."' that is unknown, not supported. We will use '0' for Dolibarr", LOG_WARNING);
+                                $status = Commande::STATUS_DRAFT;   // draft by default (draft does not exists with magento, so next line will set correct status)
+                            }
+                            else
+                            {
+                                dol_syslog("Status: We found an order id ".$commande['increment_id']." with ecommerce status '".$tmp."'. We convert it into Dolibarr status '".$status."'");
+                            }
+
+                            // try to match dolibarr billed status (payed or not)
+                            $billed = -1;   // unknown
+                            if ($commande['state'] == 'pending') $billed = 0;
+                            if ($commande['state'] == 'payment_review') $billed = 0;    // Error in payment
+                            if ($commande['state'] == 'complete') $billed = 1;          // We are sure for complete that order is payed
+                            if ($commande['state'] == 'closed') $billed = 1;            // We are sure for closed that order was payed but refund
+                            if ($commande['state'] == 'canceled') $billed = 0;          // We are sure for canceled that order was not payed
+                            // Note: with processing, billed can be 0 or 1, so we keep -1
+
+
+                            // Add order content to array or orders
+                            $commandes[] = array(
+                                    'last_update' => $commande['updated_at'],
+                                    'remote_id' => $commande['order_id'],
+                                    'remote_increment_id' => $commande['increment_id'],
+                                    'remote_id_societe' => $remoteIdSociete,
+                                    'ref_client' => $commande['increment_id'],
+                                    'date_commande' => $commande['created_at'],
+                                    'date_livraison' => $deliveryDate,
+                                    'items' => $items,
+                                    'delivery' => $delivery,
+                                    'socpeopleCommande' => $socpeopleCommande,
+                                    'socpeopleFacture' => $socpeopleFacture,
+                                    'socpeopleLivraison' => $socpeopleLivraison,
+                                    'status' => $status,                         // dolibarr status
+                                    'billed'=> $billed,
+                                    'remote_state' => $commande['state'],        // remote state, for information only (less accurate than status)
+                                    'remote_status' => $commande['status'],      // remote status, for information only (more accurate than state)
+                                    'remote_order' => $commande
+                            );
                         }
                         else
                         {
-                            $remoteIdSociete = $commande['customer_id'];
+                            dol_syslog("No items in this order", LOG_WARNING);
                         }
-
-                        //define delivery date
-                        if (isset($commande['delivery_date']) && $commande['delivery_date'] != null)
-                            $deliveryDate = $commande['delivery_date'];
-                        else
-                            $deliveryDate = $commande['created_at'];
-
-                        // define status of order
-                        // $commande['state'] is: 'pending', 'processing', 'closed', 'complete', 'canceled'
-                        // $commande['status'] is more accurate: 'pending_...', 'canceled_...'
-                        $tmp = $commande['status'];
-
-                        // try to match dolibarr status
-                        $status = '';
-                        if (preg_match('/^pending/', $tmp))         $status = Commande::STATUS_VALIDATED;           // manage 'pending', 'pending_payment', 'pending_paypal', 'pending_ogone', 'pending_...'
-                        elseif ($tmp == 'fraud')                    $status = Commande::STATUS_VALIDATED;
-                        elseif ($tmp == 'payment_review')           $status = Commande::STATUS_VALIDATED;
-                        elseif ($tmp == 'paypal_canceled_reversal') $status = Commande::STATUS_VALIDATED;
-                        elseif ($tmp == 'processing')               $status = 2;                                     // shipment in process or invoice done = processing       // Should be constant Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9
-                        elseif ($tmp == 'holded')                   $status = Commande::STATUS_CANCELED;
-                        elseif (preg_match('/^canceled/', $tmp))    $status = Commande::STATUS_CANCELED;             // manage 'canceled', 'canceled_bnpmercanetcw', 'canceled_...'
-                        elseif ($tmp == 'paypal_reversed')          $status = Commande::STATUS_CANCELED;
-                        elseif ($tmp == 'complete')                 $status = Commande::STATUS_CLOSED;
-                        elseif ($tmp == 'closed')                   $status = Commande::STATUS_CLOSED;
-                        if ($status == '')
-                        {
-                            dol_syslog("Status: We found an order id ".$commande['increment_id']." with ecommerce status '".$tmp."' that is unknown, not supported. We will use '0' for Dolibarr", LOG_WARNING);
-                            $status = Commande::STATUS_DRAFT;   // draft by default (draft does not exists with magento, so next line will set correct status)
-                        }
-                        else
-                        {
-                            dol_syslog("Status: We found an order id ".$commande['increment_id']." with ecommerce status '".$tmp."'. We convert it into Dolibarr status '".$status."'");
-                        }
-
-                        // try to match dolibarr billed status (payed or not)
-                        $billed = -1;   // unknown
-                        if ($commande['state'] == 'pending') $billed = 0;
-                        if ($commande['state'] == 'payment_review') $billed = 0;    // Error in payment
-                        if ($commande['state'] == 'complete') $billed = 1;          // We are sure for complete that order is payed
-                        if ($commande['state'] == 'closed') $billed = 1;            // We are sure for closed that order was payed but refund
-                        if ($commande['state'] == 'canceled') $billed = 0;          // We are sure for canceled that order was not payed
-                        // Note: with processing, billed can be 0 or 1, so we keep -1
-
-
-                        // Add order content to array or orders
-                        $commandes[] = array(
-                                'last_update' => $commande['updated_at'],
-                                'remote_id' => $commande['order_id'],
-                                'remote_increment_id' => $commande['increment_id'],
-                                'remote_id_societe' => $remoteIdSociete,
-                                'ref_client' => $commande['increment_id'],
-                                'date_commande' => $commande['created_at'],
-                                'date_livraison' => $deliveryDate,
-                                'items' => $items,
-                                'delivery' => $delivery,
-                                'socpeopleCommande' => $socpeopleCommande,
-                                'socpeopleFacture' => $socpeopleFacture,
-                                'socpeopleLivraison' => $socpeopleLivraison,
-                                'status' => $status,                         // dolibarr status
-                                'billed'=> $billed,
-                                'remote_state' => $commande['state'],        // remote state, for information only (less accurate than status)
-                                'remote_status' => $commande['status'],      // remote status, for information only (more accurate than state)
-                                'remote_order' => $commande
-                        );
                     }
                 }
             }
@@ -856,7 +876,7 @@ class eCommerceRemoteAccessMagento
             array_multisort($last_update, SORT_ASC, $commandes);
         }
 
-        dol_syslog("convertRemoteObjectIntoDolibarrCommande Return ".count($commandes)." array of orders filled with complete data from eCommerce");
+        dol_syslog("convertRemoteObjectIntoDolibarrCommande end (found ".count($commandes)." array of orders filled with complete data from eCommerce)");
         return $commandes;
     }
 
@@ -1090,7 +1110,7 @@ class eCommerceRemoteAccessMagento
 
         //var_dump($factures);exit;
 
-        dol_syslog("convertRemoteObjectIntoDolibarrFacture return array of ".count($products)." products.");
+        dol_syslog("convertRemoteObjectIntoDolibarrFacture end (found ".count($products)." record)");
         return $factures;
     }
 

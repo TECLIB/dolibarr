@@ -72,7 +72,7 @@ if (!empty($ExecTimeLimit))
     error_reporting($err);
 }
 
-$MemoryLimit='512M';
+$MemoryLimit=0;
 if (!empty($MemoryLimit))
 {
     @ini_set('memory_limit', $MemoryLimit);
@@ -145,23 +145,28 @@ if ($id)
 
 			if (GETPOST('submit_synchro_category') || GETPOST('submit_synchro_category_ajax') || GETPOST('submit_synchro_all'))
 			{
-				$synchro->synchCategory();
+				$result=$synchro->synchCategory();
+				if ($result < 0) $error++;
 			}
 			if (GETPOST('submit_synchro_product') || GETPOST('submit_synchro_product_ajax') || GETPOST('submit_synchro_all'))
 			{
-				$synchro->synchProduct();
+				$result=$synchro->synchProduct();
+				if ($result < 0) $error++;
 			}
 			if (GETPOST('submit_synchro_societe') || GETPOST('submit_synchro_societe_ajax') ||  GETPOST('submit_synchro_all'))
 			{
-				$synchro->synchSociete();
+				$result=$synchro->synchSociete();
+				if ($result < 0) $error++;
 			}
 			if (GETPOST('submit_synchro_commande') || GETPOST('submit_synchro_commande_ajax') || GETPOST('submit_synchro_all'))
 			{
-				$synchro->synchCommande();
+				$result=$synchro->synchCommande();
+				if ($result < 0) $error++;
 			}
 			if (GETPOST('submit_synchro_facture') || GETPOST('submit_synchro_facture_ajax') ||GETPOST('submit_synchro_all'))
 			{
-				$synchro->synchFacture();
+				$result=$synchro->synchFacture();
+				if ($result < 0) $error++;
 			}
 		}
 
@@ -200,56 +205,58 @@ if ($id)
 		}
 
 		// Count into Magento
-		if (! $error)
+	    if (! GETPOST('test_with_no_categ_count'))
+	    {
+			if (! $error) $nbCategoriesToUpdate = $synchro->getNbCategoriesToUpdate(true);
+			else $nbCategoriesToUpdate='?';
+			if ($nbCategoriesToUpdate < 0) $error++;
+	    }
+	    if (! GETPOST('test_with_no_product_count'))
+	    {
+	    	if (! $error) $nbProductToUpdate = $synchro->getNbProductToUpdate(true);
+	    	else $nbProductToUpdate='?';
+			if ($nbProductToUpdate < 0) $error++;
+	    }
+	    if (! GETPOST('test_with_no_thirdparty_count'))
+	    {
+	    	if (! $error) $nbSocieteToUpdate = $synchro->getNbSocieteToUpdate(true);
+	    	else $nbSocieteToUpdate='?';
+	    	if ($nbSocieteToUpdate < 0) $error++;
+	    }
+	    if (! GETPOST('test_with_no_order_count'))
+	    {
+		    if (! empty($conf->commande->enabled))
+	        {
+    	        if (! $error) $nbCommandeToUpdate = $synchro->getNbCommandeToUpdate(true);
+    	        else $nbCommandeToUpdate='?';
+        	    if ($nbCommandeToUpdate < 0) $error++;
+            }
+	    }
+	    if (! GETPOST('test_with_no_invoice_count'))
+	    {
+		    if (! empty($conf->facture->enabled))
+	        {
+	            if (! $error) $nbFactureToUpdate = $synchro->getNbFactureToUpdate(true);
+    	        else $nbFactureToUpdate='?';
+	            if ($nbFactureToUpdate < 0) $error++;
+	        }
+	    }
+
+		if ($nbCategoriesToUpdate == 0 && $nbProductToUpdate == 0 && $nbSocieteToUpdate == 0 && $nbCommandeToUpdate == 0 && $nbFactureToUpdate == 0
+		   && ! GETPOST('test_with_no_categ_count') && GETPOST('test_with_no_product_count') && GETPOST('test_with_no_thirdparty_count')
+		    && ! GETPOST('test_with_no_order_count') && ! GETPOST('test_with_no_invoice_count')
+		    )
 		{
-		    if (! GETPOST('test_with_no_categ_count'))
-		    {
-				if (! $error) $nbCategoriesToUpdate = $synchro->getNbCategoriesToUpdate(true);
-				if ($nbCategoriesToUpdate < 0) $error++;
-		    }
-		    if (! GETPOST('test_with_no_product_count'))
-		    {
-		    	if (! $error) $nbProductToUpdate = $synchro->getNbProductToUpdate(true);
-				if ($nbProductToUpdate < 0) $error++;
-		    }
-		    if (! GETPOST('test_with_no_thirdparty_count'))
-		    {
-		    	if (! $error) $nbSocieteToUpdate = $synchro->getNbSocieteToUpdate(true);
-				if ($nbSocieteToUpdate < 0) $error++;
-		    }
-		    if (! GETPOST('test_with_no_order_count'))
-		    {
-			    if (! empty($conf->commande->enabled))
-    	        {
-        	        if (! $error) $nbCommandeToUpdate = $synchro->getNbCommandeToUpdate(true);
-            	    if ($nbCommandeToUpdate < 0) $error++;
-	            }
-		    }
-		    if (! GETPOST('test_with_no_invoice_count'))
-		    {
-			    if (! empty($conf->facture->enabled))
-    	        {
-		            if (! $error) $nbFactureToUpdate = $synchro->getNbFactureToUpdate(true);
-				    if ($nbFactureToUpdate < 0) $error++;
-    	        }
-		    }
-
-			if ($nbCategoriesToUpdate == 0 && $nbProductToUpdate == 0 && $nbSocieteToUpdate == 0 && $nbCommandeToUpdate == 0 && $nbFactureToUpdate == 0
-			   && ! GETPOST('test_with_no_categ_count') && GETPOST('test_with_no_product_count') && GETPOST('test_with_no_thirdparty_count')
-			    && ! GETPOST('test_with_no_order_count') && ! GETPOST('test_with_no_invoice_count')
-			    )
-			{
-			    $lastupdatedate = $synchro->toDate;
-			    // If there is at least one error, we take date less one second, so we are sure to not forget record next time (because we stop at first error
-			    // and we process in order of update_at)
-			    if ($error) $lastupdatedate = $lastupdatedate -1;    // Remove 1 second
-			    $site->last_update = $synchro->toDate;
-			    $site->update($user);
-			}
-
-			if ($user->rights->ecommerceng->write)
-				$synchRights = true;                // Set permission ok for .tpl
+		    $lastupdatedate = $synchro->toDate;
+		    // If there is at least one error, we take date less one second, so we are sure to not forget record next time (because we stop at first error
+		    // and we process in order of update_at)
+		    if ($error) $lastupdatedate = $lastupdatedate -1;    // Remove 1 second
+		    $site->last_update = $synchro->toDate;
+		    $site->update($user);
 		}
+
+		if ($user->rights->ecommerceng->write)
+			$synchRights = true;                // Set permission ok for .tpl
 
 		if (count($synchro->success))
 			$success = $synchro->success;

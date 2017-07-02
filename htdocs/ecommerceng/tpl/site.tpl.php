@@ -10,24 +10,26 @@ if (is_object($site))
 
     print '<br>';
 
-    dol_fiche_head('', '', 'Dolibarr <- Ecommerce');
+    dol_fiche_head('', '', $langs->trans("Direction").' : Ecommerce -> Dolibarr');
 
     print '<form name="form_count" id="form_count" action="'.$_SERVER['PHP_SELF'].'" method="post">';
     print '<input type="hidden" name="id" value="'.$site->id.'">';
 
-    print '<table class="centpercent nobordernopadding"><tr><td>';
+    print '<table class="centpercent nobordernopadding">';
 
-    print $langs->trans("ECommerceLastCompleteSync", $site->name).': ';
+    print '<tr><td>';
+
+    print $langs->trans("ECommerceLastCompleteSync", $site->name).' : ';
     if ($site->last_update) print '<strong>'.dol_print_date($site->last_update, 'dayhoursec').'</strong>';
-    else print $langs->trans("ECommerceNoUpdateSite");
+    else print '<strong>'.$langs->trans("ECommerceNoUpdateSite").'</strong>';
 
     print '</td><td align="right"></td></tr>';
 
     print '<tr><td>';
 
-    print $langs->trans("RestrictCountAndSynchForRecordBefore");
-    print ' (YYYYMMDDHHMMSS) ';
-    print '<input type="text" name="to_date" value="'.dol_escape_htmltag($to_date).'">';
+    print $langs->trans("RestrictCountAndSynchForRecordBefore").' ';
+    //print '(YYYYMMDDHHMMSS) ';
+    print '<input type="text" name="to_date" value="'.dol_escape_htmltag($to_date).'" placeholder="YYYYMMDDHHMMSS">';
 
     print '</td><td>';
     $button.='<input type="submit" class="button" name="refresh" style="margin-right: 15px" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=refresh" value="'.$langs->trans('RefreshCount').'">';
@@ -40,6 +42,18 @@ if (is_object($site))
     print $button2;
 
     print '</td></tr>';
+
+    if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER))
+    {
+        print '<tr><td>';
+
+        print $langs->trans("SynchUnkownCustomersOnThirdParty").' : ';
+        $nonloggedthirdparty=new Societe($db);
+        $result = $nonloggedthirdparty->fetch($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER);
+        print $nonloggedthirdparty->getNomUrl(1);
+        print '</td><td align="right"></td></tr>';
+    }
+
     print '</table>';
 
 
@@ -246,7 +260,7 @@ if (is_object($site))
 
 	print '<br>';
 
-    dol_fiche_head('', '', 'Dolibarr -> Ecommerce');
+    dol_fiche_head('', '', $langs->trans("Direction").' : Dolibarr -> Ecommerce');
 
 	print $langs->trans("SyncIsAutomaticInRealTime", $site->name)."\n";
 
@@ -257,11 +271,11 @@ if (is_object($site))
 	$soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
 	if ($soapwsdlcacheon)
 	{
-	    print $langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).'<br>';
+	    print '<div class="opacitymedium">'.$langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).'</div><br>';
 	}
 	else
 	{
-	    print $langs->trans("SoapCacheIsOff", $soapwsdlcachedir).'<br>';
+	    print '<div class="opacitymedium">'.$langs->trans("SoapCacheIsOff", $soapwsdlcachedir).'</div><br>';
 	}
 	print '<br>';
 

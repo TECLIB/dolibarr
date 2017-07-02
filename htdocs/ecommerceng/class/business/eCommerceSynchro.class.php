@@ -1039,7 +1039,7 @@ class eCommerceSynchro
                             //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
                             $dBSociete->email = $societeArray['email'];
                             $dBSociete->client = $societeArray['client'];
-                            $dBSociete->tva_intra = $societeArray['vatnumber'];
+                            $dBSociete->tva_intra = dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
                             $dBSociete->tva_assuj = 1;                              // tva_intra is not saved if this field is not set
                             $dBSociete->code_client = -1;           // Automatic code
                             $dBSociete->code_fournisseur = -1;      // Automatic code
@@ -1239,7 +1239,7 @@ class eCommerceSynchro
                 $dBContact->cp = $socpeopleArray['zip'];
                 $dBContact->address = $socpeopleArray['address'];
                 $dBContact->phone_pro = dol_trunc($socpeopleArray['phone'], 30, 'right', 'UTF-8', 1);
-                $dBContact->fax = $socpeopleArray['fax'];
+                $dBContact->fax = dol_trunc($socpeopleArray['fax'], 30, 'right', 'UTF-8', 1);
                 $dBContact->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
                 $contactExists = $this->getContactIdFromInfos($dBContact);
@@ -1762,6 +1762,8 @@ class eCommerceSynchro
                 // Loop on each modified order
                 foreach ($commandes as $commandeArray)
                 {
+                    dol_syslog("- Process synch of order ".$commandeArray['remote_id']);
+
                     $this->db->begin();
 
                     $this->initECommerceCommande();
@@ -1774,14 +1776,31 @@ class eCommerceSynchro
                     $refExists = $dBCommande->fetch($this->eCommerceCommande->fk_commande);
 
                     //check if societe exists in eCommerceSociete (with remote id). This init ->fk_societe. This is a sql request.
-                    $societeExists = $this->eCommerceSociete->fetchByRemoteId($commandeArray['remote_id_societe'], $this->eCommerceSite->id);
+                    //$societeExists will be 1 (found) or -1 (not found)
+                    if (! empty($commandeArray['remote_id_societe']))    // May be empty if customer was deleted on magento side.
+                    {
+                        $societeExists = $this->eCommerceSociete->fetchByRemoteId($commandeArray['remote_id_societe'], $this->eCommerceSite->id);
+                    }
+                    else
+                    {
+                        // This is an unknown customer. May be a non logged customer.
+                        if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER))
+                        {
+                            $societeExists = 1;
+                            $this->eCommerceSociete->fk_societe = $conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER;
+                        }
+                        else
+                        {
+                            $societeExists = 0;
+                        }
+                    }
 
                     //if societe exists start
                     if ($societeExists > 0)
                     {
-                        if ($refExists > 0 && $dBCommande->id > 0)
+                        if ($refExists > 0 && $dBCommande->id > 0)  // Order already synch
                         {
-                            dol_syslog("synchCommande Order with id=".$dBCommande->id." already exists in Dolibarr");
+                            dol_syslog("synchCommande Order with id=".$dBCommande->id." and remote_id=".$commandeArray['remote_id']." already exists in Dolibarr");
                             //update commande
                             $result = 1;
 
@@ -1888,7 +1907,8 @@ class eCommerceSynchro
                         {
                             dol_syslog("synchCommande Order not found in Dolibarr, so we create it");
 
-                            // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
+                            // First, we check object does not alreay exists without the link. Search using external ref. (This may occurs when we delete the table of links)
+                            // If not, we create it, if it exists, do nothing (except update status).
                             $result = $dBCommande->fetch(0, '', $this->eCommerceSite->name.'-'.$commandeArray['ref_client']);
                             if ($result == 0)
                             {
@@ -2087,7 +2107,7 @@ class eCommerceSynchro
                                 //}
                             }
 
-                            //add or update contacts of order
+                            //add or update contacts of order ($this->eCommerceSociete->fk_societe is id in Dolibarr of thirdparty but may be id of the generic "non logged user")
                             $commandeArray['socpeopleCommande']['fk_soc'] = $this->eCommerceSociete->fk_societe;
                             $commandeArray['socpeopleFacture']['fk_soc'] = $this->eCommerceSociete->fk_societe;
                             $commandeArray['socpeopleLivraison']['fk_soc'] = $this->eCommerceSociete->fk_societe;
@@ -2154,9 +2174,14 @@ class eCommerceSynchro
                         }
                     }
                     else {
-                        if ($commandeArray['remote_id_societe'] != 0 || empty($conf->global->ECOMMERCENG_DISABLED_ERROR_FOR_SOCIETE_ID_0)) {
+                        if ($commandeArray['remote_id_societe'] != 0) {
                             $error++;
-                            $this->errors[] = $this->langs->trans('ECommerceSynchCommandeErrorSocieteNotExists') . ' ' . $commandeArray['remote_id_societe'];
+                            $this->errors[] = $this->langs->trans('ECommerceSynchCommandeErrorSocieteNotExists') . ' (remote_id='.$commandeArray['remote_id'].') ' . $commandeArray['remote_id_societe'];
+                        } else
+                        {
+                            $error++;
+                            $this->errors[] = $this->langs->trans('ECommerceSynchCommandeErrorSocieteNotExists') . ' (remote_id='.$commandeArray['remote_id'].') - Unknown customer.';
+                            $this->errors[] = 'This order is not linked to a dedicated customer. Try to set option ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER';
                         }
                     }
                     unset($dBCommande);

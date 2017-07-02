@@ -155,3 +155,6 @@ ECommercePriceLevelDescription=Only this price level are synchronized between Do
 ECommerceConfirmUpdatePriceLevel=You have changed the price level and the products on the eCommerce will be updated.\nThis may take a long time, please confirm.
 SeeECommerceConfFileIfKo=See content of file <strong>%s</strong>, on your eCommerce server, if this URL does not work.
 RestrictCountAndSynchForRecordBefore=Restrict count and synchronize for record with a last modification date in eCommerce before
+SynchUnkownCustomersOnThirdParty=Use the following thirdparty for orders done on unknown customers (non logged customers)
+
+
