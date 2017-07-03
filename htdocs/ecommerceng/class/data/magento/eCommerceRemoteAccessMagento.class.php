@@ -933,6 +933,9 @@ class eCommerceRemoteAccessMagento
                     $i=0;
                     foreach ($results as $facture)
                     {
+                        // Process order
+                        dol_syslog("- Process invoice remote_id=".$facture['order_id']." last_update=".$facture['updated_at']." societe order_id=".$facture['order_id']);
+
                         $i++;
 
                         $configurableItems = array();
@@ -941,6 +944,7 @@ class eCommerceRemoteAccessMagento
                         //set each invoice items
                         $items = array();
                         if (count($facture['items']))
+                        {
                             foreach ($facture['items'] as $item)
                             {
                                 //var_dump($item);    // show invoice item as it is from magento
@@ -985,10 +989,10 @@ class eCommerceRemoteAccessMagento
                                 }
                             }
 
-                        //set shipping address
-                        $shippingAddress = $commande["shipping_address"];
-                        $billingAddress = $commande["billing_address"];
-                        $socpeopleLivraison = array(
+                            //set shipping address
+                            $shippingAddress = $commande["shipping_address"];
+                            $billingAddress = $commande["billing_address"];
+                            $socpeopleLivraison = array(
                                 'remote_id' => $shippingAddress['address_id'],
                                 'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
                                 'last_update' => $shippingAddress['updated_at'],
@@ -1002,9 +1006,9 @@ class eCommerceRemoteAccessMagento
                                 'address' => (trim($shippingAddress['company']) != '' ? trim($shippingAddress['company']) . '
                                                                                 ' : '') . $shippingAddress['street'],
                                 'phone' => $shippingAddress['telephone']
-                        );
-                        //set invoice address
-                        $socpeopleFacture = array(
+                            );
+                            //set invoice address
+                            $socpeopleFacture = array(
                                 'remote_id' => $billingAddress['address_id'],
                                 'type' => eCommerceSocpeople::CONTACT_TYPE_INVOICE,
                                 'last_update' => $billingAddress['updated_at'],
@@ -1018,81 +1022,86 @@ class eCommerceRemoteAccessMagento
                                 'address' => (trim($billingAddress['company']) != '' ? trim($billingAddress['company']) . '
                                                                                 ' : '') . $billingAddress['street'],
                                 'phone' => $billingAddress['telephone']
-                        );
-                        //set delivery as service
-                        $delivery = array(
-                                'description' => $commande['shipping_description'],
-                                'price' => $facture['shipping_amount'],
-                                'qty' => 1, //0 to not show
-                                'tva_tx' => $this->getTaxRate($facture['shipping_amount'], $facture['shipping_tax_amount'])
-                        );
+                            );
+                            //set delivery as service
+                            $delivery = array(
+                                    'description' => $commande['shipping_description'],
+                                    'price' => $facture['shipping_amount'],
+                                    'qty' => 1, //0 to not show
+                                    'tva_tx' => $this->getTaxRate($facture['shipping_amount'], $facture['shipping_tax_amount'])
+                            );
 
-                        $eCommerceTempSoc = new eCommerceSociete($this->db);
-                        if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
-                        {
-                            $remoteIdSociete = 0;
+                            $eCommerceTempSoc = new eCommerceSociete($this->db);
+                            if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
+                            {
+                                $remoteIdSociete = 0;
+                            }
+                            else
+                            {
+                                $remoteIdSociete = $commande['customer_id'];
+                            }
+
+                            // load local order to be used to retreive some data for invoice
+                            $eCommerceTempCommande = new eCommerceCommande($this->db);
+                            $eCommerceTempCommande->fetchByRemoteId($commande['order_id'], $this->site->id);
+                            $dbCommande = new Commande($this->db);
+                            $dbCommande->fetch($eCommerceTempCommande->fk_commande);
+
+
+                            // define status of invoice
+                            $tmp = $facture['state'];                                                   // state from is 1, 2, 3
+
+                            // try to match dolibarr status
+                            $status = '';
+                            if ($tmp == 1)     $status = Facture::STATUS_VALIDATED;            // validated = pending
+                            if ($tmp == 2)     $status = Facture::STATUS_CLOSED;               // complete
+                            if ($tmp == 3)     $status = Facture::STATUS_ABANDONED;            // canceled = holded
+                            if ($status == '')
+                            {
+                                dol_syslog("Status: We found an invoice id ".$commande['increment_id']." with ecommerce status '".$tmp."' that is unknown, not supported. We will use '0' for Dolibarr", LOG_WARNING);
+                                $status = Facture::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
+                            }
+                            else
+                            {
+                                dol_syslog("Status: We found an invoice id ".$commande['increment_id']." with ecommerce status '".$tmp."'. We convert it into Dolibarr status '".$status."'");
+                            }
+
+
+                            $close_code = '';
+                            $close_note = '';
+                            if ($tmp == 3)
+                            {
+                                $close_code = Facture::CLOSECODE_ABANDONED;
+                                $close_note = 'Holded on ECommerce';
+                            }
+
+                            //add invoice to invoices
+                            $factures[] = array(
+                                    'last_update' => $facture['updated_at'],
+                                    'remote_id' => $facture['invoice_id'],
+                                    'remote_increment_id' => $facture['increment_id'],
+                                    'ref_client' => $facture['increment_id'],
+                                    'remote_order_id' => $facture['order_id'],
+                                    'remote_order_increment_id' => $facture['order_increment_id'],
+                                    'remote_id_societe' => $remoteIdSociete,
+                                    'socpeopleLivraison' => $socpeopleLivraison,
+                                    'socpeopleFacture' => $socpeopleFacture,
+                                    'date' => $facture['created_at'],
+                                    'code_cond_reglement' => $dbCommande->cond_reglement_code,      // Take for local order
+                                    'delivery' => $delivery,
+                                    'items' => $items,
+                                    'status' => $tmp,
+                                    'close_code' => $close_code,
+                                    'close_note' => $close_note,
+                                    'remote_state' => $facture['state'],
+                                    'remote_order' => $commande,
+                                    'remote_invoice' => $facture
+                            );
                         }
                         else
                         {
-                            $remoteIdSociete = $commande['customer_id'];
+                            dol_syslog("No items in this invoice", LOG_WARNING);
                         }
-
-                        // load local order to be used to retreive some data for invoice
-                        $eCommerceTempCommande = new eCommerceCommande($this->db);
-                        $eCommerceTempCommande->fetchByRemoteId($commande['order_id'], $this->site->id);
-                        $dbCommande = new Commande($this->db);
-                        $dbCommande->fetch($eCommerceTempCommande->fk_commande);
-
-
-                        // define status of invoice
-                        $tmp = $facture['state'];                                                   // state from is 1, 2, 3
-
-                        // try to match dolibarr status
-                        $status = '';
-                        if ($tmp == 1)     $status = Facture::STATUS_VALIDATED;            // validated = pending
-                        if ($tmp == 2)     $status = Facture::STATUS_CLOSED;               // complete
-                        if ($tmp == 3)     $status = Facture::STATUS_ABANDONED;            // canceled = holded
-                        if ($status == '')
-                        {
-                            dol_syslog("Status: We found an invoice id ".$commande['increment_id']." with ecommerce status '".$tmp."' that is unknown, not supported. We will use '0' for Dolibarr", LOG_WARNING);
-                            $status = Facture::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
-                        }
-                        else
-                        {
-                            dol_syslog("Status: We found an invoice id ".$commande['increment_id']." with ecommerce status '".$tmp."'. We convert it into Dolibarr status '".$status."'");
-                        }
-
-
-                        $close_code = '';
-                        $close_note = '';
-                        if ($tmp == 3)
-                        {
-                            $close_code = Facture::CLOSECODE_ABANDONED;
-                            $close_note = 'Holded on ECommerce';
-                        }
-
-                        //add invoice to invoices
-                        $factures[] = array(
-                                'last_update' => $facture['updated_at'],
-                                'remote_id' => $facture['invoice_id'],
-                                'remote_increment_id' => $facture['increment_id'],
-                                'ref_client' => $facture['increment_id'],
-                                'remote_order_id' => $facture['order_id'],
-                                'remote_order_increment_id' => $facture['order_increment_id'],
-                                'remote_id_societe' => $remoteIdSociete,
-                                'socpeopleLivraison' => $socpeopleLivraison,
-                                'socpeopleFacture' => $socpeopleFacture,
-                                'date' => $facture['created_at'],
-                                'code_cond_reglement' => $dbCommande->cond_reglement_code,      // Take for local order
-                                'delivery' => $delivery,
-                                'items' => $items,
-                                'status' => $tmp,
-                                'close_code' => $close_code,
-                                'close_note' => $close_note,
-                                'remote_state' => $facture['state'],
-                                'remote_order' => $commande,
-                                'remote_invoice' => $facture
-                        );
                     }
                 }
             }
@@ -1212,7 +1221,7 @@ class eCommerceRemoteAccessMagento
      */
     public function getRemoteCategoryTree()
     {
-        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree session=".$this->session);
+        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree");
         try {
             //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category.tree');
@@ -1262,7 +1271,7 @@ class eCommerceRemoteAccessMagento
      */
     public function getRemoteAddressIdForSociete($remote_thirdparty_id)
     {
-        dol_syslog("eCommerceRemoteAccessMagento getRemoteAddressIdForSociete session=".$this->session);
+        dol_syslog("eCommerceRemoteAccessMagento getRemoteAddressIdForSociete remote customer_id=".$remote_thirdparty_id);
         try {
             //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'customer_address.list', array('customerId'=>$remote_thirdparty_id));
@@ -1287,7 +1296,7 @@ class eCommerceRemoteAccessMagento
      */
     public function getCategoryData($category_id)
     {
-        dol_syslog("eCommerceRemoteAccessMagento getCategoryData session=".$this->session);
+        dol_syslog("eCommerceRemoteAccessMagento getCategoryData remote category_id=".$category_id);
         try {
             //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category.info', array('categoryId'=>$category_id));
@@ -1313,7 +1322,7 @@ class eCommerceRemoteAccessMagento
     {
         $commande = array();
         try {
-            dol_syslog("getCommande begin");
+            dol_syslog("eCommerceRemoteAccessMagento getRemoteCommande begin remote order_id=".$remoteCommandeId);
             $result = $this->client->call($this->session, 'sales_order.list', array(array('order_id' => $remoteCommandeId)));
             //dol_syslog($this->client->__getLastRequest());
             if (count($result == 1))
@@ -1321,7 +1330,7 @@ class eCommerceRemoteAccessMagento
                 $commande = $this->client->call($this->session, 'sales_order.info', $result[0]['increment_id']);
                 //dol_syslog($this->client->__getLastRequest());
             }
-            dol_syslog("getCommande end");
+            dol_syslog("eCommerceRemoteAccessMagento getRemoteCommande end");
         } catch (SoapFault $fault) {
             $this->errors[]=$this->site->name.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);

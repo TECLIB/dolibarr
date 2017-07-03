@@ -918,9 +918,6 @@ class eCommerceSynchro
             $nbgoodsunchronize = 0;
             $societes=array();
 
-            //if ($this->getNbSocieteToUpdate(true) > 0)
-            //    $societes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSociete($this->getSocieteToUpdate());
-
             dol_syslog("***** eCommerceSynchro synchSociete");
             $resulttoupdate=$this->getSocieteToUpdate();
             if (is_array($resulttoupdate))
@@ -2258,6 +2255,8 @@ class eCommerceSynchro
 
                 foreach ($factures as $factureArray)
                 {
+                    dol_syslog("- Process synch of invoice with remote_order_id=".$factureArray['remote_order_id']);
+
                     $this->db->begin();
 
                     $this->initECommerceCommande();
