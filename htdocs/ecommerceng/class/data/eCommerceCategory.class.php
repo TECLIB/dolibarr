@@ -93,10 +93,10 @@ class eCommerceCategory // extends CommonObject
         $sql.= " '" . $this->db->escape($this->label) . "',";
         $sql.= " '" . $this->db->escape($this->type) . "',";
         $sql.= " '" . $this->db->escape($this->description) . "',";
-        $sql.= " '" . $this->db->escape($this->fk_category) . "',";
-        $sql.= " '" . $this->db->escape($this->fk_site) . "',";
-        $sql.= " '" . $this->db->escape($this->remote_id) . "',";
-        $sql.= " '" . $this->db->escape($this->remote_parent_id) . "',";
+        $sql.= " " . $this->db->escape($this->fk_category) . ",";
+        $sql.= " " . $this->db->escape($this->fk_site) . ",";
+        $sql.= " " . $this->db->escape($this->remote_id) . ",";
+        $sql.= " " . $this->db->escape($this->remote_parent_id) . ",";
         $sql.= " '" . $this->db->idate($this->last_update) . "'";
         $sql.= ")";
 
@@ -416,7 +416,7 @@ class eCommerceCategory // extends CommonObject
      *
      *    @param	int    $remoteId      string remote_id
      *    @param	int    $siteId        int fk_site
-     *    @return	int                   <0 if KO, >0 if OK
+     *    @return	int                   <0 if KO or not found, >0 if OK
      */
     public function fetchByRemoteId($remoteId, $siteId)
     {
@@ -642,7 +642,6 @@ class eCommerceCategory // extends CommonObject
             }
             $this->db->free($resql);
             return $idsArray;
-            return $num;
         } else
         {
             $this->error = "Error " . $this->db->lasterror();

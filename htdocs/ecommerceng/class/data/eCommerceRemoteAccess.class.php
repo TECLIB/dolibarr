@@ -79,9 +79,9 @@ class eCommerceRemoteAccess
     /**
      * Get societe to update from instantiated class in the constructor
      *
-     * @param $fromDate datetime    Updates from this date
-     * @param $toDate   datetime    Updates to this date
-     * @return  array               Array of remote societe
+     * @param   datetime    $fromDate Updates from this date
+     * @param   datetime    $toDate   Updates to this date
+     * @return  array                 Array of remote societe
      */
     public function getSocieteToUpdate($fromDate, $toDate)
 	{
@@ -94,8 +94,8 @@ class eCommerceRemoteAccess
     /**
      * Get product to update from instantiated class in the constructor
      *
-     * @param $fromDate datetime    Updates from this date
-     * @param $toDate   datetime    Updates to this date
+     * @param   datetime    $fromDate Updates from this date
+     * @param   datetime    $toDate   Updates to this date
      * @return array                Array of remote product
      */
     public function getProductToUpdate($fromDate, $toDate)
@@ -109,8 +109,8 @@ class eCommerceRemoteAccess
     /**
      * Get commande to update from instantiated class in the constructor
      *
-     * @param $fromDate datetime    Updates from this date
-     * @param $toDate   datetime    Updates to this date
+     * @param   datetime    $fromDate Updates from this date
+     * @param   datetime    $toDate   Updates to this date
      * @return array                Array of remote commande or false if error
      */
     public function getCommandeToUpdate($fromDate, $toDate)
@@ -124,8 +124,8 @@ class eCommerceRemoteAccess
     /**
      * Get facture to update from instantiated class in the constructor
      *
-     * @param $fromDate datetime    Updates from this date
-     * @param $toDate   datetime    Updates to this date
+     * @param   datetime    $fromDate Updates from this date
+     * @param   datetime    $toDate   Updates to this date
      * @return array                Array of remote facture
      */
     public function getFactureToUpdate($fromDate, $toDate)
@@ -136,15 +136,32 @@ class eCommerceRemoteAccess
 	    return $result;
 	}
 
+
     /**
-     * Put the remote data into societe dolibarr data from instantiated class in the constructor
+     * Put the remote data into category dolibarr data from instantiated class in the constructor
      *
-     * @param $remoteObject array
+     * @param   array   $remoteObject   Array of remote object
+     * @param   int     $toNb           Max nb
      * @return $dolibarrObject array
      */
-    public function convertRemoteObjectIntoDolibarrSociete($remoteObject)
+    public function convertRemoteObjectIntoDolibarrCategory($remoteObject,$toNb=0)
 	{
-	    $result=$this->class->convertRemoteObjectIntoDolibarrSociete($remoteObject);
+	    $result=$this->class->convertRemoteObjectIntoDolibarrCategory($remoteObject,$toNb);
+		$this->error=$this->class->error;
+		$this->errors=$this->class->errors;
+	    return $result;
+	}
+
+	/**
+     * Put the remote data into societe dolibarr data from instantiated class in the constructor
+     *
+     * @param   array   $remoteObject   Array of remote object
+     * @param   int     $toNb           Max nb
+     * @return $dolibarrObject array
+     */
+    public function convertRemoteObjectIntoDolibarrSociete($remoteObject,$toNb=0)
+	{
+	    $result=$this->class->convertRemoteObjectIntoDolibarrSociete($remoteObject,$toNb);
 		$this->error=$this->class->error;
 		$this->errors=$this->class->errors;
 	    return $result;
@@ -153,12 +170,13 @@ class eCommerceRemoteAccess
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
      *
-     * @param $remoteObject array
+     * @param   array   $remoteObject   Array of remote object
+     * @param   int     $toNb           Max nb
      * @return $dolibarrObject array
      */
-    public function convertRemoteObjectIntoDolibarrSocpeople($remoteObject)
+    public function convertRemoteObjectIntoDolibarrSocpeople($remoteObject,$toNb=0)
 	{
-	    $result=$this->class->convertRemoteObjectIntoDolibarrSocpeople($remoteObject);
+	    $result=$this->class->convertRemoteObjectIntoDolibarrSocpeople($remoteObject,$toNb);
 		$this->error=$this->class->error;
 		$this->errors=$this->class->errors;
 	    return $result;
@@ -167,12 +185,13 @@ class eCommerceRemoteAccess
     /**
      * Put the remote data into product dolibarr data from instantiated class in the constructor
      *
-     * @param $remoteObject array
+     * @param   array   $remoteObject   Array of remote object
+     * @param   int     $toNb           Max nb
      * @return $dolibarrObject array
      */
-    public function convertRemoteObjectIntoDolibarrProduct($remoteObject)
+    public function convertRemoteObjectIntoDolibarrProduct($remoteObject,$toNb=0)
 	{
-	    $result=$this->class->convertRemoteObjectIntoDolibarrProduct($remoteObject);
+	    $result=$this->class->convertRemoteObjectIntoDolibarrProduct($remoteObject,$toNb);
 		$this->error=$this->class->error;
 		$this->errors=$this->class->errors;
 	    return $result;
@@ -181,12 +200,13 @@ class eCommerceRemoteAccess
     /**
      * Put the remote data into commande dolibarr data from instantiated class in the constructor
      *
-     * @param $remoteObject array
+     * @param   array   $remoteObject   Array of remote object
+     * @param   int     $toNb           Max nb
      * @return $dolibarrObject array
      */
-    public function convertRemoteObjectIntoDolibarrCommande($remoteObject)
+    public function convertRemoteObjectIntoDolibarrCommande($remoteObject,$toNb=0)
 	{
-	    $result=$this->class->convertRemoteObjectIntoDolibarrCommande($remoteObject);
+	    $result=$this->class->convertRemoteObjectIntoDolibarrCommande($remoteObject,$toNb);
 		$this->error=$this->class->error;
 		$this->errors=$this->class->errors;
 	    return $result;
@@ -195,12 +215,13 @@ class eCommerceRemoteAccess
     /**
      * Put the remote data into facture dolibarr data from instantiated class in the constructor
      *
-     * @param $remoteObject array
+     * @param   array   $remoteObject   Array of remote object
+     * @param   int     $toNb           Max nb
      * @return $dolibarrObject array
      */
-    public function convertRemoteObjectIntoDolibarrFacture($remoteObject)
+    public function convertRemoteObjectIntoDolibarrFacture($remoteObject,$toNb=0)
 	{
-	    $result=$this->class->convertRemoteObjectIntoDolibarrFacture($remoteObject);
+	    $result=$this->class->convertRemoteObjectIntoDolibarrFacture($remoteObject,$toNb);
 		$this->error=$this->class->error;
 		$this->errors=$this->class->errors;
 	    return $result;
@@ -250,7 +271,7 @@ class eCommerceRemoteAccess
     /**
      * Get list of address id for a customer
      *
-     * @param   int     $remote_thirdparty_id
+     * @param   int     $remote_thirdparty_id   Remote thirdparty id
      * @return $dolibarrObject array
      */
     public function getRemoteAddressIdForSociete($remote_thirdparty_id)
@@ -264,6 +285,7 @@ class eCommerceRemoteAccess
 	/**
 	 *  Get a remote category tree from magento
 	 *
+	 *  @param   int   $category_id            Remote category id
 	 * 	@return	array	An array containing magento's categories as arrays
 	 */
 	public function getCategoryData($category_id)

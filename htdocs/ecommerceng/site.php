@@ -56,6 +56,7 @@ if ($user->societe_id > 0 || !$user->rights->ecommerceng->read)
 
 $id = GETPOST('id','int');
 $to_date = GETPOST('to_date','aZ09');
+$to_nb = GETPOST('to_nb','int');
 $from_date = GETPOST('from_date','aZ09');
 
 $error=0;
@@ -99,7 +100,12 @@ if ($id)
 		// Define date max (synch is done for element modified before)
 		$toDate=null;
 		if (! empty($to_date)) $toDate=dol_stringtotime($to_date);
-	    $synchro = new eCommerceSynchro($db, $site, $toDate);          // $synchro->toDate will be set to dol_now if toDate no defined.
+
+		$toNb=0;
+		if ($to_nb == '') $to_nb=1000;     // If '0', we keep 0
+		if (! empty($to_nb)) $toNb=$to_nb;
+
+		$synchro = new eCommerceSynchro($db, $site, $toDate, $toNb);          // $synchro->toDate will be set to dol_now if toDate no defined.
 
 	    dol_syslog("site.php Try to connect to eCommerce site ".$site->name);
 		$synchro->connect();
@@ -145,27 +151,27 @@ if ($id)
 
 			if (GETPOST('submit_synchro_category') || GETPOST('submit_synchro_category_ajax') || GETPOST('submit_synchro_all'))
 			{
-				$result=$synchro->synchCategory();
+				$result=$synchro->synchCategory($toNb);
 				if ($result < 0) $error++;
 			}
 			if (GETPOST('submit_synchro_product') || GETPOST('submit_synchro_product_ajax') || GETPOST('submit_synchro_all'))
 			{
-				$result=$synchro->synchProduct();
+				$result=$synchro->synchProduct($toNb);
 				if ($result < 0) $error++;
 			}
 			if (GETPOST('submit_synchro_societe') || GETPOST('submit_synchro_societe_ajax') ||  GETPOST('submit_synchro_all'))
 			{
-				$result=$synchro->synchSociete();
+				$result=$synchro->synchSociete($toNb);
 				if ($result < 0) $error++;
 			}
 			if (GETPOST('submit_synchro_commande') || GETPOST('submit_synchro_commande_ajax') || GETPOST('submit_synchro_all'))
 			{
-				$result=$synchro->synchCommande();
+				$result=$synchro->synchCommande($toNb);
 				if ($result < 0) $error++;
 			}
 			if (GETPOST('submit_synchro_facture') || GETPOST('submit_synchro_facture_ajax') ||GETPOST('submit_synchro_all'))
 			{
-				$result=$synchro->synchFacture();
+				$result=$synchro->synchFacture($toNb);
 				if ($result < 0) $error++;
 			}
 		}

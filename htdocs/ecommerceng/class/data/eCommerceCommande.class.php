@@ -441,7 +441,6 @@ class eCommerceCommande
             }
             $this->db->free($resql);
             return $idsArray;
-        	return $num;
         }
         else
         {

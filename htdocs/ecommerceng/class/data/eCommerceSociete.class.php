@@ -455,7 +455,6 @@ class eCommerceSociete // extends CommonObject
             }
             $this->db->free($resql);
             return $idsArray;
-        	return $num;
         }
         else
         {

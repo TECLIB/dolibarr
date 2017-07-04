@@ -43,6 +43,15 @@ if (is_object($site))
 
     print '</td></tr>';
 
+    print '<tr><td>';
+
+    print $langs->trans("RestrictNbInSync").' ';
+    //print '(YYYYMMDDHHMMSS) ';
+    print '<input type="text" name="to_nb" value="'.dol_escape_htmltag($to_nb).'">';
+
+    print '</td><td>';
+    print '</td></tr>';
+
     if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER))
     {
         print '<tr><td>';

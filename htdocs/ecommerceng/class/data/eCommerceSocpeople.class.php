@@ -438,7 +438,6 @@ class eCommerceSocpeople // extends CommonObject
             }
             $this->db->free($resql);
             return $idsArray;
-        	return $num;
         }
         else
         {

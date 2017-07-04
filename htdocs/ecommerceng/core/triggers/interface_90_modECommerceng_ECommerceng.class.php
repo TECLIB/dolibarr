@@ -483,7 +483,8 @@ class InterfaceECommerceng
 
             // TODO If product category and oldest parent is category for magento then delete category into magento.
 
-            $sql = "SELECT remote_id, remote_parent_id FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE label ='".$this->db->escape($object->label)."' AND type = 0";
+            //$sql = "SELECT remote_id, remote_parent_id FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE label ='".$this->db->escape($object->label)."' AND type = 0";
+            $sql = "SELECT remote_id, remote_parent_id FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE fk_category = ".$this->db->escape($object->id)." AND type = 0";
             $resql=$this->db->query($sql);
             if ($resql)
             {
@@ -492,6 +493,7 @@ class InterfaceECommerceng
                 {
                     $remote_parent_id=$obj->remote_parent_id;
                     $remote_id=$obj->remote_id;
+                    // Update all record that are under the one deleted to have a parent that is over the one deleted
                     $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_category SET last_update = NULL, remote_parent_id = ".$remote_parent_id." WHERE remote_parent_id = ".$remote_id;
                     $resql=$this->db->query($sql);
                     if (! $resql)
@@ -502,7 +504,7 @@ class InterfaceECommerceng
             }
             if (! $error)
             {
-                $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE label ='".$this->db->escape($object->label)."' AND type = 0";
+                $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE fk_category = ".$this->db->escape($object->id)." AND type = 0";
 
                 $resql=$this->db->query($sql);
                 if (! $resql)

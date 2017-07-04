@@ -65,6 +65,8 @@ class eCommerceSynchro
     private $eCommerceFacture;
     //class members
     public $toDate;
+    public $toNb;
+
     private $societeLastUpdateDate;
     private $sopeopleLastUpdateDate;
     private $productLastUpdateDate;
@@ -86,8 +88,9 @@ class eCommerceSynchro
      * @param Database          $db           Database handler
      * @param eCommerceSite     $site         Object eCommerceSite
      * @param datetime          $toDate       Ending date to synch all data modified before this date (null by default = until now)
+     * @param int               $toNb         Max nb of record to count or synch (NOT USED YET !)
      */
-    function eCommerceSynchro($db, $site, $toDate=null)
+    function eCommerceSynchro($db, $site, $toDate=null, $toNb=0)
     {
         global $langs, $user;
 
@@ -444,7 +447,7 @@ class eCommerceSynchro
     /**
      * Return list o categories to update
      *
-     * @param   boolean     $force      Force analysis of list, event if array list $this->categoryToUpdate is already defined
+     * @param   boolean     $force      Force analysis of list, even if array list $this->categoryToUpdate is already defined
      */
     public function getCategoriesToUpdate($force = false)
     {
@@ -467,12 +470,12 @@ class eCommerceSynchro
                     foreach ($resanswer as $remoteCatToCheck) // Check update for each entry into $resanswer -> $remoteCatToCheck = array('category_id'=>, 'parent_id'=>...)
                     {
                         // Test if category is disabled or not
-                        if (isset($remoteCatToCheck['is_active']) && empty($remoteCatToCheck['is_active']))
+                        if (isset($remoteCatToCheck['is_active']) && empty($remoteCatToCheck['is_active'])) // We keep because children may not be disabled.
                         {
-                            dol_syslog("Discard category remote_id=".$remoteCatToCheck['category_id'].", category is disabled.");
+                            dol_syslog("Category remote_id=".$remoteCatToCheck['category_id'].", category is disabled.");
                         }
-                        else
-                        {
+                        //else
+                        //{
                             if (! isset($remoteCatToCheck['updated_at'])) {   // The api that returns list of category did not return the updated_at property
                                 // This is very long if there is a lot of categories because we make a WS call to get the 'updated_at' info at each loop pass.
                                 dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id'].", updated_at unknow.");
@@ -494,11 +497,11 @@ class eCommerceSynchro
                                 if ($this->eCommerceCategory->checkForUpdate($this->eCommerceSite->id, $this->toDate, $remoteCatToCheck))   // compare date in remoteCatToCheck and date in sync table. $this->toDate is not used.
                                     $this->categoryToUpdate[] = $remoteCatToCheck;
                             }
-                        }
+                        //}
                     }
 
                     //var_dump($this->categoryToUpdate);exit;
-
+                    dol_syslog("Now tree are in an array ordered by hierarchy. Nb of record = ".count($this->categoryToUpdate));
                     return $this->categoryToUpdate;
                 }
             }
@@ -713,59 +716,113 @@ class eCommerceSynchro
     /**
      * 	Sync categories
      *
-     * 	@return int     <0 if KO, >= 0 if ok
+     *  @param  int     $toNb       Max nb to synch
+     * 	@return int                 <0 if KO, >= 0 if ok
      */
-    public function synchCategory()
+    public function synchCategory($toNb=0)
     {
         $error=0;
 
         try {
             $nbgoodsunchronize = 0;
+            $categories=array();
 
             dol_syslog("***** eCommerceSynchro synchCategory");
 
             // Safety check : importRootCategory exists
-            $dBCategorie = new Categorie($this->db);
-            $importRootExists = ($dBCategorie->fetch($this->eCommerceSite->fk_cat_product) > 0) ? 1 : 0;
+            $dBRootCategorie = new Categorie($this->db);
+            $importRootExists = ($dBRootCategorie->fetch($this->eCommerceSite->fk_cat_product) > 0) ? 1 : 0;
 
             if ($importRootExists)
             {
-                $this->db->begin();
-
                 dol_syslog("synchCategory importRootExists=".$importRootExists);
-                $categories = $this->getCategoriesToUpdate();   // Return list of all categories that were modified on ecommerce side
-                if (is_array($categories) && count($categories))
+
+                $resulttoupdate = $this->getCategoriesToUpdate();   // Return list of categories that were modified on ecommerce side
+                /* Do not sort run this, we want to keep sort on parent categori first and not by updated_at date.
+                if (is_array($resulttoupdate))
                 {
+                    if (count($resulttoupdate) > 0) $categories = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrCategory($resulttoupdate,$toNb);
+                }
+                else
+                {
+                    $error++;
+                }*/
+                $categories=$resulttoupdate;
+
+                // Check return of remote...
+                if (is_array($resulttoupdate) && count($resulttoupdate) > 0 && (! is_array($categories) || count($categories) == 0))    // return of remote is bad or empty when input was not empty
+                {
+                    $error++;
+                }
+                if (! $error && is_array($categories))
+                {
+                    $counter = 0;
                     foreach ($categories as $categoryArray)     // Loop on each categories found on ecommerce side. Cursor is $categoryArray
                     {
-                        dol_syslog("synchCategory Process sync of magento category_id=".$categoryArray['category_id']." name=".$categoryArray['name']);
+                        $counter++;
+                        if ($toNb > 0 && $counter > $toNb) break;
 
-                        $this->initECommerceCategory();             // Initialise new objects
+                        dol_syslog("synchCategory Process sync of magento category remote_id=".$categoryArray['category_id']." name=".$categoryArray['name']." remote parent_id=".$categoryArray['parent_id']);
+
+                        $this->db->begin();
+
+                        $this->initECommerceCategory();             // Initialise new objects eCommerceMotherCategory and eCommerceCategory
+
                         $dBCategorie = new Categorie($this->db);
 
-                        // Check if the ecommerce category has an ecommerce parent category, if not, that implies it is root
-                        $motherExists = $this->eCommerceMotherCategory->fetchByRemoteId($categoryArray['parent_id'], $this->eCommerceSite->id);
+                        // Get parent (if already synch)
+                        $this->eCommerceMotherCategory->fetchByRemoteId($categoryArray['parent_id'], $this->eCommerceSite->id);
+
+                        // If there is a parent, we check we set it into $this->eCommerceMotherCategory
+                        /*if ($parentremoteid > 0 && empty($this->eCommerceMotherCategory->id))
+                        {
+                            $error++;
+                            $this->errors[]="Failed to get/create parent category";
+                        }*/
+
+                        /*
+                        // Check if the ecommerce category has an ecommerce parent category, if not, that implies it is root.
+                        // !!!!!! This is true only if categories are returned in order of parent first.
+                        $motherExists = $this->eCommerceMotherCategory->fetchByRemoteId($parentremoteid, $this->eCommerceSite->id);
                         // Now $this->eCommerceMotherCategory contains the mother category or null
 
-                        // if remote fetch on eCommerceMotherCategory has failed, it is root
-                        if ($motherExists < 1 && ($this->eCommerceMotherCategory->fetchByFKCategory($this->eCommerceSite->fk_cat_product, $this->eCommerceSite->id) < 0))
+                        if ($motherExists < 1)  // Not found.
                         {
-                            // get the importRootCategory of Dolibarr set for the eCommerceSite
-                            $dBCategorie->fetch($this->eCommerceSite->fk_cat_product);
+                            // if remote fetch on eCommerceMotherCategory has failed, it is root
+                            // !!!!!! This is true only if categories are returned in order of parent first.
 
-                            $this->eCommerceMotherCategory->label = $dBCategorie->label;
-                            $this->eCommerceMotherCategory->type = $dBCategorie->type;
-                            $this->eCommerceMotherCategory->description = $dBCategorie->description;
-                            $this->eCommerceMotherCategory->fk_category = $dBCategorie->id;
-                            $this->eCommerceMotherCategory->fk_site = $this->eCommerceSite->id;
-                            $this->eCommerceMotherCategory->remote_id = $categoryArray['parent_id'];
+                            // We get the ROOT category.
+                            if ($this->eCommerceMotherCategory->fetchByFKCategory($this->eCommerceSite->fk_cat_product, $this->eCommerceSite->id) < 0)
+                            {
+                                // get the importRootCategory of Dolibarr set for the eCommerceSite
+                                $dBCategorie->fetch($this->eCommerceSite->fk_cat_product);
 
-                            // reset $dBCategorie
-                            $dBCategorie = new Categorie($this->db);
+                                // We rely on first parent of current record because root is not already synch,
+                                // it means, it's first synch, in such a case, the first record is just under ROOT.
+                                // TODO Make remote call until we found the true ROOT and the the first parent
+                                $parentremoteid=$categoryArray['parent_id'];
 
-                            // Create an entry to map importRootCategory in eCommerceCategory
-                            $this->eCommerceMotherCategory->create($this->user);
-                        }
+                                $this->eCommerceMotherCategory->label = $dBCategorie->label;
+                                $this->eCommerceMotherCategory->type = $dBCategorie->type;
+                                $this->eCommerceMotherCategory->description = $dBCategorie->description;
+                                $this->eCommerceMotherCategory->fk_category = $dBCategorie->id;
+                                $this->eCommerceMotherCategory->fk_site = $this->eCommerceSite->id;
+                                $this->eCommerceMotherCategory->remote_id = $parentremoteid;
+                                $this->eCommerceMotherCategory->last_update = strtotime($categoryArray['updated_at']);
+
+                                // reset $dBCategorie
+                                $dBCategorie = new Categorie($this->db);
+
+                                // Create an entry to map importRootCategory in eCommerceCategory
+                                $this->eCommerceMotherCategory->create($this->user);
+                            }
+                            else
+                            {
+                                // The root category is already synch.
+                            }
+                        }*/
+
+                        // Process category to synch.
                         $eCommerceCatExists = $this->eCommerceCategory->fetchByRemoteId($categoryArray['category_id'], $this->eCommerceSite->id);
 
                         if ($this->eCommerceCategory->fk_category > 0)
@@ -784,8 +841,20 @@ class eCommerceSynchro
                             $synchExists = $eCommerceCatExists >= 0 ? 0 : -1;
                         }
 
-                        // Affect attributes of catArray to dBCat
-                        $dBCategorie->fk_parent = $this->eCommerceMotherCategory->fk_category;
+                        // Affect attributes of $categoryArray to $dBCategorie
+
+                        // If we did not find mother yet (creation was not done in hierarchy order), we create category in root for magento
+                        if (empty($this->eCommerceMotherCategory->fk_category))
+                        {
+                            dol_syslog("We did not found parent category in dolibarr, for parent remote_id=".$categoryArray['parent_id'].", so we create ".$categoryArray['name']." with remote_id=".$categoryArray['category_id']." on root.");
+                            $dBCategorie->fk_parent = $this->eCommerceSite->fk_cat_product;
+                        }
+                        else
+                        {
+                            dol_syslog("We found parent category dolibarr id=".$this->eCommerceMotherCategory->fk_category);
+                            $dBCategorie->fk_parent = $this->eCommerceMotherCategory->fk_category;
+                        }
+
                         $dBCategorie->label = $categoryArray['name'];
                         $dBCategorie->description = $categoryArray['description'];
                         $dBCategorie->type = 0;             // for product category type
@@ -838,6 +907,8 @@ class eCommerceSynchro
 							{
 								// The category already exists in Dolibarr
 								$dBCategorie->fetch(0, $dBCategorie->label, $dBCategorie->type);    // Load full dolibarr category object
+
+
 								$this->eCommerceCategory->label = $dBCategorie->label;
 								$this->eCommerceCategory->description = $dBCategorie->description;
 								$this->eCommerceCategory->fk_category = $dBCategorie->id;
@@ -845,14 +916,16 @@ class eCommerceSynchro
                                 $this->eCommerceCategory->fk_site = $this->eCommerceSite->id;
                                 $this->eCommerceCategory->remote_id = $categoryArray['category_id'];
                                 $this->eCommerceCategory->remote_parent_id = $categoryArray['parent_id'];
+                                $this->eCommerceCategory->last_update = strtotime($categoryArray['updated_at']);
 
                                 if ($this->eCommerceCategory->create($this->user) < 0)  // insert into table lxx_ecommerce_category
                                 {
                                     // Note: creation of categorie dolibarr + creation of table link may fails if same categorie exists twice with same name in Magento.
-                                    // The first time insert of categorie + link is ok, then insert of categorie return -4 and insert of link is duplicate
+                                    // The first time insert of categorie + link is ok, then insert of categorie return -4 and insert of link is duplicate !
 
                                     $error++;
                                     $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceCategoryCreateError') . ' ' . $dBCategorie->label;
+                                    $this->errors[] = $this->langs->trans("ECommerceCheckIfCategoryDoesNotExistsTwice");
                                     $this->errors = array_merge($this->errors, $this->eCommerceCategory->errors);
                                     break;
                                 }
@@ -863,29 +936,43 @@ class eCommerceSynchro
                             	$this->errors[] = $this->langs->trans('ECommerceSynchCategoryError').' '.$dBCategorie->error;
                             	break;
 							}
-
-
                         }
-                        $nbgoodsunchronize++;
 
                         //var_dump($nbgoodsunchronize);exit;
                         unset($dBCategorie);
+
+                        if ($error || ! empty($this->errors))
+                        {
+                            $this->db->rollback();
+                            $nbrecorderror++;
+                            break;      // We decide to stop on first error
+                        }
+                        else
+                        {
+                            $this->db->commit();
+                            $nbgoodsunchronize = $nbgoodsunchronize + 1;
+                        }
+                    }   // end foreach
+
+                    if (empty($this->errors) && ! $error)
+                    {
+                        $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchCategorySuccess');
+
+                        // TODO If we commit even if there was an error (to validate previous record ok), we must also remove 1 second the the higher
+                        // date into table of links to be sure we will retry (during next synch) also record with same update_at than the last record ok.
+
+                        return $nbgoodsunchronize;
                     }
-                    $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchCategorySuccess');
-                }
-
-                if (empty($this->errors) && ! $error)
-                {
-                    // TODO If we commit even if there was an error (to validate previous record ok), we must also remove 1 second the the higher
-                    // date into table of links to be sure we will retry also record with same update_at than the last record ok
-
-                    $this->db->commit();
-                    return $nbgoodsunchronize;
+                    else
+                    {
+                        $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchCategorySuccess');
+                        return -1;
+                    }
                 }
                 else
                 {
-                    $this->db->rollback();
-                    return -1;
+                    $this->error=$this->langs->trans('ECommerceErrorsynchCategory').' (Code FailToGetDetailsOfRecord)';
+                    $this->errors[] = $this->error;
                 }
             }
             else
@@ -906,9 +993,10 @@ class eCommerceSynchro
     /**
      * Synchronize societe to update
      *
-     * @return  int                         Id of thirdparties synchronized if OK, -1 if KO
+     * @param  int     $toNb       Max nb to synch
+     * @return int                 Id of thirdparties synchronized if OK, -1 if KO
      */
-    public function synchSociete()
+    public function synchSociete($toNb=0)
     {
         global $conf;
 
@@ -922,13 +1010,27 @@ class eCommerceSynchro
             $resulttoupdate=$this->getSocieteToUpdate();
             if (is_array($resulttoupdate))
             {
-                if (count($resulttoupdate) > 0) $societes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSociete($resulttoupdate);
+                if (count($resulttoupdate) > 0) $societes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSociete($resulttoupdate,$toNb);
+            }
+            else
+            {
+                $error++;
             }
 
-            if (is_array($societes) && count($societes))
+            // Check return of remote...
+            if (is_array($resulttoupdate) && count($resulttoupdate) > 0 && (! is_array($societes) || count($societes) == 0))    // return of remote is bad or empty when input was not empty
             {
+                $error++;
+            }
+
+            if (! $error && is_array($societes))
+            {
+                $counter = 0;
                 foreach ($societes as $societeArray)
                 {
+                    $counter++;
+                    if ($toNb > 0 && $counter > $toNb) break;
+
                     $this->db->begin();
 
                     //check if societe exists in eCommerceSociete
@@ -1146,7 +1248,7 @@ class eCommerceSynchro
                         $this->db->commit();
                         $nbgoodsunchronize = $nbgoodsunchronize + 1;
                     }
-                }
+                }   // end foreach
 
                 if (empty($this->errors) && ! $error)
                 {
@@ -1331,9 +1433,10 @@ class eCommerceSynchro
     /**
      * Synchronize product to update
      *
-     * @return  int                         Id of product synchronized if OK, -1 if KO
+     * @param   int     $toNb       Max nb to synch
+     * @return  int                 Id of product synchronized if OK, -1 if KO
      */
-    public function synchProduct()
+    public function synchProduct($toNb=0)
     {
         global $conf;
 
@@ -1375,7 +1478,7 @@ class eCommerceSynchro
                 // Get details searching on $resulttoupdate[$i]['sku']
                 if (count($resulttoupdate) > 0)
                 {
-                    $products = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct($resulttoupdate);
+                    $products = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct($resulttoupdate, $toNb);
 
                     //var_dump($products);
                     //exit;
@@ -1433,10 +1536,15 @@ class eCommerceSynchro
                             }
                         }
                     }
+                    else
+                    {
+                        $error++;
+                    }
                 }
             }
 
-            if (! $error && is_array($products) && count($products))
+
+            if (! $error && is_array($products))
             {
 
                 $ii = 0;
@@ -1694,7 +1802,7 @@ class eCommerceSynchro
                         $this->db->commit();
                         $nbgoodsunchronize = $nbgoodsunchronize + 1;
                     }
-                }
+                }   // end foreach
 
                 if ($error || ! empty($this->errors))
                 {
@@ -1730,9 +1838,10 @@ class eCommerceSynchro
      * Synchronize commande to update
      * Inclut synchProduct et synchSociete
      *
-     * @return  int                         Id of product synchronized if OK, -1 if KO
+     * @param   int     $toNb       Max nb to synch
+     * @return  int                 Id of product synchronized if OK, -1 if KO
      */
-    public function synchCommande()
+    public function synchCommande($toNb=0)
     {
         global $conf, $user;
 
@@ -1750,8 +1859,18 @@ class eCommerceSynchro
             {
                 if (count($resulttoupdate) > 0) $commandes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrCommande($resulttoupdate);
             }
+            else
+            {
+                $error++;
+            }
 
-            if (is_array($commandes) && count($commandes))
+            // Check return of remote...
+            if (is_array($resulttoupdate) && count($resulttoupdate) > 0 && (! is_array($commandes) || count($commandes) == 0))    // return of remote is bad or empty when input was not empty
+            {
+                $error++;
+            }
+
+            if (! $error && is_array($commandes))
             {
                 // Local filter to exclude bundles and other complex types
                 $productsTypesOk = array('simple', 'virtual', 'downloadable');
@@ -2229,9 +2348,10 @@ class eCommerceSynchro
     /**
      * Synchronize facture to update
      *
-     * @return  int                         Id of product synchronized if OK, -1 if KO
+     * @param   int     $toNb       Max nb to synch
+     * @return  int                 Id of product synchronized if OK, -1 if KO
      */
-    public function synchFacture()
+    public function synchFacture($toNb=0)
     {
         global $conf, $user;
 
@@ -2247,8 +2367,18 @@ class eCommerceSynchro
             {
                 if (count($resulttoupdate) > 0) $factures = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrFacture($resulttoupdate);
             }
+            else
+            {
+                $error++;
+            }
 
-            if (is_array($factures) && count($factures))
+            // Check return of remote...
+            if (is_array($resulttoupdate) && count($resulttoupdate) > 0 && (! is_array($factures) || count($factures) == 0))    // return of remote is bad or empty when input was not empty
+            {
+                $error++;
+            }
+
+            if (! $error && is_array($factures))
             {
                 // Local filter to exclude bundles and other complex types
 //                $productsTypesOk = array('simple', 'virtual', 'downloadable');
@@ -2785,6 +2915,8 @@ class eCommerceSynchro
             $this->initECommerceFacture();
             $arrayECommerceFactureIds = $this->eCommerceFacture->getAllECommerceFactureIds($this->eCommerceSite->id);
 
+            $this->db->begin();
+
             foreach ($arrayECommerceFactureIds as $idFacture)
             {
                 $this->initECommerceFacture();
@@ -2812,6 +2944,8 @@ class eCommerceSynchro
             if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolFactureSuccess');
             $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchFactureSuccess');
             unset($this->eCommerceFacture);
+
+            $this->db->commit();
         }
 
         //Drop commands
@@ -2821,6 +2955,8 @@ class eCommerceSynchro
             $synchObjectsDeleted = 0;
             $this->initECommerceCommande();
             $arrayECommerceCommandeIds = $this->eCommerceCommande->getAllECommerceCommandeIds($this->eCommerceSite->id);
+
+            $this->db->begin();
 
             foreach ($arrayECommerceCommandeIds as $idCommande)
             {
@@ -2845,6 +2981,8 @@ class eCommerceSynchro
             if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolCommandeSuccess');
             $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchCommandeSuccess');
             unset($this->eCommerceCommande);
+
+            $this->db->commit();
         }
 
         //Drop products
@@ -2854,6 +2992,8 @@ class eCommerceSynchro
             $synchObjectsDeleted = 0;
             $this->initECommerceProduct();
             $arrayECommerceProductIds = $this->eCommerceProduct->getAllECommerceProductIds($this->eCommerceSite->id);
+
+            $this->db->begin();
 
             foreach ($arrayECommerceProductIds as $idProduct)
             {
@@ -2878,6 +3018,8 @@ class eCommerceSynchro
             if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolProductSuccess');
             $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchProductSuccess');
             unset($this->eCommerceProduct);
+
+            $this->db->commit();
         }
 
         //Drop socPeople
@@ -2887,6 +3029,8 @@ class eCommerceSynchro
             $synchObjectsDeleted = 0;
             $this->initECommerceSocpeople();
             $arrayECommerceSocpeopleIds = $this->eCommerceSocpeople->getAllECommerceSocpeopleIds($this->eCommerceSite->id);
+
+            $this->db->begin();
 
             foreach ($arrayECommerceSocpeopleIds as $idSocpeople)
             {
@@ -2911,6 +3055,8 @@ class eCommerceSynchro
             if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolSocpeopleSuccess');
             $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchSocpeopleSuccess');
             unset($this->eCommerceSocpeople);
+
+            $this->db->commit();
         }
 
         //Drop societes
@@ -2920,6 +3066,8 @@ class eCommerceSynchro
             $synchObjectsDeleted = 0;
             $this->initECommerceSociete();
             $arrayECommerceSocieteIds = $this->eCommerceSociete->getAllECommerceSocieteIds($this->eCommerceSite->id);
+
+            $this->db->begin();
 
             foreach ($arrayECommerceSocieteIds as $idSociete)
             {
@@ -2944,15 +3092,20 @@ class eCommerceSynchro
             if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolSocieteSuccess');
             $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchSocieteSuccess');
             unset($this->eCommerceSociete);
+
+            $this->db->commit();
         }
 
         //Drop categories
         if (empty($mode) || preg_match('/^categories/', $mode))
         {
             $dolObjectsDeleted = 0;
+            $dolObjectsNotDeleted = 0;
             $synchObjectsDeleted = 0;
             $this->initECommerceCategory();
             $arrayECommerceCategoryIds = $this->eCommerceCategory->getAllECommerceCategoryIds($this->eCommerceSite);
+
+            $this->db->begin();
 
             foreach ($arrayECommerceCategoryIds as $idCategory)
             {
@@ -2967,6 +3120,8 @@ class eCommerceSynchro
                             $resultdelete = $dbCategory->delete($this->user);
                             if ($resultdelete > 0)
                                 $dolObjectsDeleted++;
+                            else
+                                $dolObjectsNotDeleted++;
                         }
                     }
                     if ($this->eCommerceCategory->delete($this->user, 0) > 0)
@@ -2974,9 +3129,11 @@ class eCommerceSynchro
                 }
             }
 
-            if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolCategorySuccess');
+            if ($deletealsoindolibarr) $this->success[] = $dolObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetDolCategorySuccess').($dolObjectsNotDeleted?' ('.$dolObjectsNotDeleted.' ko)':'');
             $this->success[] = $synchObjectsDeleted . ' ' . $this->langs->trans('ECommerceResetSynchCategorySuccess');
             unset($this->eCommerceCategory);
+
+            $this->db->commit();
         }
     }
 

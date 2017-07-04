@@ -330,6 +330,39 @@ class eCommerceRemoteAccessMagento
     }
 
 
+
+    /**
+     * Put the remote data into category dolibarr data from instantiated class in the constructor
+     * Return array of category by update time.
+     *
+     * @param   array   $remoteObject         Array of ids of objects to convert
+     * @return  array                         societe
+     */
+    public function convertRemoteObjectIntoDolibarrCategory($remoteObject)
+    {
+        global $conf;
+
+        $categories = array();
+
+        // No need to make $this->client->multiCall($this->session, $calls); to get details.
+
+        // We just need to sort array on updated_at
+        $categories = $remoteObject;
+
+        //important - order by last update
+        if (count($categories))
+        {
+            $last_update=array();
+            foreach ($categories as $key => $row)
+            {
+                $last_update[$key] = $row['updated_at'];
+            }
+            array_multisort($last_update, SORT_ASC, $categories);
+        }
+
+        return $categories;
+    }
+
     /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
      * Return array of thirdparty by update time.
@@ -405,6 +438,7 @@ class eCommerceRemoteAccessMagento
         //important - order by last update
         if (count($societes))
         {
+            $last_update=array();
             foreach ($societes as $key => $row)
             {
                 $last_update[$key] = $row['last_update'];
@@ -467,6 +501,7 @@ class eCommerceRemoteAccessMagento
         //important - order by last update
         if (count($socpeoples))
         {
+            $last_update=array();
             foreach ($socpeoples as $key => $row)
             {
                 $last_update[$key] = $row['last_update'];
@@ -617,6 +652,7 @@ class eCommerceRemoteAccessMagento
         //important - order by last update
         if (count($products))
         {
+            $last_update=array();
             foreach ($products as $key => $row)
             {
                 $last_update[$key] = $row['last_update'];
@@ -869,6 +905,7 @@ class eCommerceRemoteAccessMagento
         //important - order by last update
         if (count($commandes))
         {
+            $last_update=array();
             foreach ($commandes as $key => $row)
             {
                 $last_update[$key] = $row['last_update'];
@@ -1110,6 +1147,7 @@ class eCommerceRemoteAccessMagento
         //important - order by last update
         if (count($factures))
         {
+            $last_update=array();
             foreach ($factures as $key => $row)
             {
                 $last_update[$key] = $row['last_update'];
@@ -1236,7 +1274,7 @@ class eCommerceRemoteAccessMagento
             return false;
         }
         //var_dump($result);
-        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree end. Nb of record of result = ".count($result));
+        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree end. Result is a tree of arrays with children in attribute children");
         return $result;
     }
 

@@ -331,6 +331,38 @@ class eCommerceRemoteAccessWoocommerce
 
 
     /**
+     * Put the remote data into category dolibarr data from instantiated class in the constructor
+     * Return array of category by update time.
+     *
+     * @param   array   $remoteObject         Array of ids of objects to convert
+     * @return  array                         societe
+     */
+    public function convertRemoteObjectIntoDolibarrCategory($remoteObject)
+    {
+        global $conf;
+
+        $categories = array();
+
+        // No need to make $this->client->multiCall($this->session, $calls); to get details.
+
+        // We just need to sort array on updated_at
+        $categories = $remoteObject;
+
+        //important - order by last update
+        if (count($categories))
+        {
+            $last_update=array();
+            foreach ($categories as $key => $row)
+            {
+                $last_update[$key] = $row['updated_at'];
+            }
+            array_multisort($last_update, SORT_ASC, $categories);
+        }
+
+        return $categories;
+    }
+
+    /**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
      * Return array of thirdparty by update time.
      *

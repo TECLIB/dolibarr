@@ -87,7 +87,7 @@ ECommerceSynchProductSuccess=products have been synchronized.
 ECommerceSynchCommandeSuccess=orders have been synchronized.
 ECommerceSynchFactureSuccess=bills have been synchronized.
 ECommerceSynchCommandeError=Error during synchronization of orders 
-
+ECommerceCheckIfCategoryDoesNotExistsTwice=Try to make name of your categories unique on your eCommerce platform
 ECommerceSynchSocieteErrorCreateUpdateSociete=Failed to synchronize thirdparty
 
 ECommerceSyncheCommerceSocpeopleCreateError=An error occured while saving contact.
@@ -155,6 +155,7 @@ ECommercePriceLevelDescription=Only this price level are synchronized between Do
 ECommerceConfirmUpdatePriceLevel=You have changed the price level and the products on the eCommerce will be updated.\nThis may take a long time, please confirm.
 SeeECommerceConfFileIfKo=See content of file <strong>%s</strong>, on your eCommerce server, if this URL does not work.
 RestrictCountAndSynchForRecordBefore=Restrict count and synchronize for record with a last modification date in eCommerce before
+RestrictNbInSync=Restrict number of record of same object to synchronize in same request
 SynchUnkownCustomersOnThirdParty=Use the following thirdparty for orders done on unknown customers (non logged customers)
 
 
