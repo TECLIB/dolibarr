@@ -48,7 +48,7 @@ if (count($sites))
 	<br>
 
 	<?php print_titre($langs->trans("MainSyncSetup")); ?>
-	
+
 	<form name="site_form_detail" id="site_form_detail" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
 			<input type="hidden" name="token" value="<?php print $_SESSION['newtoken'] ?>">
 			<input id="site_form_detail_action" type="hidden" name="site_form_detail_action" value="save">
@@ -143,6 +143,18 @@ $var=!$var;
 <?php
 $var=!$var;
 ?>
+				<tr <?php print $bc[$var] ?>>
+					<td><span><?php print $langs->trans('ThirdPartyForNonLoggedUsers') ?></span></td>
+					<td>
+						<?php
+                            print $form->select_company($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER, 'ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER', '', 1);
+						?>
+					</td>
+					<td><?php print $langs->trans('SynchUnkownCustomersOnThirdParty') ?></td>
+				</tr>
+<?php
+$var=!$var;
+?>
 				<!-- Filter are not used at this time
 				<tr <?php print $bc[$var] ?>>
 					<td><?php print $langs->trans('ECommerceFilterLabel') ?></td>
@@ -169,7 +181,7 @@ $var=!$var;
 					<td><span class="fieldrequired"><?php print $langs->trans('ECommerceSiteAddress') ?></span></td>
 					<td>
 						<input type="text" class="flat" name="ecommerce_webservice_address" value="<?php print $ecommerceWebserviceAddress ?>" size="60">
-						<?php 
+						<?php
 						if ($ecommerceWebserviceAddress)
 						    print '<br><a href="'.$ecommerceWebserviceAddress.'" target="_blank">'.$langs->trans("ECommerceClickUrlToTestUrl").'</a>';
 						?>
@@ -248,11 +260,11 @@ $var=!$var;
 ?>
 				<tr <?php print $bc[$var] ?>>
 					<td><?php print $langs->trans('ECommerceMagentoPriceType') ?></td>
-					<td>						
+					<td>
 						<select class="flat" name="ecommerce_magento_price_type">
 							<option value="HT" <?php print ($ecommerceMagentoPriceType == 'HT' ? 'selected="selected"' : '') ?>><?php print $langs->trans('ECommerceMagentoPriceTypeHT') ?></option>
 							<option value="TTC"<?php print ($ecommerceMagentoPriceType == 'TTC' ? 'selected="selected"' : '') ?>><?php print $langs->trans('ECommerceMagentoPriceTypeTTC') ?></option>
-						</select>						
+						</select>
 					</td>
 					<td><?php print $langs->trans('ECommerceMagentoPriceTypeDescription') ?></td>
 				</tr>
@@ -260,23 +272,23 @@ $var=!$var;
 
 
 			<br>
-			
 
-<?php 			
+
+<?php
 if ($conf->stock->enabled)
 {
     print_titre($langs->trans("StockSyncSetup"));
-        
+
     $var=!$var;
 ?>
 			<table class="noborder" width="100%">
-	
+
 				<tr class="liste_titre">
 					<td width="20%"><?php print $langs->trans('Parameter') ?></td>
 					<td><?php print $langs->trans('Value') ?></td>
 					<td><?php print $langs->trans('Description') ?></td>
 				</tr>
-					
+
 				<tr <?php print $bc[$var] ?>>
 					<td><span><?php print $langs->trans('ECommerceStockSyncDirection') ?></span></td>
 					<td>
@@ -286,7 +298,7 @@ if ($conf->stock->enabled)
 						?>
 					</td>
 					<td><?php print $langs->trans('ECommerceStockSyncDirectionDescription') ?></td>
-				</tr>				
+				</tr>
 <?php
     $var=!$var;
 ?>
@@ -299,15 +311,15 @@ if ($conf->stock->enabled)
 							?>
 					</td>
 					<td><?php print $langs->trans('ECommerceStockProductDescription', $langs->transnoentitiesnoconv('ECommerceStockSyncDirection')) ?></td>
-				</tr>				
+				</tr>
 <?php
 }
-?>			
+?>
 			</table>
-			
-			
-			
-			
+
+
+
+
 			<br>
 			<center>
 <?php
@@ -322,7 +334,7 @@ else
 {
 ?>
 				<input type="submit" name="save_site" class="butAction" value="<?php print $langs->trans('Add') ?>">
-<?php 
+<?php
 }
 ?>
 			</center>

@@ -157,5 +157,5 @@ SeeECommerceConfFileIfKo=See content of file <strong>%s</strong>, on your eComme
 RestrictCountAndSynchForRecordBefore=Restrict count and synchronize for record with a last modification date in eCommerce before
 RestrictNbInSync=Restrict number of record of same object to synchronize in same request
 SynchUnkownCustomersOnThirdParty=Use the following thirdparty for orders done on unknown customers (non logged customers)
-
+ThirdPartyForNonLoggedUsers=Third party for anonymous/non logged users
 

@@ -124,6 +124,9 @@ if ($_POST['site_form_detail_action'] == 'save')
         $siteDb->magento_use_special_price = ($_POST['ecommerce_magento_use_special_price'] ? 1 : 0);
         $siteDb->magento_price_type = $_POST['ecommerce_magento_price_type'];
 
+        // TODO Save this into table of ecommerce_site, field fk_thirdparty instead of global var.
+        dolibarr_set_const($db, 'ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER', GETPOST('ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER','int'));
+
         $result = 0;
         if (intval($_POST['ecommerce_id']))
         {
