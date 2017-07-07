@@ -1893,7 +1893,7 @@ class eCommerceSynchro
 
                     //check if societe exists in eCommerceSociete (with remote id). This init ->fk_societe. This is a sql request.
                     //$societeExists will be 1 (found) or -1 (not found)
-                    if (! empty($commandeArray['remote_id_societe']))    // May be empty if customer was deleted on magento side.
+                    if (! empty($commandeArray['remote_id_societe']))    // May be empty if customer is a non logged user or was deleted on magento side.
                     {
                         $societeExists = $this->eCommerceSociete->fetchByRemoteId($commandeArray['remote_id_societe'], $this->eCommerceSite->id);
                     }
@@ -2403,8 +2403,25 @@ class eCommerceSynchro
                     //check if ref exists in commande
                     $refCommandeExists = $dBCommande->fetch($this->eCommerceCommande->fk_commande);
 
-                    //check if societe exists
-                    $societeExists = $this->eCommerceSociete->fetchByRemoteId($factureArray['remote_id_societe'], $this->eCommerceSite->id);
+                    //check if societe exists in eCommerceSociete (with remote id). This init ->fk_societe. This is a sql request.
+                    //$societeExists will be 1 (found) or -1 (not found)
+                    if (! empty($factureArray['remote_id_societe']))    // May be empty if customer is a non logged user or was deleted on magento side.
+                    {
+                        $societeExists = $this->eCommerceSociete->fetchByRemoteId($factureArray['remote_id_societe'], $this->eCommerceSite->id);
+                    }
+                    else
+                    {
+                        // This is an unknown customer. May be a non logged customer.
+                        if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER))
+                        {
+                            $societeExists = 1;
+                            $this->eCommerceSociete->fk_societe = $conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER;
+                        }
+                        else
+                        {
+                            $societeExists = 0;
+                        }
+                    }
 
                     //if societe and commande exists start
                     if ($societeExists > 0 && $synchCommandeExists > 0)
