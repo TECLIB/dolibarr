@@ -10,7 +10,12 @@ if (is_object($site))
 
     print '<br>';
 
-    dol_fiche_head('', '', $langs->trans("Direction").' : Ecommerce -> Dolibarr');
+    $head = array();
+    $head[1][0] = '?id='.$site->id;
+    $head[1][1] = $langs->trans("Direction").' : Ecommerce -> Dolibarr';
+    $head[1][2] = 'ecommerce2dolibarr';
+
+    dol_fiche_head($head, 'ecommerce2dolibarr', '');
 
     print '<form name="form_count" id="form_count" action="'.$_SERVER['PHP_SELF'].'" method="post">';
     print '<input type="hidden" name="id" value="'.$site->id.'">';
@@ -47,7 +52,7 @@ if (is_object($site))
 
     print $langs->trans("RestrictNbInSync").' ';
     //print '(YYYYMMDDHHMMSS) ';
-    print '<input type="text" name="to_nb" value="'.dol_escape_htmltag($to_nb).'">';
+    print '<input type="text" name="to_nb" placeholder="0" value="'.dol_escape_htmltag($to_nb).'">';
 
     print '</td><td>';
     print '</td></tr>';
@@ -259,34 +264,28 @@ if (is_object($site))
 	$categorytmp=new Categorie($db);
 	$categorytmp->fetch($site->fk_cat_societe);
 	$tagname=$categorytmp->label;
+	print '<span class="opacitymedium">';
 	print '* '.$langs->trans("OnlyProductCategIn", $tagnameprod).'<br>';
 	print '** '.$langs->trans("OnlyProductsIn", $tagnameprod, $tagnameprod).'<br>';
 	//print '*** '.$langs->trans("OnlyThirdPartyWithTags", $tagname).'<br>';
 	print '*** '.$langs->trans("OnlyThirdPartyIn", $tagname).'<br>';
 	print '**** '.$langs->trans("WithMagentoThirdIsModifiedIfAddressModified").'<br>';
+	print '</span>';
 
 	dol_fiche_end();
 
 	print '<br>';
 
-    dol_fiche_head('', '', $langs->trans("Direction").' : Dolibarr -> Ecommerce');
+    $head = array();
+    $head[1][0] = '?id='.$site->id;
+    $head[1][1] = $langs->trans("Direction").' : Dolibarr -> Ecommerce';
+    $head[1][2] = 'dolibarr2ecommerce';
+
+    dol_fiche_head($head, 'dolibarr2ecommerce', '');
 
 	print $langs->trans("SyncIsAutomaticInRealTime", $site->name)."\n";
 
 	dol_fiche_end();
-
-	print '<br>';
-	$soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');
-	$soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
-	if ($soapwsdlcacheon)
-	{
-	    print '<div class="opacitymedium">'.$langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).'</div><br>';
-	}
-	else
-	{
-	    print '<div class="opacitymedium">'.$langs->trans("SoapCacheIsOff", $soapwsdlcachedir).'</div><br>';
-	}
-	print '<br>';
 
 	print '</form>';
 
@@ -294,7 +293,14 @@ if (is_object($site))
 	if (! empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS))
 	{
 		print '<br><br>';
-   		dol_fiche_head('', '', $langs->trans('DangerZone'));
+
+		$head = array();
+        $head[1][0] = '?id='.$site->id;
+		$head[1][1] = $langs->trans("DangerZone");
+		$head[1][2] = 'dangerzone';
+
+   		dol_fiche_head($head, 'dangerzone', '');
+
 	    print '<div class="nodebugtools inline-block">';
 		print '<a style="color: #600" id="showtools">'.$langs->trans("ShowDebugTools").'</a>';
 		print '</div>';
@@ -333,6 +339,20 @@ if (is_object($site))
         print "});";
 		print "</script>";
 	}
+
+
+	print '<br>';
+	$soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');
+	$soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
+	if ($soapwsdlcacheon)
+	{
+	    print '<div class="opacitymedium">'.$langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).'</div><br>';
+	}
+	else
+	{
+	    print '<div class="opacitymedium">'.$langs->trans("SoapCacheIsOff", $soapwsdlcachedir).'</div><br>';
+	}
+	print '<br>';
 
 }
 else

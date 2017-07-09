@@ -284,6 +284,7 @@ if (GETPOST('submit_synchro_category_ajax') || GETPOST('submit_synchro_product_a
     || GETPOST('submit_synchro_commande_ajax') || GETPOST('submit_synchro_facture_ajax'))
 {
     // Return ajax content
+    // Not used yet
 }
 else
 {

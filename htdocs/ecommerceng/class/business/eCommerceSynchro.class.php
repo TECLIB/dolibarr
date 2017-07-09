@@ -1857,7 +1857,7 @@ class eCommerceSynchro
 
             if (is_array($resulttoupdate))
             {
-                if (count($resulttoupdate) > 0) $commandes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrCommande($resulttoupdate);
+                if (count($resulttoupdate) > 0) $commandes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrCommande($resulttoupdate, $toNb);
             }
             else
             {

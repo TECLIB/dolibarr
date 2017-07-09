@@ -69,7 +69,13 @@ class eCommerceRemoteAccessWoocommerce
         global $conf;
 
         try {
-            $response_timeout = (empty($conf->global->MAIN_USE_RESPONSE_TIMEOUT)?30:$conf->global->MAIN_USE_RESPONSE_TIMEOUT);    // Response timeout
+            require_once(DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php');
+            $params=getSoapParams();
+            
+            @ini_set('default_socket_timeout', $params['response_timeout']);
+            @ini_set("memory_limit", "1024M");
+            
+            $response_timeout = (empty($conf->global->MAIN_USE_RESPONSE_TIMEOUT)?$params['response_timeout']:$conf->global->MAIN_USE_RESPONSE_TIMEOUT);    // Response timeout
 
             dol_syslog("eCommerceRemoteAccessWoocommerce Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".$this->site->user_password);
             $this->client = new Client(
@@ -91,6 +97,7 @@ class eCommerceRemoteAccessWoocommerce
                     'timeout' => $response_timeout,
                 ]
             );
+            
             dol_syslog("eCommerceRemoteAccessWoocommerce connected with new Client ok.");
 
             return true;
@@ -106,7 +113,7 @@ class eCommerceRemoteAccessWoocommerce
      *
      * @param   datetime $fromDate      From date
      * @param   datetime $toDate        To date
-     * @return  mixed                   Response from REST Api call, normally an associative array mirroring the structure of the XML response, nothing if error
+     * @return  boolean|mixed           Response from REST Api call, normally an associative array mirroring the structure of the XML response, nothing if error
      */
     public function getSocieteToUpdate($fromDate, $toDate)
     {
@@ -146,8 +153,8 @@ class eCommerceRemoteAccessWoocommerce
                     }
                 }
             }
-            dol_syslog("getSocieteToUpdate end");
 
+            dol_syslog("getSocieteToUpdate end (found ".count($result)." record)");
             return $result;
         } catch (HttpClientException $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -161,13 +168,14 @@ class eCommerceRemoteAccessWoocommerce
      *
      * @param   datetime $fromDate      From date
      * @param   datetime $toDate        To date
-     * @return  void|mixed              Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error
+     * @return  boolean|mixed           Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error
      */
     public function getProductToUpdate($fromDate, $toDate)
     {
         global $conf;
 
         try {
+            dol_syslog("getProductToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
             $result = array();
             $idxPage = 1;
             $per_page = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : $conf->global->ECOMMERCENG_MAXSIZE_MULTICALL;
@@ -202,8 +210,8 @@ class eCommerceRemoteAccessWoocommerce
                     }
                 }
             }
-            dol_syslog("getProductToUpdate end");
 
+            dol_syslog("getProductToUpdate end (found ".count($results)." record)");
             return $result;
         } catch (HttpClientException $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -217,7 +225,7 @@ class eCommerceRemoteAccessWoocommerce
      *
      * @param   datetime $fromDate      From date
      * @param   datetime $toDate        To date
-     * @return  void|mixed              Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error
+     * @return  boolean|mixed           Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error
      */
     public function getCommandeToUpdate($fromDate, $toDate)
     {
@@ -256,8 +264,8 @@ class eCommerceRemoteAccessWoocommerce
                     }
                 }
             }
-            dol_syslog("getCommandeToUpdate end");
 
+            dol_syslog("getCommandeToUpdate end (found ".count($result)." record)");
             return $result;
         } catch (HttpClientException $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -276,7 +284,7 @@ class eCommerceRemoteAccessWoocommerce
      *
      * @param   datetime $fromDate      From date
      * @param   datetime $toDate        To date
-     * @return  void|mixed              Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error
+     * @return  boolean|mixed           Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error
      */
     public function getFactureToUpdate($fromDate, $toDate)
     {
@@ -318,15 +326,14 @@ class eCommerceRemoteAccessWoocommerce
                     }
                 }
             }
-            dol_syslog("getFactureToUpdate end");
 
+            dol_syslog("getFactureToUpdate end (found ".count($result)." record)");
             return $result;
         } catch (HttpClientException $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }*/
-        return array();
     }
 
 
@@ -367,9 +374,10 @@ class eCommerceRemoteAccessWoocommerce
      * Return array of thirdparty by update time.
      *
      * @param   array   $remoteObject         Array of ids of objects to convert
+     * @param   int     $toNb                 Max nb
      * @return  array                         societe
      */
-    public function convertRemoteObjectIntoDolibarrSociete($remoteObject)
+    public function convertRemoteObjectIntoDolibarrSociete($remoteObject, $toNb=0)
     {
         global $conf;
 
@@ -378,12 +386,15 @@ class eCommerceRemoteAccessWoocommerce
         $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?100:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);
         $nbsynchro = 0;
         $nbremote = count($remoteObject);
-        if ($nbremote) {
+        if ($nbremote)
+        {
             // Create n groups of $maxsizeofmulticall records max to call the multiCall
             $callsgroup = array();
             $calls = array();
-            foreach ($remoteObject as $rsociete) {
-                if (($nbsynchro % $maxsizeofmulticall) == 0) {
+            foreach ($remoteObject as $rsociete)
+            {
+                if (($nbsynchro % $maxsizeofmulticall) == 0)
+                {
                     if (count($calls)) $callsgroup[] = $calls;    // Add new group for lot of 1000 call arrays
                     $calls = array();
                 }
@@ -397,31 +408,40 @@ class eCommerceRemoteAccessWoocommerce
             dol_syslog("convertRemoteObjectIntoDolibarrSociete Call WS to get detail for the " . count($remoteObject) . " objects (" . count($callsgroup) . " calls with " . $maxsizeofmulticall . " max of records each) then create a Dolibarr array for each object");
             //var_dump($callsgroup);exit;
 
-            foreach ($callsgroup as $calls) {
+            $results=array();
+            $nbcall=0;
+            foreach ($callsgroup as $calls)
+            {
                 try {
-                    $results = $this->client->get('customers',
+                    $nbcall++;
+                    dol_syslog("convertRemoteObjectIntoDolibarrSociete Call WS nb ".$nbcall." (".count($calls)." record)");
+                    $resulttmp = $this->client->get('customers',
                         [
                             'per_page' => $maxsizeofmulticall,
                             'include' => implode(',', $calls),
                         ]
                     );
+                    $results=array_merge($results, $resulttmp);
                 } catch (HttpClientException $fault) {
-                    dol_syslog('convertRemoteObjectIntoDolibarrSociete :' . $fault->getMessage() . '-' . $fault->getCode() . '-' . $fault->getTraceAsString(), LOG_WARNING);
+                    dol_syslog('convertRemoteObjectIntoDolibarrSociete :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+                    return false;
                 }
-
-                if (count($results)) {
-                    foreach ($results as $societe) {
-                        $newobj = array(
-                            'remote_id' => $societe['id'],
-                            'last_update' => isset($societe['date_modified']) ? $societe['date_modified'] : $societe['date_created'],
-                            'name' => dolGetFirstLastname($societe['first_name'], $societe['last_name']),
-                            'name_alias' => $this->site->name . ' id ' . $societe['id'],                // See also the delete in eCommerceSociete
-                            'email' => $societe['email'],
-                            'client' => 3, //for client/prospect
-                            'vatnumber' => '',
-                        );
-                        $societes[] = $newobj;
-                    }
+            }
+            
+            if (count($results))
+            {
+                foreach ($results as $societe)
+                {
+                    $newobj = array(
+                        'remote_id' => $societe['id'],
+                        'last_update' => isset($societe['date_modified']) ? $societe['date_modified'] : $societe['date_created'],
+                        'name' => dolGetFirstLastname($societe['first_name'], $societe['last_name']),
+                        'name_alias' => $this->site->name . ' id ' . $societe['id'],                // See also the delete in eCommerceSociete
+                        'email' => $societe['email'],
+                        'client' => 3, //for client/prospect
+                        'vatnumber' => $societe['taxvat']
+                    );
+                    $societes[] = $newobj;
                 }
             }
         }
@@ -437,6 +457,7 @@ class eCommerceRemoteAccessWoocommerce
             array_multisort($last_update, SORT_ASC, $societes);
         }
 
+        dol_syslog("convertRemoteObjectIntoDolibarrSociete end (found ".count($societes)." record)");
         return $societes;
     }
 
@@ -445,12 +466,14 @@ class eCommerceRemoteAccessWoocommerce
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
      * Return array of people by update time.
      *
-     * @param   array       $listofids      List of object with customer_address_id that is remote id of addresss
+     * @param   array   $listofids          List of object with customer_address_id that is remote id of addresss
+     * @param   int     $toNb               Max nb. Not used for socpeople.
      * @return  array                       societe
      */
-    public function convertRemoteObjectIntoDolibarrSocpeople($listofids)
+    public function convertRemoteObjectIntoDolibarrSocpeople($listofids, $toNb=0)
     {
         global $conf;
+        
         $socpeoples = array();
         $calls = array();
         if (count($listofids))
@@ -470,6 +493,7 @@ class eCommerceRemoteAccessWoocommerce
             } catch (HttpClientException $fault) {
                 dol_syslog('convertRemoteObjectIntoDolibarrSocpeople :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             }
+            
             if (count($results)) {
                 $billingName = (empty($conf->global->ECOMMERCENG_BILLING_CONTACT_NAME) ? 'Billing' : $conf->global->ECOMMERCENG_BILLING_CONTACT_NAME);      // Contact name treated as billing address.
                 $shippingName = (empty($conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME) ? 'Shipping' : $conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME);  // Contact name treated as shipping address.
@@ -551,6 +575,8 @@ class eCommerceRemoteAccessWoocommerce
             }
             array_multisort($last_update, SORT_ASC, $socpeoples);
         }
+        
+        dol_syslog("convertRemoteObjectIntoDolibarrSocPeople end (found ".count($socpeoples)." record)");
         return $socpeoples;
     }
 
@@ -559,17 +585,22 @@ class eCommerceRemoteAccessWoocommerce
      * Put the remote data into product dolibarr data from instantiated class in the constructor
      * Return array or products by update time.
      *
-     * @param   array   $remoteObject   Array of remote products (got by caller from getProductToUpdate. Only few properties defined)
-     * @return  array                   product
+     * @param   array   $remoteObject       Array of remote products (got by caller from getProductToUpdate. Only few properties defined)
+     * @param   int     $toNb               Max nb
+     * @return  array                       product
      */
-    public function convertRemoteObjectIntoDolibarrProduct($remoteObject)
+    public function convertRemoteObjectIntoDolibarrProduct($remoteObject, $toNb=0)
     {
         global $conf;
 
+        include_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
+        
         $products = array();
 
         $canvas = '';
 
+        $ecommerceurl =  $this->site->getFrontUrl();
+        
         $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?100:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);      // 1000 seems ok for multicall.
         $nbsynchro = 0;
         $nbremote = count($remoteObject);
@@ -595,25 +626,33 @@ class eCommerceRemoteAccessWoocommerce
             dol_syslog("convertRemoteObjectIntoDolibarrProduct Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
             //var_dump($callsgroup);exit;
 
+            $results=array();
+            $nbcall=0;
             foreach ($callsgroup as $calls)
             {
                 try {
-                    $results =  $this->client->get('products',
+                    $nbcall++;
+                    dol_syslog("convertRemoteObjectIntoDolibarrProduct Call WS nb ".$nbcall." (".count($calls)." record)");
+                    $resulttmp =  $this->client->get('products',
                         [
                             'per_page' => $maxsizeofmulticall,
                             'include' => implode(',', $calls),
                         ]
                     );
+                    $results=array_merge($results, $resulttmp);
                 } catch (HttpClientException $fault) {
                     dol_syslog('convertRemoteObjectIntoDolibarrProduct :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+                    
+					return false;                    
                 }
-
-                if (count($results))
+            }
+            
+            if (count($results))
+            {
+                foreach ($results as $cursorproduct => $product)
                 {
-                    foreach ($results as $cursorproduct => $product)
-                    {
-                        // Variations
-                        if (count($product['variations'])) {
+                    // Variations
+                    if (count($product['variations'])) {
                             try {
                                 $variations = $this->client->get('products/' . $product['id'] . '/variations');
                             } catch (HttpClientException $fault) {
@@ -652,7 +691,7 @@ class eCommerceRemoteAccessWoocommerce
                                     'is_in_stock'       => $variation['in_stock'],   // not used
                                 );
                             }
-                        } else {
+                    } else {
                             $products[] = array(
                                 'remote_id'         => $product['id'],  // id product
                                 'last_update'       => isset($product['date_modified'])?$product['date_modified']:$product['date_created'],
@@ -674,7 +713,6 @@ class eCommerceRemoteAccessWoocommerce
                                 'stock_qty'         => $product['stock_quantity'],
                                 'is_in_stock'       => $product['in_stock'],   // not used
                             );
-                        }
                     }
                 }
             }
@@ -690,6 +728,8 @@ class eCommerceRemoteAccessWoocommerce
             }
             array_multisort($last_update, SORT_ASC, $products);
         }
+
+        dol_syslog("convertRemoteObjectIntoDolibarrProduct end (found ".count($products)." record)");
         return $products;
     }
 
@@ -698,9 +738,10 @@ class eCommerceRemoteAccessWoocommerce
      * Return array of orders by update time.
      *
      * @param   array   $remoteObject       array of remote orders
+     * @param   int     $toNb               Max nb
      * @return  array                       commande
      */
-    public function convertRemoteObjectIntoDolibarrCommande($remoteObject)
+    public function convertRemoteObjectIntoDolibarrCommande($remoteObject, $toNb=0)
     {
         global $conf, $langs;
 
@@ -731,29 +772,40 @@ class eCommerceRemoteAccessWoocommerce
             dol_syslog("convertRemoteObjectIntoDolibarrCommande Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
             //var_dump($callsgroup);exit;
 
+            $results=array();
+            $nbcall=0;
             foreach ($callsgroup as $calls)
             {
                 try {
-                    $results =  $this->client->get('orders',
+                    $nbcall++;
+                    dol_syslog("convertRemoteObjectIntoDolibarrCommande Call WS nb ".$nbcall." (".count($calls)." record)");
+                    $resulttmp = $this->client->get('orders',
                         [
                             'per_page' => $maxsizeofmulticall,
                             'include' => implode(',', $calls),
                         ]
                     );
+                    $results=array_merge($results, $resulttmp);
                 } catch (HttpClientException $fault) {
                     dol_syslog('convertRemoteObjectIntoDolibarrCommande :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+					return false;
                 }
-
-                if (count($results))
+            }
+            
+            if (count($results))
+            {
+                foreach ($results as $commande)
                 {
-                    foreach ($results as $commande)
+                    // Process order
+                    dol_syslog("- Process order remote_id=".$commande['order_id']." last_update=".$commande['updated_at']." societe remote_id=".$commande['customer_id']);
+                    
+                    //set each items
+                    $items = array();
+                    $configurableItems = array();
+                    if (count($commande['line_items']))
                     {
-                        //set each items
-                        $items = array();
-                        $configurableItems = array();
-                        if (count($commande['line_items']))
-                            foreach ($commande['line_items'] as $item)
-                            {
+                        foreach ($commande['line_items'] as $item)
+                        {
                                 $items[] = array(
                                     'item_id' => $item['id'],
                                     'id_remote_product' => !empty($item['variation_id']) ? $item['product_id'].'|'.$item['variation_id'] : $item['product_id'],
@@ -763,8 +815,8 @@ class eCommerceRemoteAccessWoocommerce
                                     'qty' => $item['quantity'],
                                     'tva_tx' => $this->getTaxRate($commande['total'], $commande['total_tax']) // tax_class > requete taxes rates
                                 );
-                            }
-
+                        }
+                    
                         //define remote id societe : 0 for anonymous
                         $eCommerceTempSoc = new eCommerceSociete($this->db);
                         if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
@@ -868,13 +920,13 @@ class eCommerceRemoteAccessWoocommerce
 
                         // try to match dolibarr billed status (payed or not)
                         $billed = -1;   // unknown
-                        if ($commande['status'] == 'pending') $billed = 0;
+                        if ($commande['status'] == 'pending')    $billed = 0;
                         if ($commande['status'] == 'processing') $billed = 0;   //
-                        if ($commande['status'] == 'on-hold') $billed = 0;      //
-                        if ($commande['status'] == 'completed') $billed = 1;    // We are sure for complete that order is payed
-                        if ($commande['status'] == 'cancelled') $billed = 0;    // We are sure for canceled that order was not payed
-                        if ($commande['status'] == 'refunded') $billed = 1;     //
-                        if ($commande['status'] == 'failed') $billed = 0;       //
+                        if ($commande['status'] == 'on-hold')    $billed = 0;      //
+                        if ($commande['status'] == 'completed')  $billed = 1;    // We are sure for complete that order is payed
+                        if ($commande['status'] == 'cancelled')  $billed = 0;    // We are sure for canceled that order was not payed
+                        if ($commande['status'] == 'refunded')   $billed = 1;     //
+                        if ($commande['status'] == 'failed')     $billed = 0;       //
                         // Note: with processing, billed can be 0 or 1, so we keep -1
 
 
@@ -900,6 +952,10 @@ class eCommerceRemoteAccessWoocommerce
                             'remote_order'          => $commande
                         );
                     }
+                    else
+                    {
+                        dol_syslog("No items in this order", LOG_WARNING);
+                    }                        
                 }
             }
         }
@@ -915,7 +971,7 @@ class eCommerceRemoteAccessWoocommerce
             array_multisort($last_update, SORT_ASC, $commandes);
         }
 
-        dol_syslog("convertRemoteObjectIntoDolibarrCommande Return ".count($commandes)." array of orders filled with complete data from eCommerce");
+        dol_syslog("convertRemoteObjectIntoDolibarrCommande end (found ".count($commandes)." array of orders filled with complete data from eCommerce)");
         return $commandes;
     }
 
@@ -924,9 +980,10 @@ class eCommerceRemoteAccessWoocommerce
      * Return array of invoices by update time.
      *
      * @param   array   $remoteObject       array of remote invoices
+     * @param   int     $toNb               Max nb
      * @return  array                       facture
      */
-    public function convertRemoteObjectIntoDolibarrFacture($remoteObject)
+    public function convertRemoteObjectIntoDolibarrFacture($remoteObject, $toNb=0)
     {
         global $conf;
 
@@ -957,33 +1014,43 @@ class eCommerceRemoteAccessWoocommerce
             dol_syslog("convertRemoteObjectIntoDolibarrFacture Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
             //var_dump($callsgroup);exit;
 
+            $results=array();
+            $nbcall=0;
             foreach ($callsgroup as $calls)
             {
                 try {
-                    $results =  $this->client->get('orders',
+                    $nbcall++;
+                    dol_syslog("convertRemoteObjectIntoDolibarrFacture Call WS nb ".$nbcall." (".count($calls)." record)");
+                    $resulttmp =  $this->client->get('orders',
                         [
                             'include' => implode(',', $calls),
                         ]
                     );
+                    $results=array_merge($results, $resulttmp);
                 } catch (HttpClientException $fault) {
                     dol_syslog('convertRemoteObjectIntoDolibarrFacture :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
                 }
+			}
 
-                if (count($results))
+            if (count($results))
+            {
+                $i=0;
+                foreach ($results as $facture)
                 {
-                    $i=0;
-                    foreach ($results as $facture)
-                    {
-                        $i++;
+                    // Process invoice
+   	                dol_syslog("- Process invoice remote_id=".$facture['order_id']." last_update=".$facture['updated_at']." societe order_id=".$facture['order_id']);
 
-                        $configurableItems = array();
-                        //retrive remote order from invoice
-                        $commande = $this->getRemoteCommande($facture['order_id']);
-                        //set each invoice items
-                        $items = array();
-                        if (count($facture['items']))
-                            foreach ($facture['items'] as $item)
-                            {
+                    $i++;
+
+                    $configurableItems = array();
+                    //retrive remote order from invoice
+                    $commande = $this->getRemoteCommande($facture['order_id']);
+                    //set each invoice items
+                    $items = array();
+                    if (count($facture['items']))
+					{
+                        foreach ($facture['items'] as $item)
+                        {
                                 //var_dump($item);    // show invoice item as it is from magento
 
                                 $product_type = $this->getProductTypeOfItem($item, $commande, $facture);
@@ -1024,7 +1091,7 @@ class eCommerceRemoteAccessWoocommerce
                                         );
                                     }
                                 }
-                            }
+                        }
 
                         //set shipping address
                         $shippingAddress = $commande["shipping_address"];
@@ -1135,6 +1202,10 @@ class eCommerceRemoteAccessWoocommerce
                                 'remote_invoice' => $facture
                         );
                     }
+                    else
+                    {
+                        dol_syslog("No items in this invoice", LOG_WARNING);
+                    }
                 }
             }
         }
@@ -1142,6 +1213,7 @@ class eCommerceRemoteAccessWoocommerce
         //important - order by last update
         if (count($factures))
         {
+            $last_update=array();
             foreach ($factures as $key => $row)
             {
                 $last_update[$key] = $row['last_update'];
@@ -1151,6 +1223,8 @@ class eCommerceRemoteAccessWoocommerce
 
         //var_dump($factures);exit;
         */
+                
+        dol_syslog("convertRemoteObjectIntoDolibarrFacture end (found ".count($products)." record)");
         return $factures;
     }
 
