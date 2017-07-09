@@ -1546,23 +1546,23 @@ class eCommerceSynchro
 
             if (! $error && is_array($products))
             {
-
-                $ii = 0;
-
+                $counter = 0;
                 foreach ($products as $productArray)
                 {
-                    $ii++;
+                    dol_syslog("- Process synch of product remote_id=".$productArray['remote_id']);
+
+                    $counter++;
+                    if ($toNb > 0 && $counter > $toNb) break;
+
                     if (empty($productArray['remote_id']))
                     {
-                        dol_syslog("Record with index ".$ii." is empty. Error.");
+                        dol_syslog("Record with index ".$counter." is empty. Error.");
                         $error++;
-                        $this->errors[]="Record with index ".$ii." is empty. Error.";
+                        $this->errors[]="Record with index ".$counter." is empty. Error.";
                         break;
                     }
 
                     $this->db->begin();
-
-                    dol_syslog("Process product ecommerce remote_id=".$productArray['remote_id']);
 
                     //check if product exists in eCommerceProduct (with remote id)
                     $synchExists = $this->eCommerceProduct->fetchByRemoteId($productArray['remote_id'], $this->eCommerceSite->id);
@@ -1876,9 +1876,13 @@ class eCommerceSynchro
                 $productsTypesOk = array('simple', 'virtual', 'downloadable');
 
                 // Loop on each modified order
+                $counter++;
                 foreach ($commandes as $commandeArray)
                 {
-                    dol_syslog("- Process synch of order ".$commandeArray['remote_id']);
+                    dol_syslog("- Process synch of order remote_id=".$commandeArray['remote_id']);
+
+                    $counter++;
+                    if ($toNb > 0 && $counter > $toNb) break;
 
                     $this->db->begin();
 
@@ -2365,7 +2369,7 @@ class eCommerceSynchro
             $resulttoupdate=$this->getFactureToUpdate();
             if (is_array($resulttoupdate))
             {
-                if (count($resulttoupdate) > 0) $factures = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrFacture($resulttoupdate);
+                if (count($resulttoupdate) > 0) $factures = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrFacture($resulttoupdate, $toNb);
             }
             else
             {
@@ -2383,9 +2387,13 @@ class eCommerceSynchro
                 // Local filter to exclude bundles and other complex types
 //                $productsTypesOk = array('simple', 'virtual', 'downloadable');
 
+                $counter=0;
                 foreach ($factures as $factureArray)
                 {
                     dol_syslog("- Process synch of invoice with remote_order_id=".$factureArray['remote_order_id']);
+
+                    $counter++;
+                    if ($toNb > 0 && $counter > $toNb) break;
 
                     $this->db->begin();
 
