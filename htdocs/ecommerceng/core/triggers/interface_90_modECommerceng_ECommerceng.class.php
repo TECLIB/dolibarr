@@ -475,15 +475,14 @@ class InterfaceECommerceng
     	}
 
 
-
     	/* Delete */
+
     	if ($action == 'CATEGORY_DELETE' && ((int) $object->type == 0))     // Product category
         {
             $this->db->begin();
 
             // TODO If product category and oldest parent is category for magento then delete category into magento.
 
-            //$sql = "SELECT remote_id, remote_parent_id FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE label ='".$this->db->escape($object->label)."' AND type = 0";
             $sql = "SELECT remote_id, remote_parent_id FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE fk_category = ".$this->db->escape($object->id)." AND type = 0";
             $resql=$this->db->query($sql);
             if ($resql)
@@ -586,7 +585,7 @@ class InterfaceECommerceng
         {
             $this->db->begin();
 
-            $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_commande WHERE fk_commande ='".$this->db->escape($object->id)."'";
+            $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_commande WHERE fk_commande = '".$this->db->escape($object->id)."'";
             $resql=$this->db->query($sql);
             if (! $resql)
             {
@@ -610,7 +609,7 @@ class InterfaceECommerceng
         {
             $this->db->begin();
 
-            $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_facture WHERE fk_facture ='".$this->db->escape($object->id)."'";
+            $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_facture WHERE fk_facture = '".$this->db->escape($object->id)."'";
             $resql=$this->db->query($sql);
             if (! $resql)
             {
