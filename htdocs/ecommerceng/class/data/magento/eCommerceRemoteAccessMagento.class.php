@@ -315,28 +315,37 @@ class eCommerceRemoteAccessMagento
      * Return array of category by update time.
      *
      * @param   array   $remoteObject         Array of ids of objects to convert
+     * @param   int     $toNb                 Max nb
      * @return  array                         societe
      */
-    public function convertRemoteObjectIntoDolibarrCategory($remoteObject)
+    public function convertRemoteObjectIntoDolibarrCategory($remoteObject, $toNb=0)
     {
         global $conf;
 
         $categories = array();
 
-        // No need to make $this->client->multiCall($this->session, $calls); to get details.
-
-        // We just need to sort array on updated_at
-        $categories = $remoteObject;
-
-        //important - order by last update
-        if (count($categories))
+        $nbremote = count($remoteObject);
+        if ($nbremote)
         {
-            $last_update=array();
-            foreach ($categories as $key => $row)
+            // No need to make $this->client->multiCall($this->session, $calls); to get details.
+
+            $results=array();
+
+            // We just need to sort array on updated_at
+            $results = $remoteObject;
+
+            //important - order by last update
+            if (count($results))
             {
-                $last_update[$key] = $row['updated_at'];
+                $last_update=array();
+                foreach ($results as $key => $row)
+                {
+                    $last_update[$key] = $row['updated_at'];
+                }
+                array_multisort($last_update, SORT_ASC, $results);
             }
-            array_multisort($last_update, SORT_ASC, $categories);
+
+            $categories = $results;
         }
 
         return $categories;
@@ -404,8 +413,20 @@ class eCommerceRemoteAccessMagento
 
             if (count($results))
             {
+                //important - order by last update
+                $last_update=array();
+                foreach ($results as $key => $row)
+                {
+                    $last_update[$key] = $row['updated_at'];
+                }
+                array_multisort($last_update, SORT_ASC, $results);
+
+                $count=0;
                 foreach ($results as $societe)
                 {
+                    $counter++;
+                    if ($toNb > 0 && $counter > $toNb) break;
+
                     $newobj=array(
                             'remote_id' => $societe['customer_id'],
                             'last_update' => $societe['updated_at'],
@@ -420,16 +441,6 @@ class eCommerceRemoteAccessMagento
             }
         }
 
-        //important - order by last update
-        if (count($societes))
-        {
-            $last_update=array();
-            foreach ($societes as $key => $row)
-            {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $societes);
-        }
 
         dol_syslog("convertRemoteObjectIntoDolibarrSociete end (found ".count($societes)." record)");
         return $societes;
@@ -460,9 +471,17 @@ class eCommerceRemoteAccessMagento
             } catch (SoapFault $fault) {
                 //echo 'convertRemoteObjectIntoDolibarrSociete :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
             }
-            
+
             if (count($results))
             {
+                //important - order by last update
+                $last_update=array();
+                foreach ($results as $key => $row)
+                {
+                    $last_update[$key] = $row['updated_at'];
+                }
+                array_multisort($last_update, SORT_ASC, $results);
+
                 foreach ($results as $socpeople)
                 {
                     $newobj=array(
@@ -485,17 +504,6 @@ class eCommerceRemoteAccessMagento
                     $socpeoples[] = $newobj;
                 }
             }
-        }
-
-        //important - order by last update
-        if (count($socpeoples))
-        {
-            $last_update=array();
-            foreach ($socpeoples as $key => $row)
-            {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $socpeoples);
         }
 
         dol_syslog("convertRemoteObjectIntoDolibarrSocPeople end (found ".count($socpeoples)." record)");
@@ -586,8 +594,23 @@ class eCommerceRemoteAccessMagento
 
             if (count($results))
             {
+                //important - order by last update
+                $last_update=array();
+                foreach ($results as $key => $row)
+                {
+                    $last_update[$key] = $row['updated_at'];
+                }
+                array_multisort($last_update, SORT_ASC, $results);
+
+                $counter=0;
                 foreach ($results as $cursorproduct => $product)
                 {
+                    $counter++;
+                    if ($toNb > 0 && $counter > $toNb) break;
+
+                    // Process order
+                    dol_syslog("- Process product remote_id=".$product['product_id']." last_update=".$product['updated_at']);
+
                     // Complete data with info in stock
                     $product['stock_qty'] = null;
                     $product['is_in_stock'] = null;
@@ -642,17 +665,6 @@ class eCommerceRemoteAccessMagento
             }
         }
 
-        //important - order by last update
-        if (count($products))
-        {
-            $last_update=array();
-            foreach ($products as $key => $row)
-            {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $products);
-        }
-
         dol_syslog("convertRemoteObjectIntoDolibarrProduct end (found ".count($products)." record)");
         return $products;
     }
@@ -676,11 +688,24 @@ class eCommerceRemoteAccessMagento
         $nbremote = count($remoteObject);
         if ($nbremote)
         {
+            //important - order by last update
+            $last_update=array();
+            foreach ($remoteObject as $key => $row)
+            {
+                $last_update[$key] = $row['updated_at'];
+            }
+            array_multisort($last_update, SORT_ASC, $remoteObject);
+            //var_dump($remoteObject);exit;
+
             // Create n groups of $maxsizeofmulticall records max to call the multiCall
             $callsgroup = array();
             $calls=array();
+            $counter=0;
             foreach ($remoteObject as $rcommande)
             {
+                $counter++;
+                if ($toNb > 0 && $counter > $toNb) break;
+
                 if (($nbsynchro % $maxsizeofmulticall) == 0)
                 {
                     if (count($calls)) $callsgroup[]=$calls;    // Add new group for lot of 1000 call arrays
@@ -696,7 +721,7 @@ class eCommerceRemoteAccessMagento
             }
             if (count($calls)) $callsgroup[]=$calls;    // Add new group for the remain lot of calls not yet added
 
-            dol_syslog("convertRemoteObjectIntoDolibarrCommande Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
+            dol_syslog("convertRemoteObjectIntoDolibarrCommande Call WS to get detail for the ".count($remoteObject)." objects (restricted to ".$toNb.", ".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
             //var_dump($callsgroup);exit;
 
             $results=array();
@@ -902,17 +927,6 @@ class eCommerceRemoteAccessMagento
             }
         }
 
-        //important - order by last update
-        if (count($commandes))
-        {
-            $last_update=array();
-            foreach ($commandes as $key => $row)
-            {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $commandes);
-        }
-
         dol_syslog("convertRemoteObjectIntoDolibarrCommande end (found ".count($commandes)." array of orders filled with complete data from eCommerce)");
         return $commandes;
     }
@@ -936,11 +950,23 @@ class eCommerceRemoteAccessMagento
         $nbremote = count($remoteObject);
         if ($nbremote)
         {
+            //important - order by last update
+            $last_update=array();
+            foreach ($remoteObject as $key => $row)
+            {
+                $last_update[$key] = $row['updated_at'];
+            }
+            array_multisort($last_update, SORT_ASC, $remoteObject);
+
             // Create n groups of $maxsizeofmulticall records max to call the multiCall
             $callsgroup = array();
             $calls=array();
+            $counter=0;
             foreach ($remoteObject as $rfacture)
             {
+                $counter++;
+                if ($toNb > 0 && $counter > $toNb) break;
+
                 if (($nbsynchro % $maxsizeofmulticall) == 0)
                 {
                     if (count($calls)) $callsgroup[]=$calls;    // Add new group for lot of 1000 call arrays
@@ -956,7 +982,7 @@ class eCommerceRemoteAccessMagento
             }
             if (count($calls)) $callsgroup[]=$calls;    // Add new group for the remain lot of calls not yet added
 
-            dol_syslog("convertRemoteObjectIntoDolibarrFacture Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
+            dol_syslog("convertRemoteObjectIntoDolibarrFacture Call WS to get detail for the ".count($remoteObject)." objects (restricted to ".$toNb.", ".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
             //var_dump($callsgroup);exit;
 
             $results=array();
@@ -975,13 +1001,10 @@ class eCommerceRemoteAccessMagento
 
             if (count($results))
             {
-                $i=0;
                 foreach ($results as $facture)
                 {
                     // Process invoice
                     dol_syslog("- Process invoice remote_id=".$facture['order_id']." last_update=".$facture['updated_at']." societe order_id=".$facture['order_id']);
-
-                    $i++;
 
                     $configurableItems = array();
                     //retrive remote order from invoice
@@ -1149,17 +1172,6 @@ class eCommerceRemoteAccessMagento
                     }
                 }
             }
-        }
-
-        //important - order by last update
-        if (count($factures))
-        {
-            $last_update=array();
-            foreach ($factures as $key => $row)
-            {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $factures);
         }
 
         //var_dump($factures);exit;

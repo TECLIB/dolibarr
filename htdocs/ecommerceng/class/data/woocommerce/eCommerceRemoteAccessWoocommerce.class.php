@@ -71,10 +71,10 @@ class eCommerceRemoteAccessWoocommerce
         try {
             require_once(DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php');
             $params=getSoapParams();
-            
+
             @ini_set('default_socket_timeout', $params['response_timeout']);
             @ini_set("memory_limit", "1024M");
-            
+
             $response_timeout = (empty($conf->global->MAIN_USE_RESPONSE_TIMEOUT)?$params['response_timeout']:$conf->global->MAIN_USE_RESPONSE_TIMEOUT);    // Response timeout
 
             dol_syslog("eCommerceRemoteAccessWoocommerce Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".$this->site->user_password);
@@ -97,7 +97,7 @@ class eCommerceRemoteAccessWoocommerce
                     'timeout' => $response_timeout,
                 ]
             );
-            
+
             dol_syslog("eCommerceRemoteAccessWoocommerce connected with new Client ok.");
 
             return true;
@@ -342,9 +342,10 @@ class eCommerceRemoteAccessWoocommerce
      * Return array of category by update time.
      *
      * @param   array   $remoteObject         Array of ids of objects to convert
+     * @param   int     $toNb                 Max nb
      * @return  array                         societe
      */
-    public function convertRemoteObjectIntoDolibarrCategory($remoteObject)
+    public function convertRemoteObjectIntoDolibarrCategory($remoteObject, $toNb=0)
     {
         global $conf;
 
@@ -427,7 +428,7 @@ class eCommerceRemoteAccessWoocommerce
                     return false;
                 }
             }
-            
+
             if (count($results))
             {
                 foreach ($results as $societe)
@@ -473,7 +474,7 @@ class eCommerceRemoteAccessWoocommerce
     public function convertRemoteObjectIntoDolibarrSocpeople($listofids, $toNb=0)
     {
         global $conf;
-        
+
         $socpeoples = array();
         $calls = array();
         if (count($listofids))
@@ -493,7 +494,7 @@ class eCommerceRemoteAccessWoocommerce
             } catch (HttpClientException $fault) {
                 dol_syslog('convertRemoteObjectIntoDolibarrSocpeople :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             }
-            
+
             if (count($results)) {
                 $billingName = (empty($conf->global->ECOMMERCENG_BILLING_CONTACT_NAME) ? 'Billing' : $conf->global->ECOMMERCENG_BILLING_CONTACT_NAME);      // Contact name treated as billing address.
                 $shippingName = (empty($conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME) ? 'Shipping' : $conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME);  // Contact name treated as shipping address.
@@ -575,7 +576,7 @@ class eCommerceRemoteAccessWoocommerce
             }
             array_multisort($last_update, SORT_ASC, $socpeoples);
         }
-        
+
         dol_syslog("convertRemoteObjectIntoDolibarrSocPeople end (found ".count($socpeoples)." record)");
         return $socpeoples;
     }
@@ -594,13 +595,13 @@ class eCommerceRemoteAccessWoocommerce
         global $conf;
 
         include_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
-        
+
         $products = array();
 
         $canvas = '';
 
         $ecommerceurl =  $this->site->getFrontUrl();
-        
+
         $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?100:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);      // 1000 seems ok for multicall.
         $nbsynchro = 0;
         $nbremote = count($remoteObject);
@@ -642,11 +643,11 @@ class eCommerceRemoteAccessWoocommerce
                     $results=array_merge($results, $resulttmp);
                 } catch (HttpClientException $fault) {
                     dol_syslog('convertRemoteObjectIntoDolibarrProduct :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-                    
-					return false;                    
+
+					return false;
                 }
             }
-            
+
             if (count($results))
             {
                 foreach ($results as $cursorproduct => $product)
@@ -791,14 +792,14 @@ class eCommerceRemoteAccessWoocommerce
 					return false;
                 }
             }
-            
+
             if (count($results))
             {
                 foreach ($results as $commande)
                 {
                     // Process order
                     dol_syslog("- Process order remote_id=".$commande['order_id']." last_update=".$commande['updated_at']." societe remote_id=".$commande['customer_id']);
-                    
+
                     //set each items
                     $items = array();
                     $configurableItems = array();
@@ -816,7 +817,7 @@ class eCommerceRemoteAccessWoocommerce
                                     'tva_tx' => $this->getTaxRate($commande['total'], $commande['total_tax']) // tax_class > requete taxes rates
                                 );
                         }
-                    
+
                         //define remote id societe : 0 for anonymous
                         $eCommerceTempSoc = new eCommerceSociete($this->db);
                         if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
@@ -955,7 +956,7 @@ class eCommerceRemoteAccessWoocommerce
                     else
                     {
                         dol_syslog("No items in this order", LOG_WARNING);
-                    }                        
+                    }
                 }
             }
         }
@@ -1223,7 +1224,7 @@ class eCommerceRemoteAccessWoocommerce
 
         //var_dump($factures);exit;
         */
-                
+
         dol_syslog("convertRemoteObjectIntoDolibarrFacture end (found ".count($products)." record)");
         return $factures;
     }
