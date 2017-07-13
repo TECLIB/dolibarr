@@ -23,23 +23,28 @@
  * 	\file       htdocs/admin/societe.php
  * 	\ingroup    company
  * 	\brief      Third party module setup page
- * 
+ *
  *  To enable module into a dolibarr git instance, you can do into htdocs dir:
  *  ln -fs ../../teclib_dolibarr_modules/htdocs teclib_3.8
- *  Then complete the htdocs/conf.php file with 
+ *  Then complete the htdocs/conf.php file with
  *  $dolibarr_main_url_root_alt='/custom,/teclib_3.8';
  *  $dolibarr_main_document_root_alt='/home/login/git/dolibarr_3.8/htdocs/custom,/home/login/git/dolibarr_3.8/htdocs/teclib_3.8';
  */
+
+// Load Dolibarr environment
 $res=0;
+// Try main.inc.php into web root known defined into CONTEXT_DOCUMENT_ROOT (not always defined)
 if (! $res && ! empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])) $res=@include($_SERVER["CONTEXT_DOCUMENT_ROOT"]."/main.inc.php");
-if (! $res && file_exists("../main.inc.php")) $res=@include("../main.inc.php");
+// Try main.inc.php into web root detected using web root caluclated from SCRIPT_FILENAME
+$tmp=empty($_SERVER['SCRIPT_FILENAME'])?'':$_SERVER['SCRIPT_FILENAME'];$tmp2=realpath(__FILE__); $i=strlen($tmp)-1; $j=strlen($tmp2)-1;
+while($i > 0 && $j > 0 && isset($tmp[$i]) && isset($tmp2[$j]) && $tmp[$i]==$tmp2[$j]) { $i--; $j--; }
+if (! $res && $i > 0 && file_exists(substr($tmp, 0, ($i+1))."/main.inc.php")) $res=@include(substr($tmp, 0, ($i+1))."/main.inc.php");
+if (! $res && $i > 0 && file_exists(dirname(substr($tmp, 0, ($i+1)))."/main.inc.php")) $res=@include(dirname(substr($tmp, 0, ($i+1)))."/main.inc.php");
+// Try main.inc.php using relative path
 if (! $res && file_exists("../../main.inc.php")) $res=@include("../../main.inc.php");
 if (! $res && file_exists("../../../main.inc.php")) $res=@include("../../../main.inc.php");
-if (! $res && file_exists("../../../../main.inc.php")) $res=@include("../../../../main.inc.php");
-if (! $res && file_exists("../../../../../main.inc.php")) $res=@include("../../../../../main.inc.php");
-if (! $res && preg_match('/\/nltechno([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
-if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res) die("Include of main fails");
+
 require_once(DOL_DOCUMENT_ROOT."/core/lib/admin.lib.php");
 require_once(DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php');
 dol_include_once('/autoaddline/class/autoaddline.class.php');
@@ -72,7 +77,7 @@ if (isset($_POST['submit_affect']))
     $serviceValue = str_replace(',', '.', $serviceValue);
     $serviceValue = is_numeric($serviceValue) ? $serviceValue : '';
     $rulename = GETPOST('rulename');
-    
+
     if (! $rulename)
     {
         setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("RuleName")), null, 'errors');
@@ -88,7 +93,7 @@ if (isset($_POST['submit_affect']))
         setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("DefineValue")), null, 'errors');
         $error++;
     }
-    
+
     if (! $error)
     {
         if ($serviceId > 0 && !empty($serviceValue))
@@ -97,13 +102,13 @@ if (isset($_POST['submit_affect']))
             $autoAddLine->product_id = $serviceId;
             $autoAddLine->type = $serviceType;
             $autoAddLine->value = $serviceValue;
-    
+
             if (!($autoAddLine->create($user) > 0))
             {
                 setEventMessages($autoAddLine->error, $autoAddLine->errors, 'errors');
                 $error++;
             }
-            
+
             if(!$error)
                 $id = $autoAddLine->id;
         }
@@ -121,7 +126,7 @@ if (isset($_POST['submit_see_details']) && $id > 0)
 {
     $seeDetail = true;
 }
- 
+
 if (isset($_POST['submit_update']))
 {
     // remove lines
@@ -163,7 +168,7 @@ else
 /*
  * View
  */
- 
+
 $allProductsAndServices = $autoAddLine->getProducts();
 $finals = $allProductsAndServices['final_services'];
 $usables = $allProductsAndServices['usable_services'];
@@ -451,7 +456,7 @@ if ($seeDetail)
     );
 
     include ('tpl/fieldset.tpl.php');
-    
+
     $fieldset=array();
 
     // Currently associated select multiple
