@@ -1876,7 +1876,7 @@ class eCommerceSynchro
                 $productsTypesOk = array('simple', 'virtual', 'downloadable');
 
                 // Loop on each modified order
-                $counter++;
+                $counter = 0;
                 foreach ($commandes as $commandeArray)
                 {
                     dol_syslog("- Process synch of order remote_id=".$commandeArray['remote_id']);
