@@ -19,6 +19,12 @@ if (is_object($site))
 
     print '<form name="form_count" id="form_count" action="'.$_SERVER['PHP_SELF'].'" method="post">';
     print '<input type="hidden" name="id" value="'.$site->id.'">';
+    if (GETPOST('test_with_no_categ_count','alpha')) print '<input type="hidden" name="test_with_no_categ_count" value="'.GETPOST('test_with_no_categ_count','alpha').'">';
+    if (GETPOST('test_with_no_product_count','alpha')) print '<input type="hidden" name="test_with_no_product_count" value="'.GETPOST('test_with_no_product_count','alpha').'">';
+    if (GETPOST('test_with_no_thirdparty_count','alpha')) print '<input type="hidden" name="test_with_no_thirdparty_count" value="'.GETPOST('test_with_no_thirdparty_count','alpha').'">';
+    if (GETPOST('test_with_no_order_count','alpha')) print '<input type="hidden" name="test_with_no_order_count" value="'.GETPOST('test_with_no_order_count','alpha').'">';
+    if (GETPOST('test_with_no_invoice_count','alpha')) print '<input type="hidden" name="test_with_no_invoice_count" value="'.GETPOST('test_with_no_invoice_count','alpha').'">';
+    print '<input type="hidden" name="id" value="'.$site->id.'">';
 
     print '<table class="centpercent nobordernopadding">';
 
