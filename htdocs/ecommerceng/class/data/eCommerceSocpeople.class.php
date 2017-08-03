@@ -39,8 +39,9 @@ class eCommerceSocpeople // extends CommonObject
     const CONTACT_TYPE_DELIVERY = 4;
 
     /**
-     *      \brief      Constructor
-     *      \param      DB      Database handler
+     *    Constructor
+     *
+     *    @param	DoliDB		$DB      Database handler
      */
     function eCommerceSocpeople($DB)
     {
@@ -50,10 +51,11 @@ class eCommerceSocpeople // extends CommonObject
 
 
     /**
-     *      \brief      Create in database
-     *      \param      user        	User that create
-     *      \param      notrigger	    0=launch triggers after, 1=disable triggers
-     *      \return     int         	<0 if KO, Id of created object if OK
+     *    Create in database
+     *
+     *    @param      User	$user        	User that create
+     *    @param      int	$notrigger	    0=launch triggers after, 1=disable triggers
+     *    @return     int    		     	<0 if KO, Id of created object if OK
      */
     function create($user, $notrigger=0)
     {

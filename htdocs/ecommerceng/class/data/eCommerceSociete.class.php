@@ -167,10 +167,11 @@ class eCommerceSociete // extends CommonObject
 
 
     /**
-     *      \brief      Update database
-     *      \param      user        	User that modify
-     *      \param      notrigger	    0=launch triggers after, 1=disable triggers
-     *      \return     int         	<0 if KO, >0 if OK
+     *    Update database
+     *
+     *    @param      User 	$user        	User that modify
+     *    @param      int	$notrigger	    0=launch triggers after, 1=disable triggers
+     *    @return     int    		     	<0 if KO, >0 if OK
      */
     function update($user=0, $notrigger=0)
     {
