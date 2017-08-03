@@ -33,8 +33,9 @@ class eCommerceCommande
     var $last_update;
 
     /**
-     *      \brief      Constructor
-     *      \param      DB      Database handler
+     *    Constructor
+     *
+     *    @param	DoliDB		$DB      Database handler
      */
     function eCommerceCommande($DB)
     {
@@ -44,10 +45,11 @@ class eCommerceCommande
 
 
     /**
-     *      \brief      Create in database
-     *      \param      user        	User that create
-     *      \param      notrigger	    0=launch triggers after, 1=disable triggers
-     *      \return     int         	<0 if KO, Id of created object if OK
+     *     Create in database
+     *
+     *     @param      User		$user        	User that create
+     *     @param      int		$notrigger	    0=launch triggers after, 1=disable triggers
+     *     @return     int       			  	<0 if KO, Id of created object if OK
      */
     function create($user, $notrigger=0)
     {
@@ -169,10 +171,11 @@ class eCommerceCommande
 
 
     /**
-     *      \brief      Update database
-     *      \param      user        	User that modify
-     *      \param      notrigger	    0=launch triggers after, 1=disable triggers
-     *      \return     int         	<0 if KO, >0 if OK
+     *      Update database
+     *
+     *      @param      User	$user        	User that modify
+     *      @param      int		$notrigger	    0=launch triggers after, 1=disable triggers
+     *      @return     int      			   	<0 if KO, >0 if OK
      */
     function update($user=0, $notrigger=0)
     {
@@ -240,10 +243,11 @@ class eCommerceCommande
 
 
  	/**
-	 *   \brief      Delete object in database
-     *	\param      user        	User that delete
-     *   \param      notrigger	    0=launch triggers after, 1=disable triggers
-	 *	\return		int				<0 if KO, >0 if OK
+	 *  Delete object in database
+	 *
+     *	@param      User	$user        	User that delete
+     *  @param      int		$notrigger	    0=launch triggers after, 1=disable triggers
+	 *	@return		int						<0 if KO, >0 if OK
 	 */
 	function delete($user, $notrigger=0)
 	{
