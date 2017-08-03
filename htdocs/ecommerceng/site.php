@@ -250,7 +250,7 @@ if ($id)
 	    }
 
 		if ($nbCategoriesToUpdate == 0 && $nbProductToUpdate == 0 && $nbSocieteToUpdate == 0 && $nbCommandeToUpdate == 0 && $nbFactureToUpdate == 0
-		   && ! GETPOST('test_with_no_categ_count') && GETPOST('test_with_no_product_count') && GETPOST('test_with_no_thirdparty_count')
+		   && ! GETPOST('test_with_no_categ_count') && ! GETPOST('test_with_no_product_count') && ! GETPOST('test_with_no_thirdparty_count')
 		    && ! GETPOST('test_with_no_order_count') && ! GETPOST('test_with_no_invoice_count')
 		    )
 		{
