@@ -112,8 +112,9 @@ class modECommerceNg extends DolibarrModules
 		    0=>array('ECOMMERCENG_SHOW_DEBUG_TOOLS', 'chaine', '1', 'Enable button to clean database for debug purpose', 1, 'allentities', 1),
 		    1=>array('ECOMMERCENG_DEBUG', 'chaine', '0', 'This is to enable ECommerceng log of web services requests', 1, 'allentities', 1),
 		    2=>array('ECOMMERCENG_MAXSIZE_MULTICALL', 'chaine', '400', 'Max size for multicall', 1, 'allentities', 1),
-		    3=>array('ECOMMERCENG_ENABLE_LOG_IN_NOTE', 'chaine', '0', 'Store into public note the last full response returned by web service', 1, 'allentities', 1),
-		    4=>array('ECOMMERCENG_THIRDPARTY_UNIQUE_ON', 'chaine', 'name', 'name or email', 1, 'allentities', 1)
+			3=>array('ECOMMERCENG_MAXRECORD_PERSYNC', 'chaine', '2000', 'Max nb of record per synch', 1, 'allentities', 1),
+			4=>array('ECOMMERCENG_ENABLE_LOG_IN_NOTE', 'chaine', '0', 'Store into public note the last full response returned by web service', 1, 'allentities', 1),
+		    5=>array('ECOMMERCENG_THIRDPARTY_UNIQUE_ON', 'chaine', 'name', 'name or email', 1, 'allentities', 1)
 		);
 
 		// Array to add new pages in new tabs

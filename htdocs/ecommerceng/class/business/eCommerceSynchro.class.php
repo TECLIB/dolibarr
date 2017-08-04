@@ -88,7 +88,7 @@ class eCommerceSynchro
      * @param Database          $db           Database handler
      * @param eCommerceSite     $site         Object eCommerceSite
      * @param datetime          $toDate       Ending date to synch all data modified before this date (null by default = until now)
-     * @param int               $toNb         Max nb of record to count or synch (NOT USED YET !)
+     * @param int               $toNb         Max nb of record to count or synch (Used only for synch, not for count for the moment !)
      */
     function eCommerceSynchro($db, $site, $toDate=null, $toNb=0)
     {
@@ -102,7 +102,7 @@ class eCommerceSynchro
 
             $this->eCommerceRemoteAccess = new eCommerceRemoteAccess($this->db, $this->eCommerceSite);
 
-            if (empty($toDate)) $this->toDate = dol_now();      // Set date to use as last update date
+            if (empty($toDate)) $this->toDate = (dol_now() - 10);      // Set date to use as last update date (we remove 10 second to be sure we don't have pb with not sync date)
             else $this->toDate = $toDate;
         }
         catch (Exception $e)
@@ -1467,8 +1467,8 @@ class eCommerceSynchro
             'website_ids' => array (0 => '1')
             ));
 
-            var_dump($resulttoupdate);
-            */
+            //var_dump($resulttoupdate);
+			*/
 
             // Return an array like  array([product_id]=>27, [sku]=>'QSINCP01384', [name]=>'Name of product', [set]=>85, [type]=>simple, [category_ids]=>Array([0]=>98, [1]=>225), [website_ids] => Array([0]=>1))
             if (is_array($resulttoupdate))
@@ -1478,10 +1478,7 @@ class eCommerceSynchro
                 // Get details searching on $resulttoupdate[$i]['sku']
                 if (count($resulttoupdate) > 0)
                 {
-                    $products = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct($resulttoupdate, $toNb);
-
-                    //var_dump($products);
-                    //exit;
+                    $products = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct($resulttoupdate, $toNb);	// Return max $toNb record only
 
                     /* Get more complete arrays like  array(
                         [fk_product_type] => 0
@@ -1505,27 +1502,35 @@ class eCommerceSynchro
                         )
                      */
 
-                    // Check we get all detailed information for each record
+                    // Check we get all detailed information for each record.
+                    // This test is specific to product because Magento sometimes return not complete record
                     if (is_array($products) && count($products))
                     {
                         dol_syslog("Check we get all detailed information for each record. We compare resulttoupdate and productArray to list missing entries.");
                         $listofrefnotfound=array();
-                        foreach($resulttoupdate as $val)
-                        {
-                            $found=false;
-                            foreach($products as $val2)
-                            {
-                                if ($val['sku'] == $val2['ref'])
-                                {
-                                    $found=true;
-                                    break;
-                                }
-                            }
-                            if (! $found)
-                            {
-                                $listofrefnotfound[]=$val['sku'];
-                            }
-                        }
+						if (empty($toNb))	// If not limit into number of answer by convertRemoteObjectIntoDolibarrProduct, then $products must contains all responses of $resulttoupdate
+						{
+	                        foreach($resulttoupdate as $val)
+	                        {
+	                            $found=false;
+	                            foreach($products as $val2)
+	                            {
+	                                if ($val['sku'] == $val2['ref'])
+	                                {
+	                                    $found=true;
+	                                    break;
+	                                }
+	                            }
+	                            if (! $found)
+	                            {
+	                                $listofrefnotfound[]=$val['sku'];
+	                            }
+	                        }
+						}
+						else				// If a limit into number of answer by convertRemoteObjectIntoDolibarrProduct was provided, then $products is not complete, we can't make any tests
+						{
+							dol_syslog("We don't check that each requested record has an answer because number of answers was restricted, so we are sure we don't have all requested record");
+						}
                         if (count($listofrefnotfound))
                         {
                             $error++;
@@ -1538,6 +1543,7 @@ class eCommerceSynchro
                     }
                     else
                     {
+                    	if ($toNb <= 0) dol_syslog('We get an empty array from convertRemoteObjectIntoDolibarrProduct() with input $resulttoupdate = '.serialize($resulttoupdate), LOG_WARNING);
                         $error++;
                     }
                 }

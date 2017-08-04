@@ -103,7 +103,7 @@ if ($id)
 		if (! empty($to_date)) $toDate=dol_stringtotime($to_date);
 
 		$toNb=0;
-		if ($to_nb == '') $to_nb=1000;     // If '0', we keep 0
+		if ($to_nb == '') $to_nb=(empty($conf->global->ECOMMERCENG_MAXRECORD_PERSYNC)?'':$conf->global->ECOMMERCENG_MAXRECORD_PERSYNC);     // If '0', we keep 0
 		if (! empty($to_nb)) $toNb=$to_nb;
 
 		$synchro = new eCommerceSynchro($db, $site, $toDate, $toNb);          // $synchro->toDate will be set to dol_now if toDate no defined.
@@ -250,7 +250,8 @@ if ($id)
 	    }
 
 		if ($nbCategoriesToUpdate == 0 && $nbProductToUpdate == 0 && $nbSocieteToUpdate == 0 && $nbCommandeToUpdate == 0 && $nbFactureToUpdate == 0
-		   && ! GETPOST('test_with_no_categ_count') && ! GETPOST('test_with_no_product_count') && ! GETPOST('test_with_no_thirdparty_count')
+			&& ! GETPOST('to_date', 'alpha')
+		    && ! GETPOST('test_with_no_categ_count') && ! GETPOST('test_with_no_product_count') && ! GETPOST('test_with_no_thirdparty_count')
 		    && ! GETPOST('test_with_no_order_count') && ! GETPOST('test_with_no_invoice_count')
 		    )
 		{
