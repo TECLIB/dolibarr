@@ -143,6 +143,11 @@ class modECommerceNg extends DolibarrModules
 		//$this->boxes[$r][1] = "myboxb.php";
 		//$r++;
 
+		// Cronjobs
+		//------------
+		$this->cronjobs = array(
+			0=>array('label'=>'AutoSyncEcommerceNg', 'jobtype'=>'method', 'class'=>'ecommerceng/class/business/eCommerceUtils.class.php', 'objectname'=>'eCommerceUtils', 'method'=>'synchAll', 'parameters'=>'100', 'comment'=>'Synchronize all data from eCommerce to Dolibarr. Parameter is max nb of record to do per synchronization run.', 'frequency'=>1, 'unitfrequency'=>86400, 'priority'=>90, 'status'=>0, 'test'=>true),
+		);
 
 		// Permissions
 		$this->rights = array();		// Permission array used by this module

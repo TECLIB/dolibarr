@@ -90,7 +90,7 @@ class eCommerceSynchro
      * @param datetime          $toDate       Ending date to synch all data modified before this date (null by default = until now)
      * @param int               $toNb         Max nb of record to count or synch (Used only for synch, not for count for the moment !)
      */
-    function eCommerceSynchro($db, $site, $toDate=null, $toNb=0)
+    function __construct($db, $site, $toDate=null, $toNb=0)
     {
         global $langs, $user;
 
@@ -710,7 +710,6 @@ class eCommerceSynchro
             return -2;
         }
     }
-
 
 
     /**
