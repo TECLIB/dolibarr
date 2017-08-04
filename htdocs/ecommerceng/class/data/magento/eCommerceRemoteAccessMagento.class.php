@@ -228,8 +228,8 @@ class eCommerceRemoteAccessMagento
                 array('updated_at' => array('from' => dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard'))),
             );
 
-            $result = $this->client->call($this->session, 'sales_order.list', $filter);
-            //$result = $this->client->call($this->session, 'order.list');
+            $result = $this->client->call($this->session, 'sales_order.list', $filter);		// 'order.list' is an alias
+            // TODO Restrict to get only increment_id and update_at ?
 
             // Add debug
             if (! empty($conf->global->ECOMMERCENG_DEBUG))

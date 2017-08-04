@@ -105,12 +105,12 @@ class eCommerceUtils
 
 			if ($error || $result < 0)
 			{
-				$this->output .= 'Error during automatic synchronization of site '.$site."\n";
-				$this->error .= 'Error during automatic synchronization of site '.$site.": ".$synchro->error;
+				$this->output .= 'Error during automatic synchronization of site '.$site->name."\n";
+				$this->error .= 'Error during automatic synchronization of site '.$site->name.": ".$synchro->error;
 			}
 			else
 			{
-				$this->output .= 'Automatic synchronization of site '.$site.' done'."\n";
+				$this->output .= 'Automatic synchronization of site '.$site->name.' done'."\n";
 			}
 		}
 
