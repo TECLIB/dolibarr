@@ -113,7 +113,7 @@ class modECommerceNg extends DolibarrModules
 		    1=>array('ECOMMERCENG_DEBUG', 'chaine', '0', 'This is to enable ECommerceng log of web services requests', 1, 'allentities', 1),
 		    2=>array('ECOMMERCENG_MAXSIZE_MULTICALL', 'chaine', '400', 'Max size for multicall', 1, 'allentities', 1),
 			3=>array('ECOMMERCENG_MAXRECORD_PERSYNC', 'chaine', '2000', 'Max nb of record per synch', 1, 'allentities', 1),
-			4=>array('ECOMMERCENG_ENABLE_LOG_IN_NOTE', 'chaine', '0', 'Store into public note the last full response returned by web service', 1, 'allentities', 1),
+			4=>array('ECOMMERCENG_ENABLE_LOG_IN_NOTE', 'chaine', '0', 'Store into private note the last full response returned by web service', 1, 'allentities', 1),
 		    5=>array('ECOMMERCENG_THIRDPARTY_UNIQUE_ON', 'chaine', 'name', 'name or email', 1, 'allentities', 1)
 		);
 

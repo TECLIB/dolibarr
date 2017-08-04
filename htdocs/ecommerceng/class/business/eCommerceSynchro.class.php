@@ -2048,9 +2048,9 @@ class eCommerceSynchro
                                 $dBCommande->source=$input_method_id;
                                 $dBCommande->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
                                 $dBCommande->note_private=isset($commandeArray['note'])?$commandeArray['note']:"";
-                                if (empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE))
+                                if (! empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE))
                                 {
-                                    $dBCommande->note_private.="Last eCommerce order received:\n".dol_trunc(serialize(var_export($commandeArray['remote_order'], true), 65000));
+                                    $dBCommande->note_private.="Last eCommerce order received:\n".dol_trunc(serialize(var_export($commandeArray['remote_order'], true)), 65000);
                                 }
 
                                 $result = $dBCommande->create($this->user);
@@ -2554,11 +2554,11 @@ class eCommerceSynchro
                                 $dBFacture->cond_reglement_id = $settlementTermsId;
                                 $dBFacture->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
                                 $dBFacture->note_private="";
-                                if (empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE))
+                                if (! empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE))
                                 {
-                                    $dBFacture->note_private .= "Last eCommerce invoice received:\n".serialize(var_export($factureArray['remote_invoice'], true));
+                                    $dBFacture->note_private .= "Last eCommerce invoice received:\n".dol_trunc(serialize(var_export($factureArray['remote_invoice'], true)), 65000);
                                     $dBFacture->note_private .= "\n\n";
-                                    $dBFacture->note_private .= "Last eCommerce order received:\n".serialize(var_export($factureArray['remote_order'], true));
+                                    $dBFacture->note_private .= "Last eCommerce order received:\n".dol_trunc(serialize(var_export($factureArray['remote_order'], true)), 65000);
                                 }
 
                                 // Add link to order (cut takenf from facture card page)
