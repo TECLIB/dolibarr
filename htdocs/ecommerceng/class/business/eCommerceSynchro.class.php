@@ -1585,12 +1585,7 @@ class eCommerceSynchro
                     $dBProduct->type = $productArray['fk_product_type'];
                     $dBProduct->finished = $productArray['finished'];
                     $dBProduct->status = $productArray['envente'];
-                    if (empty($conf->global->PRODUIT_MULTIPRICES)) {
-                        $dBProduct->price = $productArray['price'];             // New price, later we will save/update price with price_base_type (TE/TI)
-                        $dBProduct->price_min = $productArray['price_min'];
-                        $dBProduct->tva_tx = $productArray['tax_rate'];
-                    }
-                    $dBProduct->tva_npr = 0;  // Avoiding _log_price's sql blank
+
                     $dBProduct->country_id = $productArray['fk_country'];
                     $dBProduct->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
                     $dBProduct->ref_ext = $this->eCommerceSite->name.'-'.$productArray['remote_id'];
@@ -1602,12 +1597,49 @@ class eCommerceSynchro
                         $result = $dBProduct->update($dBProduct->id, $this->user);
                         if ($result >= 0)// rajouter constante TTC/HT
                         {
-                            if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+                        	if (empty($productArray['price_base_type'])) $productArray['price_base_type']='HT';
+
+							/*
+							var_dump($this->eCommerceSite->price_level);
+							// Result from ecommerce
+							var_dump($productArray['price_base_type'].' - '.$productArray['price'].' - '.price2num((float) $productArray['tax_rate']).' - '.$productArray['price_min']);
+							// Into dolibarr database
+							var_dump($dBProduct->price_base_type." - ".$dBProduct->price." - ".price2num((float) $dBProduct->tva_tx)." - ".$dBProduct->price_min);
+							var_dump($dBProduct->multiprices_base_type[$this->eCommerceSite->price_level]." - ".$dBProduct->multiprices[$this->eCommerceSite->price_level]." - ".$dBProduct->multiprices_tva_tx[$this->eCommerceSite->price_level]." - ".$dBProduct->multiprices_min[$this->eCommerceSite->price_level]);
+							*/
+
+							// Update price
+                            if (!empty($conf->global->PRODUIT_MULTIPRICES))
+                            {
                                 $price_level = $this->eCommerceSite->price_level;
-                                $dBProduct->updatePrice($productArray['price'], $dBProduct->multiprices_base_type[$price_level], $this->user, $productArray['tax_rate'], $productArray['price_min'], $price_level);
+                                $price_min = $dBProduct->multiprices_min[$price_level];
+                                if (isset($productArray['price_min'])) $price_min = $productArray['price_min'];
+
+                                if ($productArray['price'] != $dBProduct->multiprices[$price_level] || $productArray['price_base_type'] != $dBProduct->multiprices_base_type[$price_level] || (price2num((float) $productArray['tax_rate']) != price2num((float) $dBProduct->multiprices_tva_tx[$price_level])) || (isset($productArray['price_min']) && ($productArray['price_min'] != $dBProduct->multiprices_min[$price_level])))
+                                {
+                                	$dBProduct->updatePrice($productArray['price'], $productArray['price_base_type'], $this->user, $productArray['tax_rate'], $price_min, $price_level);
+                                }
+                                else
+                                {
+                                   	//print 'No change in price for '.$dBProduct->ref."\n";
+                                }
+                            }
+                            else
+                            {
+                                $price_min = $dBProduct->price_min;
+                                if (isset($productArray['price_min'])) $price_min = $productArray['price_min'];
+
+                                if ($productArray['price'] != $dBProduct->price || $productArray['price_base_type'] != $dBProduct->price_base_type || (price2num((float) $productArray['tax_rate']) != price2num((float) $dBProduct->tva_tx)) || (isset($productArray['price_min']) && ($productArray['price_min'] != $dBProduct->price_min)))
+                                {
+                            		$dBProduct->updatePrice($productArray['price'], $productArray['price_base_type'], $this->user, $productArray['tax_rate'], $price_min);
+                                }
+                                else
+                                {
+                                	print 'No change in price for '.$dBProduct->ref."\n";
+                                }
                             }
 
-                            // If eCommerce setup hase change and now prices are switch TI/TE (Tax Include / Tax Excluded)
+                            // If eCommerce setup has changed and now prices are switch TI/TE (Tax Include / Tax Excluded)
                             if ($dBProduct->price_base_type != $this->eCommerceSite->magento_price_type && empty($conf->global->ECOMMERCENG_DISABLE_MAGENTO_PRICE_TYPE))
                             {
                                 dol_syslog("Setup price for eCommerce are switched from TE toTI or TI to TE, we update price of product");
