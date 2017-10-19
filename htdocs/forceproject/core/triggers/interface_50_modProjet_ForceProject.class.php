@@ -137,10 +137,10 @@ class InterfaceForceProject
 	            	$obj=$this->db->fetch_object($resql);
 	            	$newref=$obj->ref;
 	            	$newref=preg_replace('/projectref/',$projectref,$newref);
-	            	$newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);
+	            	$newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
 	            	$newref=preg_replace('/%%+/',$projectref,$newref);
-	            	
-	            	// If we want counter is started to 1 for each project
+
+	            	// If we want the counter to start to 1 for each project
 	            	if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
 	            	{
 		            	$savmask=$conf->global->PROPALE_SAPHIR_MASK;
@@ -201,8 +201,10 @@ class InterfaceForceProject
 	            	$obj=$this->db->fetch_object($resql);
 	            	$newref=$obj->ref;
 	            	$newref=preg_replace('/projectref/',$projectref,$newref);
+	            	$newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
+	            	$newref=preg_replace('/%%+/',$projectref,$newref);
 
-	            	// If we want counter is started to 1 for each project
+	            	// If we want the counter to start to 1 for each project
 	            	if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
 	            	{
 		            	$savmask=$conf->global->COMMANDE_SAPHIR_MASK;
@@ -241,17 +243,106 @@ class InterfaceForceProject
         {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
-            if (empty($object->fk_project))
+            if (empty($object->fk_project) || $object->fk_project < 0)
             {
 				$langs->load("forceproject@forceproject");	// So files is loaded for function to show error message
             	$this->errors[]=$langs->trans("InvoiceMustBeLinkedToProject");
             	return -1;
             }
+            else
+            {
+                $object->fetch_projet();
+                $projectid=$object->projet->id;
+                $projectref=$object->projet->ref;
+
+                $sql="SELECT facnumber as ref FROM ".MAIN_DB_PREFIX."facture WHERE rowid=".$object->id;
+
+                $resql=$this->db->query($sql);
+                if ($resql)
+                {
+                    $obj=$this->db->fetch_object($resql);
+                    $newref=$obj->ref;
+                    $newref=preg_replace('/projectref/',$projectref,$newref);
+                    $newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
+                    $newref=preg_replace('/%%+/',$projectref,$newref);
+
+                    // If we want the counter to start to 1 for each project
+                    if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
+                    {
+                        if ($object->type == 1)
+                        {
+                            $savmask=$conf->global->FACTURE_MERCURE_MASK_REPLACEMENT;
+                            $conf->global->FACTURE_MERCURE_MASK_REPLACEMENT=preg_replace('/projectref/',$projectref,$conf->global->FACTURE_MERCURE_MASK_REPLACEMENT);
+                            $conf->global->FACTURE_MERCURE_MASK_REPLACEMENT=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_REPLACEMENT);
+                            $conf->global->FACTURE_MERCURE_MASK_REPLACEMENT=preg_replace('/%%+/',$projectref,$conf->global->FACTURE_MERCURE_MASK_REPLACEMENT);
+                            $newref=$object->getNextNumRef($object->thirdparty);
+                            //$newref=$projectref.substr($newref,7);
+                            $conf->global->FACTURE_MERCURE_MASK_REPLACEMENT=$savmask;
+                            //var_dump($newref); exit;
+                        }
+                        elseif ($object->type == 2)
+                        {
+                            $savmask=$conf->global->FACTURE_MERCURE_MASK_CREDIT;
+                            $conf->global->FACTURE_MERCURE_MASK_CREDIT=preg_replace('/projectref/',$projectref,$conf->global->FACTURE_MERCURE_MASK_CREDIT);
+                            $conf->global->FACTURE_MERCURE_MASK_CREDIT=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_CREDIT);
+                            $conf->global->FACTURE_MERCURE_MASK_CREDIT=preg_replace('/%%+/',$projectref,$conf->global->FACTURE_MERCURE_MASK_CREDIT);
+                            $newref=$object->getNextNumRef($object->thirdparty);
+                            //$newref=$projectref.substr($newref,7);
+                            $conf->global->FACTURE_MERCURE_MASK_CREDIT=$savmask;
+                            //var_dump($newref); exit;
+                        }
+                        elseif ($object->type == 3)
+                        {
+                            $savmask=$conf->global->FACTURE_MERCURE_MASK_DEPOSIT;
+                            $conf->global->FACTURE_MERCURE_MASK_DEPOSIT=preg_replace('/projectref/',$projectref,$conf->global->FACTURE_MERCURE_MASK_DEPOSIT);
+                            $conf->global->FACTURE_MERCURE_MASK_DEPOSIT=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_DEPOSIT);
+                            $conf->global->FACTURE_MERCURE_MASK_DEPOSIT=preg_replace('/%%+/',$projectref,$conf->global->FACTURE_MERCURE_MASK_DEPOSIT);
+                            $newref=$object->getNextNumRef($object->thirdparty);
+                            //$newref=$projectref.substr($newref,7);
+                            $conf->global->FACTURE_MERCURE_MASK_DEPOSIT=$savmask;
+                            //var_dump($newref); exit;
+                        }
+                        else
+                        {
+                            $savmask=$conf->global->FACTURE_MERCURE_MASK_INVOICE;
+                            $conf->global->FACTURE_MERCURE_MASK_INVOICE=preg_replace('/projectref/',$projectref,$conf->global->FACTURE_MERCURE_MASK_INVOICE);
+                            $conf->global->FACTURE_MERCURE_MASK_INVOICE=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_INVOICE);
+                            $conf->global->FACTURE_MERCURE_MASK_INVOICE=preg_replace('/%%+/',$projectref,$conf->global->FACTURE_MERCURE_MASK_INVOICE);
+                            $newref=$object->getNextNumRef($object->thirdparty);
+                            //$newref=$projectref.substr($newref,7);
+                            $conf->global->FACTURE_MERCURE_MASK_INVOICE=$savmask;
+                            //var_dump($newref); exit;
+                        }
+                    }
+
+                    dol_syslog("We validate order ".$object->id." oldref=".$object->ref." newref=".$newref." projectid=".$projectid." projectref=".$projectref);
+
+                    $sql="UPDATE ".MAIN_DB_PREFIX."facture SET facnumber = '".$this->db->escape($newref)."' WHERE rowid=".$object->id;
+                    dol_syslog("sql=".$sql);
+                    $resql=$this->db->query($sql);
+
+                    if ($resql)
+                    {
+                        $object->ref=$newref;
+                        $ok=1;
+                    }
+                    else
+                    {
+                        $this->errors[]=$this->db->lasterror();
+                        $ok=-1;
+                    }
+                }
+                else
+                {
+                    dol_print_error($this->db);
+                    $ok=-1;
+                }
+            }
         }
 
         // Suppliers
 
-    
+
         if (($action == 'SUPPLIER_PROPOSAL_VALIDATE' || $action == 'PROPOSAL_SUPPLIER_VALIDATE') && (! empty($conf->global->FORCEPROJECT_ON_PROPOSAL_SUPPLIER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
         {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
@@ -263,7 +354,7 @@ class InterfaceForceProject
             	return -1;
             }
         }
-        
+
         if ($action == 'ORDER_SUPPLIER_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_ORDER_SUPPLIER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
         {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);

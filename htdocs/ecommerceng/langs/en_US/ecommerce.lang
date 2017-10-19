@@ -40,8 +40,8 @@ ECommerceUserPasswordDescription=Exemple : myapikey
 ECommerceSite=Site
 ECommerceLastUpdate=Last Ecommerce->Dolibarr sync
 ECommerceNoUpdateSite=This site has never been synchronized
-ECommerceUpdateSite=Detailed update of this site
-ECommerceUpdateAll=Update all for this site
+ECommerceUpdateSite=Synchronization detail of this site
+ECommerceUpdateAll=Synchronize all objects
 ECommerceReset=Delete all links and Dolibarr linked record
 ECommerceResetLink=Delete all link records between Dolibarr and Ecommerce
 ECommerceMenu=ECommerce Sync
@@ -62,11 +62,6 @@ ECommerceSynchronizeSociete = Synchronize thirdparties
 ECommerceSynchronizeProduct = Synchronize products
 ECommerceSynchronizeCommande = Synchronize orders
 ECommerceSynchronizeFacture = Synchronize bills
-ECommerceErrorGetSocieteToUpdate=Error connect while retrieving companies. Please retry.
-ECommerceErrorGetProduitsToUpdate=Error connect while retrieving products. Please retry.
-ECommerceErrorGetCategoryToUpdate=Error connect while retrieving categories. Please retry.
-ECommerceErrorGetCommandeToUpdate=Error connect while retrieving orders. Please retry.
-ECommerceErrorGetFactureToUpdate=Error connect while retrieving bills. Please retry.
 ECommerceReboot=Please disable this module, re-able it and then try again.
 ECommerceAnonymousCreateFailed=Failed to create the synchronization object corresponding to the anonymous third party.
 ECommerceNoDbAnonymous=Anonymous third party doesn't exists in database.
@@ -82,8 +77,6 @@ ECommerceResetDolSocieteSuccess=companies imported have been deleted.
 ECommerceResetSynchSocieteSuccess=companies synchronization mapping data have been deleted.
 ECommerceResetDolCategorySuccess=categories imported have been deleted (this quantity can be higher by including categories' children).
 ECommerceResetSynchCategorySuccess=categories synchronization mapping data have been deleted (this quantity can be higher by including mappings' children).
-ECommerceSyncheCommerceCategoryUpdateError=Error while updating a category.
-ECommerceSyncheCommerceCategoryCreateError=Error while creating a category.
 ECommerceSynchronizeCategoryProduct=Synchronize product categories
 ECommerceSynchCategoryError=Error while synchronizing categories.
 ECommerceSynchCategorySuccess=categories have been synchronized.
@@ -93,7 +86,16 @@ ECommerceSynchSocieteSuccess=companies have been synchronized.
 ECommerceSynchProductSuccess=products have been synchronized.
 ECommerceSynchCommandeSuccess=orders have been synchronized.
 ECommerceSynchFactureSuccess=bills have been synchronized.
-ECommerceSynchECommerceSocpeopleCreateError=An error occured while saving contact.
+ECommerceSynchCommandeError=Error during synchronization of orders 
+ECommerceCheckIfCategoryDoesNotExistsTwice=Try to make name of your categories unique on your eCommerce platform
+ECommerceSynchSocieteErrorCreateUpdateSociete=Failed to synchronize thirdparty
+
+ECommerceSyncheCommerceSocpeopleCreateError=An error occured while saving contact.
+ECommerceSyncheCommerceProductCreateError=Error creating the link between Dolibarr product and eCommerce product
+ECommerceSyncheCommerceCommandeCreateError=Error creating the link between Dolibarr order and eCommerce order
+ECommerceSyncheCommerceCategoryUpdateError=Error while updating a category.
+ECommerceSyncheCommerceCategoryCreateError=Error while creating a category.
+
 ECommerceSetupSites=Setup sites ECommerce
 ECommerceTimeout=Timeout of synchronize
 ECommerceSetupTimeoutEmpty=Timeout empty
@@ -103,10 +105,19 @@ ECommerceClickUrlToTestUrl=Click here to test URL (an XML file must appear)
 ECommerceCategoriesProducts=Product categories
 ECommerceStockProduct=Warehouse for stock initialization
 ECommerceStockProductDescription=When previous option <strong>%s</strong> is set to <strong>eCommerce to Dolibarr</strong>, this is warehouse to use for stock change/init when a product is created/modified into Dolibarr by an eCommerce synchronization. Note that stock change on Dolibarr occurs during step of synchronization of products and not during synchronization of orders/invoices.
-ECommerceSyncheCommerceProductCreateError=Error creating the link between Dolibarr product and eCommerce product
-ECommerceSyncheCommerceCommandeCreateError=Error creating the link between Dolibarr order and eCommerce order
-ECommerceSynchCommandeError=Error during synchronization of orders 
-WarningStockProductNotFilled=Warehouse for stock is not filled. It means you won't be able to create products into Dolibarr from eCommerce if stock is not empty on eCommerce side.
+
+ECommerceErrorGetSocieteToUpdate=Error failed to retrieving companies list. Please retry.
+ECommerceErrorGetProduitsToUpdate=Error failed while retrieving products list. Please retry.
+ECommerceErrorGetCategoryToUpdate=Error failed while retrieving categories list. Please retry.
+ECommerceErrorGetCommandeToUpdate=Error failed while retrieving orders list. Please retry.
+ECommerceErrorGetFactureToUpdate=Error dailed while retrieving bills list. Please retry.
+
+ECommerceErrorsynchProduct=Error during synchronization of products
+
+ECommerceSynchFactureErrorSocieteNotExists=Error, the customer with remote_id = %s was not yet synchronized. Complete synchronizing of thirdparties first.
+ECommerceSynchFactureErrorCommandeNotExists=Error, the order with remote_id = %s was not yet synchronized. Complete synchronizing of orders first.
+
+WarningStockProductNotFilled=Warehouse for stock is not defined. It means you won't be able to create products into Dolibarr from eCommerce if you choose the 'Stock synchronization direction' to value 'From ecommerce to dolibarr' and if stock is not empty on eCommerce side.
 SyncCategFirst=Synchronize categories first
 SyncSocieteFirst=Synchronize thirdparties first
 SyncCommandeFirst=Synchronize orders first
@@ -142,3 +153,9 @@ ECommerceShipping=Shipping
 ECommercePriceLevel=Price level
 ECommercePriceLevelDescription=Only this price level are synchronized between Dolibarr and eCommerce
 ECommerceConfirmUpdatePriceLevel=You have changed the price level and the products on the eCommerce will be updated.\nThis may take a long time, please confirm.
+SeeECommerceConfFileIfKo=See content of file <strong>%s</strong>, on your eCommerce server, if this URL does not work.
+RestrictCountAndSynchForRecordBefore=Restrict count and synchronize for record with a last modification date in eCommerce before
+RestrictNbInSync=Restrict number of record of same object to synchronize in same request
+SynchUnkownCustomersOnThirdParty=Use the following thirdparty for orders done on unknown customers (non logged customers)
+ThirdPartyForNonLoggedUsers=Third party for anonymous/non logged users
+

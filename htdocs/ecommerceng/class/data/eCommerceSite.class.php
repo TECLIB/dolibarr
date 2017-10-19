@@ -28,9 +28,9 @@ class eCommerceSite // extends CommonObject
 	var $errors=array();				//!< To return several error codes (or messages)
 	//var $element='ecommerce_site';			//!< Id that identify managed objects
 	//var $table_element='ecommerce_site';	//!< Name of table without prefix where object is stored
-    
+
     var $id;
-    
+
 	var $name;
 	var $type;
 	var $webservice_address;
@@ -50,13 +50,13 @@ class eCommerceSite // extends CommonObject
 
 	//The site type name is used to define class name in eCommerceRemoteAccess class
     private $siteTypes = array(1=>'magento', 2=>'woocommerce');
-	
+
     /**
      * Constructor
-     * 
+     *
      * @param      DoliDB      $db      Database handler
      */
-    function eCommerceSite($db) 
+    function eCommerceSite($db)
     {
         $this->db = $db;
     }
@@ -90,7 +90,7 @@ class eCommerceSite // extends CommonObject
 
     /**
      *      Create in database
-     *      
+     *
      *      @param      User    $user        	User that create
      *      @param      int     $notrigger	    0=launch triggers after, 1=disable triggers
      *      @return     int                    	<0 if KO, Id of created object if OK
@@ -99,7 +99,7 @@ class eCommerceSite // extends CommonObject
     {
     	global $conf, $langs;
 		$error=0;
-    	
+
 		// Clean parameters
 		if (isset($this->name)) $this->name=trim($this->name);
 		if (isset($this->type)) $this->type=trim($this->type);
@@ -117,7 +117,7 @@ class eCommerceSite // extends CommonObject
 
 		// Check parameters
 		// Put here code to add control on parameters values
-		
+
         // Insert request
 		$sql = "INSERT INTO ".MAIN_DB_PREFIX."ecommerce_site(";
 		$sql.= "name,";
@@ -137,14 +137,14 @@ class eCommerceSite // extends CommonObject
 		$sql.= "magento_use_special_price,";
 		$sql.= "magento_price_type";
         $sql.= ") VALUES (";
-		$sql.= " ".(! isset($this->name)?'NULL':"'".addslashes($this->name)."'").",";
+		$sql.= " ".(! isset($this->name)?'NULL':"'".$this->db->escape($this->name)."'").",";
 		$sql.= " ".(! isset($this->type)?'NULL':"'".$this->type."'").",";
-		$sql.= " ".(! isset($this->webservice_address)?'NULL':"'".addslashes($this->webservice_address)."'").",";
-		$sql.= " ".(! isset($this->user_name)?'NULL':"'".addslashes($this->user_name)."'").",";
-		$sql.= " ".(! isset($this->user_password)?'NULL':"'".addslashes($this->user_password)."'").",";
-        $sql.= " ".(! isset($this->price_level)?'NULL':"'".addslashes($this->price_level)."'").",";
-		$sql.= " ".(! isset($this->filter_label)?'NULL':"'".addslashes($this->filter_label)."'").",";
-		$sql.= " ".(! isset($this->filter_value)?'NULL':"'".addslashes($this->filter_value)."'").",";
+		$sql.= " ".(! isset($this->webservice_address)?'NULL':"'".$this->db->escape($this->webservice_address)."'").",";
+		$sql.= " ".(! isset($this->user_name)?'NULL':"'".$this->db->escape($this->user_name)."'").",";
+		$sql.= " ".(! isset($this->user_password)?'NULL':"'".$this->db->escape($this->user_password)."'").",";
+        $sql.= " ".(! isset($this->price_level)?'NULL':"'".$this->db->escape($this->price_level)."'").",";
+		$sql.= " ".(! isset($this->filter_label)?'NULL':"'".$this->db->escape($this->filter_label)."'").",";
+		$sql.= " ".(! isset($this->filter_value)?'NULL':"'".$this->db->escape($this->filter_value)."'").",";
 		$sql.= " ".($this->fk_cat_societe > 0 ? $this->fk_cat_societe : "NULL").",";
 		$sql.= " ".($this->fk_cat_product > 0 ? $this->fk_cat_product : "NULL").",";
 		$sql.= " ".($this->fk_warehouse > 0 ? $this->fk_warehouse : "NULL").",";
@@ -156,15 +156,15 @@ class eCommerceSite // extends CommonObject
 		$sql.= ")";
 
 		$this->db->begin();
-		
+
 	   	dol_syslog(get_class($this)."::create sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-        
+
 		if (! $error)
         {
             $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX."ecommerce_site");
-            
+
             //create an entry for anonymous company
             $eCommerceSociete = new eCommerceSociete($this->db);
             $eCommerceSociete->fk_societe = dolibarr_get_const($this->db, 'ECOMMERCE_COMPANY_ANONYMOUS');
@@ -184,7 +184,7 @@ class eCommerceSite // extends CommonObject
 			{
 	            dol_syslog(get_class($this)."::create ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -195,10 +195,10 @@ class eCommerceSite // extends CommonObject
 		}
     }
 
-    
+
     /**
      *   Load object in memory from database
-     *   
+     *
      *   @param     int     $id         Id of object
      *   @return    int                 <0 if KO, >0 if OK
      */
@@ -225,7 +225,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.magento_price_type";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_site as t";
         $sql.= " WHERE t.rowid = ".$id;
-    
+
     	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
@@ -233,9 +233,9 @@ class eCommerceSite // extends CommonObject
             if ($this->db->num_rows($resql))
             {
                 $obj = $this->db->fetch_object($resql);
-    
+
                 $this->id    = $obj->rowid;
-                
+
 				$this->name = $obj->name;
 				$this->type = $obj->type;
 				$this->webservice_address = $obj->webservice_address;
@@ -253,10 +253,10 @@ class eCommerceSite // extends CommonObject
 				$this->magento_use_special_price = $obj->magento_use_special_price;
 				$this->magento_price_type = $obj->magento_price_type;
 
-                
+
             }
             $this->db->free($resql);
-            
+
             return 1;
         }
         else
@@ -266,11 +266,11 @@ class eCommerceSite // extends CommonObject
             return -1;
         }
     }
-    
+
 
     /**
      *   Update database
-     *   
+     *
      *   @param      User   $user        	User that modify
      *   @param      int    $notrigger	    0=launch triggers after, 1=disable triggers
      *   @return     int                	<0 if KO, >0 if OK
@@ -279,9 +279,9 @@ class eCommerceSite // extends CommonObject
     {
     	global $conf, $langs;
 		$error=0;
-    	
+
 		// Clean parameters
-        
+
 		if (isset($this->name)) $this->name=trim($this->name);
 		if (isset($this->type)) $this->type=trim($this->type);
 		if (isset($this->webservice_address)) $this->webservice_address=trim($this->webservice_address);
@@ -300,15 +300,15 @@ class eCommerceSite // extends CommonObject
 
         // Update request
         $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_site SET";
-        
-		$sql.= " name=".(isset($this->name)?"'".addslashes($this->name)."'":"null").",";
+
+		$sql.= " name=".(isset($this->name)?"'".$this->db->escape($this->name)."'":"null").",";
 		$sql.= " type=".(isset($this->type)?$this->type:"null").",";
-		$sql.= " webservice_address=".(isset($this->webservice_address)?"'".addslashes($this->webservice_address)."'":"null").",";
-		$sql.= " user_name=".(isset($this->user_name)?"'".addslashes($this->user_name)."'":"null").",";
-		$sql.= " user_password=".(isset($this->user_password)?"'".addslashes($this->user_password)."'":"null").",";
-        $sql.= " price_level=".(isset($this->price_level)?"'".addslashes($this->price_level)."'":"null").",";
-		$sql.= " filter_label=".(isset($this->filter_label)?"'".addslashes($this->filter_label)."'":"null").",";
-		$sql.= " filter_value=".(isset($this->filter_value)?"'".addslashes($this->filter_value)."'":"null").",";
+		$sql.= " webservice_address=".(isset($this->webservice_address)?"'".$this->db->escape($this->webservice_address)."'":"null").",";
+		$sql.= " user_name=".(isset($this->user_name)?"'".$this->db->escape($this->user_name)."'":"null").",";
+		$sql.= " user_password=".(isset($this->user_password)?"'".$this->db->escape($this->user_password)."'":"null").",";
+        $sql.= " price_level=".(isset($this->price_level)?"'".$this->db->escape($this->price_level)."'":"null").",";
+		$sql.= " filter_label=".(isset($this->filter_label)?"'".$this->db->escape($this->filter_label)."'":"null").",";
+		$sql.= " filter_value=".(isset($this->filter_value)?"'".$this->db->escape($this->filter_value)."'":"null").",";
 		$sql.= " fk_cat_societe=".($this->fk_cat_societe > 0 ? $this->fk_cat_societe:"null").",";
 		$sql.= " fk_cat_product=".($this->fk_cat_product > 0 ? $this->fk_cat_product:"null").",";
 		$sql.= " fk_warehouse=".($this->fk_warehouse > 0 ? $this->fk_warehouse:"null").",";
@@ -318,20 +318,20 @@ class eCommerceSite // extends CommonObject
 		$sql.= " magento_use_special_price=".(isset($this->magento_use_special_price)? "'".intval($this->magento_use_special_price)."'" : '0').",";
         $sql.= " magento_price_type=".(isset($this->magento_price_type)? "'".$this->magento_price_type."'" : 'HT')."";
         $sql.= " WHERE rowid=".$this->id;
- 
+
 		$this->db->begin();
-        
+
 		dol_syslog(get_class($this)."::update sql=".$sql, LOG_DEBUG);
         $resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-        
+
 		if (! $error)
 		{
 			if (! $notrigger)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
 	            // want this action call a trigger.
-				
+
 	            //// Call triggers
 	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 	            //$interface=new Interfaces($this->db);
@@ -340,7 +340,7 @@ class eCommerceSite // extends CommonObject
 	            //// End call triggers
 	    	}
 		}
-		
+
         // Commit or rollback
 		if ($error)
 		{
@@ -348,7 +348,7 @@ class eCommerceSite // extends CommonObject
 			{
 	            dol_syslog(get_class($this)."::update ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -356,13 +356,13 @@ class eCommerceSite // extends CommonObject
 		{
 			$this->db->commit();
 			return 1;
-		}		
+		}
     }
-  
-  
+
+
  	/**
 	 * Delete object in database
-     *	
+     *
      * @param   User    $user        	 User that delete
      * @param   int     $notrigger	     0=launch triggers after, 1=disable triggers
 	 * @return	int				         <0 if KO, >0 if OK
@@ -371,32 +371,32 @@ class eCommerceSite // extends CommonObject
 	{
 		global $conf, $langs;
 		$error=0;
-		
+
 		$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_site";
 		$sql.= " WHERE rowid=".$this->id;
-	
+
 		$this->db->begin();
-		
+
 		dol_syslog(get_class($this)."::delete sql=".$sql);
 		$resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-		
+
 		if (! $error)
 		{
 			if (! $notrigger)
 			{
 				// Uncomment this and change MYOBJECT to your own tag if you
 		        // want this action call a trigger.
-				
+
 		        //// Call triggers
 		        //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 		        //$interface=new Interfaces($this->db);
 		        //$result=$interface->run_triggers('MYOBJECT_DELETE',$this,$user,$langs,$conf);
 		        //if ($result < 0) { $error++; $this->errors=$interface->errors; }
 		        //// End call triggers
-			}	
+			}
 		}
-		
+
         // Commit or rollback
 		if ($error)
 		{
@@ -404,7 +404,7 @@ class eCommerceSite // extends CommonObject
 			{
 	            dol_syslog(get_class($this)."::delete ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -416,7 +416,7 @@ class eCommerceSite // extends CommonObject
 	}
 
 
-	
+
 	/**
 	 *	Load an object from its id and create a new one in database
 	 *
@@ -426,9 +426,9 @@ class eCommerceSite // extends CommonObject
 	function createFromClone($fromid)
 	{
 		global $user,$langs;
-		
+
 		$error=0;
-		
+
 		$object=new Ecommerce_site($this->db);
 
 		$this->db->begin();
@@ -440,24 +440,24 @@ class eCommerceSite // extends CommonObject
 
 		// Clear fields
 		// ...
-				
+
 		// Create clone
 		$result=$object->create($user);
 
 		// Other options
-		if ($result < 0) 
+		if ($result < 0)
 		{
 			$this->error=$object->error;
 			$error++;
 		}
-		
+
 		if (! $error)
 		{
-			
-			
-			
+
+
+
 		}
-		
+
 		// End
 		if (! $error)
 		{
@@ -471,17 +471,17 @@ class eCommerceSite // extends CommonObject
 		}
 	}
 
-	
+
 	/**
 	 *	Initialise object with example values
 	 *  id must be 0 if object instance is a specimen.
-	 *  
+	 *
 	 *	@return     void
 	 */
 	function initAsSpecimen()
 	{
 		$this->id=0;
-		
+
 		$this->name='';
 		$this->type='';
 		$this->webservice_address='';
@@ -495,29 +495,29 @@ class eCommerceSite // extends CommonObject
 		$this->fk_warehouse='';
 		$this->stock_sync_direction='none';
 		$this->last_update='';
-		$this->timeout='';	
+		$this->timeout='';
 		$this->magento_use_special_price='';
-		$this->magento_price_type='';	
+		$this->magento_price_type='';
 	}
 
 	/**
 	 *    Return list of all defined ecommerce sites
-	 *    
+	 *
 	 *    @param	string		$mode		'array' or 'object'
 	 *    @return 	array					List of sites
 	 */
 	function listSites($mode='array')
 	{
 		global $langs;
-		
+
 		$list = array();
-		
+
         $sql = "SELECT";
 		$sql.= " t.rowid,";
 		$sql.= " t.name,";
 		$sql.= " t.last_update";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_site as t";
-    
+
     	$result = $this->db->query($sql);
 		if ($result)
 		{
@@ -541,10 +541,10 @@ class eCommerceSite // extends CommonObject
 		}
 		return $list;
 	}
-	
+
 	/**
 	 * Return list of available site types
-	 * 
+	 *
 	 * @return string[]
 	 */
 	public function getSiteTypes()
@@ -552,17 +552,18 @@ class eCommerceSite // extends CommonObject
 		return $this->siteTypes;
 	}
 
-	
+
 	/**
 	 * Return URL of visitors shop
 	 *
 	 * @return string
-	 */	
+	 */
 	public function getFrontUrl()
 	{
         // Try to guess public home page of ecommerce web site from the api url
 	    $url=preg_replace('/index\.php\/api.*$/', '', $this->webservice_address);
-        if ($url && ! preg_match('/\/$/', $url)) $url.='/';
+	    $url=preg_replace('/\/api\/.*$/', '', $url);
+	    if ($url && ! preg_match('/\/$/', $url)) $url.='/';
 	    return $url;
 	}
 
@@ -578,6 +579,6 @@ class eCommerceSite // extends CommonObject
 	    $url.='index.php/admin';
 	    return $url;
 	}
-	
+
 }
 

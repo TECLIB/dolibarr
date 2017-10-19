@@ -32,11 +32,13 @@ class modECommerceNg extends DolibarrModules
 {
 	/**
 	 *   Constructor. Define names, constants, directories, boxes, permissions
-	 *   
+	 *
 	 *   @param    DoliDB      $db      Database handler
 	 */
 	function __construct($db)
 	{
+	    global $conf;
+
 		$this->db = $db;
 
 		// Id for module (must be unique).
@@ -51,13 +53,13 @@ class modECommerceNg extends DolibarrModules
 		// Module label (no space allowed), used if translation string 'ModuleXXXName' not found (where XXX is value of numeric property 'numero' of module)
 		$this->name = 'EcommerceNg';        //  Must be same than value used for if $conf->ecommerceng->enabled
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
-		$this->description = "Module to synchronise Dolibarr with ECommerce platform (currently ecommerce supported: Magento)";
+		$this->description = "Module to synchronise Dolibarr with ECommerce platform (currently ecommerce supported: Magento, WooCommerce)";
 		$this->descriptionlong = "See page https://wiki.dolibarr.org/index.php/Module_Magento_EN for more information";
 		$this->editor_name = 'TecLib';
 		$this->editor_url = 'http://www.teclib.com';
-		
+
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '3.9.0.3';
+		$this->version = '4.0.0';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -66,7 +68,7 @@ class modECommerceNg extends DolibarrModules
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/images directory, use this->picto=DOL_URL_ROOT.'/module/images/file.png'
 		$this->picto='eCommerce.png@ecommerceng';
-                
+
         // Defined all module parts (triggers, login, substitutions, menus, css, etc...)
 		// for default path (eg: /mymodule/core/xxxxx) (0=disable, 1=enable)
 		// for specific path of parts (eg: /mymodule/core/modules/barcode)
@@ -101,11 +103,18 @@ class modECommerceNg extends DolibarrModules
 		$this->depends = array("modSociete","modProduct","modCategorie","modWebServices");		// List of modules id that must be enabled if this module is enabled
 		$this->requiredby = array();	// List of modules id to disable if this one is disabled
 		$this->phpmin = array(4,3);					// Minimum version of PHP required by module
-		$this->need_dolibarr_version = array(2,7);	// Minimum version of Dolibarr required by module
+		$this->need_dolibarr_version = array(3,9);	// Minimum version of Dolibarr required by module
 		$this->langfiles = array("ecommerce@ecommerceng");
 
 		// Constants
-		$this->const = array(0=>array('ECOMMERCENG_SHOW_DEBUG_TOOLS', 'chaine', '1', 'Enable button to clean database for debug purpose', 1, 'allentities', 1));	// List of particular constants to add when module is enabled
+		// List of particular constants to add when module is enabled
+		$this->const = array(
+		    0=>array('ECOMMERCENG_SHOW_DEBUG_TOOLS', 'chaine', '1', 'Enable button to clean database for debug purpose', 1, 'allentities', 1),
+		    1=>array('ECOMMERCENG_DEBUG', 'chaine', '0', 'This is to enable ECommerceng log of web services requests', 1, 'allentities', 0),
+		    2=>array('ECOMMERCENG_MAXSIZE_MULTICALL', 'chaine', '400', 'Max size for multicall', 1, 'allentities', 0),
+			3=>array('ECOMMERCENG_MAXRECORD_PERSYNC', 'chaine', '2000', 'Max nb of record per synch', 1, 'allentities', 0),
+			4=>array('ECOMMERCENG_ENABLE_LOG_IN_NOTE', 'chaine', '0', 'Store into private note the last full response returned by web service', 1, 'allentities', 0),
+		);
 
 		// Array to add new pages in new tabs
 		//$this->tabs = array('entity:Title:@mymodule:/mymodule/mynewtab.php?id=__ID__');
@@ -133,6 +142,11 @@ class modECommerceNg extends DolibarrModules
 		//$this->boxes[$r][1] = "myboxb.php";
 		//$r++;
 
+		// Cronjobs
+		//------------
+		$this->cronjobs = array(
+			0=>array('label'=>'AutoSyncEcommerceNg', 'jobtype'=>'method', 'class'=>'ecommerceng/class/business/eCommerceUtils.class.php', 'objectname'=>'eCommerceUtils', 'method'=>'synchAll', 'parameters'=>'100', 'comment'=>'Synchronize all data from eCommerce to Dolibarr. Parameter is max nb of record to do per synchronization run.', 'frequency'=>1, 'unitfrequency'=>86400, 'priority'=>90, 'status'=>0, 'test'=>true),
+		);
 
 		// Permissions
 		$this->rights = array();		// Permission array used by this module
@@ -156,7 +170,7 @@ class modECommerceNg extends DolibarrModules
 		$this->rights[$r][1] = 'Configure websites';
 		$this->rights[$r][3] = 0;
 		$this->rights[$r][4] = 'site';
-		
+
 		$r=0;
 
 		// Add here list of permission defined by an id, a label, a boolean and two constant strings.
@@ -174,9 +188,11 @@ class modECommerceNg extends DolibarrModules
 		$r=0;
 
 		// Add here entries to declare new menus
-		$eCommerceMenu = new eCommerceMenu($this->db,null,$this);
-		$this->menu = $eCommerceMenu->getMenu();
-
+		//if (! empty($conf->modules['ecommerceng']))     // Do not run this code if module is not yet enabled (tables does not exists yet)
+		//{
+    		$eCommerceMenu = new eCommerceMenu($this->db,null,$this);
+	        $this->menu = $eCommerceMenu->getMenu();
+		//}
 
 		// Exports
 		$r=1;
@@ -196,26 +212,30 @@ class modECommerceNg extends DolibarrModules
 	}
 
 	/**
-	 *		\brief      Function called when module is enabled.
-	 *					The init function add constants, boxes, permissions and menus (defined in constructor) into Dolibarr database.
-	 *					It also creates data directories.
-	 *      \return     int             1 if OK, 0 if KO
+	 *	Function called when module is enabled.
+	 *	The init function add constants, boxes, permissions and menus (defined in constructor) into Dolibarr database.
+	 *	It also creates data directories.
+	 *
+	 *  @param     string  $options    Options
+	 *  @return    int                 1 if OK, 0 if KO
 	 */
 	function init($options = '')
 	{
 		$sql = array();
 
-		$result=$this->load_tables();
+		$result=$this->load_tables($options);
 		$this->addSettlementTerms();
 		$this->addAnonymousCompany();
 		return $this->_init($sql, $options);
 	}
 
 	/**
-	 *		\brief		Function called when module is disabled.
-	 *              	Remove from database constants, boxes and permissions from Dolibarr database.
-	 *					Data directories are not deleted.
-	 *      \return     int             1 if OK, 0 if KO
+	 *	Function called when module is disabled.
+	 *  Remove from database constants, boxes and permissions from Dolibarr database.
+	 *	Data directories are not deleted.
+	 *
+	 *  @param     string  $options    Options
+	 *  @return    int                 1 if OK, 0 if KO
 	 */
 	function remove($options = '')
 	{
@@ -236,37 +256,37 @@ class modECommerceNg extends DolibarrModules
 	{
 		return $this->_load_tables('/ecommerceng/sql/');
 	}
-	
+
 	/**
 	 * Add anonymous company for anonymous orders
 	 */
 	private function addAnonymousCompany()
 	{
 	    global $user;
-	    
+
 		$idCompany = dolibarr_get_const($this->db, 'ECOMMERCE_COMPANY_ANONYMOUS');
-		
+
 		// Check for const existing but company deleted from dB
 		if ($idCompany)
 		{
 			$dBSociete = new Societe($this->db);
-			$idCompany = $dBSociete->fetch($idCompany) < 0 ? null:$idCompany ; 
+			$idCompany = $dBSociete->fetch($idCompany) < 0 ? null:$idCompany ;
 		}
-		
+
 		if ($idCompany == null)
 		{
 			$dBSociete = new Societe($this->db);
 			$dBSociete->nom = 'Anonymous';
 			$dBSociete->client = 3;//for client/prospect
 			$dBSociete->create($user);
-			
+
 			if (dolibarr_set_const($this->db, 'ECOMMERCE_COMPANY_ANONYMOUS', $dBSociete->id) < 0)
 			{
 				dolibarr_print_error($this->db);
 			}
 		}
 	}
-	
+
 	/**
 	 * Add settlement terms if not exists
 	 */
@@ -279,42 +299,44 @@ class modECommerceNg extends DolibarrModules
 		{
 			// Get free rowid to insert
 			$newid = 0;
-			$sql = "SELECT max(`rowid`) newid from `".$table."`";
+			$sql = "SELECT max(rowid) newid from ".$table;
 			$maxId = $this->db->query($sql);
 			if ($maxId)
 			{
 				$obj = $this->db->fetch_object($maxId);
-				$newid = ($obj->newid + 1);	
+				$newid = ($obj->newid + 1);
 			}
 			else
 			{
 				dol_print_error($this->db);
 			}
-			
+
 			// Get free sortorder to insert
 			$newSort = 0;
-			$sql = "SELECT max(`sortorder`) newsortorder from `".$table."`";
+			$sql = "SELECT max(sortorder) newsortorder from ".$table;
 			$maxSort = $this->db->query($sql);
 			if ($maxSort)
 			{
 				$obj = $this->db->fetch_object($maxSort);
-				$newSort = ($obj->newsortorder + 1);	
+				$newSort = ($obj->newsortorder + 1);
 			}
 			else
 			{
 				dol_print_error($this->db);
 			}
-			
+
 			if ($newid != 0 && $newSort != 0)
 			{
-				$sql = "INSERT INTO `".$table."`
-							(`rowid`, `code`, `sortorder`, `active`, `libelle`, `libelle_facture`, `fdm`, `nbjour`, `decalage`)
-						VALUES
-							(".$newid.", 'CASH', ".$newSort.", 1, 'Au comptant', 'A la commande', 0, 0, NULL)";
-				$insert = $this->db->query($sql);
+			    if ((float) DOL_VERSION < 5.0)
+			    {
+    				$sql = "INSERT INTO ".$table."
+    							(rowid, code, sortorder, active, libelle, libelle_facture, fdm, nbjour, decalage)
+    						VALUES
+    							(".$newid.", 'CASH', ".$newSort.", 1, 'Au comptant', 'A la commande', 0, 0, NULL)";
+    				$insert = $this->db->query($sql);
+			    }
 			}
 		}
 	}
 }
 
-?>

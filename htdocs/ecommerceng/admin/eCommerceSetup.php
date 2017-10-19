@@ -20,14 +20,19 @@
 
 /* PAGE setup ecommerce */
 
+// Load Dolibarr environment
 $res=0;
+// Try main.inc.php into web root known defined into CONTEXT_DOCUMENT_ROOT (not always defined)
 if (! $res && ! empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])) $res=@include($_SERVER["CONTEXT_DOCUMENT_ROOT"]."/main.inc.php");
+// Try main.inc.php into web root detected using web root caluclated from SCRIPT_FILENAME
+$tmp=empty($_SERVER['SCRIPT_FILENAME'])?'':$_SERVER['SCRIPT_FILENAME'];$tmp2=realpath(__FILE__); $i=strlen($tmp)-1; $j=strlen($tmp2)-1;
+while($i > 0 && $j > 0 && isset($tmp[$i]) && isset($tmp2[$j]) && $tmp[$i]==$tmp2[$j]) { $i--; $j--; }
+if (! $res && $i > 0 && file_exists(substr($tmp, 0, ($i+1))."/main.inc.php")) $res=@include(substr($tmp, 0, ($i+1))."/main.inc.php");
+if (! $res && $i > 0 && file_exists(dirname(substr($tmp, 0, ($i+1)))."/main.inc.php")) $res=@include(dirname(substr($tmp, 0, ($i+1)))."/main.inc.php");
+// Try main.inc.php using relative path
+if (! $res && file_exists("../main.inc.php")) $res=@include("../main.inc.php");
 if (! $res && file_exists("../../main.inc.php")) $res=@include("../../main.inc.php");
 if (! $res && file_exists("../../../main.inc.php")) $res=@include("../../../main.inc.php");
-if (! $res && file_exists("../../../../main.inc.php")) $res=@include("../../../../main.inc.php");
-if (! $res && file_exists("../../../../../main.inc.php")) $res=@include("../../../../../main.inc.php");
-if (! $res && preg_match('/\/nltechno([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
-if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res) die("Include of main fails");
 
 require_once(DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php');
@@ -79,7 +84,7 @@ if ($siteId != null)
 /*
  * Actions
  */
- 
+
 if ($_POST['site_form_detail_action'] == 'save')
 {
     if (trim($_POST['ecommerce_name']) == '')
@@ -90,7 +95,7 @@ if ($_POST['site_form_detail_action'] == 'save')
         $errors[] = $langs->trans('ECommerceSetupCatSocieteEmpty');
     if ($_POST['ecommerce_type'] == 0)
         $errors[] = $langs->trans('ECommerceSetupTypeEmpty');
-    if (! ($_POST['ecommerce_fk_warehouse'] > 0))
+    if (! ($_POST['ecommerce_fk_warehouse'] > 0) && $_POST['ecommerce_stock_sync_direction'] == 'ecommerce2dolibarr')
         setEventMessages($langs->trans('WarningStockProductNotFilled'), null, 'warnings');
     if (trim($_POST['ecommerce_webservice_address']) == '')
         $errors[] = $langs->trans('ECommerceSetupAddressEmpty');
@@ -120,13 +125,16 @@ if ($_POST['site_form_detail_action'] == 'save')
         $siteDb->magento_use_special_price = ($_POST['ecommerce_magento_use_special_price'] ? 1 : 0);
         $siteDb->magento_price_type = $_POST['ecommerce_magento_price_type'];
 
+        // TODO Save this into table of ecommerce_site, field fk_thirdparty instead of global var.
+        dolibarr_set_const($db, 'ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER', GETPOST('ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER','int'));
+
         $result = 0;
         if (intval($_POST['ecommerce_id']))
-        {            
+        {
             $siteDb->id = $_POST['ecommerce_id'];
             $result = $siteDb->update($user);
         } else
-        {            
+        {
             $result = $siteDb->create($user);
         }
 
@@ -174,15 +182,15 @@ elseif ($_POST['site_form_detail_action'] == 'delete')
 
 
 /*
- *  View 
+ *  View
  */
 
 if (! extension_loaded('soap'))
 {
     llxHeader();
-    
+
     print info_admin($langs->trans("ErrorModuleSoapRequired"));
-    
+
     llxFooter();
     exit;
 }

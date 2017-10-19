@@ -15,7 +15,7 @@
 -- Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 --
 -- ===================================================================
-ALTER TABLE `llx_ecommerce_facture`  ADD INDEX `idx_ecommerce_facture_fk_facture` ( `fk_facture` );
-ALTER TABLE `llx_ecommerce_facture`  ADD INDEX `idx_ecommerce_facture_fk_site` ( `fk_site` );
-ALTER TABLE `llx_ecommerce_facture`  ADD UNIQUE KEY `uk_ecommerce_facture_fk_site_fk_facture` ( `fk_site` ,`fk_facture` );
---ALTER TABLE `llx_ecommerce_facture`  ADD CONSTRAINT `fk_ecommerce_facture_fk_facture` FOREIGN KEY (`fk_facture`) REFERENCES `llx_facture`(`rowid`);
+ALTER TABLE llx_ecommerce_facture  ADD INDEX idx_ecommerce_facture_fk_facture ( fk_facture );
+ALTER TABLE llx_ecommerce_facture  ADD INDEX idx_ecommerce_facture_fk_site ( fk_site );
+ALTER TABLE llx_ecommerce_facture  ADD UNIQUE KEY uk_ecommerce_facture_fk_site_fk_facture ( fk_site ,fk_facture );
+--ALTER TABLE llx_ecommerce_facture  ADD CONSTRAINT fk_ecommerce_facture_fk_facture FOREIGN KEY (fk_facture) REFERENCES llx_facture(rowid);

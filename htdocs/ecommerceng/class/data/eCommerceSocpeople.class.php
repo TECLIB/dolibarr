@@ -25,72 +25,74 @@ class eCommerceSocpeople // extends CommonObject
 	var $errors=array();				//!< To return several error codes (or messages)
 	//var $element='ecommerce_socpeople';			//!< Id that identify managed objects
 	//var $table_element='ecommerce_socpeople';	//!< Name of table without prefix where object is stored
-    
+
     var $id;
     var $fk_socpeople;
     var $fk_site;
     var $remote_id;
     var $type;
     var $last_update;
-    
+
     const CONTACT_TYPE_COMPANY = 1;
     const CONTACT_TYPE_ORDER = 2;
     const CONTACT_TYPE_INVOICE = 3;
     const CONTACT_TYPE_DELIVERY = 4;
-    
+
     /**
-     *      \brief      Constructor
-     *      \param      DB      Database handler
+     *    Constructor
+     *
+     *    @param	DoliDB		$DB      Database handler
      */
-    function eCommerceSocpeople($DB) 
+    function eCommerceSocpeople($DB)
     {
         $this->db = $DB;
         return 1;
     }
 
-	
+
     /**
-     *      \brief      Create in database
-     *      \param      user        	User that create
-     *      \param      notrigger	    0=launch triggers after, 1=disable triggers
-     *      \return     int         	<0 if KO, Id of created object if OK
+     *    Create in database
+     *
+     *    @param      User	$user        	User that create
+     *    @param      int	$notrigger	    0=launch triggers after, 1=disable triggers
+     *    @return     int    		     	<0 if KO, Id of created object if OK
      */
     function create($user, $notrigger=0)
     {
     	global $conf, $langs;
 		$error=0;
-    	
+
 		// Clean parameters
 		if (isset($this->fk_socpeople)) $this->fk_socpeople=intval($this->fk_socpeople);
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
 		if (isset($this->remote_id)) $this->remote_id=trim($this->remote_id);
 		if (isset($this->type)) $this->type=intval($this->type);
 		if (isset($this->last_update)) $this->last_update=trim($this->last_update);
-		
+
 		// Check parameters
 		// Put here code to add control on parameters values
-		
+
         // Insert request
 		$sql = "INSERT INTO ".MAIN_DB_PREFIX."ecommerce_socpeople(";
-		
+
 		$sql.= "fk_socpeople,";
 		$sql.= "fk_site,";
 		$sql.= "remote_id,";
 		$sql.= "type,";
 		$sql.= "last_update";
-		
+
         $sql.= ") VALUES (";
-       
+
 		$sql.= " ".(isset($this->fk_socpeople)?intval($this->fk_socpeople):0).",";
 		$sql.= " ".(isset($this->fk_site)?intval($this->fk_site):0).",";
 		$sql.= " ".(isset($this->remote_id)?"'".$this->remote_id."'":"").",";
 		$sql.= " ".(isset($this->type)?intval($this->type):1).",";
-		$sql.= " ".(isset($this->last_update)?"'".$this->db->idate($this->last_update)."'" : 'null')."";
-		
+		$sql.= " ".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
+
 		$sql.= ")";
 
 		$this->db->begin();
-		
+
 	   	dol_syslog(get_class($this)."::create sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
@@ -98,12 +100,12 @@ class eCommerceSocpeople // extends CommonObject
 		if (! $error)
         {
             $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX."ecommerce_socpeople");
-    
+
 			if (! $notrigger)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
 	            // want this action call a trigger.
-	            
+
 	            //// Call triggers
 	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 	            //$interface=new Interfaces($this->db);
@@ -131,11 +133,12 @@ class eCommerceSocpeople // extends CommonObject
 		}
     }
 
-    
+
     /**
-     *    \brief      Load object in memory from database
-     *    \param      id          id object
-     *    \return     int         <0 if KO, >0 if OK
+     *    Load object in memory from database
+     *
+     *    @param      int   $id          id object
+     *    @return     int                <0 if KO, >0 if OK
      */
     function fetch($id)
     {
@@ -149,7 +152,7 @@ class eCommerceSocpeople // extends CommonObject
 		$sql.= " t.last_update";
 		$sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_socpeople as t";
         $sql.= " WHERE t.rowid = ".$id;
-    
+
     	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
@@ -157,7 +160,7 @@ class eCommerceSocpeople // extends CommonObject
             if ($this->db->num_rows($resql))
             {
                 $obj = $this->db->fetch_object($resql);
-    
+
                 $this->id = $obj->rowid;
                 $this->fk_socpeople = $obj->fk_socpeople;
                 $this->fk_site = $obj->fk_site;
@@ -166,7 +169,7 @@ class eCommerceSocpeople // extends CommonObject
                 $this->last_update = $obj->last_update;
             }
             $this->db->free($resql);
-            
+
             return 1;
         }
         else
@@ -176,7 +179,7 @@ class eCommerceSocpeople // extends CommonObject
             return -1;
         }
     }
-    
+
 
     /**
      *      \brief      Update database
@@ -188,7 +191,7 @@ class eCommerceSocpeople // extends CommonObject
     {
     	global $conf, $langs;
 		$error=0;
-    	
+
 		// Clean parameters
 		if (isset($this->fk_socpeople)) $this->fk_socpeople=intval($this->fk_socpeople);
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
@@ -201,28 +204,28 @@ class eCommerceSocpeople // extends CommonObject
 
         // Update request
         $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_socpeople SET";
-        
+
 		$sql.= " fk_socpeople=".(isset($this->fk_socpeople)?intval($this->fk_socpeople):0).",";
 		$sql.= " fk_site=".(isset($this->fk_site)?intval($this->fk_site):0).",";
-		$sql.= " remote_id=".(isset($this->remote_id)?"'".addslashes($this->remote_id)."'":"").",";
+		$sql.= " remote_id=".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
 		$sql.= " type=".(isset($this->type)?intval($this->type):1).",";
 		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
-        
+
         $sql.= " WHERE rowid=".$this->id;
 
 		$this->db->begin();
-        
+
 		dol_syslog(get_class($this)."::update sql=".$sql, LOG_DEBUG);
         $resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-        
+
 		if (! $error)
 		{
 			if (! $notrigger)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
 	            // want this action call a trigger.
-				
+
 	            //// Call triggers
 	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 	            //$interface=new Interfaces($this->db);
@@ -231,7 +234,7 @@ class eCommerceSocpeople // extends CommonObject
 	            //// End call triggers
 	    	}
 		}
-		
+
         // Commit or rollback
 		if ($error)
 		{
@@ -239,7 +242,7 @@ class eCommerceSocpeople // extends CommonObject
 			{
 	            dol_syslog(get_class($this)."::update ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -247,10 +250,10 @@ class eCommerceSocpeople // extends CommonObject
 		{
 			$this->db->commit();
 			return 1;
-		}		
+		}
     }
-  
-  
+
+
  	/**
 	 *   \brief      Delete object in database
      *	\param      user        	User that delete
@@ -261,32 +264,32 @@ class eCommerceSocpeople // extends CommonObject
 	{
 		global $conf, $langs;
 		$error=0;
-		
+
 		$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_socpeople";
 		$sql.= " WHERE rowid=".$this->id;
-	
+
 		$this->db->begin();
-		
+
 		dol_syslog(get_class($this)."::delete sql=".$sql);
 		$resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-		
+
 		if (! $error)
 		{
 			if (! $notrigger)
 			{
 				// Uncomment this and change MYOBJECT to your own tag if you
 		        // want this action call a trigger.
-				
+
 		        //// Call triggers
 		        //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
 		        //$interface=new Interfaces($this->db);
 		        //$result=$interface->run_triggers('MYOBJECT_DELETE',$this,$user,$langs,$conf);
 		        //if ($result < 0) { $error++; $this->errors=$interface->errors; }
 		        //// End call triggers
-			}	
+			}
 		}
-		
+
         // Commit or rollback
 		if ($error)
 		{
@@ -294,7 +297,7 @@ class eCommerceSocpeople // extends CommonObject
 			{
 	            dol_syslog(get_class($this)."::delete ".$errmsg, LOG_ERR);
 	            $this->error.=($this->error?', '.$errmsg:$errmsg);
-			}	
+			}
 			$this->db->rollback();
 			return -1*$error;
 		}
@@ -304,10 +307,10 @@ class eCommerceSocpeople // extends CommonObject
 			return 1;
 		}
 	}
-	
+
 	/**
      *    Load object in memory from database by remote_id
-     *    
+     *
      *    @param	$remoteId string remote_id
      *    @param	$siteId int fk_site
      *    @param	$typeId int contact type (1=>'company', 2=>'order', 3=>'invoice', 4=>'delivery')
@@ -319,7 +322,7 @@ class eCommerceSocpeople // extends CommonObject
 		if (isset($remoteId)) $remoteId=trim($remoteId);
 		if (isset($typeId)) $typeId=intval($typeId);
 		if (isset($siteId)) $siteId=intval($siteId);
-		
+
     	global $langs;
         $sql = "SELECT";
 		$sql.= " t.rowid,";
@@ -358,7 +361,7 @@ class eCommerceSocpeople // extends CommonObject
             return -1;
         }
     }
-    
+
     /**
      *    Load object in memory from database by fkContact
      *
@@ -371,7 +374,7 @@ class eCommerceSocpeople // extends CommonObject
         // Clean parameters
         if (isset($fkSocpeople)) $fkSocpeople=trim($fkSocpeople);
         if (isset($siteId)) $siteId=intval($siteId);
-    
+
         global $langs;
         $sql = "SELECT";
         $sql.= " t.rowid,";
@@ -410,8 +413,8 @@ class eCommerceSocpeople // extends CommonObject
             return -1;
         }
     }
-    
-	/**	
+
+	/**
      * 		Select all the ids from eCommerceSocpeople for a site
      * 		@param int		siteId
      * 		@return array	synchObject ids for this site
@@ -420,7 +423,7 @@ class eCommerceSocpeople // extends CommonObject
     {
    		global $langs;
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."ecommerce_socpeople";
-        $sql.= " WHERE fk_site = ".$siteId;       
+        $sql.= " WHERE fk_site = ".$siteId;
     	dol_syslog(get_class($this)."::getAllECommerceSocpeopleIds sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
 
@@ -434,10 +437,9 @@ class eCommerceSocpeople // extends CommonObject
             	$obj = $this->db->fetch_object($resql);
             	$idsArray[] = intval($obj->rowid);
             	$ii++;
-            }            
+            }
             $this->db->free($resql);
             return $idsArray;
-        	return $num;
         }
         else
         {
@@ -447,4 +449,4 @@ class eCommerceSocpeople // extends CommonObject
         }
     }
 }
-?>
+

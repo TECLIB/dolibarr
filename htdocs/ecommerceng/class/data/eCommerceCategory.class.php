@@ -19,12 +19,9 @@
 
 
 /**
- *      \file       dev/skeletons/skeleton_class.class.php
- *      \ingroup    mymodule othermodule1 othermodule2
+ *      \file       ecommerceng/class/data/eCommerceCategory.class.php
+ *      \ingroup    ecommerceng
  *      \brief      This file is an example for a CRUD class file (Create/Read/Update/Delete)
- * 		\version    $Id: skeleton_class.class.php,v 1.29 2010/04/29 14:54:13 grandoc Exp $
- * 		\author		Put author name here
- * 		\remarks	Put here some comments
  */
 // Put here all includes required by your class file
 //require_once(DOL_DOCUMENT_ROOT."/core/class/commonobject.class.php");
@@ -32,9 +29,7 @@
 //require_once(DOL_DOCUMENT_ROOT."/product/class/product.class.php");
 
 /**
- *      \class      Skeleton_class
- *      \brief      Put here description of your class
- * 		\remarks	Put here some comments
+ *      eCommerceCategory
  */
 class eCommerceCategory // extends CommonObject
 {
@@ -55,8 +50,9 @@ class eCommerceCategory // extends CommonObject
     var $last_update;
 
     /**
-     *      \brief      Constructor
-     *      \param      DB      Database handler
+     *      Constructor
+     *
+     *      @param      DoliDB  $DB      Database handler
      */
     function eCommerceCategory($DB)
     {
@@ -66,10 +62,11 @@ class eCommerceCategory // extends CommonObject
     }
 
     /**
-     *      \brief      Create in database
-     *      \param      user        	User that create
-     *      \param      notrigger	    0=launch triggers after, 1=disable triggers
-     *      \return     int         	<0 if KO, Id of created object if OK
+     *      Create in database
+     *
+     *      @param      User    $user        	User that create
+     *      @param      int     $notrigger	    0=launch triggers after, 1=disable triggers
+     *      @return     int                    	<0 if KO, Id of created object if OK
      */
     function create($user, $notrigger = 0)
     {
@@ -96,10 +93,10 @@ class eCommerceCategory // extends CommonObject
         $sql.= " '" . $this->db->escape($this->label) . "',";
         $sql.= " '" . $this->db->escape($this->type) . "',";
         $sql.= " '" . $this->db->escape($this->description) . "',";
-        $sql.= " '" . $this->db->escape($this->fk_category) . "',";
-        $sql.= " '" . $this->db->escape($this->fk_site) . "',";
-        $sql.= " '" . $this->db->escape($this->remote_id) . "',";
-        $sql.= " '" . $this->db->escape($this->remote_parent_id) . "',";
+        $sql.= " " . $this->db->escape($this->fk_category) . ",";
+        $sql.= " " . $this->db->escape($this->fk_site) . ",";
+        $sql.= " " . $this->db->escape($this->remote_id) . ",";
+        $sql.= " " . $this->db->escape($this->remote_parent_id) . ",";
         $sql.= " '" . $this->db->idate($this->last_update) . "'";
         $sql.= ")";
 
@@ -148,9 +145,10 @@ class eCommerceCategory // extends CommonObject
     }
 
     /**
-     *    \brief      Load object in memory from database
-     *    \param      id          id object
-     *    \return     int         <0 if KO, >0 if OK
+     *    Load object in memory from database
+     *
+     *    @param      int   $id          id object
+     *    @return     int                <0 if KO, >0 if OK
      */
     function fetch($id)
     {
@@ -199,10 +197,11 @@ class eCommerceCategory // extends CommonObject
     }
 
     /**
-     *      \brief      Update database
-     *      \param      user        	User that modify
-     *      \param      notrigger	    0=launch triggers after, 1=disable triggers
-     *      \return     int         	<0 if KO, >0 if OK
+     *      Update database
+     *
+     *      @param      User    $user        	User that modify
+     *      @param      int     $notrigger	    0=launch triggers after, 1=disable triggers
+     *      @return     int                    	<0 if KO, >0 if OK
      */
     function update($user = 0, $notrigger = 0)
     {
@@ -225,16 +224,14 @@ class eCommerceCategory // extends CommonObject
         // Put here code to add control on parameters values
         // Update request
         $sql = "UPDATE " . MAIN_DB_PREFIX . $this->table_element . " SET";
-
-        $sql.= " label='" . $this->label . "',";
+        $sql.= " label='" . $this->db->escape($this->label) . "',";
         $sql.= " type=" . (isset($this->type) ? intval($this->type) : 0) . ",";
-        $sql.= " description='" . $this->description . "',";
+        $sql.= " description='" . $this->db->escape($this->description) . "',";
         $sql.= " fk_category=" . (isset($this->fk_category) ? intval($this->fk_category) : 0) . ",";
         $sql.= " fk_site=" . (isset($this->fk_site) ? intval($this->fk_site) : 0) . ",";
         $sql.= " remote_id=" . (isset($this->remote_id) ? intval($this->remote_id) : 0) . ",";
         $sql.= " remote_parent_id=" . (isset($this->remote_parent_id) ? intval($this->remote_parent_id) : $this->fk_site) . ",";
         $sql.= " last_update=" . (isset($this->last_update) ? "'" . $this->db->idate($this->last_update) . "'" : "null") . "";
-
         $sql.= " WHERE rowid=" . $this->id;
 
         $this->db->begin();
@@ -280,10 +277,11 @@ class eCommerceCategory // extends CommonObject
     }
 
     /**
-     *   \brief      Delete object in database
-     * 	\param      user        	User that delete
-     *   \param      notrigger	    0=launch triggers after, 1=disable triggers
-     * 	\return		int				<0 if KO, >0 if OK
+     *   Delete object in database
+     *
+     * 	 @param     User    $user        	User that delete
+     *   @param     int     $notrigger	    0=launch triggers after, 1=disable triggers
+     * 	 @return	int		          		<0 if KO, >0 if OK
      */
     function delete($user, $notrigger = 0)
     {
@@ -337,8 +335,9 @@ class eCommerceCategory // extends CommonObject
 
     /**
      * Get the last date of the last updated category
-     * @param $site eCommerceSite id | * for each sites
-     * @return datetime
+     *
+     * @param   int     $site       eCommerceSite id | * for each sites
+     * @return  datetime
      */
     public function getLastUpdate($site)
     {
@@ -368,18 +367,18 @@ class eCommerceCategory // extends CommonObject
         return $lastdate;
     }
 
-    /** 		
+    /**
      * 		Function to compare date in remoteCatToCheck and date into sync table to see if category was changed on Magento side
-     * 
-     * 		@param		$site				site id from eCommerceSynchro
-     * 		@param		$toDate				$toDate is now from eCommerceSynchro. Not used.
-     * 		@param		$remoteCatToCheck	magento category cutted from magento tree (is an array)
-     * 		@return		1 to add this category to update array, 0 to not add this category	 * 
+     *
+     * 		@param		int        $siteId				site id from eCommerceSynchro
+     * 		@param		string     $toDate				$toDate is now from eCommerceSynchro. Not used.
+     * 		@param		string     $remoteCatToCheck    Magento category cutted from magento tree (is an array)
+     * 		@return		1 to add this category to update array, 0 to not add this category
      */
     public function checkForUpdate($siteId, $toDate, $remoteCatToCheck)
     {
         global $langs;
-        $updateRequired = 0;  // If any error occurs, category won't appears in update array		
+        $updateRequired = 0;  // If any error occurs, category won't appears in update array
 
         $sql = "SELECT t.last_update as lastdate, t.remote_parent_id as parentid FROM " . MAIN_DB_PREFIX . $this->table_element . " as t";
         $sql.= " WHERE t.remote_id=" . $remoteCatToCheck['category_id'] . " AND t.fk_site = " . $siteId;
@@ -391,7 +390,7 @@ class eCommerceCategory // extends CommonObject
             {
                 $obj = $this->db->fetch_object($resql);
 
-                $now = $toDate;  // Dolibarr's category time 
+                $now = $toDate;  // Dolibarr's category time
                 $lu = $this->db->jdate($obj->lastdate);                 // date of last update process
                 $lumage = strtotime($remoteCatToCheck['updated_at']);
                 //var_dump($lu);
@@ -402,7 +401,7 @@ class eCommerceCategory // extends CommonObject
                 $updateRequired = 1;
             }
             $this->db->free($resql);
-        } 
+        }
         else
         {
             $this->error = "Error " . $this->db->lasterror();
@@ -414,10 +413,10 @@ class eCommerceCategory // extends CommonObject
 
     /**
      *    Load object in memory from database by remote_id
-     *    
-     *    @param	$remoteId string remote_id
-     *    @param	$siteId int fk_site
-     *    @return	int <0 if KO, >0 if OK
+     *
+     *    @param	int    $remoteId      string remote_id
+     *    @param	int    $siteId        int fk_site
+     *    @return	int                   <0 if KO or not found, >0 if OK
      */
     public function fetchByRemoteId($remoteId, $siteId)
     {
@@ -432,7 +431,6 @@ class eCommerceCategory // extends CommonObject
         $sql.= "t.remote_id,";
         $sql.= "t.remote_parent_id,";
         $sql.= "t.last_update";
-
         $sql.= " FROM " . MAIN_DB_PREFIX . $this->table_element . " as t";
         $sql.= " WHERE t.fk_site = " . $siteId;
         $sql.= " AND t.remote_id = " . $remoteId;
@@ -470,10 +468,12 @@ class eCommerceCategory // extends CommonObject
     }
 
     /**
-     * 		\brief		function used to call a fetchByRemoteId by fKCat (to check if an eCommerceCat 
-     * 					exists corresponding with the importRoot defined in eCommerceSite)
-     * 		\param		fk_cat from eCommerceSite, eCommerceSite Id
-     * 		\return		fetchByRemoteId's result, -2 if error in this method
+     * 		Function used to call a fetchByRemoteId by fKCat (to check if an eCommerceCat
+     * 		exists corresponding with the importRoot defined in eCommerceSite)
+     *
+     * 		@param		int     $fKCategory     $fKCategory from eCommerceSite
+     *      @param      int     $siteId         eCommerceSite Id
+     * 		@return		fetchByRemoteId's result, -2 if error in this method
      */
     public function fetchByFKCategory($fKCategory, $siteId)
     {
@@ -481,7 +481,6 @@ class eCommerceCategory // extends CommonObject
 
         $sql = "SELECT ";
         $sql.= "t.remote_id";
-
         $sql.= " FROM " . MAIN_DB_PREFIX . $this->table_element . " as t";
         $sql.= " WHERE t.fk_site = " . $siteId;
         $sql.= " AND t.fk_category= " . $fKCategory;
@@ -510,9 +509,10 @@ class eCommerceCategory // extends CommonObject
     }
 
     /**
-     * 		\brief		Function to put each category of a tree in a unique array. Children are always after parents.
-     * 		\param		array 		$tree, array containing arrays of the same kind
-     * 		\return		array		array containing each category on a unique level (without the tree root)
+     * 		Function to put each category of a tree in a unique array. Children are always after parents.
+     *
+     * 		@param		array 		$tree      Array containing arrays of the same kind
+     * 		@return		array		           array containing each category on a unique level (without the tree root)
      */
     public function cuttingCategoryTreeFromMagentoToDolibarr($tree)
     {
@@ -528,7 +528,7 @@ class eCommerceCategory // extends CommonObject
             // $subres is a one-leveled array, so we iterate over it and put each cat it contains in $res
             if ($subRes)
             {
-                array_reverse($subRes); // For children of a child to be position-ordered after its parent	   				   			
+                array_reverse($subRes); // For children of a child to be position-ordered after its parent
                 foreach ($subRes as $cat)
                     $res[] = $cat; // We add children behind parent
             }
@@ -537,28 +537,30 @@ class eCommerceCategory // extends CommonObject
     }
 
     /**
-     * 		\brief		Function to put each category of a tree in a unique array. Children are always after parents.
-     * 		\param		array 		$tree, array containing arrays of the same kind
-     * 		\return		array		array containing each category on a unique level (without the tree root)
+     * 		Function to put each category of a tree in a unique array. Children are always after parents.
+     *
+     * 		@param	   array       $tree          Array containing arrays of the same kind
+     *      @param     array       $resanswer     Array containing each category on a unique level (without the tree root)
+     * 		@return    void
      */
     public function cuttingCategoryTreeFromMagentoToDolibarrNew($tree, &$resanswer)
     {
         $tmp=$tree;
         if (isset($tmp['level']) && $tmp['level']==0) $tmp=$tree['children'];
-        
+
         foreach ($tmp as $subCat)
         {
             $savchildren = null;
-            if (isset($subCat['children'])) 
+            if (isset($subCat['children']))
             {
                 $savchildren=$subCat['children'];
                 unset($subCat['children']);
             }
-            
+
             //var_dump($subCat);
-            
+
             $resanswer[] = $subCat;   // We add the popped $subcat to $res
-            
+
             // For each child, we check if it has children to, and call this function again in this case
             if (!empty($savchildren))
             {
@@ -567,12 +569,12 @@ class eCommerceCategory // extends CommonObject
             }
         }
     }
-    
+
     /**
      * 		Function to return list of id of Dolibarr categories from a list of remoteCategoriesIds
-     * 
-     * 		@param		array		        Array of remote ids
-     * 		@return		array	            Array of categories' ids 
+     *
+     * 		@param		array	$ids        Array of remote ids
+     * 		@return		array	            Array of categories' ids
      */
     public function getDolibarrCategoryFromRemoteIds($ids)
     {
@@ -613,17 +615,18 @@ class eCommerceCategory // extends CommonObject
         }
     }
 
-    /** 	
+    /**
      * 		Select all the ids from eCommerceCategory for a site
-     * 		@param 	object	ECommerceSite
-     * 		@return array	synchObject ids for this site
+     *
+     * 		@param 	ECommerceSite  $eCommerceSite      Object eCommerceSite
+     * 		@return array	                           synchObject ids for this site
      */
     public function getAllECommerceCategoryIds($eCommerceSite)
     {
         global $langs;
 
         $sql = "SELECT rowid FROM " . MAIN_DB_PREFIX . "ecommerce_category";
-        $sql.= " WHERE fk_site = " . $eCommerceSite->id . " AND fk_category<>" . intval($eCommerceSite->fk_cat_product);
+        $sql.= " WHERE fk_site = " . $eCommerceSite->id . " AND fk_category <> " . intval($eCommerceSite->fk_cat_product);
         dol_syslog(get_class($this) . "::getAllECommerceCategoryIds sql=" . $sql, LOG_DEBUG);
         $resql = $this->db->query($sql);
 
@@ -639,7 +642,6 @@ class eCommerceCategory // extends CommonObject
             }
             $this->db->free($resql);
             return $idsArray;
-            return $num;
         } else
         {
             $this->error = "Error " . $this->db->lasterror();

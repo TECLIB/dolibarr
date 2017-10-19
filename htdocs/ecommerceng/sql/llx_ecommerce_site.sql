@@ -23,14 +23,16 @@ CREATE TABLE llx_ecommerce_site (
   webservice_address varchar(255) NOT NULL,
   user_name varchar(255) DEFAULT NULL,
   user_password varchar(255) DEFAULT NULL,
+  price_level integer NULL DEFAULT 1,
   filter_label varchar(255) DEFAULT NULL,
   filter_value varchar(255) DEFAULT NULL,
   fk_cat_societe integer NOT NULL,
   fk_cat_product integer NOT NULL,
   fk_warehouse integer NULL,
+  fk_thirdparty integer NULL,							-- thirdparty for non logged users
   stock_sync_direction varchar(24) DEFAULT 'none',
   last_update datetime DEFAULT NULL,
-  timeout int(11) NOT NULL DEFAULT 300,
-  magento_use_special_price INT( 1 ) NOT NULL DEFAULT '0',
+  timeout integer NOT NULL DEFAULT 300,
+  magento_use_special_price INTEGER NOT NULL DEFAULT 0,
   magento_price_type VARCHAR(3) NOT NULL DEFAULT 'HT'
 ) ENGINE=InnoDB;

@@ -16,10 +16,10 @@
 --
 -- ===================================================================
 
-CREATE TABLE `llx_ecommerce_product` (
-  `rowid` int(11) NOT NULL auto_increment PRIMARY KEY,
-  `fk_product` int(11) NOT NULL,
-  `fk_site` int(11) NOT NULL,
-  `remote_id` varchar(255) NOT NULL,
-  `last_update` datetime default NULL
+CREATE TABLE llx_ecommerce_product (
+  rowid integer NOT NULL auto_increment PRIMARY KEY,
+  fk_product integer NOT NULL,
+  fk_site integer NOT NULL,
+  remote_id varchar(255) NOT NULL,
+  last_update datetime default NULL
 ) ENGINE=InnoDB COMMENT='Table transition remote site -  Dolibarr';

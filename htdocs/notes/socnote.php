@@ -26,20 +26,24 @@
  */
 
 $res=0;
+// Try main.inc.php into web root known defined into CONTEXT_DOCUMENT_ROOT (not always defined)
 if (! $res && ! empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])) $res=@include($_SERVER["CONTEXT_DOCUMENT_ROOT"]."/main.inc.php");
+// Try main.inc.php into web root detected using web root caluclated from SCRIPT_FILENAME
+$tmp=empty($_SERVER['SCRIPT_FILENAME'])?'':$_SERVER['SCRIPT_FILENAME'];$tmp2=realpath(__FILE__); $i=strlen($tmp)-1; $j=strlen($tmp2)-1;
+while($i > 0 && $j > 0 && isset($tmp[$i]) && isset($tmp2[$j]) && $tmp[$i]==$tmp2[$j]) { $i--; $j--; }
+if (! $res && $i > 0 && file_exists(substr($tmp, 0, ($i+1))."/main.inc.php")) $res=@include(substr($tmp, 0, ($i+1))."/main.inc.php");
+if (! $res && $i > 0 && file_exists(dirname(substr($tmp, 0, ($i+1)))."/main.inc.php")) $res=@include(dirname(substr($tmp, 0, ($i+1)))."/main.inc.php");
+// Try main.inc.php using relative path
 if (! $res && file_exists("../main.inc.php")) $res=@include("../main.inc.php");
 if (! $res && file_exists("../../main.inc.php")) $res=@include("../../main.inc.php");
 if (! $res && file_exists("../../../main.inc.php")) $res=@include("../../../main.inc.php");
-if (! $res && file_exists("../../../../main.inc.php")) $res=@include("../../../../main.inc.php");
-if (! $res && file_exists("../../../../../main.inc.php")) $res=@include("../../../../../main.inc.php");
-if (! $res && preg_match('/\/nltechno([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
-if (! $res && preg_match('/\/teclib([^\/]*)\//',$_SERVER["PHP_SELF"],$reg)) $res=@include("../../../dolibarr".$reg[1]."/htdocs/main.inc.php"); // Used on dev env only
 if (! $res) die("Include of main fails");
+
 require_once(DOL_DOCUMENT_ROOT."/core/class/doleditor.class.php");
 require_once(DOL_DOCUMENT_ROOT."/core/lib/company.lib.php");
 dol_include_once("/notes/class/note.class.php");
 
-$action = GETPOST('action');
+$action = GETPOST('action','aZ09');
 
 $langs->load("companies");
 $langs->load("notes@notes");
@@ -63,7 +67,7 @@ if ($socid > 0)
  * Actions
  */
 
-if ($action=="del_note" && ! GETPOST('cancel')) 
+if ($action=="del_note" && ! GETPOST('cancel'))
 {
 	$notes = new Note();
 	$notes->getFromDB($_GET['note_id']);
@@ -89,7 +93,7 @@ if($action=="edit_note_go" && ! GETPOST('cancel')) {
 	}
 }
 
-if ($action=="add_note") 
+if ($action=="add_note")
 {
 	$notes = new Note();
 	$notes->fields['user_id'] = $user->id;
@@ -224,14 +228,14 @@ JS;
 				$user->fetch($note_infos['user_id']);
 				$auteur = $user->getFullName($langs);
 
-				
+
 			 	print'<h3 class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-top">';
 			 	print '<a href="#">';
 			 	print 'n°'.$note_infos['rowid'].' - '.$note_infos['datetime'].' - '.$auteur;
 			 	print ' : '.$note_infos['note_title'];
 			 	print '</a>';
 			 	print '</h3>';
-			 	
+
 			 	print '<div class="ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content-active">';
 			 	print '<p style="float: right; width:50px; text-align:center;margin-bottom:0px; margin-top: 0px;">';
 			 	Note::showEdit($socid,$note_infos['rowid']);       // Show button EditNote

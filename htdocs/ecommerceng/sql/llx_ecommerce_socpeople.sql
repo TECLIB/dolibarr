@@ -16,11 +16,11 @@
 --
 -- ===================================================================
 
-CREATE TABLE `llx_ecommerce_socpeople` (
-  `rowid` int(11) unsigned NOT NULL auto_increment PRIMARY KEY,
-  `fk_socpeople` int(11) unsigned NOT NULL,
-  `fk_site` int(11) unsigned NOT NULL,
-  `remote_id` varchar(255) NOT NULL,
-  `type` int(11) unsigned NOT NULL DEFAULT 1,
-  `last_update` datetime default NULL
+CREATE TABLE llx_ecommerce_socpeople (
+  rowid integer unsigned NOT NULL auto_increment PRIMARY KEY,
+  fk_socpeople integer unsigned NOT NULL,
+  fk_site integer unsigned NOT NULL,
+  remote_id varchar(255) NOT NULL,
+  type integer unsigned NOT NULL DEFAULT 1,
+  last_update datetime default NULL
 ) ENGINE=InnoDB COMMENT='Table transition remote site -  Dolibarr';

@@ -26,7 +26,7 @@ class KimiosPhpSoap {
 
 	function connect($kimiosUrl,$userSource,$userName,$password) {
 		$SecurityService = new SecurityService(
-			$this->getWsdl($kimiosUrl, 'SecurityService'), 
+			$this->getWsdl($kimiosUrl, 'SecurityService'),
 			$this->getArrayOptionsService($kimiosUrl, 'SecurityService')
 		);
 
@@ -43,11 +43,21 @@ class KimiosPhpSoap {
 	}
 
 	function getArrayOptionsService($serverUrl, $serviceName){
-		$options = array(
+	    $context = stream_context_create([
+	        'ssl' => [
+	            // set some SSL/TLS specific options
+	            'verify_peer' => false,
+	            'verify_peer_name' => false,
+	            'allow_self_signed' => true
+	        ]
+	    ]);
+
+	    $options = array(
 			'soap_version'	=> SOAP_1_1,
 			'exceptions'	=> true,
 			'trace'			=> 1,
-			'location'		=> $serverUrl.'/services/'.$serviceName.'?wsdl'
+			'location'		=> $serverUrl.'/services/'.$serviceName.'?wsdl',
+		    'stream_context' => $context
 		);
 
 		return $options;
