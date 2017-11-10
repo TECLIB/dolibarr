@@ -98,6 +98,19 @@ class InterfaceECommerceng
     {
     	$error=0;
 
+        if ($action == 'CATEGORY_LINK') {
+            if (isset($object->linkto->element)) {
+                switch ($object->linkto->element) {
+                    case 'product':
+                        //$cat_link_action_old = $action;
+                        //$cat_link_object_old = $object;
+                        $action = 'PRODUCT_MODIFY';
+                        $object = $object->linkto;
+                        break;
+                }
+            }
+        }
+
         if ($action == 'COMPANY_CREATE')
         {
 
@@ -274,11 +287,18 @@ class InterfaceECommerceng
         {
             $this->db->begin();
 
+            $categories = GETPOST('categories');
+
             $eCommerceSite = new eCommerceSite($this->db);
 			$sites = $eCommerceSite->listSites('object');
 
 			foreach($sites as $site)
 			{
+			    if (!in_array($site->fk_cat_product, $categories)) {
+                    dol_syslog("Product not in categorie now, so we won't run code to sync from dolibarr to ecommerce");
+                    continue;
+                }
+
 				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
                 {
                     dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
@@ -317,21 +337,35 @@ class InterfaceECommerceng
     				}
     				else
     				{
-    				    // Get current categories
-    				    require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
-    				    $c = new Categorie($this->db);
-    				    $catids = $c->containing($object->id, Categorie::TYPE_PRODUCT, 'id');
+                        // Get current categories
+                        require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+                        $c = new Categorie($this->db);
+                        $catids = $c->containing($object->id, Categorie::TYPE_PRODUCT, 'id');
 
-    				    if (in_array($site->fk_cat_product, $catids))
-    				    {
-    				        dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
-    				        // TODO
-    				        //$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
-    				    }
-    				    else
-    				    {
-    					   dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record and does not has category flag to push on eCommerce.");
-    				    }
+                        if (in_array($site->fk_cat_product, $catids)) {
+                            dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
+
+                            $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+                            dol_syslog("Trigger " . $action . " try to connect to eCommerce site " . $site->name);
+                            $eCommerceSynchro->connect();
+                            if (count($eCommerceSynchro->errors)) {
+                                $error++;
+                                setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
+                            }
+
+                            if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+                                $object->price = $object->multiprices[$site->price_level];
+                            }
+
+                            $result = $eCommerceSynchro->eCommerceRemoteAccess->createRemoteProduct($object);
+                            if (!$result) {
+                                $error++;
+                                $this->error = $eCommerceSynchro->eCommerceRemoteAccess->error;
+                                $this->errors = $eCommerceSynchro->eCommerceRemoteAccess->errors;
+                            }
+                        } else {
+                            dol_syslog("Product with id ".$object->id." is not linked to an ecommerce record and does not has category flag to push on eCommerce.");
+                        }
     				}
 				}
 			}
@@ -350,9 +384,19 @@ class InterfaceECommerceng
 
 
 
-        if ($action == 'ORDER_MODIFY' || $action == 'ORDER_CLOSE' || $action == 'ORDER_CLASSIFY_BILLED')
+        if ($action == 'ORDER_MODIFY' || $action == 'ORDER_CLOSE' || $action == 'ORDER_CLASSIFY_BILLED' ||
+            $action == 'ORDER_VALIDATE' || $action == 'ORDER_UNVALIDATE' || $action == 'ORDER_REOPEN' ||
+            $action == 'ORDER_CANCEL' || $action == 'ORDER_CLASSIFY_UNBILLED')
         {
             $this->db->begin();
+
+            switch ($action) {
+                case 'ORDER_VALIDATE': $object->statut = Commande::STATUS_VALIDATED; break;
+                case 'ORDER_UNVALIDATE': $object->statut = Commande::STATUS_DRAFT; break;
+                case 'ORDER_REOPEN': $object->statut = Commande::STATUS_DRAFT; break;
+                case 'ORDER_CLOSE': $object->statut = Commande::STATUS_CLOSED; break;
+                case 'ORDER_CANCEL': $object->statut = Commande::STATUS_CANCELED; break;
+            }
 
             $eCommerceSite = new eCommerceSite($this->db);
             $sites = $eCommerceSite->listSites('object');

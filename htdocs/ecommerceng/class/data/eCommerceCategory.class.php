@@ -95,8 +95,8 @@ class eCommerceCategory // extends CommonObject
         $sql.= " '" . $this->db->escape($this->description) . "',";
         $sql.= " " . $this->db->escape($this->fk_category) . ",";
         $sql.= " " . $this->db->escape($this->fk_site) . ",";
-        $sql.= " " . $this->db->escape($this->remote_id) . ",";
-        $sql.= " " . $this->db->escape($this->remote_parent_id) . ",";
+        $sql.= " '" . $this->db->escape($this->remote_id) . "',";
+        $sql.= " '" . $this->db->escape($this->remote_parent_id) . "',";
         $sql.= " '" . $this->db->idate($this->last_update) . "'";
         $sql.= ")";
 
@@ -380,7 +380,7 @@ class eCommerceCategory // extends CommonObject
         global $langs;
         $updateRequired = 0;  // If any error occurs, category won't appears in update array
 
-        $sql = "SELECT t.last_update as lastdate, t.remote_parent_id as parentid FROM " . MAIN_DB_PREFIX . $this->table_element . " as t";
+        $sql = "SELECT t.last_update as lastdate, t.remote_parent_id as parentid, t.fk_category FROM " . MAIN_DB_PREFIX . $this->table_element . " as t";
         $sql.= " WHERE t.remote_id=" . $remoteCatToCheck['category_id'] . " AND t.fk_site = " . $siteId;
 
         $resql = $this->db->query($sql);
@@ -390,12 +390,24 @@ class eCommerceCategory // extends CommonObject
             {
                 $obj = $this->db->fetch_object($resql);
 
-                $now = $toDate;  // Dolibarr's category time
-                $lu = $this->db->jdate($obj->lastdate);                 // date of last update process
-                $lumage = strtotime($remoteCatToCheck['updated_at']);
-                //var_dump($lu);
-                //var_dump($lumage);
-                $updateRequired = ($obj->parentid != $remoteCatToCheck['parent_id'] || ($lu < $lumage)) ? 1 : 0;
+                $diffdates = false;
+                $diffvalues = false;
+                if (empty($remoteCatToCheck['updated_at'])) {
+                    $catObj = new Categorie($this->db);
+                    $ret = $catObj->fetch($obj->fk_category);
+                    if ($ret > 0) {
+                        $diffvalues = $catObj->label != $remoteCatToCheck['name'] || $catObj->description != $remoteCatToCheck['description'];
+                    }
+                } else {
+                    $now = $toDate;  // Dolibarr's category time
+                    $lu = $this->db->jdate($obj->lastdate);                 // date of last update process
+                    $lumage = strtotime($remoteCatToCheck['updated_at']);
+                    //var_dump($lu);
+                    //var_dump($lumage);
+                    $diffdates = $lu < $lumage;
+                }
+
+                $updateRequired = ($obj->parentid != $remoteCatToCheck['parent_id'] || $diffdates || $diffvalues) ? 1 : 0;
             } else
             {
                 $updateRequired = 1;

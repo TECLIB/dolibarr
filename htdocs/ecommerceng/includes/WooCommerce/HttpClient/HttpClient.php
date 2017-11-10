@@ -313,12 +313,17 @@ class HttpClient
         if (!\in_array($this->response->getCode(), ['200', '201', '202'])) {
             $errors = !empty($parsedResponse['errors']) ? $parsedResponse['errors'] : $parsedResponse;
 
-            if (!empty($errors[0])) {
-                $errorMessage = $errors[0]['message'];
-                $errorCode    = $errors[0]['code'];
+            if (is_array($errors)) {
+                if (!empty($errors[0])) {
+                    $errorMessage = $errors[0]['message'];
+                    $errorCode = $errors[0]['code'];
+                } else {
+                    $errorMessage = $errors['message'];
+                    $errorCode = $errors['code'];
+                }
             } else {
-                $errorMessage = $errors['message'];
-                $errorCode    = $errors['code'];
+                $errorMessage = 'N/A';
+                $errorCode    = 'N/A';
             }
 
             throw new HttpClientException(\sprintf('Error: %s [%s]', $errorMessage, $errorCode), $this->response->getCode(), $this->request, $this->response);
@@ -335,7 +340,7 @@ class HttpClient
         $parsedResponse = \json_decode($this->response->getBody(), true);
 
         // Test if return a valid JSON.
-        if (JSON_ERROR_NONE !== json_last_error()) {
+        if ($parsedResponse === null || (function_exists('json_last_error') && JSON_ERROR_NONE !== json_last_error())) {
             $message = function_exists('json_last_error_msg') ? json_last_error_msg() : 'Invalid JSON returned';
             throw new HttpClientException($message, $this->response->getCode(), $this->request, $this->response);
         }

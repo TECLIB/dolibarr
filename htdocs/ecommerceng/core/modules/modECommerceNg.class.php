@@ -23,6 +23,7 @@ require_once(DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php');
 
 dol_include_once('/ecommerceng/admin/class/gui/eCommerceMenu.class.php');
 dol_include_once('/ecommerceng/admin/class/data/eCommerceDict.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 
 
 /**
@@ -59,7 +60,7 @@ class modECommerceNg extends DolibarrModules
 		$this->editor_url = 'http://www.teclib.com';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '4.0.0';
+		$this->version = '4.0.1';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -85,8 +86,9 @@ class modECommerceNg extends DolibarrModules
 		//							'workflow' => array('order' => array('WORKFLOW_ORDER_AUTOCREATE_INVOICE')) // Set here all workflow context managed by module
 		//                        );
 		$this->module_parts = array(
-                    'triggers' => 1
-                );
+            'triggers' => 1,
+			'hooks' => array('expeditioncard','invoicecard','productdocuments'),
+		);
 
 		// Data directories to create when module is enabled.
 		// Example: this->dirs = array("/mymodule/temp");
@@ -102,9 +104,9 @@ class modECommerceNg extends DolibarrModules
 		// Dependencies
 		$this->depends = array("modSociete","modProduct","modCategorie","modWebServices");		// List of modules id that must be enabled if this module is enabled
 		$this->requiredby = array();	// List of modules id to disable if this one is disabled
-		$this->phpmin = array(4,3);					// Minimum version of PHP required by module
+		$this->phpmin = array(5,3);					// Minimum version of PHP required by module
 		$this->need_dolibarr_version = array(3,9);	// Minimum version of Dolibarr required by module
-		$this->langfiles = array("ecommerce@ecommerceng");
+		$this->langfiles = array("ecommerce@ecommerceng", "woocommerce@ecommerceng");
 
 		// Constants
 		// List of particular constants to add when module is enabled
@@ -130,6 +132,42 @@ class modECommerceNg extends DolibarrModules
 		// 'member'           to add a tab in fundation member view
 		// 'contract'         to add a tab in contract view
 
+        if (! isset($conf->ecommerceng) || ! isset($conf->ecommerceng->enabled))
+        {
+            $conf->ecommerceng=new stdClass();
+            $conf->ecommerceng->enabled=0;
+        }
+
+        $eCommerceSite = new eCommerceSite($this->db);
+
+        // Dictionaries
+		$this->dictionaries=array(
+		    'langs'=>'woocommerce@ecommerceng',
+            'tabname'=>array(MAIN_DB_PREFIX."c_ecommerceng_tax_class"),
+            'tablib'=>array("ECommercengWoocommerceDictTaxClass"),
+            'tabsql'=>array('SELECT f.rowid as rowid, f.site_id, f.code, f.label, f.entity, f.active FROM '.MAIN_DB_PREFIX.'c_ecommerceng_tax_class as f WHERE f.entity='.$conf->entity),
+            'tabsqlsort'=>array("site_id ASC, label ASC"),
+            'tabfield'=>array("code,label,site_id"),
+            'tabfieldvalue'=>array("code,label,site_id"),
+            'tabfieldinsert'=>array("code,label,site_id"),
+            'tabrowid'=>array("rowid"),
+            'tabcond'=>array($conf->ecommerceng->enabled && $eCommerceSite->hasTypeSite(2))
+        );
+
+        /* Example:
+        $this->dictionaries=array(
+            'langs'=>'mylangfile@mymodule',
+            'tabname'=>array(MAIN_DB_PREFIX."table1",MAIN_DB_PREFIX."table2",MAIN_DB_PREFIX."table3"),		// List of tables we want to see into dictonnary editor
+            'tablib'=>array("Table1","Table2","Table3"),													// Label of tables
+            'tabsql'=>array('SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table1 as f','SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table2 as f','SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table3 as f'),	// Request to select fields
+            'tabsqlsort'=>array("label ASC","label ASC","label ASC"),																					// Sort order
+            'tabfield'=>array("code,label","code,label","code,label"),																					// List of fields (result of select to show dictionary)
+            'tabfieldvalue'=>array("code,label","code,label","code,label"),																				// List of fields (list of fields to edit a record)
+            'tabfieldinsert'=>array("code,label","code,label","code,label"),																			// List of fields (list of fields for insert)
+            'tabrowid'=>array("rowid","rowid","rowid"),																									// Name of columns with primary key (try to always name it 'rowid')
+            'tabcond'=>array($conf->mymodule->enabled,$conf->mymodule->enabled,$conf->mymodule->enabled)												// Condition to show each dictionary
+        );
+        */
 
 		// Boxes
 		$this->boxes = array();			// List of boxes
@@ -226,6 +264,7 @@ class modECommerceNg extends DolibarrModules
 		$result=$this->load_tables($options);
 		$this->addSettlementTerms();
 		$this->addAnonymousCompany();
+        $this->addFiles();
 		return $this->_init($sql, $options);
 	}
 
@@ -338,5 +377,18 @@ class modECommerceNg extends DolibarrModules
 			}
 		}
 	}
+
+    /**
+   	 * Add files need for dolibarr
+   	 */
+   	private function addFiles()
+   	{
+        $srcFile = dol_buildpath('/ecommerceng/patchs/dolibarr/includes/OAuth/OAuth2/Service/WordPress.php');
+        $destFile = DOL_DOCUMENT_ROOT . '/includes/OAuth/OAuth2/Service/WordPress.php';
+
+        if (dol_copy($srcFile, $destFile) < 0) {
+            setEventMessages("Error copy file '$srcFile' to '$destFile'", null, 'errors');
+        }
+   	}
 }
 
