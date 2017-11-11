@@ -1164,8 +1164,8 @@ class eCommerceSynchro
                             if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
                             if (isset($societeArray['vatnumber'])) {
                                 $dBSociete->tva_intra = $societeArray['vatnumber'];
-                                $dBSociete->tva_assuj = 1;      // tba_intra is not saved if this field is not set
                             }
+                            $dBSociete->tva_assuj = 1;      // tva_intra is not saved if this field is not set
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
                             $result = $dBSociete->update($dBSociete->id, $this->user);
