@@ -761,7 +761,7 @@ class eCommerceSynchro
                         $counter++;
                         if ($toNb > 0 && $counter > $toNb) break;
 
-                        dol_syslog("synchCategory Process sync of magento category remote_id=".$categoryArray['category_id']." name=".$categoryArray['name']." remote parent_id=".$categoryArray['parent_id']);
+                        dol_syslog("synchCategory Process sync of ecommerce category remote_id=".$categoryArray['category_id']." name=".$categoryArray['name']." remote parent_id=".$categoryArray['parent_id']);
 
                         $this->db->begin();
 
