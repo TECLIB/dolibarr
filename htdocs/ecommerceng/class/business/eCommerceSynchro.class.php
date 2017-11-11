@@ -1060,6 +1060,7 @@ class eCommerceSynchro
                     else
                     {
                         $result = 0;
+			    
                         // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
                         if (isset($societeArray['email_key']) && !empty($societeArray['email_key'])) {
                             // Search into email company and contact
@@ -1071,8 +1072,39 @@ class eCommerceSynchro
                         }
 
                         if ($result < 1 && (!isset($societeArray['type']) || $societeArray['type'] == 'company')) {
-                            // Search for the company name
-                            $result = $dBSociete->fetch(0, $societeArray['name']);
+
+				$unicity='name';
+				if (! empty($conf->global->ECOMMERCENG_THIRDPARTY_UNIQUE_ON) && $conf->global->ECOMMERCENG_THIRDPARTY_UNIQUE_ON == 'email')
+				{
+				    $unicity='email';
+				}
+
+				// If unicity is on NAME
+				if ($unicity == 'name')
+				{
+				    $result = $dBSociete->fetch(0, $societeArray['name']);
+				}
+				// If unicity is on EMAIL
+				if ($unicity == 'email')
+				{
+				    $sql = 'SELECT s.rowid FROM '.MAIN_DB_PREFIX."societe as s where email = '".$this->db->escape($societeArray['email'])."'";
+				    $resqlid = $this->db->query($sql);
+				    if ($resqlid)
+				    {
+					$obj = $this->db->fetch_object($resqlid);
+					if ($obj)
+					{
+					    $thirdpartyid = $obj->rowid;
+					    $result = $dBSociete->fetch(0, $thirdpartyid);
+					}
+				    }
+				    else
+				    {
+					$error++;
+					$this->error='Error in getting id from email.';
+					$this->errors[]=$this->error;
+				    }
+				}
                         }
 
                         if ($result == -2) {
