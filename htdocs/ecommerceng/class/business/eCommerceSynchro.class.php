@@ -774,7 +774,10 @@ class eCommerceSynchro
                         // Now $this->eCommerceMotherCategory contains the mother category or null
 
                         // if fetch on eCommerceMotherCategory has failed, it is root
-                        if ($motherExists < 1 && ($this->eCommerceMotherCategory->fetchByFKCategory($this->eCommerceSite->fk_cat_product, $this->eCommerceSite->id) < 0))
+                        /* Disable automatic creation in dolibarr of link to parent into table of links
+			because, we can't know what is the parent. Here code suppose it is the root category defined into setup
+			but we may have several levels
+			if ($motherExists < 1 && ($this->eCommerceMotherCategory->fetchByFKCategory($this->eCommerceSite->fk_cat_product, $this->eCommerceSite->id) < 0))
                         {
                             // get the importRootCategory of Dolibarr set for the eCommerceSite
                             $dBCategorie->fetch($this->eCommerceSite->fk_cat_product);
@@ -791,7 +794,8 @@ class eCommerceSynchro
 
                             // Create an entry to map importRootCategory in eCommerceCategory
                             $this->eCommerceMotherCategory->create($this->user);
-                        }
+                        } */
+			    
                         $eCommerceCatExists = $this->eCommerceCategory->fetchByRemoteId($categoryArray['category_id'], $this->eCommerceSite->id);
 
                         if ($this->eCommerceCategory->fk_category > 0)
@@ -836,7 +840,8 @@ class eCommerceSynchro
                         }
                         else
                         {
-                            if ($dBCategorie->already_exists()) {
+                            /* Disabled, not sure this is good/required
+			    if ($dBCategorie->already_exists()) {
                                 $cats = $dBCategorie->rechercher('', $dBCategorie->label, $dBCategorie->type, true, true);
                                 foreach ($cats as $cat) {
                                     if ($cat->fk_parent == $dBCategorie->fk_parent) {
@@ -844,9 +849,9 @@ class eCommerceSynchro
                                         $result = $dBCategorie->update($this->user);
                                     }
                                 }
-                            } else {
+                            } else { */
                                 $result = $dBCategorie->create($this->user);
-                            }
+                            /* } */
                         }
                         // if synchro category ok
                         if ($result >= 0)
