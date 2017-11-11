@@ -1613,16 +1613,19 @@ class eCommerceSynchro
                                 $tax_rate_org = $dBProduct->multiprices_tva_tx[$price_level];
                             }
 
-                            if ($price_base_type_org != $this->eCommerceSite->ecommerce_price_type ||
+			    $price_base_type = $this->eCommerceSite->ecommerce_price_type;
+			    if (isset($productArray['price_base_type'])) $price_base_type = $productArray['price_base_type'];
+				
+                            if ($price_base_type_org != $price_base_type ||
                                 $price_org != $productArray['price'] ||
                                 (isset($productArray['price_min']) && $price_min_org != $productArray['price_min']) ||
                                 price2num((float) $productArray['tax_rate']) != price2num((float) $tax_rate_org)
                             ) {
                                 // The price type from eCommerce is defined for the site: TI/TE (Tax Include / Tax Excluded)
                                 if (empty($conf->global->PRODUIT_MULTIPRICES)) {
-                                    $dBProduct->updatePrice($productArray['price'], $this->eCommerceSite->ecommerce_price_type, $this->user, $productArray['tax_rate'], $productArray['price_min']);
+                                    $dBProduct->updatePrice($productArray['price'], $price_base_type, $this->user, $productArray['tax_rate'], $productArray['price_min']);
                                 } else {
-                                    $dBProduct->updatePrice($productArray['price'], $this->eCommerceSite->ecommerce_price_type, $this->user, $productArray['tax_rate'], $productArray['price_min'], $price_level);
+                                    $dBProduct->updatePrice($productArray['price'], $price_base_type, $this->user, $productArray['tax_rate'], $productArray['price_min'], $price_level);
                                 }
                             }
                         }
