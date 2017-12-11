@@ -74,7 +74,7 @@ class WordPress extends AbstractService
         if (null === $data || !is_array($data)) {
             throw new TokenResponseException('Unable to parse response: "'.(isset($responseBody)?$responseBody:'NULL').'"');
         } elseif (isset($data['error'])) {
-            throw new TokenResponseException('Error in retrieving token: "' . $data['error'] . '"');
+            throw new TokenResponseException('Error in retrieving token: "' . $data['error'] . '" : "'.$data['error_description'].'"');
         }
 
         $token = new StdOAuth2Token();

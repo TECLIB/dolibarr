@@ -38,7 +38,7 @@ dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 use OAuth\Common\Storage\DoliStorage;
 use OAuth\Common\Consumer\Credentials;
 use OAuth\Common\Http\Uri\Uri;
-use OAuth\Common\Http\Client\CurlClientEx;
+use OAuth\Common\Http\Client\CurlClient;
 use OAuth\OAuth2\Service\WordPress;
 
 // Define $urlwithroot
@@ -76,7 +76,7 @@ $currentUri = $uriFactory->createFromAbsolute($urlwithroot.'/custom/ecommerceng/
 
 /** @var $serviceFactory \OAuth\ServiceFactory An OAuth service factory. */
 $serviceFactory = new \OAuth\ServiceFactory();
-$httpClient = new CurlClientEx();
+$httpClient = new CurlClient();
 // TODO Set options for proxy and timeout
 // $params=array('CURLXXX'=>value, ...)
 //$httpClient->setCurlParameters($params);

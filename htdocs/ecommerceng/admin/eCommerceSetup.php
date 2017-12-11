@@ -155,10 +155,29 @@ if ($_POST['site_form_detail_action'] == 'save')
             if ($siteDb->type == 2) { // Woocommerce
                 $result = ecommerceng_add_extrafields($db, $langs, [
                     [
+                        'attrname' => "ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}",
+                        'label' => $langs->trans('ECommercengWoocommerceStatus', $siteDb->name),
+                        'type' => 'select',
+                        'pos' => 1,
+                        'size' => '',
+                        'elementtype' => 'product',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => array('options' => array(
+                            "draft" => $langs->trans('ECommercengWoocommerceStatusDraft', $siteDb->name),
+                            "pending" => $langs->trans('ECommercengWoocommerceStatusPending', $siteDb->name),
+                            "private" => $langs->trans('ECommercengWoocommerceStatusPrivate', $siteDb->name),
+                            "publish" => $langs->trans('ECommercengWoocommerceStatusPublish', $siteDb->name),
+                        )),
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 0,
+                    ],[
                         'attrname' => "ecommerceng_description_{$conf->entity}",
                         'label' => 'ECommercengWoocommerceDescription',
                         'type' => 'text',
-                        'pos' => 1,
+                        'pos' => 2,
                         'size' => '',
                         'elementtype' => 'product',
                         'unique' => 0,
@@ -173,7 +192,7 @@ if ($_POST['site_form_detail_action'] == 'save')
                         'attrname' => "ecommerceng_short_description_{$conf->entity}",
                         'label' => 'ECommercengWoocommerceShortDescription',
                         'type' => 'text',
-                        'pos' => 2,
+                        'pos' => 3,
                         'size' => '',
                         'elementtype' => 'product',
                         'unique' => 0,
@@ -188,7 +207,7 @@ if ($_POST['site_form_detail_action'] == 'save')
                         'attrname' => "ecommerceng_tax_class_{$siteDb->id}_{$conf->entity}",
                         'label' => $langs->trans('ECommercengWoocommerceTaxClass', $siteDb->name),
                         'type' => 'sellist',
-                        'pos' => 3,
+                        'pos' => 4,
                         'size' => '',
                         'elementtype' => 'product',
                         'unique' => 0,
@@ -306,13 +325,15 @@ $ecommerceName = ($_POST['ecommerce_name'] ? $_POST['ecommerce_name'] : $siteDb-
 $ecommerceType = ($_POST['ecommerce_type'] ? $_POST['ecommerce_type'] : intval($siteDb->type));
 $ecommerceWebserviceAddress = ($_POST['ecommerce_webservice_address'] ? $_POST['ecommerce_webservice_address'] : $siteDb->webservice_address);
 $ecommerceWebserviceAddressTest = '';
-switch ($ecommerceType) {
-    case 1: // Magento
-        $ecommerceWebserviceAddressTest = $ecommerceWebserviceAddress .(substr($ecommerceWebserviceAddress, -1, 1)!='/'?'/':''). 'api/?wsdl';
-        break;
-    case 2: // Woocommerce
-        $ecommerceWebserviceAddressTest = $ecommerceWebserviceAddress .(substr($ecommerceWebserviceAddress, -1, 1)!='/'?'/':''). 'wp-json/';
-        break;
+if (!empty($ecommerceWebserviceAddress)) {
+    switch ($ecommerceType) {
+        case 1: // Magento
+            $ecommerceWebserviceAddressTest = $ecommerceWebserviceAddress .(substr($ecommerceWebserviceAddress, -1, 1)!='/'?'/':''). 'api/?wsdl';
+            break;
+        case 2: // Woocommerce
+            $ecommerceWebserviceAddressTest = $ecommerceWebserviceAddress .(substr($ecommerceWebserviceAddress, -1, 1)!='/'?'/':''). 'wp-json/';
+            break;
+    }
 }
 $ecommerceUserName = ($_POST['ecommerce_user_name'] ? $_POST['ecommerce_user_name'] : $siteDb->user_name);
 $ecommerceUserPassword = ($_POST['ecommerce_user_password'] ? $_POST['ecommerce_user_password'] : $siteDb->user_password);
