@@ -761,7 +761,7 @@ class eCommerceSynchro
                         $counter++;
                         if ($toNb > 0 && $counter > $toNb) break;
 
-                        dol_syslog("synchCategory Process sync of magento category remote_id=".$categoryArray['category_id']." name=".$categoryArray['name']." remote parent_id=".$categoryArray['parent_id']);
+                        dol_syslog("synchCategory Process sync of ecommerce category remote_id=".$categoryArray['category_id']." name=".$categoryArray['name']." remote parent_id=".$categoryArray['parent_id']);
 
                         $this->db->begin();
 
@@ -774,7 +774,10 @@ class eCommerceSynchro
                         // Now $this->eCommerceMotherCategory contains the mother category or null
 
                         // if fetch on eCommerceMotherCategory has failed, it is root
-                        if ($motherExists < 1 && ($this->eCommerceMotherCategory->fetchByFKCategory($this->eCommerceSite->fk_cat_product, $this->eCommerceSite->id) < 0))
+                        /* Disable automatic creation in dolibarr of link to parent into table of links
+			because, we can't know what is the parent. Here code suppose it is the root category defined into setup
+			but we may have several levels
+			if ($motherExists < 1 && ($this->eCommerceMotherCategory->fetchByFKCategory($this->eCommerceSite->fk_cat_product, $this->eCommerceSite->id) < 0))
                         {
                             // get the importRootCategory of Dolibarr set for the eCommerceSite
                             $dBCategorie->fetch($this->eCommerceSite->fk_cat_product);
@@ -791,7 +794,8 @@ class eCommerceSynchro
 
                             // Create an entry to map importRootCategory in eCommerceCategory
                             $this->eCommerceMotherCategory->create($this->user);
-                        }
+                        } */
+			    
                         $eCommerceCatExists = $this->eCommerceCategory->fetchByRemoteId($categoryArray['category_id'], $this->eCommerceSite->id);
 
                         if ($this->eCommerceCategory->fk_category > 0)
@@ -836,7 +840,8 @@ class eCommerceSynchro
                         }
                         else
                         {
-                            if ($dBCategorie->already_exists()) {
+                            /* Disabled, not sure this is good/required
+			    if ($dBCategorie->already_exists()) {
                                 $cats = $dBCategorie->rechercher('', $dBCategorie->label, $dBCategorie->type, true, true);
                                 foreach ($cats as $cat) {
                                     if ($cat->fk_parent == $dBCategorie->fk_parent) {
@@ -844,9 +849,9 @@ class eCommerceSynchro
                                         $result = $dBCategorie->update($this->user);
                                     }
                                 }
-                            } else {
+                            } else { */
                                 $result = $dBCategorie->create($this->user);
-                            }
+                            /* } */
                         }
                         // if synchro category ok
                         if ($result >= 0)
@@ -1033,8 +1038,8 @@ class eCommerceSynchro
                             if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
                             if (isset($societeArray['vatnumber'])) {
                                 $dBSociete->tva_intra = $societeArray['vatnumber'];
-                                $dBSociete->tva_assuj = 1;      // tba_intra is not saved if this field is not set
                             }
+                            $dBSociete->tva_assuj = 1;      // tva_intra is not saved if this field is not set
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
                             $result = $dBSociete->update($dBSociete->id, $this->user);
@@ -1055,6 +1060,7 @@ class eCommerceSynchro
                     else
                     {
                         $result = 0;
+			    
                         // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
                         if (isset($societeArray['email_key']) && !empty($societeArray['email_key'])) {
                             // Search into email company and contact
@@ -1066,8 +1072,39 @@ class eCommerceSynchro
                         }
 
                         if ($result < 1 && (!isset($societeArray['type']) || $societeArray['type'] == 'company')) {
-                            // Search for the company name
-                            $result = $dBSociete->fetch(0, $societeArray['name']);
+
+				$unicity='name';
+				if (! empty($conf->global->ECOMMERCENG_THIRDPARTY_UNIQUE_ON) && $conf->global->ECOMMERCENG_THIRDPARTY_UNIQUE_ON == 'email')
+				{
+				    $unicity='email';
+				}
+
+				// If unicity is on NAME
+				if ($unicity == 'name')
+				{
+				    $result = $dBSociete->fetch(0, $societeArray['name']);
+				}
+				// If unicity is on EMAIL
+				if ($unicity == 'email')
+				{
+				    $sql = 'SELECT s.rowid FROM '.MAIN_DB_PREFIX."societe as s where email = '".$this->db->escape($societeArray['email'])."'";
+				    $resqlid = $this->db->query($sql);
+				    if ($resqlid)
+				    {
+					$obj = $this->db->fetch_object($resqlid);
+					if ($obj)
+					{
+					    $thirdpartyid = $obj->rowid;
+					    $result = $dBSociete->fetch(0, $thirdpartyid);
+					}
+				    }
+				    else
+				    {
+					$error++;
+					$this->error='Error in getting id from email.';
+					$this->errors[]=$this->error;
+				    }
+				}
                         }
 
                         if ($result == -2) {
@@ -1102,8 +1139,8 @@ class eCommerceSynchro
                             if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
                             if (isset($societeArray['vatnumber'])) {
                                 $dBSociete->tva_intra = dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
-                                $dBSociete->tva_assuj = 1;                              // tva_intra is not saved if this field is not set
                             }
+                            $dBSociete->tva_assuj = 1;                              // tva_intra is not saved if this field is not set
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
                             $dBSociete->code_client = -1;           // Automatic code
                             $dBSociete->code_fournisseur = -1;      // Automatic code
@@ -1127,8 +1164,8 @@ class eCommerceSynchro
                             if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
                             if (isset($societeArray['vatnumber'])) {
                                 $dBSociete->tva_intra = $societeArray['vatnumber'];
-                                $dBSociete->tva_assuj = 1;      // tba_intra is not saved if this field is not set
                             }
+                            $dBSociete->tva_assuj = 1;      // tva_intra is not saved if this field is not set
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
                             $result = $dBSociete->update($dBSociete->id, $this->user);
@@ -1576,16 +1613,19 @@ class eCommerceSynchro
                                 $tax_rate_org = $dBProduct->multiprices_tva_tx[$price_level];
                             }
 
-                            if ($price_base_type_org != $this->eCommerceSite->ecommerce_price_type ||
+			    $price_base_type = $this->eCommerceSite->ecommerce_price_type;
+			    if (isset($productArray['price_base_type'])) $price_base_type = $productArray['price_base_type'];
+				
+                            if ($price_base_type_org != $price_base_type ||
                                 $price_org != $productArray['price'] ||
                                 (isset($productArray['price_min']) && $price_min_org != $productArray['price_min']) ||
                                 price2num((float) $productArray['tax_rate']) != price2num((float) $tax_rate_org)
                             ) {
                                 // The price type from eCommerce is defined for the site: TI/TE (Tax Include / Tax Excluded)
                                 if (empty($conf->global->PRODUIT_MULTIPRICES)) {
-                                    $dBProduct->updatePrice($productArray['price'], $this->eCommerceSite->ecommerce_price_type, $this->user, $productArray['tax_rate'], $productArray['price_min']);
+                                    $dBProduct->updatePrice($productArray['price'], $price_base_type, $this->user, $productArray['tax_rate'], $productArray['price_min']);
                                 } else {
-                                    $dBProduct->updatePrice($productArray['price'], $this->eCommerceSite->ecommerce_price_type, $this->user, $productArray['tax_rate'], $productArray['price_min'], $price_level);
+                                    $dBProduct->updatePrice($productArray['price'], $price_base_type, $this->user, $productArray['tax_rate'], $productArray['price_min'], $price_level);
                                 }
                             }
                         }
