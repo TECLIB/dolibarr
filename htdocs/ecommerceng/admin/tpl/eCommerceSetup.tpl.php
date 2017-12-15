@@ -146,9 +146,7 @@ $var=!$var;
 				<tr <?php print $bc[$var] ?>>
 					<td><span><?php print $langs->trans('ThirdPartyForNonLoggedUsers') ?></span></td>
 					<td>
-						<?php
-                            print $form->select_company($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER, 'ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER', '', 1);
-						?>
+						<?php print $form->select_company($ecommerceFkAnonymousThirdparty, 'ecommerce_fk_anonymous_thirdparty', '', 1); ?>
 					</td>
 					<td><?php print $langs->trans('SynchUnkownCustomersOnThirdParty') ?></td>
 				</tr>
@@ -182,8 +180,8 @@ $var=!$var;
 					<td>
 						<input type="text" class="flat" name="ecommerce_webservice_address" value="<?php print $ecommerceWebserviceAddress ?>" size="60">
 						<?php
-						if ($ecommerceWebserviceAddress)
-						    print '<br><a href="'.$ecommerceWebserviceAddress.'" target="_blank">'.$langs->trans("ECommerceClickUrlToTestUrl").'</a>';
+						if ($ecommerceWebserviceAddressTest)
+						    print '<br><a href="'.$ecommerceWebserviceAddressTest.'" target="_blank">'.$langs->trans("ECommerceClickUrlToTestUrl").'</a>';
 						?>
 					</td>
 					<td><?php print $langs->trans('ECommerceSiteAddressDescription') ?></td>
@@ -201,35 +199,33 @@ $var=!$var;
 <?php
 $var=!$var;
 ?>
-        <tr <?php print $bc[$var] ?>>
-          <td class="fieldrequired"><?php print $langs->trans('ECommerceUserPassword') ?></td>
-          <td>
-            <input type="password" class="flat" name="ecommerce_user_password" value="<?php print $ecommerceUserPassword ?>" size="20">
-          </td>
-          <td><?php print $langs->trans('ECommerceUserPasswordDescription') ?></td>
-        </tr>
+				<tr <?php print $bc[$var] ?>>
+					<td class="fieldrequired"><?php print $langs->trans('ECommerceUserPassword') ?></td>
+					<td><input type="password" class="flat" name="ecommerce_user_password" value="<?php print $ecommerceUserPassword ?>" size="20"></td>
+					<td><?php print $langs->trans('ECommerceUserPasswordDescription') ?></td>
+				</tr>
 <?php
 if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
-  $var = !$var;
+	$var = !$var;
 ?>
-  <tr <?php print $bc[$var] ?>>
-    <td class="fieldrequired"><?php print $langs->trans('ECommercePriceLevel') ?></td>
-    <td>
-      <select class="flat" name="ecommerce_price_level">
-        <?php
-        foreach ($priceLevels as $idx => $priceLevel) {
-          print '<option value="' . $idx . '"' . ($ecommercePriceLevel == $idx ? ' selected="selected"' : '') . '">' . $idx . '</option>';
-        }
-        ?>
-      </select>
-    </td>
-    <td><?php print $langs->trans('ECommercePriceLevelDescription') ?></td>
-  </tr>
-  <script type="text/javascript">
-    jQuery(document).ready(function (){
-      eCommerceConfirmUpdatePriceLevel("site_form_detail", "<?php print $langs->transnoentities('ECommerceConfirmUpdatePriceLevel') ?>", <?php print $siteDb->price_level ?>);
-    });
-  </script>
+				<tr <?php print $bc[$var] ?>>
+					<td class="fieldrequired"><?php print $langs->trans('ECommercePriceLevel') ?></td>
+					<td>
+						<select class="flat" name="ecommerce_price_level">
+						<?php
+						foreach ($priceLevels as $idx => $priceLevel) {
+							print '<option value="' . $idx . '"' . ($ecommercePriceLevel == $idx ? ' selected="selected"' : '') . '">' . $idx . '</option>';
+						}
+						?>
+						</select>
+					</td>
+					<td><?php print $langs->trans('ECommercePriceLevelDescription') ?></td>
+				</tr>
+				<script type="text/javascript">
+					jQuery(document).ready(function (){
+						eCommerceConfirmUpdatePriceLevel("site_form_detail", "<?php print $langs->transnoentities('ECommerceConfirmUpdatePriceLevel') ?>", <?php print $siteDb->price_level ?>);
+					});
+				</script>
 <?php
 }
 /*
@@ -259,20 +255,116 @@ $var=!$var;
 $var=!$var;
 ?>
 				<tr <?php print $bc[$var] ?>>
-					<td><?php print $langs->trans('ECommerceMagentoPriceType') ?></td>
+					<td><?php print $langs->trans('ECommercePriceType') ?></td>
 					<td>
-						<select class="flat" name="ecommerce_magento_price_type">
-							<option value="HT" <?php print ($ecommerceMagentoPriceType == 'HT' ? 'selected="selected"' : '') ?>><?php print $langs->trans('ECommerceMagentoPriceTypeHT') ?></option>
-							<option value="TTC"<?php print ($ecommerceMagentoPriceType == 'TTC' ? 'selected="selected"' : '') ?>><?php print $langs->trans('ECommerceMagentoPriceTypeTTC') ?></option>
+						<select class="flat" name="ecommerce_price_type">
+							<option value="HT" <?php print ($ecommercePriceType == 'HT' ? 'selected="selected"' : '') ?>><?php print $langs->trans('ECommercePriceTypeHT') ?></option>
+							<option value="TTC"<?php print ($ecommercePriceType == 'TTC' ? 'selected="selected"' : '') ?>><?php print $langs->trans('ECommercePriceTypeTTC') ?></option>
 						</select>
 					</td>
-					<td><?php print $langs->trans('ECommerceMagentoPriceTypeDescription') ?></td>
+					<td><?php print $langs->trans('ECommercePriceTypeDescription') ?></td>
 				</tr>
 			</table>
 
-
 			<br>
 
+<?php
+if ($ecommerceOAuth) {
+    print_titre($langs->trans("ECommerceOAuthWordpressSetup", $ecommerceOAuthWordpressOAuthSetupUri));
+?>
+		<table class="noborder" width="100%">
+			<tr class="liste_titre">
+				<td width="20%"><?php print $langs->trans('Parameter') ?></td>
+				<td><?php print $langs->trans('Value') ?></td>
+				<td><?php print $langs->trans('Description') ?></td>
+			</tr>
+<?php
+	$var = !$var;
+?>
+			<tr <?php print $bc[$var] ?>>
+				<td><?php print $langs->trans("ECommerceSiteOAuthRedirectUri"); ?></td>
+				<td><input type="text" class="flat" name="ecommerce_oauth_redirect_uri" value="<?php print $ecommerceOAuthRedirectUri ?>" size="50" readonly="readonly"></td>
+				<td><?php print $langs->trans('ECommerceSiteOAuthRedirectUriDescription') ?></td>
+			</tr>
+<?php
+	$var = !$var;
+?>
+			<tr <?php print $bc[$var] ?>>
+				<td><span class="fieldrequired"><?php print $langs->trans("ECommerceSiteOAuthId"); ?></span></td>
+				<td><input type="text" class="flat" name="ecommerce_oauth_id" value="<?php print $ecommerceOAuthId ?>" size="20"></td>
+				<td><?php print $langs->trans('ECommerceSiteOAuthIdDescription') ?></td>
+			</tr>
+<?php
+	$var = !$var;
+?>
+			<tr <?php print $bc[$var] ?>>
+				<td><span class="fieldrequired"><?php print $langs->trans("ECommerceSiteOAuthSecret"); ?></span></td>
+				<td><input type="password" class="flat" name="ecommerce_oauth_secret" value="<?php print $ecommerceOAuthSecret ?>" size="20"></td>
+				<td><?php print $langs->trans('ECommerceSiteOAuthSecretDescription') ?></td>
+			</tr>
+<?php
+	if ($ecommerceOAuthGenerateToken) {
+		$var = !$var;
+?>
+			<tr <?php print $bc[$var] ?>>
+				<td><?php print $langs->trans("IsTokenGenerated"); ?></td>
+				<td><?php print (is_object($ecommerceOAuthTokenObj) ? $langs->trans("HasAccessToken") : $langs->trans("NoAccessToken")); ?></td>
+				<td>
+<?php
+		// Links to delete/checks token
+		if (is_object($ecommerceOAuthTokenObj)) {
+			print '<a class="button" href="' . $ecommerceOAuthRedirectUri . '&action=delete&backtourl=' . $ecommerceOAuthBackToUri . '">' . $langs->trans('DeleteAccess') . '</a><br><br>';
+		}
+		// Request remote token
+		print '<a class="button" href="' . $ecommerceOAuthRedirectUri . '&backtourl=' . $ecommerceOAuthBackToUri . '">' . $langs->trans('RequestAccess') . '</a><br><br>';
+		// Check remote access
+		if ($ecommerceOAuthCheckTokenUri) {
+			print $langs->trans("ECommerceOAuthCheckToken", $ecommerceOAuthCheckTokenUri);
+		}
+?>
+				</td>
+			</tr>
+<?php
+		$var = !$var;
+?>
+			<tr <?php print $bc[$var] ?>>
+				<td><?php print $langs->trans("Token"); ?></td>
+				<td><?php print (is_object($ecommerceOAuthTokenObj) ? $ecommerceOAuthTokenObj->getAccessToken() : ''); ?></td>
+				<td></td>
+			</tr>
+<?php
+		if (is_object($ecommerceOAuthTokenObj)) {
+			$var = !$var;
+?>
+			<tr <?php print $bc[$var] ?>>
+				<td><?php print $langs->trans("TOKEN_REFRESH"); ?></td>
+				<td><?php print yn(!empty($ecommerceOAuthHasRefreshToken)); ?></td>
+				<td></td>
+			</tr>
+<?php
+			$var = !$var;
+?>
+			<tr <?php print $bc[$var] ?>>
+				<td><?php print $langs->trans("TOKEN_EXPIRED"); ?></td>
+				<td><?php print yn(!empty($ecommerceOAuthTokenExpired)); ?></td>
+				<td></td>
+			</tr>
+<?php
+			$var = !$var;
+?>
+			<tr <?php print $bc[$var] ?>>
+				<td><?php print $langs->trans("TOKEN_EXPIRE_AT"); ?></td>
+				<td><?php print $ecommerceOAuthTokenExpireDate; ?></td>
+				<td></td>
+			</tr>
+<?php
+		}
+	}
+}
+?>
+			</table>
+
+			<br>
 
 <?php
 if ($conf->stock->enabled)
@@ -293,7 +385,7 @@ if ($conf->stock->enabled)
 					<td><span><?php print $langs->trans('ECommerceStockSyncDirection') ?></span></td>
 					<td>
 						<?php
-                            $array=array('none'=>$langs->trans('None'), 'ecommerce2dolibarr'=>'eCommerce to Dolibarr', 'dolibarr2ecommerce'=>'Dolibarr to eCommerce');
+                            $array=array('none'=>$langs->trans('None'), 'ecommerce2dolibarr'=>$langs->trans('ECommerceToDolibarr'), 'dolibarr2ecommerce'=>$langs->trans('DolibarrToeCommerce'));
 							print $form->selectarray('ecommerce_stock_sync_direction', $array, $ecommerceStockSyncDirection);
 						?>
 					</td>
@@ -327,6 +419,14 @@ if ($siteDb->id)
 {
 ?>
 				<input type="submit" name="save_site" class="butAction" value="<?php print $langs->trans('Save') ?>">
+<?php
+if ($siteDb->type == 2)
+{
+?>
+        <a class="butAction" href='javascript:eCommerceConfirmWoocommerceUpdateDictTaxClass("site_form_detail", "<?php print $langs->trans('ECommerceWoocommerceConfirmUpdateDictTaxClasses') ?>")'><?php print $langs->trans('ECommerceWoocommerceUpdateDictTaxClasses') ?></a>
+<?php
+}
+?>
 				<a class="butActionDelete" href='javascript:eCommerceConfirmDelete("site_form_detail", "<?php print $langs->trans('ECommerceConfirmDelete') ?>")'><?php print $langs->trans('Delete') ?></a>
 <?php
 }

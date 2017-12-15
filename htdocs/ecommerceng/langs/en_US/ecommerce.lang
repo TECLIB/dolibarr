@@ -1,9 +1,9 @@
 # Dolibarr language file - en_Us - magento
 CHARSET=UTF-8
-ECommerceMagentoPriceType=Imported prices' types
-ECommerceMagentoPriceTypeHT=Tax excluded
-ECommerceMagentoPriceTypeTTC=Tax included
-ECommerceMagentoPriceTypeDescription=Define the VAT application on Magento's imported products' prices (TE or TI) 
+ECommercePriceType=Imported prices' types
+ECommercePriceTypeHT=Tax excluded
+ECommercePriceTypeTTC=Tax included
+ECommercePriceTypeDescription=Define the VAT application on E-Commerce's imported products' prices (TE or TI)
 ECommerceMagentoUseSpecialPriceDescription=Check to import Magento's special prices instead of public prices (public price will be imported only if special price is not defined)
 ECommerceMagentoUseSpecialPrice=Use Magento's special price
 ECommerceDashboard=ECommerce synchronization management dashboard
@@ -33,15 +33,15 @@ ECommerceCatProductDescription=Select a product category to use to tags products
 ECommerceCatSocieteDescription=Select a customer category to use to tags thirparties in Doliarr to mark them as customers presents in Ecommerce too<br>Note: Module Tags/Categories must be activated.
 ECommerceFilterLabelDescription=Indicate a filter (exemple : store_id)
 ECommerceFilterValueDescription=Indicate a value du filtre (exemple : *)
-ECommerceSiteTypeDescription =Select a site type
+ECommerceSiteTypeDescription=Select a site type
 ECommerceSiteAddressDescription=Check before into your eCommerce admin that services are enabled.<br>Exemple : http://www.localhost.com/api/?wsdl, http://mymagentoserver/index.php/api/?wsdl
 ECommerceUserNameDescription=Exemple : soapuser
 ECommerceUserPasswordDescription=Exemple : myapikey
 ECommerceSite=Site
 ECommerceLastUpdate=Last Ecommerce->Dolibarr sync
 ECommerceNoUpdateSite=This site has never been synchronized
-ECommerceUpdateSite=Synchronization detail of this site
-ECommerceUpdateAll=Synchronize all objects
+ECommerceUpdateSite=Detailed update of this site
+ECommerceUpdateAll=Update all for this site
 ECommerceReset=Delete all links and Dolibarr linked record
 ECommerceResetLink=Delete all link records between Dolibarr and Ecommerce
 ECommerceMenu=ECommerce Sync
@@ -86,11 +86,11 @@ ECommerceSynchSocieteSuccess=companies have been synchronized.
 ECommerceSynchProductSuccess=products have been synchronized.
 ECommerceSynchCommandeSuccess=orders have been synchronized.
 ECommerceSynchFactureSuccess=bills have been synchronized.
-ECommerceSynchCommandeError=Error during synchronization of orders 
+ECommerceSynchCommandeError=Error during synchronization of orders
 ECommerceCheckIfCategoryDoesNotExistsTwice=Try to make name of your categories unique on your eCommerce platform
 ECommerceSynchSocieteErrorCreateUpdateSociete=Failed to synchronize thirdparty
 
-ECommerceSyncheCommerceSocpeopleCreateError=An error occured while saving contact.
+ECommerceSyncheCommerceSocpeopleCreateError=An error occured while saving contact (company ID: %s; first name: %s; last name: %s).
 ECommerceSyncheCommerceProductCreateError=Error creating the link between Dolibarr product and eCommerce product
 ECommerceSyncheCommerceCommandeCreateError=Error creating the link between Dolibarr order and eCommerce order
 ECommerceSyncheCommerceCategoryUpdateError=Error while updating a category.
@@ -159,3 +159,44 @@ RestrictNbInSync=Restrict number of record of same object to synchronize in same
 SynchUnkownCustomersOnThirdParty=Use the following thirdparty for orders done on unknown customers (non logged customers)
 ThirdPartyForNonLoggedUsers=Third party for anonymous/non logged users
 
+## OAuth Setup ##
+ECommerceOAuthWordpressSetup=Connexion OAuth2 sur WordPress ( Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> , puis "Ajouter un nouveau client" pour créer les informations d'identification OAuth2 )
+ECommerceSiteOAuthRedirectUri=Url de redirection
+ECommerceSiteOAuthRedirectUriDescription=Utilisez l'URL suivante comme URI de redirection (Callback) quand vous créez une nouvelle application (ou un nouveau client)
+ECommerceSiteOAuthId=OAuth ID
+ECommerceSiteOAuthIdDescription=Id de connexion au service OAuth
+ECommerceSiteOAuthSecret=OAuth secret
+ECommerceSiteOAuthSecretDescription=Secret de connexion au service OAuth
+ECommerceOAuthCheckToken=Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> pour vérifier/effacer les autorisations sauvées par le fournisseur OAuth2.
+
+ECommerceSynchronizeProductImages=Synchronize images
+ECommerceProductImagesSynchronized=Images synchronized.
+
+ECommerceRemoteAccessConnect=Erreur de connection au site '%s': %s
+ECommerceRemoteAccessConvertRemoteObjectIntoDolibarrCommande=Erreur de recuperation des commandes sur le site '%s': %s
+ECommerceRemoteAccessConvertRemoteObjectIntoDolibarrProduct=Erreur de recuperation des produits sur le site '%s': %s
+ECommerceRemoteAccessConvertRemoteObjectIntoDolibarrProductVariations=Erreur de recuperation des variations du produit distant 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessConvertRemoteObjectIntoDolibarrSociete=Erreur de recuperation des sociétés sur le site '%s': %s
+ECommerceRemoteAccessConvertRemoteObjectIntoDolibarrSocpeople=Erreur de recuperation des sociétés (pour les contacts/adresses) sur le site '%s': %s
+ECommerceRemoteAccessCreateRemoteProduct=Erreur de creation du produit 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessCreateRemoteProductLink=Erreur de creation du lien pour le produit 'id:%s' pour le site '%s': %s
+ECommerceRemoteAccessGetCategoryData=Erreur de récupération des données de la catégorie distante 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessGetCommandeToUpdate=Erreur de récupération de la liste des commandes à mettre à jour sur le site '%s': %s
+ECommerceRemoteAccessGetProductToUpdate=Erreur de récupération de la liste des produits à mettre à jour sur le site '%s': %s
+ECommerceRemoteAccessGetRemoteCategoryTree=Erreur de récupération de la liste des catégories à mettre à jour sur le site '%s': %s
+ECommerceRemoteAccessGetSocieteToUpdate=Erreur de récupération de la liste des sociétés à mettre à jour sur le site '%s': %s
+ECommerceRemoteAccessSendFileForCommande=Erreur pour lier le fichier avec la commande distante 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessSendFileForCommandeInWordpress=Erreur de l'envoi du fichier pour la commande distante 'id:%s' dans les média de Wordpress sur le site '%s': %s
+ECommerceRemoteAccessUpdateRemoteCommande=Erreur de mise à jour de la commande distante 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessUpdateRemoteProduct=Erreur de mise à jour du produit distant 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessUpdateRemoteProductGetRemoteProduct=Erreur de récupération du produit distant 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessUpdateRemoteProductSendImage=Erreur de l'envoi d'une image pour le produit distante 'id:%s' dans les média de Wordpress sur le site '%s': %s
+ECommerceRemoteAccessUpdateRemoteProductVariation=Erreur de mise à jour de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessUpdateRemoteSociete=Erreur de mise à jour de la société distante 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessUpdateRemoteSocpeople=Erreur de mise à jour des contacts/adresses de la société distante 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessUpdateRemoteStockProduct=Erreur de mise à jour des stocks de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessUpdateRemoteStockProductVariation=Erreur de mise à jour des stocks du produit distant 'id:%s' sur le site '%s': %s
+
+ECommerceSyncheCommerceProductDownloadImageError=Erreur de récupération de l'image (%s) pour le produit 'id:%s' du produit distant 'id:%s' sur le site '%s'
+
+ECommerceNoDescForProductLine=L'api n'a pas pu récupérer la description du produit

@@ -29,7 +29,6 @@ CREATE TABLE llx_ecommerce_site (
   fk_cat_societe integer NOT NULL,
   fk_cat_product integer NOT NULL,
   fk_warehouse integer NULL,
-  fk_thirdparty integer NULL,							-- thirdparty for non logged users
   stock_sync_direction varchar(24) DEFAULT 'none',
   last_update datetime DEFAULT NULL,
   timeout integer NOT NULL DEFAULT 300,

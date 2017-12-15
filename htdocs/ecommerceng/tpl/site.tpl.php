@@ -63,13 +63,13 @@ if (is_object($site))
     print '</td><td>';
     print '</td></tr>';
 
-    if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER))
+    if (! empty($site->fk_anonymous_thirdparty))
     {
         print '<tr><td>';
 
         print $langs->trans("SynchUnkownCustomersOnThirdParty").' : ';
         $nonloggedthirdparty=new Societe($db);
-        $result = $nonloggedthirdparty->fetch($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER);
+        $result = $nonloggedthirdparty->fetch($site->fk_anonymous_thirdparty);
         print $nonloggedthirdparty->getNomUrl(1);
         print '</td><td align="right"></td></tr>';
     }
@@ -117,7 +117,7 @@ if (is_object($site))
 			</td>
 			<?php if ($synchRights==true) { ?>
 			<td>
-				<?php if ($nbCategoriesToUpdate>0) { ?>
+				<?php if ($nbCategoriesToUpdate>0||!empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) { ?>
 					<input type="submit" name="submit_synchro_category" id="submit_synchro_category" class="button" value="<?php print $langs->trans('ECommerceSynchronizeCategoryProduct') ?>">
 				<?php } ?>
 			</td>
@@ -144,12 +144,12 @@ if (is_object($site))
 			<?php if ($synchRights==true):?>
 			<td>
 				<?php
-				if ($nbProductToUpdate>0 && $nbCategoriesToUpdate>0) {
+				if ($nbProductToUpdate>0 && $nbCategoriesToUpdate>0&&empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) {
 				    ?>
 					<input type="submit" name="submit_synchro_product" id="submit_synchro_product" class="button" disabled="disabled" value="<?php print $langs->trans('ECommerceSynchronizeProduct').' ('.$langs->trans("SyncCategFirst").")"; ?>">
 				<?php
 				}
-				elseif ($nbProductToUpdate>0) { ?>
+				elseif ($nbProductToUpdate>0||!empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) { ?>
 					<input type="submit" name="submit_synchro_product" id="submit_synchro_product" class="button" value="<?php print $langs->trans('ECommerceSynchronizeProduct') ?>">
 				<?php } ?>
 			</td>
@@ -178,7 +178,7 @@ if (is_object($site))
 			</td>
 			<?php if ($synchRights==true):?>
 			<td>
-				<?php if ($nbSocieteToUpdate>0): ?>
+				<?php if ($nbSocieteToUpdate>0||!empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)): ?>
 					<input type="submit" name="submit_synchro_societe" id="submit_synchro_societe" class="button" value="<?php print $langs->trans('ECommerceSynchronizeSociete') ?>">
 				<?php endif; ?>
 			</td>
@@ -215,9 +215,9 @@ if (is_object($site))
     			<?php if ($synchRights==true):?>
     			<td>
                         <?php
-    				if ($nbCommandeToUpdate>0 && $nbSocieteToUpdate>0) { ?>
+    				if ($nbCommandeToUpdate>0 && $nbSocieteToUpdate>0&&empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) { ?>
     					<input type="submit" name="submit_synchro_commande" id="submit_synchro_commande" class="button" disabled="disabled" value="<?php print $langs->trans('ECommerceSynchronizeCommande').' ('.$langs->trans("SyncSocieteFirst").')'; ?>">
-    				<?php } elseif ($nbCommandeToUpdate>0) { ?>
+    				<?php } elseif ($nbCommandeToUpdate>0||!empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) { ?>
     					<input type="submit" name="submit_synchro_commande" id="submit_synchro_commande" class="button" value="<?php print $langs->trans('ECommerceSynchronizeCommande') ?>">
     				<?php } ?>
     			</td>
@@ -250,11 +250,11 @@ if (is_object($site))
 			</td>
 			<?php if ($synchRights==true):?>
 			<td>
-				<?php if ($nbFactureToUpdate>0 && $nbSocieteToUpdate>0) { ?>
+				<?php if ($nbFactureToUpdate>0 && $nbSocieteToUpdate>0&&empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) { ?>
 					<input type="submit" name="submit_synchro_facture" id="submit_synchro_facture" class="button" disabled="disabled" value="<?php print $langs->trans('ECommerceSynchronizeFacture').' ('.$langs->trans("SyncSocieteFirst").')'; ?>">
-				<?php } elseif ($nbFactureToUpdate>0 && $nbCommandeToUpdate>0) { ?>
+				<?php } elseif ($nbFactureToUpdate>0 && $nbCommandeToUpdate>0&&empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) { ?>
 					<input type="submit" name="submit_synchro_facture" id="submit_synchro_facture" class="button" disabled="disabled" value="<?php print $langs->trans('ECommerceSynchronizeFacture').' ('.$langs->trans("SyncCommandeFirst").')'; ?>">
-				<?php } elseif ($nbFactureToUpdate>0) { ?>
+				<?php } elseif ($nbFactureToUpdate>0||!empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) { ?>
 					<input type="submit" name="submit_synchro_facture" id="submit_synchro_facture" class="button" value="<?php print $langs->trans('ECommerceSynchronizeFacture') ?>">
 				<?php } ?>
 			</td>

@@ -41,12 +41,16 @@ class eCommerceSite // extends CommonObject
 	var $filter_value;
 	var $fk_cat_societe;
 	var $fk_cat_product;
+    var $fk_anonymous_thirdparty;
 	var $fk_warehouse;
 	var $stock_sync_direction;
 	var $last_update;
 	var $timeout;
 	var $magento_use_special_price;
-	var $magento_price_type;
+	var $ecommerce_price_type;
+
+	var $oauth_id;
+	var $oauth_secret;
 
 	//The site type name is used to define class name in eCommerceRemoteAccess class
     private $siteTypes = array(1=>'magento', 2=>'woocommerce');
@@ -111,9 +115,13 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->filter_value)) $this->filter_value=trim($this->filter_value);
 		if (isset($this->fk_cat_societe)) $this->fk_cat_societe=trim($this->fk_cat_societe);
 		if (isset($this->fk_cat_product)) $this->fk_cat_product=trim($this->fk_cat_product);
+        if (isset($this->fk_anonymous_thirdparty)) $this->fk_anonymous_thirdparty=trim($this->fk_anonymous_thirdparty);
 		if (isset($this->fk_warehouse)) $this->fk_warehouse=trim($this->fk_warehouse);
 		if (isset($this->stock_sync_direction)) $this->stock_sync_direction=trim($this->stock_sync_direction);
 		if (isset($this->timeout)) $this->timeout=trim($this->timeout);
+
+		if (isset($this->oauth_id)) $this->oauth_id=trim($this->oauth_id);
+		if (isset($this->oauth_secret)) $this->oauth_secret=trim($this->oauth_secret);
 
 		// Check parameters
 		// Put here code to add control on parameters values
@@ -130,29 +138,35 @@ class eCommerceSite // extends CommonObject
 		$sql.= "filter_value,";
 		$sql.= "fk_cat_societe,";
 		$sql.= "fk_cat_product,";
+        $sql.= "fk_anonymous_thirdparty,";
 		$sql.= "fk_warehouse,";
 		$sql.= "stock_sync_direction,";
 		$sql.= "last_update,";
 		$sql.= "timeout,";
 		$sql.= "magento_use_special_price,";
-		$sql.= "magento_price_type";
+		$sql.= "ecommerce_price_type,";
+		$sql.= "oauth_id,";
+		$sql.= "oauth_secret";
         $sql.= ") VALUES (";
 		$sql.= " ".(! isset($this->name)?'NULL':"'".$this->db->escape($this->name)."'").",";
 		$sql.= " ".(! isset($this->type)?'NULL':"'".$this->type."'").",";
 		$sql.= " ".(! isset($this->webservice_address)?'NULL':"'".$this->db->escape($this->webservice_address)."'").",";
 		$sql.= " ".(! isset($this->user_name)?'NULL':"'".$this->db->escape($this->user_name)."'").",";
 		$sql.= " ".(! isset($this->user_password)?'NULL':"'".$this->db->escape($this->user_password)."'").",";
-        $sql.= " ".(! isset($this->price_level)?'NULL':"'".$this->db->escape($this->price_level)."'").",";
+        $sql.= " ".(! isset($this->price_level)?'1':"'".$this->db->escape($this->price_level)."'").",";
 		$sql.= " ".(! isset($this->filter_label)?'NULL':"'".$this->db->escape($this->filter_label)."'").",";
 		$sql.= " ".(! isset($this->filter_value)?'NULL':"'".$this->db->escape($this->filter_value)."'").",";
 		$sql.= " ".($this->fk_cat_societe > 0 ? $this->fk_cat_societe : "NULL").",";
 		$sql.= " ".($this->fk_cat_product > 0 ? $this->fk_cat_product : "NULL").",";
+        $sql.= " ".($this->fk_anonymous_thirdparty > 0 ? $this->fk_anonymous_thirdparty : "NULL").",";
 		$sql.= " ".($this->fk_warehouse > 0 ? $this->fk_warehouse : "NULL").",";
 		$sql.= " ".($this->stock_sync_direction ? "'".$this->stock_sync_direction."'" : "'none'").",";
 		$sql.= " ".(! isset($this->last_update) || strlen($this->last_update)==0?'NULL':"'".$this->db->idate($this->last_update)."'").",";
 		$sql.= " ".(! isset($this->timeout)?'300':"'".intval($this->timeout)."'").",";
 		$sql.= " ".(! isset($this->magento_use_special_price)?'0':"'".intval($this->magento_use_special_price)."'").",";
-		$sql.= " ".(! isset($this->magento_price_type)?'HT':"'".$this->magento_price_type."'")."";
+		$sql.= " ".(! isset($this->ecommerce_price_type)?'HT':"'".$this->ecommerce_price_type."'").",";
+		$sql.= " ".(! isset($this->oauth_id)?"NULL":"'".$this->db->escape($this->oauth_id)."'").",";
+		$sql.= " ".(! isset($this->oauth_secret)?"NULL":"'".$this->db->escape($this->oauth_secret)."'")."";
 		$sql.= ")";
 
 		$this->db->begin();
@@ -167,7 +181,7 @@ class eCommerceSite // extends CommonObject
 
             //create an entry for anonymous company
             $eCommerceSociete = new eCommerceSociete($this->db);
-            $eCommerceSociete->fk_societe = dolibarr_get_const($this->db, 'ECOMMERCE_COMPANY_ANONYMOUS');
+            $eCommerceSociete->fk_societe = $this->fk_anonymous_thirdparty;
 			$eCommerceSociete->fk_site = $this->id;
 			$eCommerceSociete->remote_id = 0;
 			if ($eCommerceSociete->create($user)<0)
@@ -217,12 +231,15 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.filter_value,";
 		$sql.= " t.fk_cat_societe,";
 		$sql.= " t.fk_cat_product,";
+        $sql.= " t.fk_anonymous_thirdparty,";
 		$sql.= " t.fk_warehouse,";
 		$sql.= " t.stock_sync_direction,";
 		$sql.= " t.last_update,";
 		$sql.= " t.timeout,";
 		$sql.= " t.magento_use_special_price,";
-		$sql.= " t.magento_price_type";
+		$sql.= " t.ecommerce_price_type,";
+		$sql.= " t.oauth_id,";
+		$sql.= " t.oauth_secret";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_site as t";
         $sql.= " WHERE t.rowid = ".$id;
 
@@ -246,13 +263,16 @@ class eCommerceSite // extends CommonObject
 				$this->filter_value = $obj->filter_value;
 				$this->fk_cat_societe = $obj->fk_cat_societe;
 				$this->fk_cat_product = $obj->fk_cat_product;
+                $this->fk_anonymous_thirdparty = $obj->fk_anonymous_thirdparty;
 				$this->fk_warehouse = $obj->fk_warehouse;
 				$this->stock_sync_direction = $obj->stock_sync_direction;
 				$this->last_update = $this->db->jdate($obj->last_update);
 				$this->timeout = $obj->timeout;
 				$this->magento_use_special_price = $obj->magento_use_special_price;
-				$this->magento_price_type = $obj->magento_price_type;
+				$this->ecommerce_price_type = $obj->ecommerce_price_type;
 
+				$this->oauth_id = $obj->oauth_id;
+				$this->oauth_secret = $obj->oauth_secret;
 
             }
             $this->db->free($resql);
@@ -292,8 +312,11 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->filter_value)) $this->filter_value=trim($this->filter_value);
 		if (isset($this->fk_cat_societe)) $this->fk_cat_societe=trim($this->fk_cat_societe);
 		if (isset($this->fk_cat_product)) $this->fk_cat_product=trim($this->fk_cat_product);
+        if (isset($this->fk_anonymous_thirdparty)) $this->fk_anonymous_thirdparty=trim($this->fk_anonymous_thirdparty);
 		if (isset($this->fk_warehouse)) $this->fk_warehouse=trim($this->fk_warehouse);
 		if (isset($this->timeout)) $this->timeout=trim($this->timeout);
+		if (isset($this->oauth_id)) $this->oauth_id=trim($this->oauth_id);
+		if (isset($this->oauth_secret)) $this->oauth_secret=trim($this->oauth_secret);
 
 		// Check parameters
 		// Put here code to add control on parameters values
@@ -306,17 +329,20 @@ class eCommerceSite // extends CommonObject
 		$sql.= " webservice_address=".(isset($this->webservice_address)?"'".$this->db->escape($this->webservice_address)."'":"null").",";
 		$sql.= " user_name=".(isset($this->user_name)?"'".$this->db->escape($this->user_name)."'":"null").",";
 		$sql.= " user_password=".(isset($this->user_password)?"'".$this->db->escape($this->user_password)."'":"null").",";
-        $sql.= " price_level=".(isset($this->price_level)?"'".$this->db->escape($this->price_level)."'":"null").",";
+        $sql.= " price_level=".(isset($this->price_level)?"'".$this->db->escape($this->price_level)."'":"1").",";
 		$sql.= " filter_label=".(isset($this->filter_label)?"'".$this->db->escape($this->filter_label)."'":"null").",";
 		$sql.= " filter_value=".(isset($this->filter_value)?"'".$this->db->escape($this->filter_value)."'":"null").",";
 		$sql.= " fk_cat_societe=".($this->fk_cat_societe > 0 ? $this->fk_cat_societe:"null").",";
 		$sql.= " fk_cat_product=".($this->fk_cat_product > 0 ? $this->fk_cat_product:"null").",";
+        $sql.= " fk_anonymous_thirdparty=".($this->fk_anonymous_thirdparty > 0 ? $this->fk_anonymous_thirdparty:"null").",";
 		$sql.= " fk_warehouse=".($this->fk_warehouse > 0 ? $this->fk_warehouse:"null").",";
 		$sql.= " stock_sync_direction=".($this->stock_sync_direction ? "'".$this->stock_sync_direction."'":"'none'").",";
 		$sql.= " last_update=".((isset($this->last_update) && $this->last_update != '') ? "'".$this->db->idate($this->last_update)."'" : 'null').",";
 		$sql.= " timeout=".(isset($this->timeout)? "'".intval($this->timeout)."'" : '300').",";
 		$sql.= " magento_use_special_price=".(isset($this->magento_use_special_price)? "'".intval($this->magento_use_special_price)."'" : '0').",";
-        $sql.= " magento_price_type=".(isset($this->magento_price_type)? "'".$this->magento_price_type."'" : 'HT')."";
+		$sql.= " ecommerce_price_type=".(isset($this->ecommerce_price_type)? "'".$this->ecommerce_price_type."'" : 'HT').",";
+		$sql.= " oauth_id=".(isset($this->oauth_id)?"'".$this->oauth_id."'":"NULL").",";
+		$sql.= " oauth_secret=".(isset($this->oauth_secret)?"'".$this->oauth_secret."'":"NULL")."";
         $sql.= " WHERE rowid=".$this->id;
 
 		$this->db->begin();
@@ -327,7 +353,36 @@ class eCommerceSite // extends CommonObject
 
 		if (! $error)
 		{
-			if (! $notrigger)
+            $eCommerceSociete = new eCommerceSociete($this->db);
+            if ($eCommerceSociete->fetchByRemoteId(0, $this->id) > 0) {
+                if (isset($this->fk_anonymous_thirdparty)) {
+                    // update an entry for anonymous company
+                    $eCommerceSociete->fk_societe = $this->fk_anonymous_thirdparty;
+                    if ($eCommerceSociete->update($user) < 0) {
+                        $error++;
+                        $this->errors[] = "Error " . $this->db->lasterror();
+                    }
+                } else {
+                    // delete an entry for anonymous company
+                    if ($eCommerceSociete->delete($user) < 0) {
+                        $error++;
+                        $this->errors[] = "Error " . $this->db->lasterror();
+                    }
+                }
+            } else {
+                // create an entry for anonymous company
+                $eCommerceSociete = new eCommerceSociete($this->db);
+                $eCommerceSociete->fk_societe = $this->fk_anonymous_thirdparty;
+                $eCommerceSociete->fk_site = $this->id;
+                $eCommerceSociete->remote_id = 0;
+                if ($eCommerceSociete->create($user)<0)
+                {
+                    $error++;
+                    $this->errors[]="Error ".$this->db->lasterror();
+                }
+            }
+
+			if (! $notrigger && !$error)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
 	            // want this action call a trigger.
@@ -492,12 +547,15 @@ class eCommerceSite // extends CommonObject
 		$this->filter_value='';
 		$this->fk_cat_societe='';
 		$this->fk_cat_product='';
+        $this->fk_anonymous_thirdparty='';
 		$this->fk_warehouse='';
 		$this->stock_sync_direction='none';
 		$this->last_update='';
 		$this->timeout='';
 		$this->magento_use_special_price='';
-		$this->magento_price_type='';
+		$this->ecommerce_price_type='';
+		$this->oauth_id='';
+		$this->oauth_secret='';
 	}
 
 	/**
@@ -542,6 +600,30 @@ class eCommerceSite // extends CommonObject
 		return $list;
 	}
 
+    /**
+   	 *    Check if type site is created
+   	 *
+   	 *    @param	integer		$typeSite		Type of site
+   	 *    @return 	boolean					    true if type site has created
+   	 */
+   	function hasTypeSite($typeSite)
+   	{
+        $sql = "SELECT";
+   		$sql.= " count(*) AS count";
+        $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_site as t";
+        $sql.= " WHERE t.type=".$typeSite;
+
+       	$result = $this->db->query($sql);
+   		if ($result) {
+            $obj = $this->db->fetch_object($result);
+            if ($obj->count > 0) {
+                return true;
+            }
+   		}
+
+   		return false;
+   	}
+
 	/**
 	 * Return list of available site types
 	 *
@@ -576,7 +658,14 @@ class eCommerceSite // extends CommonObject
 	{
 	    // Try to guess public home page of ecommerce web site from the api url
 	    $url=$this->getFrontUrl();
-	    $url.='index.php/admin';
+		switch ($this->type) {
+			case 1: // Magento
+				$url.='index.php/admin';
+				break;
+			case 2: // Woocommerce
+				$url.=(substr($url, -1, 1)!='/'?'/':'').'wp-admin';
+				break;
+		}
 	    return $url;
 	}
 

@@ -190,7 +190,7 @@ class eCommerceProduct // extends CommonObject
 
 		$sql.= " fk_product=".(isset($this->fk_product)?intval($this->fk_product):0).",";
 		$sql.= " fk_site=".(isset($this->fk_site)?intval($this->fk_site):0).",";
-		$sql.= " remote_id=".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
+		$sql.= " remote_id='".$this->db->escape($this->remote_id)."',";
 		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
 
         $sql.= " WHERE rowid=".$this->id;
@@ -343,7 +343,7 @@ class eCommerceProduct // extends CommonObject
 		$sql.= " t.last_update";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_product as t";
         $sql.= " WHERE t.fk_site = ".$siteId;
-        $sql.= " AND t.remote_id = ".$remoteId;
+        $sql.= " AND t.remote_id = '".$this->db->escape($remoteId)."'";
     	dol_syslog(get_class($this)."::fetchByRemoteId sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)

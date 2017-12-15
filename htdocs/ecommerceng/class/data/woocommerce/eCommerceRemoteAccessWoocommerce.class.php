@@ -29,6 +29,11 @@ dol_include_once('/ecommerceng/includes/WooCommerce/HttpClient/Options.php');
 dol_include_once('/ecommerceng/includes/WooCommerce/HttpClient/Request.php');
 dol_include_once('/ecommerceng/includes/WooCommerce/HttpClient/Response.php');
 
+dol_include_once('/ecommerceng/lib/eCommerce.lib.php');
+
+dol_include_once('/ecommerceng/includes/WordPressClient.php');
+
+require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 
 use Automattic\WooCommerce\Client;
@@ -39,23 +44,93 @@ use Automattic\WooCommerce\HttpClient\HttpClientException;
  */
 class eCommerceRemoteAccessWoocommerce
 {
-
+    /**
+     * eCommerceSite object.
+     *
+     * @var eCommerceSite
+     */
     private $site;
+
+    /**
+     * Woocommerce client new API v2.
+     *
+     * @var Client
+     */
     private $client;
+    /**
+     * Woocommerce client old API v3.
+     *
+     * @var Client
+     */
     private $clientOld;
-    private $filter;
-    private $taxRates;
+    /**
+     * WordPress client.
+     *
+     * @var WordPressClient
+     */
+    private $worpressclient;
+
+    /**
+     * Dolibarr tax rates.
+     *
+     * @var array
+     */
+    private $dolibarrTaxes;
+
+    /**
+     * Woocommerce taxes.
+     *
+     * @var array
+     */
+    private $woocommerceTaxes;
+
+    /**
+     * Database handler.
+     *
+     * @var DoliDB
+     */
     private $db;
 
     /**
-     *      Constructor
-     *      @param      DoliDB      $db         Database handler
-     *      @param      string      $site       eCommerceSite
+     * Errors list.
+     *
+     * @var array
+     */
+    public $errors;
+
+    /**
+     * GMT timezone.
+     *
+     * @var DateTimeZone
+     */
+    public $gmtTimeZone;
+
+    /**
+     * Current timezone.
+     *
+     * @var DateTimeZone
+     */
+    public $currentTimeZone;
+
+    /**
+     * Constructor
+     * @param   DoliDB          $db     Database handler
+     * @param   eCommerceSite   $site   eCommerceSite object
      */
     function eCommerceRemoteAccessWoocommerce($db, $site)
     {
+        global $langs;
+
+        $langs->load("ecommerce@ecommerceng");
+        $langs->load("woocommerce@ecommerceng");
+
         $this->db = $db;
         $this->site = $site;
+        $this->errors = [];
+
+        $this->gmtTimeZone = new DateTimeZone('GMT');
+        $this->currentTimeZone = new DateTimeZone(date_default_timezone_get());
+
         return 1;
     }
 
@@ -66,18 +141,13 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function connect()
     {
-        global $conf;
+        dol_syslog(__METHOD__ . ": Connect to API webservice_address=" . $this->site->webservice_address . " user_name=" .
+            $this->site->user_name . " user_password=" . $this->site->user_password . " for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs;
+
+        $response_timeout = (empty($conf->global->MAIN_USE_RESPONSE_TIMEOUT) ? 30 : $conf->global->MAIN_USE_RESPONSE_TIMEOUT);    // Response timeout
 
         try {
-            require_once(DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php');
-            $params=getSoapParams();
-
-            @ini_set('default_socket_timeout', $params['response_timeout']);
-            @ini_set("memory_limit", "1024M");
-
-            $response_timeout = (empty($conf->global->MAIN_USE_RESPONSE_TIMEOUT)?$params['response_timeout']:$conf->global->MAIN_USE_RESPONSE_TIMEOUT);    // Response timeout
-
-            dol_syslog("eCommerceRemoteAccessWoocommerce Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".$this->site->user_password);
             $this->client = new Client(
                 $this->site->webservice_address,
                 $this->site->user_name,
@@ -88,6 +158,8 @@ class eCommerceRemoteAccessWoocommerce
                     'timeout' => $response_timeout,
                 ]
             );
+            $this->client->get('customers', [ 'page' => 1, 'per_page' => 1 ]);
+
             $this->clientOld = new Client(
                 $this->site->webservice_address,
                 $this->site->user_name,
@@ -97,42 +169,60 @@ class eCommerceRemoteAccessWoocommerce
                     'timeout' => $response_timeout,
                 ]
             );
-
-            dol_syslog("eCommerceRemoteAccessWoocommerce connected with new Client ok.");
-
-            return true;
+            $this->clientOld->get('customers', [ 'page' => 1, 'filter' => [ 'limit' => 1 ] ]);
         } catch (HttpClientException $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            $this->errors[] = $langs->trans('ECommerceWoocommerceConnect', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+            dol_syslog(__METHOD__ .
+                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConnect', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
             return false;
         }
+
+        try {
+            $this->worpressclient = new WordPressClient(
+                $this->site->webservice_address,
+                $this->site->oauth_id,
+                $this->site->oauth_secret,
+                dol_buildpath('/custom/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php', 2) . '?ecommerce_id=' . $this->site->id
+            );
+        } catch (Exception $e) {
+            $this->errors[] = $langs->trans('ECommerceWoocommerceConnect', $this->site->name, $e->getMessage());
+            dol_syslog(__METHOD__ . ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConnect', $this->site->name, $e->getMessage()), LOG_ERR);
+            return false;
+        }
+
+        dol_syslog(__METHOD__ . ": end, ok", LOG_DEBUG);
+        return true;
     }
 
     /**
-     * Call Woocommerce API to get last updated companies
+     * Call Woocommerce API to get last updated companies. We are interested here by list of id only. We will retreive properties later.
      *
-     * @param   datetime $fromDate      From date
-     * @param   datetime $toDate        To date
-     * @return  boolean|mixed           Response from REST Api call, normally an associative array mirroring the structure of the XML response, nothing if error
+     * @param   int             $fromDate   From date
+     * @param   int             $toDate     To date
+     *
+     * @return  array|boolean               List of companies ID to update or false if error
      */
     public function getSocieteToUpdate($fromDate, $toDate)
     {
-        global $conf;
+        dol_syslog(__METHOD__ . ": start gt = " . (!empty($fromDate) ? dol_print_date($fromDate, 'standard') : 'none') .
+            ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs;
 
-        try {
-            $result = array();
-            $idxPage = 1;
-            $per_page = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : $conf->global->ECOMMERCENG_MAXSIZE_MULTICALL;
-            $from_date = isset($fromDate) && !empty($fromDate) ? new DateTime(dol_print_date($fromDate, 'standard')) : null;
-            $to_date = isset($toDate) && !empty($toDate) ? new DateTime(dol_print_date($toDate, 'standard')) : null;
+        $last_update = [];
+        $result = [];
+        $idxPage = 1;
+        $per_page = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+        $from_date = isset($fromDate) && !empty($fromDate) ? new DateTime(dol_print_date($fromDate, 'standard')) : null;
+        $to_date = isset($toDate) && !empty($toDate) ? new DateTime(dol_print_date($toDate, 'standard')) : null;
 
-            $filter = [ 'limit' => $per_page ];
-            // Not work with customers
-            //if (isset($fromDate) && !empty($fromDate)) $filter['updated_at_min'] = dol_print_date($fromDate - (24 * 60 * 60), 'dayrfc');
-            //if (isset($toDate) && !empty($toDate)) $filter['updated_at_max'] = dol_print_date($toDate + (24 * 60 * 60), 'dayrfc');
+        $filter = ['limit' => $per_page];
+        // Not work with customers
+        //if (isset($fromDate) && !empty($fromDate)) $filter['updated_at_min'] = dol_print_date($fromDate - (24 * 60 * 60), 'dayrfc');
+        //if (isset($toDate) && !empty($toDate)) $filter['updated_at_max'] = dol_print_date($toDate + (24 * 60 * 60), 'dayrfc');
 
-            dol_syslog("getSocieteToUpdate start gt = " . dol_print_date($fromDate, 'standard') . ", lt = " . dol_print_date($toDate, 'standard'));
-            while (true) {
+        while (true) {
+            try {
                 $page = $this->clientOld->get('customers',
                     [
                         'page' => $idxPage++,
@@ -140,1851 +230,2141 @@ class eCommerceRemoteAccessWoocommerce
                         'fields' => 'id,created_at,last_update'
                     ]
                 );
-                if (!isset($page['customers']) || ($nbCustomers = count($page['customers'])) == 0) break;
-                $page = $page['customers'];
-
-                for ($idxCustomer = 0; $idxCustomer < $nbCustomers; $idxCustomer++) {
-                    $created_at = new DateTime($page[$idxCustomer]['created_at']);
-                    $date = new DateTime($page[$idxCustomer]['last_update']);
-                    $date = $date < $created_at ? $created_at : $date;
-
-                    if ((!isset($from_date) || $from_date < $date) && (!isset($to_date) || $date <= $to_date)) {
-                        $result[] = $page[$idxCustomer]['id'];
-                    }
-                }
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceGetSocieteToUpdate', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetSocieteToUpdate', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
             }
 
-            dol_syslog("getSocieteToUpdate end (found ".count($result)." record)");
-            return $result;
-        } catch (HttpClientException $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
+            if (!isset($page['customers']) || ($nbCustomers = count($page['customers'])) == 0) break;
+            $page = $page['customers'];
+
+            foreach ($page as $customer) {
+                $date = $this->getDateTimeFromGMTDateTime(!empty($customer['updated_at']) ? $customer['updated_at'] : $customer['created_at']);
+
+                if ((!isset($from_date) || $from_date < $date) && (!isset($to_date) || $date <= $to_date)) {
+                    $id = $customer['id'];
+                    $result[$id] = $id;
+                    $last_update[$id] = $date->format('Y-m-d H:i:s');
+                }
+            }
         }
+
+        //important - order by last update
+        if (count($result)) {
+            array_multisort($last_update, SORT_ASC, $result);
+        }
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return $result;
     }
 
     /**
-     * Call Magenta API to get last updated products. We are interested here by list of id only. We will retreive properties later.
+     * Call Woocommerce API to get last updated products. We are interested here by list of id only. We will retreive properties later.
      *
-     * @param   datetime $fromDate      From date
-     * @param   datetime $toDate        To date
-     * @return  boolean|mixed           Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error
+     * @param   int             $fromDate   From date
+     * @param   int             $toDate     To date
+     *
+     * @return  array|boolean               List of products ID to update or false if error
      */
     public function getProductToUpdate($fromDate, $toDate)
     {
-        global $conf;
+        dol_syslog(__METHOD__ . ": start gt = " . (!empty($fromDate) ? dol_print_date($fromDate, 'standard') : 'none') .
+            ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs;
 
-        try {
-            dol_syslog("getProductToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            $result = array();
-            $idxPage = 1;
-            $per_page = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : $conf->global->ECOMMERCENG_MAXSIZE_MULTICALL;
-            $from_date = isset($fromDate) && !empty($fromDate) ? new DateTime(dol_print_date($fromDate, 'standard')) : null;
-            $to_date = isset($toDate) && !empty($toDate) ? new DateTime(dol_print_date($toDate, 'standard')) : null;
+        $last_update = [];
+        $result = [];
+        $idxPage = 1;
+        $per_page = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+        $from_date = isset($fromDate) && !empty($fromDate) ? new DateTime(dol_print_date($fromDate, 'standard')) : null;
+        $to_date = isset($toDate) && !empty($toDate) ? new DateTime(dol_print_date($toDate, 'standard')) : null;
 
-            $filter = [ 'limit' => $per_page ];
-            if (isset($fromDate) && !empty($fromDate)) $filter['updated_at_min'] = dol_print_date($fromDate - (24 * 60 * 60), 'dayrfc');
-            if (isset($toDate) && !empty($toDate)) $filter['updated_at_max'] = dol_print_date($toDate + (24 * 60 * 60), 'dayrfc');
+        $filter = ['limit' => $per_page];
+        if (isset($fromDate) && !empty($fromDate)) $filter['updated_at_min'] = dol_print_date($fromDate - (24 * 60 * 60), 'dayrfc');
+        if (isset($toDate) && !empty($toDate)) $filter['updated_at_max'] = dol_print_date($toDate + (24 * 60 * 60), 'dayrfc');
 
-            dol_syslog("getProductToUpdate start gt=".dol_print_date($fromDate != null ? $fromDate : 0, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            while (true) {
+        while (true) {
+            try {
                 $page = $this->clientOld->get('products',
                     [
                         'page' => $idxPage++,
                         'filter' => $filter,
-                        'fields' => 'id,created_at,updated_at'
-                    ]
-                );
-                if (!isset($page['products']) || ($nbProducts = count($page['products'])) == 0) break;
-                $page = $page['products'];
-
-                for ($idxProduct = 0; $idxProduct < $nbProducts; $idxProduct++) {
-                    $created_at = new DateTime($page[$idxProduct]['created_at']);
-                    $date = new DateTime($page[$idxProduct]['updated_at']);
-                    $date = $date < $created_at ? $created_at : $date;
-
-                    if ((!isset($from_date) || $from_date < $date) && (!isset($to_date) || $date <= $to_date)) {
-                        $product = $page[$idxProduct];
-                        //if ($product['virtual'] || $product['downloadable']) continue;
-                        $result[] = $product['id'];
-                    }
-                }
-            }
-
-            dol_syslog("getProductToUpdate end (found ".count($results)." record)");
-            return $result;
-        } catch (HttpClientException $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
-        }
-    }
-
-    /**
-     * Call Magenta API to get last updated orders
-     *
-     * @param   datetime $fromDate      From date
-     * @param   datetime $toDate        To date
-     * @return  boolean|mixed           Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error
-     */
-    public function getCommandeToUpdate($fromDate, $toDate)
-    {
-        global $conf;
-
-        try {
-            $result = array();
-            $idxPage = 1;
-            $per_page = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : $conf->global->ECOMMERCENG_MAXSIZE_MULTICALL;
-            $from_date = isset($fromDate) && !empty($fromDate) ? new DateTime(dol_print_date($fromDate, 'standard')) : null;
-            $to_date = isset($toDate) && !empty($toDate) ? new DateTime(dol_print_date($toDate, 'standard')) : null;
-
-            $filter = [ 'limit' => $per_page ];
-            if (isset($fromDate) && !empty($fromDate)) $filter['updated_at_min'] = dol_print_date($fromDate - (24 * 60 * 60), 'dayrfc');
-            if (isset($toDate) && !empty($toDate)) $filter['updated_at_max'] = dol_print_date($toDate + (24 * 60 * 60), 'dayrfc');
-
-            dol_syslog("getCommandeToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            while (true) {
-                $page = $this->clientOld->get('orders',
-                    [
-                        'page' => $idxPage++,
-                        'filter' => $filter,
-                        'fields' => 'id,created_at,updated_at'
-                    ]
-                );
-                if (!isset($page['orders']) || ($nbOrders = count($page['orders'])) == 0) break;
-                $page = $page['orders'];
-
-                for ($idxOrder = 0; $idxOrder < $nbOrders; $idxOrder++) {
-                    $created_at = new DateTime($page[$idxOrder]['created_at']);
-                    $date = new DateTime($page[$idxOrder]['updated_at']);
-                    $date = $date < $created_at ? $created_at : $date;
-
-                    if ((!isset($from_date) || $from_date < $date) && (!isset($to_date) || $date <= $to_date)) {
-                        $result[] = $page[$idxOrder]['id'];
-                    }
-                }
-            }
-
-            dol_syslog("getCommandeToUpdate end (found ".count($result)." record)");
-            return $result;
-        } catch (HttpClientException $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
-        }
-        catch (Exception $e) {
-            $this->errors[]=$e->getMessage().'-'.$e->getCode();
-            dol_syslog(__METHOD__.': '.$e->getMessage().'-'.$e->getCode().'-'.$e->getTraceAsString(), LOG_WARNING);
-            return false;
-        }
-    }
-
-    /**
-     * Call Magenta API to get last updated invoices
-     *
-     * @param   datetime $fromDate      From date
-     * @param   datetime $toDate        To date
-     * @return  boolean|mixed           Response from SOAP call, normally an associative array mirroring the structure of the XML response, nothing if error
-     */
-    public function getFactureToUpdate($fromDate, $toDate)
-    {
-    /*    global $conf;
-
-        try {
-            $result = array();
-            $idxPage = 1;
-            $per_page = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : $conf->global->ECOMMERCENG_MAXSIZE_MULTICALL;
-            $from_date = isset($fromDate) && !empty($fromDate) ? new DateTime(dol_print_date($fromDate, 'standard')) : null;
-            $to_date = isset($toDate) && !empty($toDate) ? new DateTime(dol_print_date($toDate, 'standard')) : null;
-
-            $filter = [ 'limit' => $per_page ];
-            if (isset($fromDate) && !empty($fromDate)) $filter['updated_at_min'] = dol_print_date($fromDate - (24 * 60 * 60), 'dayrfc');
-            if (isset($toDate) && !empty($toDate)) $filter['updated_at_max'] = dol_print_date($toDate + (24 * 60 * 60), 'dayrfc');
-
-            dol_syslog("getFactureToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            while (true) {
-                $page = $this->clientOld->get('orders',
-                    [
-                        'page' => $idxPage++,
-                        'filter' => $filter,
-                        'fields' => 'id,created_at,updated_at'
-                    ]
-                );
-                if (!isset($page['orders']) || ($nbOrders = count($page['orders'])) == 0) break;
-                $page = $page['orders'];
-
-                for ($idxOrder = 0; $idxOrder < $nbOrders; $idxOrder++) {
-                    $created_at = new DateTime($page[$idxOrder]['created_at']);
-                    $date = new DateTime($page[$idxOrder]['updated_at']);
-                    $date = $date < $created_at ? $created_at : $date;
-
-                    if ((!isset($from_date) || $from_date < $date) && (!isset($to_date) || $date <= $to_date)) {
-//                    $status = $page[$idxOrder]['status'];
-//                    if ($status == 'completed' || $status == 'refunded') {
-                        $result[] = $page[$idxOrder]['id'];
-//                    }
-                    }
-                }
-            }
-
-            dol_syslog("getFactureToUpdate end (found ".count($result)." record)");
-            return $result;
-        } catch (HttpClientException $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
-        }*/
-    }
-
-
-    /**
-     * Put the remote data into category dolibarr data from instantiated class in the constructor
-     * Return array of category by update time.
-     *
-     * @param   array   $remoteObject         Array of ids of objects to convert
-     * @param   int     $toNb                 Max nb
-     * @return  array                         societe
-     */
-    public function convertRemoteObjectIntoDolibarrCategory($remoteObject, $toNb=0)
-    {
-        global $conf;
-
-        $categories = array();
-
-        // No need to make $this->client->multiCall($this->session, $calls); to get details.
-
-        // We just need to sort array on updated_at
-        $categories = $remoteObject;
-
-        //important - order by last update
-        if (count($categories))
-        {
-            $last_update=array();
-            foreach ($categories as $key => $row)
-            {
-                $last_update[$key] = $row['updated_at'];
-            }
-            array_multisort($last_update, SORT_ASC, $categories);
-        }
-
-        return $categories;
-    }
-
-    /**
-     * Put the remote data into societe dolibarr data from instantiated class in the constructor
-     * Return array of thirdparty by update time.
-     *
-     * @param   array   $remoteObject         Array of ids of objects to convert
-     * @param   int     $toNb                 Max nb
-     * @return  array                         societe
-     */
-    public function convertRemoteObjectIntoDolibarrSociete($remoteObject, $toNb=0)
-    {
-        global $conf;
-
-        $societes = array();
-
-        $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?100:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);
-        $nbsynchro = 0;
-        $nbremote = count($remoteObject);
-        if ($nbremote)
-        {
-            // Create n groups of $maxsizeofmulticall records max to call the multiCall
-            $callsgroup = array();
-            $calls = array();
-            foreach ($remoteObject as $rsociete)
-            {
-                if (($nbsynchro % $maxsizeofmulticall) == 0)
-                {
-                    if (count($calls)) $callsgroup[] = $calls;    // Add new group for lot of 1000 call arrays
-                    $calls = array();
-                }
-
-                $calls[] = $rsociete;
-
-                $nbsynchro++;   // nbsynchro is now number of calls to do
-            }
-            if (count($calls)) $callsgroup[] = $calls;    // Add new group for the remain lot of calls not yet added
-
-            dol_syslog("convertRemoteObjectIntoDolibarrSociete Call WS to get detail for the " . count($remoteObject) . " objects (" . count($callsgroup) . " calls with " . $maxsizeofmulticall . " max of records each) then create a Dolibarr array for each object");
-            //var_dump($callsgroup);exit;
-
-            $results=array();
-            $nbcall=0;
-            foreach ($callsgroup as $calls)
-            {
-                try {
-                    $nbcall++;
-                    dol_syslog("convertRemoteObjectIntoDolibarrSociete Call WS nb ".$nbcall." (".count($calls)." record)");
-                    $resulttmp = $this->client->get('customers',
-                        [
-                            'per_page' => $maxsizeofmulticall,
-                            'include' => implode(',', $calls),
-                        ]
-                    );
-                    $results=array_merge($results, $resulttmp);
-                } catch (HttpClientException $fault) {
-                    dol_syslog('convertRemoteObjectIntoDolibarrSociete :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-                    return false;
-                }
-            }
-
-            if (count($results))
-            {
-                foreach ($results as $societe)
-                {
-                    $newobj = array(
-                        'remote_id' => $societe['id'],
-                        'last_update' => isset($societe['date_modified']) ? $societe['date_modified'] : $societe['date_created'],
-                        'name' => dolGetFirstLastname($societe['first_name'], $societe['last_name']),
-                        'name_alias' => $this->site->name . ' id ' . $societe['id'],                // See also the delete in eCommerceSociete
-                        'email' => $societe['email'],
-                        'client' => 3, //for client/prospect
-                        'vatnumber' => $societe['taxvat']
-                    );
-                    $societes[] = $newobj;
-                }
-            }
-        }
-
-        //important - order by last update
-        if (count($societes))
-        {
-            $last_update = array();
-            foreach ($societes as $key => $row)
-            {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $societes);
-        }
-
-        dol_syslog("convertRemoteObjectIntoDolibarrSociete end (found ".count($societes)." record)");
-        return $societes;
-    }
-
-
-    /**
-     * Put the remote data into societe dolibarr data from instantiated class in the constructor
-     * Return array of people by update time.
-     *
-     * @param   array   $listofids          List of object with customer_address_id that is remote id of addresss
-     * @param   int     $toNb               Max nb. Not used for socpeople.
-     * @return  array                       societe
-     */
-    public function convertRemoteObjectIntoDolibarrSocpeople($listofids, $toNb=0)
-    {
-        global $conf;
-
-        $socpeoples = array();
-        $calls = array();
-        if (count($listofids))
-        {
-            dol_syslog("convertRemoteObjectIntoDolibarrSocpeople Call WS to get detail for the ".count($listofids)." objects then create a Dolibarr array for each object");
-            foreach ($listofids as $listofid)
-            {
-                $calls[] = $listofid;
-            }
-            try {
-                $results =  $this->client->get('customers',
-                    [
-                        'per_page' => 100,
-                        'include' => implode(',', $calls),
+                        'fields' => 'id,created_at,updated_at,variations'
                     ]
                 );
             } catch (HttpClientException $fault) {
-                dol_syslog('convertRemoteObjectIntoDolibarrSocpeople :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+                $this->errors[] = $langs->trans('ECommerceWoocommerceGetProductToUpdate', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetProductToUpdate', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
             }
 
-            if (count($results)) {
-                $billingName = (empty($conf->global->ECOMMERCENG_BILLING_CONTACT_NAME) ? 'Billing' : $conf->global->ECOMMERCENG_BILLING_CONTACT_NAME);      // Contact name treated as billing address.
-                $shippingName = (empty($conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME) ? 'Shipping' : $conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME);  // Contact name treated as shipping address.
+            if (!isset($page['products']) || ($nbProducts = count($page['products'])) == 0) break;
+            $page = $page['products'];
 
-                foreach ($results as $socpeople) {
-                    $billing = $socpeople['billing'];
-                    $newobj = array(
-                        'remote_id' => $socpeople['id'] . '|1',
-                        //'type'                  => eCommerceSocpeople::CONTACT_TYPE_COMPANY,
-                        'last_update' => isset($socpeople['date_modified']) ? $socpeople['date_modified'] : $socpeople['date_created'],
-                        'name' => $billingName,
-                        'email' => $billing['email'],
-                        'address' => $billing['address_1'] . (!empty($billing['address_1']) && !empty($billing['address_2']) ? "\n" : "") . $billing['address_2'],
-                        'town' => $billing['city'],
-                        'zip' => $billing['postcode'],
-                        'country_code' => getCountry($billing['country'], 3),
-                        'phone' => $billing['phone'],
-                        'fax' => "",
-                        'firstname' => "", // $billing['first_name'],
-                        'lastname' => $billingName, // $billing['last_name'],
-                        'vatnumber' => "",
-                        'is_default_billing' => true,
-                        'is_default_shipping' => false
-                    );
-                    $socpeoples[] = $newobj;
+            foreach ($page as $product) {
+                $update = false;
+                $date_product = $this->getDateTimeFromGMTDateTime(!empty($product['updated_at']) ? $product['updated_at'] : $product['created_at']);
 
-                    $shipping = $socpeople['shipping'];
-                    if ((!empty($shipping['address_1']) || !empty($shipping['address_1'])) && !empty($shipping['city']) && !empty($shipping['postcode']) && !empty($shipping['country'])) {
-                        $newobj = array(
-                            'remote_id' => $socpeople['id'] . '|2',
-                            //'type'                  => eCommerceSocpeople::CONTACT_TYPE_COMPANY,
-                            'last_update' => isset($socpeople['date_modified']) ? $socpeople['date_modified'] : $socpeople['date_created'],
-                            'name' => $shippingName,
-                            'email' => "",
-                            'address' => $shipping['address_1'] . (!empty($shipping['address_1']) && !empty($shipping['address_2']) ? "\n" : "") . $shipping['address_2'],
-                            'town' => $shipping['city'],
-                            'zip' => $shipping['postcode'],
-                            'country_code' => getCountry($shipping['country'], 3),
-                            'phone' => "",
-                            'fax' => "",
-                            'firstname' => "", // $shipping['first_name'],
-                            'lastname' => $shippingName, // $shipping['last_name'],
-                            'vatnumber' => "",
-                            'is_default_billing' => false,
-                            'is_default_shipping' => true
-                        );
-                    } else {
-                        $newobj = array(
-                            'remote_id' => $socpeople['id'] . '|2',
-                            //'type'                  => eCommerceSocpeople::CONTACT_TYPE_COMPANY,
-                            'last_update' => isset($socpeople['date_modified']) ? $socpeople['date_modified'] : $socpeople['date_created'],
-                            'name' => $shippingName,
-                            'email' => $billing['email'],
-                            'address' => $billing['address_1'] . (!empty($billing['address_1']) && !empty($billing['address_2']) ? "\n" : "") . $billing['address_2'],
-                            'town' => $billing['city'],
-                            'zip' => $billing['postcode'],
-                            'country_code' => getCountry($billing['country'], 3),
-                            'phone' => "",
-                            'fax' => "",
-                            'firstname' => "", // $billing['first_name'],
-                            'lastname' => $shippingName, // $billing['last_name'],
-                            'vatnumber' => "",
-                            'is_default_billing' => false,
-                            'is_default_shipping' => true
-                        );
+                // Product
+                if ((!isset($from_date) || $from_date < $date_product) && (!isset($to_date) || $date_product <= $to_date)) {
+                    $id = $product['id'];
+                    $result[$id] = $id;
+                    $last_update[$id] = $date_product->format('Y-m-d H:i:s');
+                }
+
+                // Variations
+                if (!$update) {
+                    foreach ($product['variations'] as $variation) {
+                        $date_variation = $this->getDateTimeFromGMTDateTime(!empty($variation['updated_at']) ? $variation['updated_at'] : $variation['created_at']);
+
+                        if ((!isset($from_date) || $from_date < $date_variation) && (!isset($to_date) || $date_variation <= $to_date)) {
+                            $id = $product['id'].'|'.$variation['id'];
+                    $result[$id] = $id;
+                            $last_update[$id] = $date_variation->format('Y-m-d H:i:s');
+                        }
                     }
-                    $socpeoples[] = $newobj;
                 }
             }
         }
 
         //important - order by last update
-        if (count($socpeoples))
-        {
-            $last_update = array();
-            foreach ($socpeoples as $key => $row)
-            {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $socpeoples);
+        if (count($result)) {
+            array_multisort($last_update, SORT_ASC, $result);
         }
 
-        dol_syslog("convertRemoteObjectIntoDolibarrSocPeople end (found ".count($socpeoples)." record)");
-        return $socpeoples;
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return $result;
     }
 
+    /**
+     * Call Woocommerce API to get last updated orders. We are interested here by list of id only. We will retreive properties later.
+     *
+     * @param   int             $fromDate   From date
+     * @param   int             $toDate     To date
+     *
+     * @return  array|boolean               List of orders ID to update or false if error
+     */
+    public function getCommandeToUpdate($fromDate, $toDate)
+    {
+        dol_syslog(__METHOD__ . ": start gt = " . (!empty($fromDate) ? dol_print_date($fromDate, 'standard') : 'none') .
+            ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs;
+
+        $last_update = [];
+        $result = [];
+        $idxPage = 1;
+        $per_page = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+        $from_date = isset($fromDate) && !empty($fromDate) ? new DateTime(dol_print_date($fromDate, 'standard')) : null;
+        $to_date = isset($toDate) && !empty($toDate) ? new DateTime(dol_print_date($toDate, 'standard')) : null;
+
+        $filter = ['limit' => $per_page];
+        if (isset($fromDate) && !empty($fromDate)) $filter['updated_at_min'] = dol_print_date($fromDate - (24 * 60 * 60), 'dayrfc');
+        if (isset($toDate) && !empty($toDate)) $filter['updated_at_max'] = dol_print_date($toDate + (24 * 60 * 60), 'dayrfc');
+
+        while (true) {
+            try {
+                $page = $this->clientOld->get('orders',
+                    [
+                        'page' => $idxPage++,
+                        'filter' => $filter,
+                        'fields' => 'id,created_at,updated_at'
+                    ]
+                );
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceGetCommandeToUpdate', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetCommandeToUpdate', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
+            }
+
+            if (!isset($page['orders']) || ($nbOrders = count($page['orders'])) == 0) break;
+            $page = $page['orders'];
+
+            foreach ($page as $order) {
+                $date = $this->getDateTimeFromGMTDateTime(!empty($order['updated_at']) ? $order['updated_at'] : $order['created_at']);
+
+                if ((!isset($from_date) || $from_date < $date) && (!isset($to_date) || $date <= $to_date)) {
+                    $id = $order['id'];
+                    $result[$id] = $id;
+                    $last_update[$id] = $date->format('Y-m-d H:i:s');
+                }
+            }
+        }
+
+        //important - order by last update
+        if (count($result)) {
+            array_multisort($last_update, SORT_ASC, $result);
+        }
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return $result;
+    }
 
     /**
-     * Put the remote data into product dolibarr data from instantiated class in the constructor
-     * Return array or products by update time.
+     * Desactivated because is not supported by woocommerce.
      *
-     * @param   array   $remoteObject       Array of remote products (got by caller from getProductToUpdate. Only few properties defined)
-     * @param   int     $toNb               Max nb
-     * @return  array                       product
+     * @param   int     $fromDate   From date
+     * @param   int     $toDate     To date
+     *
+     * @return  array               Empty list
+     */
+    public function getFactureToUpdate($fromDate, $toDate)
+    {
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
+        return [];
+    }
+
+    /**
+     * Call Woocommerce API to get company datas and put into dolibarr company class.
+     *
+     * @param   array           $remoteObject List of id of remote companies to convert
+     * @param   int             $toNb         Max nb
+     * @return  array|boolean                 List of companies sorted by update time or false if error.
+     */
+    public function convertRemoteObjectIntoDolibarrSociete($remoteObject, $toNb=0)
+    {
+        dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote companies ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs;
+
+        $companies = [];
+        $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+        $requestGroups = $this->getRequestGroups($remoteObject, $nb_max_by_request, $toNb);
+
+        foreach ($requestGroups as $request) {
+            dol_syslog(__METHOD__ . ": Get partial remote companies ID: " . implode(', ', $request), LOG_DEBUG);
+            try {
+                $results = $this->client->get('customers',
+                    [
+                        'per_page' => $nb_max_by_request,
+                        'include' => implode(',', $request),
+                    ]
+                );
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
+            }
+
+            if (is_array($results)) {
+                foreach ($results as $company) {
+                    $last_update = $this->getDateTimeFromGMTDateTime(!empty($company['date_modified_gmt']) ? $company['date_modified_gmt'] : $company['date_created_gmt']);
+
+                    // Company
+                    if (!empty($company['billing']['company'])) {
+                        $companies[] = [
+                            'remote_id' => $company['id'],
+                            'last_update' => $last_update->format('Y-m-d H:i:s'),
+                            'type' => 'company',
+                            'name' => $company['billing']['company'],
+                            'name_alias' => null,
+                            'email' => null,
+                            'email_key' => $company['email'],
+                            'client' => 1,
+                            'vatnumber' => null,
+                            'note_private' => "Site: '{$this->site->name}' - ID: {$company['id']}",
+                            'country_id' => getCountry($company['billing']['country'], 3),
+                            'remote_datas' => $company,
+                        ];
+                    }
+                    // User
+                    else {
+                        $firstname = !empty($company['first_name']) ? $company['first_name'] : $company['billing']['first_name'];
+                        $lastname = !empty($company['last_name']) ? $company['last_name'] : $company['billing']['last_name'];
+                        if (!empty($firstname) && !empty($lastname)) {
+                            $name = dolGetFirstLastname($firstname, $lastname);
+                        } elseif (!empty($firstname)) {
+                            $name = dolGetFirstLastname($firstname, $langs->trans("ECommercengWoocommerceLastnameNotInformed"));
+                        } else {
+                            $name = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                        }
+                        $companies[] = [
+                            'remote_id' => $company['id'],
+                            'last_update' => $last_update->format('Y-m-d H:i:s'),
+                            'type' => 'user',
+                            'name' => $name,
+                            'name_alias' => null,
+                            'email' => $company['email'],
+                            'email_key' => $company['email'],
+                            'client' => 1,
+                            'vatnumber' => null,
+                            'note_private' => "Site: '{$this->site->name}' - ID: {$company['id']}",
+                            'country_id' => getCountry($company['billing']['country'], 3),
+                            'remote_datas' => $company,
+                        ];
+                    }
+                }
+            }
+        }
+
+        //important - order by last update
+        if (count($companies)) {
+            $last_update = [];
+            foreach ($companies as $key => $row) {
+                $last_update[$key] = $row['last_update'];
+            }
+            array_multisort($last_update, SORT_ASC, $companies);
+        }
+
+        dol_syslog(__METHOD__ . ": end, converted " . count($companies) . " remote companies", LOG_DEBUG);
+        return $companies;
+    }
+
+    /**
+     * Call Woocommerce API to get contact datas and put into dolibarr contact class.
+     *
+     * @param   array           $remoteCompany Remote company infos
+     * @return  array|boolean                 List of contact sorted by update time or false if error.
+     */
+    public function convertRemoteObjectIntoDolibarrSocpeople($remoteCompany)
+    {
+        dol_syslog(__METHOD__ . ": Get remote contacts ID: {$remoteCompany["id"]} for site ID {$this->site->id}", LOG_DEBUG);
+        global $langs;
+
+        $contacts = [];
+        $last_update = $this->getDateTimeFromGMTDateTime(!empty($remoteCompany['date_modified_gmt']) ? $remoteCompany['date_modified_gmt'] : $remoteCompany['date_created_gmt']);
+
+        $bContact = $remoteCompany['billing'];
+                    if (!empty($bContact['address_1']) || !empty($bContact['address_2']) || !empty($bContact['postcode']) ||
+                        !empty($bContact['city']) || !empty($bContact['country']) ||
+                        !empty($bContact['email']) || !empty($bContact['phone'])
+                    ) {
+            $firstname = !empty($bContact['first_name']) ? $bContact['first_name'] : $remoteCompany['first_name'];
+            $lastname = !empty($bContact['last_name']) ? $bContact['last_name'] : $remoteCompany['last_name'];
+            if (!empty($firstname) && empty($lastname)) {
+                $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+            } elseif (empty($firstname) && empty($lastname)) {
+                $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+            }
+                        $contacts[] = [
+                            'remote_id' => null,
+                            'last_update' => $last_update->format('Y-m-d H:i:s'),
+                'firstname' => $firstname,
+                'lastname' => $lastname,
+                            'address' => $bContact['address_1'] . (!empty($bContact['address_1']) && !empty($bContact['address_2']) ? "\n" : "") . $bContact['address_2'],
+                            'zip' => $bContact['postcode'],
+                            'town' => $bContact['city'],
+                            'country_id' => getCountry($bContact['country'], 3),
+                'email' => !empty($bContact['email']) ? $bContact['email'] : $remoteCompany['email'],
+                            'phone' => $bContact['phone'],
+                            'fax' => null,
+                        ];
+                    }
+
+        $sContact = $remoteCompany['shipping'];
+                    if (!empty($sContact['address_1']) || !empty($sContact['address_2']) ||
+                        !empty($sContact['postcode']) || !empty($sContact['city']) ||
+                        !empty($sContact['country'])
+                    ) {
+                        if ($bContact['first_name'] != $sContact['first_name'] || $bContact['last_name'] != $sContact['last_name'] ||
+                            $bContact['address_1'] != $sContact['address_1'] || $bContact['address_2'] != $sContact['address_2'] ||
+                            $bContact['postcode'] != $sContact['postcode'] || $bContact['city'] != $sContact['city'] ||
+                            $bContact['country'] != $sContact['country']
+                        ) {
+                $firstname = !empty($sContact['first_name']) ? $sContact['first_name'] : $remoteCompany['first_name'];
+                $lastname = !empty($sContact['last_name']) ? $sContact['last_name'] : $remoteCompany['last_name'];
+                if (!empty($firstname) && empty($lastname)) {
+                    $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+                } elseif (empty($firstname) && empty($lastname)) {
+                    $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                }
+                            $contacts[] = [
+                                'remote_id' => null,
+                                'last_update' => $last_update->format('Y-m-d H:i:s'),
+                    'firstname' => $firstname,
+                    'lastname' => $lastname,
+                                'address' => $sContact['address_1'] . (!empty($sContact['address_1']) && !empty($sContact['address_2']) ? "\n" : "") . $sContact['address_2'],
+                                'zip' => $sContact['postcode'],
+                                'town' => $sContact['city'],
+                                'country_id' => getCountry($sContact['country'], 3),
+                    'email' => null,
+                    'phone' => null,
+                                'fax' => null,
+                            ];
+                        }
+                    }
+
+        dol_syslog(__METHOD__ . ": end, converted " . count($contacts) . " remote contacts", LOG_DEBUG);
+        return $contacts;
+    }
+
+    /**
+     * Call Woocommerce API to get product datas and put into dolibarr product class.
+     *
+     * @param   array           $remoteObject List of id of remote products to convert
+     * @param   int             $toNb         Max nb
+     * @return  array|boolean                 List of products sorted by update time or false if error.
      */
     public function convertRemoteObjectIntoDolibarrProduct($remoteObject, $toNb=0)
     {
-        global $conf;
-
-        include_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
-
-        $products = array();
+        dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote products ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs;
 
         $canvas = '';
+        $products = [];
+        $remoteVariationObject = [];
+        $products_last_update = [];
+        $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
 
-        $ecommerceurl =  $this->site->getFrontUrl();
-
-        $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?100:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);      // 1000 seems ok for multicall.
-        $nbsynchro = 0;
-        $nbremote = count($remoteObject);
-        if ($nbremote)
-        {
-            // Create n groups of $maxsizeofmulticall records max to call the multiCall
-            $callsgroup = array();
-            $calls=array();
-            foreach ($remoteObject as $rproduct)
-            {
-                if (($nbsynchro % $maxsizeofmulticall) == 0)
-                {
-                    if (count($calls)) $callsgroup[]=$calls;    // Add new group for lot of 1000 call arrays
-                    $calls=array();
-                }
-
-                $calls[] = $rproduct;
-
-                $nbsynchro++;   // nbsynchro is now number of calls to do
+        // Products
+        $newRemoteObject = [];
+        $remoteObject = array_slice($remoteObject, 0, $toNb);
+        foreach ($remoteObject as $id) {
+            if (($pos = strpos($id, '|')) !== false) {
+                $variation_id = substr($id,$pos+1);
+                $id = substr($id,0,$pos);
+                if (!isset($remoteVariationObject[$id])) $remoteVariationObject[$id] = [];
+                $remoteVariationObject[$id][] = $variation_id;
             }
-            if (count($calls)) $callsgroup[]=$calls;    // Add new group for the remain lot of calls not yet added
-
-            dol_syslog("convertRemoteObjectIntoDolibarrProduct Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
-            //var_dump($callsgroup);exit;
-
-            $results=array();
-            $nbcall=0;
-            foreach ($callsgroup as $calls)
-            {
-                try {
-                    $nbcall++;
-                    dol_syslog("convertRemoteObjectIntoDolibarrProduct Call WS nb ".$nbcall." (".count($calls)." record)");
-                    $resulttmp =  $this->client->get('products',
-                        [
-                            'per_page' => $maxsizeofmulticall,
-                            'include' => implode(',', $calls),
-                        ]
-                    );
-                    $results=array_merge($results, $resulttmp);
-                } catch (HttpClientException $fault) {
-                    dol_syslog('convertRemoteObjectIntoDolibarrProduct :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-
-					return false;
-                }
+            $newRemoteObject[$id] = $id;
+        }
+        $requestGroups = $this->getRequestGroups($newRemoteObject, $nb_max_by_request);
+        foreach ($requestGroups as $request) {
+            dol_syslog(__METHOD__ . ": Get ".count($request)." partial remote products ID: " . implode(', ', $request), LOG_DEBUG);
+            try {
+                $results = $this->client->get('products',
+                    [
+                        'per_page' => $nb_max_by_request,
+                        'include' => implode(',', $request),
+                    ]
+                );
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
             }
 
-            if (count($results))
-            {
-                foreach ($results as $cursorproduct => $product)
-                {
+            if (is_array($results)) {
+                foreach ($results as $product) {
+                    // Categories
+                    $categories = [];
+                    foreach ($product['categories'] as $category) {
+                        $categories[] = $category['id'];
+                    }
+
+                    // Images
+                    $images = [];
+                    if (!empty($conf->global->ECOMMERCENG_ENABLE_SYNCHRO_IMAGES)) {
+                        foreach ($product['images'] as $image) {
+                            $last_update = $this->getDateTimeFromGMTDateTime(!empty($image['date_modified_gmt']) ? $image['date_modified_gmt'] : $image['date_created_gmt']);
+                            $images[] = [
+                                'url' => $image['src'],
+                                'date_modified' => $last_update->format('Y-m-d H:i:s'),
+                            ];
+                        }
+                        array_reverse($images);
+                    }
+
+                    $last_update_product = $this->getDateTimeFromGMTDateTime(!empty($product['date_modified_gmt']) ? $product['date_modified_gmt'] : $product['date_created_gmt']);
+
+                    $remote_id = $product['id'];  // id product
+                    $last_update = $last_update_product->format('Y-m-d H:i:s');
+
+                    // Produit de base
+                    if (in_array($remote_id, $remoteObject, true)) {
+                        $products_last_update[$remote_id] = $last_update;
+                        $products[$remote_id] = [
+                            'remote_id' => $remote_id,
+                            'last_update' => $last_update,
+                        'fk_product_type' => ($product['virtual'] ? 1 : 0), // 0 (product) or 1 (service)
+                        'ref' => $product['sku'],
+                        'label' => $product['name'],
+                        'weight' => $product['weight'],
+                        'price' => $product['price'],
+                        'envente' => empty($product['variations']) ? 1 : 0,
+                        'enachat' => empty($product['variations']) ? 1 : 0,
+                        'finished' => 1,    // 1 = manufactured, 0 = raw material
+                        'canvas' => $canvas,
+                        'categories' => $categories,
+                        'tax_rate' => $this->getTaxRate($product['tax_class'], $product['tax_status']),
+                        'price_min' => $product['price'],
+                        'fk_country' => '',
+                        'url' => $product['permalink'],
+                        // Stock
+                        'stock_qty' => $product['stock_quantity'],
+                        'is_in_stock' => $product['in_stock'],   // not used
+                        'extrafields' => [
+                            "ecommerceng_wc_status_{$this->site->id}_{$conf->entity}" => $product['status'],
+                            "ecommerceng_description_{$conf->entity}" => $product['description'],
+                            "ecommerceng_short_description_{$conf->entity}" => $product['short_description'],
+                            "ecommerceng_tax_class_{$this->site->id}_{$conf->entity}" => $this->getTaxClass($product['tax_class'], $product['tax_status']),
+                        ],
+                        'images' => $images,
+                    ];
+                    }
+
                     // Variations
-                    if (count($product['variations'])) {
-                            try {
-                                $variations = $this->client->get('products/' . $product['id'] . '/variations');
-                            } catch (HttpClientException $fault) {
-                                $this->errors[] = $fault->getMessage() . '-' . $fault->getCode();
-                                dol_syslog($fault->getRequest(), LOG_WARNING);
-                                dol_syslog($fault->getResponse(), LOG_WARNING);
-                                dol_syslog(__METHOD__ . ': ' . $fault->getMessage() . '-' . $fault->getCode() . '-' . $fault->getTraceAsString(), LOG_WARNING);
-                                return false;
-                            }
+                    $requestGroupsVariations = $this->getRequestGroups($remoteVariationObject[$product['id']], $nb_max_by_request);
+                    foreach ($requestGroupsVariations as $requestVariations) {
+                        dol_syslog(__METHOD__ . ": Get ".count($requestVariations)." products variations of remote product (ID:{$product['id']}): " . implode(', ', $requestVariations), LOG_DEBUG);
+                        try {
+                            $results = $this->client->get('products/' . $product['id'] . '/variations',
+                                [
+                                    'per_page' => $nb_max_by_request,
+                                    'include' => implode(',', $requestVariations),
+                                ]
+                            );
+                        } catch (HttpClientException $fault) {
+                            $this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                            dol_syslog(__METHOD__ .
+                                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                            return false;
+                        }
 
-                            foreach ($variations as $variation) {
+                        if (is_array($results)) {
+                            foreach ($results as $variation) {
                                 $attributesLabel = '';
                                 foreach ($variation['attributes'] as $attribute) {
-                                    $attributesLabel .= ', '.$attribute['name'].':'.$attribute['option'];
+                                    $attributesLabel .= ', ' . $attribute['name'] . ':' . $attribute['option'];
                                 }
 
-                                $products[] = array(
-                                    'remote_id'         => $product['id'].'|'.$variation['id'],  // id product | id variation
-                                    'last_update'       => isset($variation['date_modified'])?$variation['date_modified']:$variation['date_created'],
-                                    'fk_product_type'   => ($variation['virtual'] ? 1 : 0), // 0 (product) or 1 (service)
-                                    'ref'               => dol_string_nospecial($variation['sku']),
-                                    'label'             => ($product['name']?$product['name']:dol_string_nospecial($variation['sku'])).$attributesLabel,
-                                    'description'       => $variation['description'],
-                                    'weight'            => $variation['weight'],
-                                    'price'             => $variation['price'],  //sale_price
-                                    'envente'           => $variation['purchasable'] ? 1 : 0,
-                                    'finished'          => 1,    // 1 = manufactured, 0 = raw material
-                                    'canvas'            => $canvas,
-                                    'categories'        => '', //$product['categories'],  // a check   // Same as property $product['category_ids']
-                                    'tax_rate'          => '', // $variation['tax_rate'], // a check
-                                    'price_min'         => $variation['price'],
-                                    'fk_country'        => '',
-                                    'url'               => $variation['permalink'],
+                                // Images
+                                $images = [];
+                                if (!empty($conf->global->ECOMMERCENG_ENABLE_SYNCHRO_IMAGES)) {
+                                    if (!empty($variation['image'])) {
+                                        $last_update = $this->getDateTimeFromGMTDateTime(!empty($variation['image']['date_modified_gmt']) ? $variation['image']['date_modified_gmt'] : $variation['image']['date_created_gmt']);
+                                        $images[] = [
+                                            'url' => $variation['image']['src'],
+                                            'date_modified' => $last_update->format('Y-m-d H:i:s'),
+                                        ];
+                                    }
+                                }
+
+                                $last_update_product_variation = $this->getDateTimeFromGMTDateTime(!empty($variation['date_modified_gmt']) ? $variation['date_modified_gmt'] : $variation['date_created_gmt']);
+
+                                $remote_id = $product['id'] . '|' . $variation['id'];  // id product | id variation
+                                $last_update = $last_update_product_variation->format('Y-m-d H:i:s');
+
+                                // Variation
+                                $products_last_update[$remote_id] = $last_update;
+                                $products[$remote_id] = [
+                                    'remote_id' => $remote_id,
+                                    'last_update' => $last_update,
+                                    'fk_product_type' => ($variation['virtual'] ? 1 : 0), // 0 (product) or 1 (service)
+                                    'ref' => $variation['sku'],
+                                    'label' => $product['name'] . $attributesLabel,
+                                    'weight' => $variation['weight'],
+                                    'price' => $variation['price'],
+                                    'envente' => 1,
+                                    'enachat' => 1,
+                                    'finished' => 1,    // 1 = manufactured, 0 = raw material
+                                    'canvas' => $canvas,
+                                    'categories' => $product['categories'],
+                                    'tax_rate' => $this->getTaxRate($variation['tax_class'], $variation['tax_status']),
+                                    'price_min' => $variation['price'],
+                                    'fk_country' => '',
+                                    'url' => $variation['permalink'],
                                     // Stock
-                                    'stock_qty'         => $variation['stock_quantity'],
-                                    'is_in_stock'       => $variation['in_stock'],   // not used
-                                );
+                                    'stock_qty' => $variation['stock_quantity'],
+                                    'is_in_stock' => $variation['in_stock'],   // not used
+                                    'extrafields' => [
+                                        "ecommerceng_description_{$conf->entity}" => $variation['description'],
+                                        "ecommerceng_tax_class_{$this->site->id}_{$conf->entity}" => $this->getTaxClass($variation['tax_class'], $variation['tax_status']),
+                                    ],
+                                    'images' => $images,
+                                ];
                             }
-                    } else {
-                            $products[] = array(
-                                'remote_id'         => $product['id'],  // id product
-                                'last_update'       => isset($product['date_modified'])?$product['date_modified']:$product['date_created'],
-                                'fk_product_type'   => ($product['virtual'] ? 1 : 0), // 0 (product) or 1 (service)
-                                'ref'               => dol_string_nospecial($product['sku']),
-                                'label'             => ($product['name']?$product['name']:dol_string_nospecial($product['sku'])),
-                                'description'       => $product['description'],
-                                'weight'            => $product['weight'],
-                                'price'             => $product['price'],  //sale_price
-                                'envente'           => $product['purchasable'] ? 1 : 0,
-                                'finished'          => 1,    // 1 = manufactured, 0 = raw material
-                                'canvas'            => $canvas,
-                                'categories'        => '', // $product['categories'],  // a check   // Same as property $product['category_ids']
-                                'tax_rate'          => '', // $product['tax_rate'], // a check
-                                'price_min'         => $product['price'],
-                                'fk_country'        => '',
-                                'url'               => $product['permalink'],
-                                // Stock
-                                'stock_qty'         => $product['stock_quantity'],
-                                'is_in_stock'       => $product['in_stock'],   // not used
-                            );
+                        }
                     }
                 }
             }
         }
 
         //important - order by last update
-        if (count($products))
-        {
-            $last_update = array();
-            foreach ($products as $key => $row)
-            {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $products);
+        if (count($products)) {
+            array_multisort($products_last_update, SORT_ASC, $products);
         }
 
-        dol_syslog("convertRemoteObjectIntoDolibarrProduct end (found ".count($products)." record)");
+        dol_syslog(__METHOD__ . ": end, converted " . count($products) . " remote products", LOG_DEBUG);
         return $products;
     }
 
     /**
-     * Put the remote data into commande dolibarr data from instantiated class in the constructor
-     * Return array of orders by update time.
+     * Call Woocommerce API to get order datas and put into dolibarr order class.
      *
-     * @param   array   $remoteObject       array of remote orders
-     * @param   int     $toNb               Max nb
-     * @return  array                       commande
+     * @param   array           $remoteObject List of id of remote orders to convert
+     * @param   int             $toNb         Max nb
+     * @return  array|boolean                 List of orders sorted by update time or false if error.
      */
     public function convertRemoteObjectIntoDolibarrCommande($remoteObject, $toNb=0)
     {
+        dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote orders ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
-        $commandes = array();
+        $orders = [];
+        $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+        $requestGroups = $this->getRequestGroups($remoteObject, $nb_max_by_request, $toNb);
 
-        $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?100:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);      // 1000 seems ok for multicall.
-        $nbsynchro = 0;
-        $nbremote = count($remoteObject);
-        if ($nbremote)
-        {
-            // Create n groups of $maxsizeofmulticall records max to call the multiCall
-            $callsgroup = array();
-            $calls=array();
-            foreach ($remoteObject as $rcommande)
-            {
-                if (($nbsynchro % $maxsizeofmulticall) == 0)
-                {
-                    if (count($calls)) $callsgroup[]=$calls;    // Add new group for lot of 1000 call arrays
-                    $calls=array();
-                }
-
-                $calls[] = $rcommande;
-
-                $nbsynchro++;   // nbsynchro is now number of calls to do
-            }
-            if (count($calls)) $callsgroup[]=$calls;    // Add new group for the remain lot of calls not yet added
-
-            dol_syslog("convertRemoteObjectIntoDolibarrCommande Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
-            //var_dump($callsgroup);exit;
-
-            $results=array();
-            $nbcall=0;
-            foreach ($callsgroup as $calls)
-            {
-                try {
-                    $nbcall++;
-                    dol_syslog("convertRemoteObjectIntoDolibarrCommande Call WS nb ".$nbcall." (".count($calls)." record)");
-                    $resulttmp = $this->client->get('orders',
-                        [
-                            'per_page' => $maxsizeofmulticall,
-                            'include' => implode(',', $calls),
-                        ]
-                    );
-                    $results=array_merge($results, $resulttmp);
-                } catch (HttpClientException $fault) {
-                    dol_syslog('convertRemoteObjectIntoDolibarrCommande :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-					return false;
-                }
+        foreach ($requestGroups as $request) {
+            dol_syslog(__METHOD__ . ": Get partial remote orders ID: " . implode(', ', $request), LOG_DEBUG);
+            try {
+                $results = $this->client->get('orders',
+                    [
+                        'per_page' => $nb_max_by_request,
+                        'include' => implode(',', $request),
+                    ]
+                );
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
             }
 
-            if (count($results))
-            {
-                foreach ($results as $commande)
-                {
-                    // Process order
-                    dol_syslog("- Process order remote_id=".$commande['order_id']." last_update=".$commande['updated_at']." societe remote_id=".$commande['customer_id']);
+            if (is_array($results)) {
+                foreach ($results as $order) {
+                    // Set items
+                    $items = [];
+                    foreach ($order['line_items'] as $item) {
+                        $items[] = [
+                            'item_id' => $item['id'],
+                            'id_remote_product' => !empty($item['variation_id']) ? $item['product_id'] . '|' . $item['variation_id'] : $item['product_id'],
+                            'description' => $item['name'],
+                            'product_type' => 'simple',
+                            'price' => $item['price'],
+                            'qty' => $item['quantity'],
+                            'tva_tx' => $this->getClosestDolibarrTaxRate($item['total'], $item['total_tax']),
+                        ];
+                    }
 
-                    //set each items
-                    $items = array();
-                    $configurableItems = array();
-                    if (count($commande['line_items']))
-                    {
-                        foreach ($commande['line_items'] as $item)
-                        {
-                                $items[] = array(
-                                    'item_id' => $item['id'],
-                                    'id_remote_product' => !empty($item['variation_id']) ? $item['product_id'].'|'.$item['variation_id'] : $item['product_id'],
-                                    'description' => $item['name'],
-                                    'product_type' => 'simple',
-                                    'price' => $item['price'],
-                                    'qty' => $item['quantity'],
-                                    'tva_tx' => $this->getTaxRate($commande['total'], $commande['total_tax']) // tax_class > requete taxes rates
-                                );
-                        }
+                    // Set remote id company : 0 for anonymous
+                    $eCommerceTempSoc = new eCommerceSociete($this->db);
+                    if (empty($order['customer_id']) || $eCommerceTempSoc->fetchByRemoteId($order['customer_id'], $this->site->id) < 0) {
+                        dol_syslog(__METHOD__ . ": The customer of the remote order ID " . $order['id'] . " was not found into companies table link", LOG_WARNING);
+                        $remoteCompanyID = 0;   // If company was not found into companies table link
+                    } else {
+                        $remoteCompanyID = $order['customer_id'];
+                    }
 
-                        //define remote id societe : 0 for anonymous
-                        $eCommerceTempSoc = new eCommerceSociete($this->db);
-                        if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
-                        {
-                            dol_syslog("The customer of this order was not found into table link", LOG_WARNING);
-                            $remoteIdSociete = 0;   // If thirdparty was not found into thirdparty table link
-                        }
-                        else
-                        {
-                            $remoteIdSociete = $commande['customer_id'];
-                        }
+                    $last_update = $this->getDateTimeFromGMTDateTime(!empty($order['date_modified_gmt']) ? $order['date_modified_gmt'] : $order['date_created_gmt']);
 
-                        //set order's address
-                        $billingName = (empty($conf->global->ECOMMERCENG_BILLING_CONTACT_NAME)?'Billing':$conf->global->ECOMMERCENG_BILLING_CONTACT_NAME);      // Contact name treated as billing address.
-                        $commandeSocpeople = $commande['billing'];
-                        $socpeopleCommande = array(
-                            'remote_id'     => $remoteIdSociete.'|1',
-                            'type'          => eCommerceSocpeople::CONTACT_TYPE_ORDER,
-                            'last_update'   => isset($commande['date_modified'])?$commande['date_modified']:$commande['date_created'],
-                            'name'          => $billingName, // $commandeSocpeople['last_name'],
-                            'lastname'      => $billingName, // $commandeSocpeople['last_name'],
-                            'firstname'     => '', // $commandeSocpeople['first_name'],
-                            'town'          => $commandeSocpeople['city'],
-                            //'fk_pays'       => getCountry($commandeSocpeople['country'], 3),
-                            'fax'           => '',
-                            'zip'           => $commandeSocpeople['postcode'],
-                            //add wrap
-                            'address'       => (!empty(trim($commandeSocpeople['company'])) ? trim($commandeSocpeople['company']) . ", " : "") .
-                                $commandeSocpeople['address_1'] . (!empty($commandeSocpeople['address_1']) && !empty($commandeSocpeople['address_2']) ? "\n" : "") . $commandeSocpeople['address_2'],
-                            'phone'         => $commandeSocpeople['phone'],
-                        );
+                    // Set billing's address
+                    $bContact = $order['billing'];
+                    $firstname = $bContact['first_name'];
+                    $lastname = $bContact['last_name'];
+                    if (!empty($firstname) && empty($lastname)) {
+                        $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+                    } elseif (empty($firstname) && empty($lastname)) {
+                        $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                    }
+                    $contactBilling = [
+                        'remote_id' => "",
+                        'type' => 1, //eCommerceSocpeople::CONTACT_TYPE_ORDER,
+                        'last_update' => $last_update->format('Y-m-d H:i:s'),
+                        'firstname' => $firstname,
+                        'lastname' => $lastname,
+                        'address' => $bContact['address_1'] . (!empty($bContact['address_1']) && !empty($bContact['address_2']) ? "\n" : "") . $bContact['address_2'],
+                        'zip' => $bContact['postcode'],
+                        'town' => $bContact['city'],
+                        'country_id' => getCountry($bContact['country'], 3),
+                        'email' => $bContact['email'],
+                        'phone' => $bContact['phone'],
+                        'fax' => null,
+                    ];
 
-                        //set billing's address
-                        $socpeopleFacture = $socpeopleCommande;
-                        $socpeopleFacture['type'] = eCommerceSocpeople::CONTACT_TYPE_INVOICE;
+                    // Set invoice's address
+                    $contactInvoice = $contactBilling;
+                    $contactInvoice['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_INVOICE;
 
-                        //set shipping's address
-                        $livraisonSocpeople = $commande['shipping'];
-                        if ((!empty($livraisonSocpeople['address_1']) || !empty($livraisonSocpeople['address_1'])) && !empty($livraisonSocpeople['city']) && !empty($livraisonSocpeople['postcode']) && !empty($livraisonSocpeople['country'])) {
-                            $shippingName = (empty($conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME) ? 'Shipping' : $conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME);  // Contact name treated as shipping address.
-                            $socpeopleLivraison = array(
-                                'remote_id'     => $remoteIdSociete . '|2',
-                                'type'          => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
-                                'last_update'   => isset($commande['date_modified'])?$commande['date_modified']:$commande['date_created'],
-                                'name'          => $shippingName, // $livraisonSocpeople['last_name'],
-                                'lastname'      => $shippingName, // $livraisonSocpeople['last_name'],
-                                'firstname'     => '', // $livraisonSocpeople['first_name'],
-                                'town'          => $livraisonSocpeople['city'],
-                                //'fk_pays'       => getCountry($commandeSocpeople['country'], 3),
-                                'fax'           => '',
-                                'zip'           => $livraisonSocpeople['postcode'],
-                                //add wrap
-                                'address'       => (!empty(trim($livraisonSocpeople['company'])) ? addslashes(trim($livraisonSocpeople['company'])) . ", " : "") .
-                                    $livraisonSocpeople['address_1'] . (!empty($livraisonSocpeople['address_1']) && !empty($livraisonSocpeople['address_2']) ? "\n" : "") .
-                                    $livraisonSocpeople['address_2'],
-                                'phone'         => '',
-                            );
+                    // Set shipping's address
+                    $sContact = $order['shipping'];
+                    if (!empty($sContact['address_1']) || !empty($sContact['address_2']) ||
+                        !empty($sContact['postcode']) || !empty($sContact['city']) ||
+                        !empty($sContact['country'])
+                    ) {
+                        if ($bContact['first_name'] != $sContact['first_name'] || $bContact['last_name'] != $sContact['last_name'] ||
+                            $bContact['address_1'] != $sContact['address_1'] || $bContact['address_2'] != $sContact['address_2'] ||
+                            $bContact['postcode'] != $sContact['postcode'] || $bContact['city'] != $sContact['city'] ||
+                            $bContact['country'] != $sContact['country']
+                        ) {
+                            $firstname = $sContact['first_name'];
+                            $lastname = $sContact['last_name'];
+                            if (!empty($firstname) && empty($lastname)) {
+                                $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+                            } elseif (empty($firstname) && empty($lastname)) {
+                                $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                            }
+                            $contactShipping = [
+                                'remote_id' => "",
+                                'type' => 1, //eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
+                                'last_update' => $last_update->format('Y-m-d H:i:s'),
+                                'firstname' => $firstname,
+                                'lastname' => $lastname,
+                                'address' => $sContact['address_1'] . (!empty($sContact['address_1']) && !empty($sContact['address_2']) ? "\n" : "") . $sContact['address_2'],
+                                'zip' => $sContact['postcode'],
+                                'town' => $sContact['city'],
+                                'country_id' => getCountry($sContact['country'], 3),
+                                'email' => null,
+                                'phone' => null,
+                                'fax' => null,
+                            ];
                         } else {
-                            $socpeopleLivraison = $socpeopleCommande;
-                            $socpeopleLivraison['type'] = eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
+                            $contactShipping = $contactBilling;
+                            $contactShipping['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
                         }
-
-                        //set delivery as service
-                        $langs->load("ecommerce@ecommerceng");
-                        $shippingDisplayIfNull = (empty($conf->global->ECOMMERCENG_SHIPPING_NOT_DISPLAY_IF_NULL)?true:false);  // Contact name treated as shipping address.
-                        $delivery = array(
-                            'description'   => $langs->trans('ECommerceShipping') . (isset($commande['shipping_lines'][0]) ? ' - '.$commande['shipping_lines'][0]['method_title'] : ''), // $commande['customer_note']
-                            'price'         => $commande['shipping_total'],
-                            'qty'           => $shippingDisplayIfNull || isset($commande['shipping_lines'][0]) ? 1 : 0, //0 to not show
-                            'tva_tx'        => $this->getTaxRate($commande['shipping_total'], $commande['shipping_tax'])
-                        );
-
-                        //define delivery date
-                        if (isset($commande['date_completed']) && $commande['date_completed'] != null)
-                            $deliveryDate = $commande['date_completed'];
-                        else
-                            $deliveryDate = $commande['date_created'];
-
-                        // define status of order
-                        // $commande['status'] is: 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed'
-                        $tmp = $commande['status'];
-
-                        // try to match dolibarr status
-                        $status = '';
-                        if (preg_match('/^pending/', $tmp))          $status = Commande::STATUS_VALIDATED;           // manage 'pending', 'pending_payment', 'pending_paypal', 'pending_ogone', 'pending_...'
-                        elseif ($tmp == 'processing')                $status = Commande::STATUS_ACCEPTED;                                    // shipment in process or invoice done = processing       // Should be constant Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9
-                        elseif ($tmp == 'on-hold')                   $status = Commande::STATUS_ACCEPTED;
-                        elseif (preg_match('/^cancelled/', $tmp))    $status = Commande::STATUS_CANCELED;            // manage 'canceled', 'canceled_bnpmercanetcw', 'canceled_...'
-                        elseif ($tmp == 'completed')                 $status = Commande::STATUS_CLOSED;
-                        elseif ($tmp == 'refunded')                  $status = Commande::STATUS_CLOSED;
-                        elseif ($tmp == 'failed')                    $status = Commande::STATUS_CANCELED;
-                        if ($status == '')
-                        {
-                            dol_syslog("Status: We found an order id ".$commande['increment_id']." with ecommerce status '".$tmp."' that is unknown, not supported. We will use '0' for Dolibarr", LOG_WARNING);
-                            $status = Commande::STATUS_DRAFT;   // draft by default (draft does not exists with magento, so next line will set correct status)
-                        }
-                        else
-                        {
-                            dol_syslog("Status: We found an order id ".$commande['increment_id']." with ecommerce status '".$tmp."'. We convert it into Dolibarr status '".$status."'");
-                        }
-
-                        // try to match dolibarr billed status (payed or not)
-                        $billed = -1;   // unknown
-                        if ($commande['status'] == 'pending')    $billed = 0;
-                        if ($commande['status'] == 'processing') $billed = 0;   //
-                        if ($commande['status'] == 'on-hold')    $billed = 0;      //
-                        if ($commande['status'] == 'completed')  $billed = 1;    // We are sure for complete that order is payed
-                        if ($commande['status'] == 'cancelled')  $billed = 0;    // We are sure for canceled that order was not payed
-                        if ($commande['status'] == 'refunded')   $billed = 1;     //
-                        if ($commande['status'] == 'failed')     $billed = 0;       //
-                        // Note: with processing, billed can be 0 or 1, so we keep -1
-
-
-                        // Add order content to array or orders
-                        $commandes[] = array(
-                            'last_update'           => isset($commande['date_modified'])?$commande['date_modified']:$commande['date_created'],
-                            'remote_id'             => $commande['id'],
-                            'remote_increment_id'   => $commande['id'],
-                            'remote_id_societe'     => $remoteIdSociete,
-                            'ref_client'            => $commande['id'],
-                            'date_commande'         => $commande['date_created'],
-                            'date_livraison'        => $commande['date_completed'], // $deliveryDate,
-                            'items'                 => $items,
-                            'delivery'              => $delivery,
-                            'note'                  => $commande['customer_note'],
-                            'socpeopleCommande'     => $socpeopleCommande,
-                            'socpeopleFacture'      => $socpeopleFacture,
-                            'socpeopleLivraison'    => $socpeopleLivraison,
-                            'status'                => $status,                         // dolibarr status
-                            'billed'                => $billed,
-                            'remote_state'          => $commande['status'],        // remote state, for information only (less accurate than status)
-                            'remote_status'         => $commande['status'],      // remote status, for information only (more accurate than state)
-                            'remote_order'          => $commande
-                        );
+                    } else {
+                        $contactShipping = $contactBilling;
+                        $contactShipping['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
                     }
-                    else
-                    {
-                        dol_syslog("No items in this order", LOG_WARNING);
+
+                    // Set delivery as service
+                    $shippingDisplayIfNull = (empty($conf->global->ECOMMERCENG_SHIPPING_NOT_DISPLAY_IF_NULL) ? true : false);
+                    $delivery = [
+                        'description' => $langs->trans('ECommerceShipping') . (isset($order['shipping_lines'][0]) ? ' - ' .
+                                $order['shipping_lines'][0]['method_title'] : ''), // $order['customer_note']
+                        'price' => $order['shipping_total'],
+                        'qty' => $shippingDisplayIfNull || isset($order['shipping_lines'][0]) ? 1 : 0, //0 to not show
+                        'tva_tx' => $this->getClosestDolibarrTaxRate($order['shipping_total'], $order['shipping_tax'])
+                    ];
+
+                    // Set status of order
+                    // $order['status'] is: 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed'
+                    $orderStatus = $order['status'];
+
+                    $status = '';
+                    switch ($orderStatus) {
+                        case 'on-hold': $status = Commande::STATUS_DRAFT; break;
+                        case 'pending': $status = Commande::STATUS_DRAFT; break;
+                        case 'processing': $status = !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_ORDER_PROCESSING_STATUS_TO_DRAFT)?Commande::STATUS_DRAFT:Commande::STATUS_VALIDATED; break;
+                        case 'completed': $status = Commande::STATUS_CLOSED; break;
+                        case 'refunded': $status = Commande::STATUS_CANCELED; break;
+                        case 'cancelled': $status = Commande::STATUS_CANCELED; break;
+                        case 'failed': $status = Commande::STATUS_CANCELED; break;
                     }
+                    if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_FORCE_ORDER_STATUS_TO_DRAFT)) $status = Commande::STATUS_DRAFT;
+                    if ($status == '') {
+                        dol_syslog(__METHOD__ . ": Status \"$orderStatus\" was not found for remote order ID {$order['id']} and set in draft", LOG_WARNING);
+                        $status = Commande::STATUS_DRAFT;   // draft by default
+                    }
+
+                    // Set dolibarr billed status (payed or not)
+                    $billed = -1;   // unknown
+                    if ($order['status'] == 'pending') $billed = 0;
+                    if ($order['status'] == 'processing') $billed = 0;   //
+                    if ($order['status'] == 'on-hold') $billed = 0;      //
+                    if ($order['status'] == 'completed') $billed = 1;    // We are sure for complete that order is payed
+                    if ($order['status'] == 'cancelled') $billed = 0;    // We are sure for canceled that order was not payed
+                    if ($order['status'] == 'refunded') $billed = 1;     //
+                    if ($order['status'] == 'failed') $billed = 0;       //
+                    // Note: with processing, billed can be 0 or 1, so we keep -1
+
+                    // Add order content to array or orders
+                    $orders[] = [
+                        'last_update' => $last_update->format('Y-m-d H:i:s'),
+                        'remote_id' => $order['id'],
+                        'remote_increment_id' => $order['id'],
+                        'remote_id_societe' => $remoteCompanyID,
+                        'ref_client' => $order['id'],
+                        'date_commande' => $order['date_created'],
+                        'date_livraison' => $order['date_completed'],
+                        'items' => $items,
+                        'delivery' => $delivery,
+                        'note' => $order['customer_note'],
+                        'socpeopleCommande' => $contactBilling,
+                        'socpeopleFacture' => $contactInvoice,
+                        'socpeopleLivraison' => $contactShipping,
+                        'status' => $status,                         // dolibarr status
+                        'billed' => $billed,
+                        'remote_state' => $order['status'],        // remote state, for information only (less accurate than status)
+                        'remote_status' => $order['status'],      // remote status, for information only (more accurate than state)
+                        'remote_order' => $order,
+                        'payment_method' => $order['payment_method_title'],
+                        'extrafields' => [
+                            "ecommerceng_online_payment_{$conf->entity}" => empty($order['date_paid']) ? 0 : 1,
+                        ],
+                    ];
                 }
             }
         }
 
         //important - order by last update
-        if (count($commandes))
-        {
-            $last_update = array();
-            foreach ($commandes as $key => $row)
-            {
+        if (count($orders)) {
+            $last_update = [];
+            foreach ($orders as $key => $row) {
                 $last_update[$key] = $row['last_update'];
             }
-            array_multisort($last_update, SORT_ASC, $commandes);
+            array_multisort($last_update, SORT_ASC, $orders);
         }
 
-        dol_syslog("convertRemoteObjectIntoDolibarrCommande end (found ".count($commandes)." array of orders filled with complete data from eCommerce)");
-        return $commandes;
+        dol_syslog(__METHOD__ . ": end, converted " . count($orders) . " remote orders", LOG_DEBUG);
+        return $orders;
     }
 
     /**
-     * Put the remote data into facture dolibarr data from instantiated class
-     * Return array of invoices by update time.
+     * Desactivated because is not supported by woocommerce.
      *
-     * @param   array   $remoteObject       array of remote invoices
-     * @param   int     $toNb               Max nb
-     * @return  array                       facture
+     * @param   array   $remoteObject   List of id of remote orders to convert
+     * @param   int     $toNb           Max nb
+     * @return  array                   Empty list
      */
     public function convertRemoteObjectIntoDolibarrFacture($remoteObject, $toNb=0)
     {
-        global $conf;
-
-        $factures = array();
-
-/*        $maxsizeofmulticall = (empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL)?100:$conf->global->ECOMMERCENG_MAXSIZE_MULTICALL);      // 1000 seems ok for multicall.
-        $nbsynchro = 0;
-        $nbremote = count($remoteObject);
-        if ($nbremote)
-        {
-            // Create n groups of $maxsizeofmulticall records max to call the multiCall
-            $callsgroup = array();
-            $calls=array();
-            foreach ($remoteObject as $rfacture)
-            {
-                if (($nbsynchro % $maxsizeofmulticall) == 0)
-                {
-                    if (count($calls)) $callsgroup[]=$calls;    // Add new group for lot of 1000 call arrays
-                    $calls=array();
-                }
-
-                $calls[] = $rfacture;
-
-                $nbsynchro++;   // nbsynchro is now number of calls to do
-            }
-            if (count($calls)) $callsgroup[]=$calls;    // Add new group for the remain lot of calls not yet added
-
-            dol_syslog("convertRemoteObjectIntoDolibarrFacture Call WS to get detail for the ".count($remoteObject)." objects (".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
-            //var_dump($callsgroup);exit;
-
-            $results=array();
-            $nbcall=0;
-            foreach ($callsgroup as $calls)
-            {
-                try {
-                    $nbcall++;
-                    dol_syslog("convertRemoteObjectIntoDolibarrFacture Call WS nb ".$nbcall." (".count($calls)." record)");
-                    $resulttmp =  $this->client->get('orders',
-                        [
-                            'include' => implode(',', $calls),
-                        ]
-                    );
-                    $results=array_merge($results, $resulttmp);
-                } catch (HttpClientException $fault) {
-                    dol_syslog('convertRemoteObjectIntoDolibarrFacture :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-                }
-			}
-
-            if (count($results))
-            {
-                $i=0;
-                foreach ($results as $facture)
-                {
-                    // Process invoice
-   	                dol_syslog("- Process invoice remote_id=".$facture['order_id']." last_update=".$facture['updated_at']." societe order_id=".$facture['order_id']);
-
-                    $i++;
-
-                    $configurableItems = array();
-                    //retrive remote order from invoice
-                    $commande = $this->getRemoteCommande($facture['order_id']);
-                    //set each invoice items
-                    $items = array();
-                    if (count($facture['items']))
-					{
-                        foreach ($facture['items'] as $item)
-                        {
-                                //var_dump($item);    // show invoice item as it is from magento
-
-                                $product_type = $this->getProductTypeOfItem($item, $commande, $facture);
-                                $parent_item_id = $this->getParentItemOfItem($item, $commande, $facture);
-
-                                // If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
-                                if ($product_type == 'configurable') {
-                                    $configurableItems[$item['item_id']] = array(
-                                        'item_id' => $item['item_id'],
-                                        'id_remote_product' => $item['product_id'],
-                                        'description' => $item['name'],
-                                        'product_type' => $product_type,
-                                        'price' => $item['price'],
-                                        'qty' => $item['qty'],
-                                        'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
-                                    );
-                                } else {
-                                    // If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
-                                    if (!array_key_exists($parent_item_id, $configurableItems)) {
-                                        $items[] = array(
-                                                'item_id' => $item['item_id'],
-                                                'id_remote_product' => $item['product_id'],
-                                                'description' => $item['name'],
-                                                'product_type' => $product_type,
-                                                'price' => $item['price'],
-                                                'qty' => $item['qty'],
-                                                'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
-                                        );
-                                    } else {
-                                        $items[] = array(
-                                                'item_id' => $item['item_id'],
-                                                'id_remote_product' => $item['product_id'],
-                                                'description' => $item['name'],
-                                                'product_type' => $product_type,
-                                                'price' => $configurableItems[$parent_item_id]['price'],
-                                                'qty' => $item['qty'],
-                                                'tva_tx' => $configurableItems[$parent_item_id]['tva_tx']
-                                        );
-                                    }
-                                }
-                        }
-
-                        //set shipping address
-                        $shippingAddress = $commande["shipping_address"];
-                        $billingAddress = $commande["billing_address"];
-                        $socpeopleLivraison = array(
-                                'remote_id' => $shippingAddress['address_id'],
-                                'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
-                                'last_update' => $shippingAddress['updated_at'],
-                                'name' => $shippingAddress['lastname'],
-                                'firstname' => $shippingAddress['firstname'],
-                                'ville' => $shippingAddress['city'],
-                                //'fk_pays' => $commandeSocpeople['country_id'],
-                                'fax' => $shippingAddress['fax'],
-                                'cp' => $shippingAddress['postcode'],
-                                //add wrap
-                                'address' => (trim($shippingAddress['company']) != '' ? trim($shippingAddress['company']) . '
-                                                                                ' : '') . $shippingAddress['street'],
-                                'phone' => $shippingAddress['telephone']
-                        );
-                        //set invoice address
-                        $socpeopleFacture = array(
-                                'remote_id' => $billingAddress['address_id'],
-                                'type' => eCommerceSocpeople::CONTACT_TYPE_INVOICE,
-                                'last_update' => $billingAddress['updated_at'],
-                                'name' => $billingAddress['lastname'],
-                                'firstname' => $billingAddress['firstname'],
-                                'ville' => $billingAddress['city'],
-                                //'fk_pays' => $commandeSocpeople['country_id'],
-                                'fax' => $billingAddress['fax'],
-                                'cp' => $billingAddress['postcode'],
-                                //add wrap
-                                'address' => (trim($billingAddress['company']) != '' ? trim($billingAddress['company']) . '
-                                                                                ' : '') . $billingAddress['street'],
-                                'phone' => $billingAddress['telephone']
-                        );
-                        //set delivery as service
-                        $delivery = array(
-                                'description' => $commande['shipping_description'],
-                                'price' => $facture['shipping_amount'],
-                                'qty' => 1, //0 to not show
-                                'tva_tx' => $this->getTaxRate($facture['shipping_amount'], $facture['shipping_tax_amount'])
-                        );
-
-                        $eCommerceTempSoc = new eCommerceSociete($this->db);
-                        if ($commande['customer_id'] == null || $eCommerceTempSoc->fetchByRemoteId($commande['customer_id'], $this->site->id) < 0)
-                        {
-                            $remoteIdSociete = 0;
-                        }
-                        else
-                        {
-                            $remoteIdSociete = $commande['customer_id'];
-                        }
-
-                        // load local order to be used to retreive some data for invoice
-                        $eCommerceTempCommande = new eCommerceCommande($this->db);
-                        $eCommerceTempCommande->fetchByRemoteId($commande['order_id'], $this->site->id);
-                        $dbCommande = new Commande($this->db);
-                        $dbCommande->fetch($eCommerceTempCommande->fk_commande);
-
-
-                        // define status of invoice
-                        $tmp = $facture['state'];                                                   // state from is 1, 2, 3
-
-                        // try to match dolibarr status
-                        $status = '';
-                        if ($tmp == 1)     $status = Facture::STATUS_VALIDATED;            // validated = pending
-                        if ($tmp == 2)     $status = Facture::STATUS_CLOSED;               // complete
-                        if ($tmp == 3)     $status = Facture::STATUS_ABANDONED;            // canceled = holded
-                        if ($status == '')
-                        {
-                            dol_syslog("Status: We found an invoice id ".$commande['increment_id']." with ecommerce status '".$tmp."' that is unknown, not supported. We will use '0' for Dolibarr", LOG_WARNING);
-                            $status = Facture::STATUS_DRAFT;                                            // draft by default (draft does not exists with magento, so next line will set correct status)
-                        }
-                        else
-                        {
-                            dol_syslog("Status: We found an invoice id ".$commande['increment_id']." with ecommerce status '".$tmp."'. We convert it into Dolibarr status '".$status."'");
-                        }
-
-
-                        $close_code = '';
-                        $close_note = '';
-                        if ($tmp == 3)
-                        {
-                            $close_code = Facture::CLOSECODE_ABANDONED;
-                            $close_note = 'Holded on ECommerce';
-                        }
-
-                        //add invoice to invoices
-                        $factures[] = array(
-                                'last_update' => $facture['updated_at'],
-                                'remote_id' => $facture['invoice_id'],
-                                'remote_increment_id' => $facture['increment_id'],
-                                'ref_client' => $facture['increment_id'],
-                                'remote_order_id' => $facture['order_id'],
-                                'remote_order_increment_id' => $facture['order_increment_id'],
-                                'remote_id_societe' => $remoteIdSociete,
-                                'socpeopleLivraison' => $socpeopleLivraison,
-                                'socpeopleFacture' => $socpeopleFacture,
-                                'date' => $facture['created_at'],
-                                'code_cond_reglement' => $dbCommande->cond_reglement_code,      // Take for local order
-                                'delivery' => $delivery,
-                                'items' => $items,
-                                'status' => $tmp,
-                                'close_code' => $close_code,
-                                'close_note' => $close_note,
-                                'remote_state' => $facture['state'],
-                                'remote_order' => $commande,
-                                'remote_invoice' => $facture
-                        );
-                    }
-                    else
-                    {
-                        dol_syslog("No items in this invoice", LOG_WARNING);
-                    }
-                }
-            }
-        }
-
-        //important - order by last update
-        if (count($factures))
-        {
-            $last_update=array();
-            foreach ($factures as $key => $row)
-            {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $factures);
-        }
-
-        //var_dump($factures);exit;
-        */
-
-        dol_syslog("convertRemoteObjectIntoDolibarrFacture end (found ".count($products)." record)");
-        return $factures;
-    }
-
-
-    /**
-     * Return if type of an item of invoice (information comue from item of order)
-     *
-     * @param   array   $item       Item of invoice
-     * @param   array   $commande   Commande with items
-     * @param   array   $facture    Facture with items
-     * @return string
-     */
-    function getProductTypeOfItem($item, $commande, $facture)
-    {
-        $product_type = 'notfound';   // By default
-
-        //print "Try to find product type of invoice item_id=".$item['item_id']." (invoice ".$facture['increment_id'].") and order_item_id=".$item['order_item_id']." (order ".$commande['increment_id'].")\n";
-
-        $order_item_id = $item['order_item_id'];
-
-        // We scan item of order to find this order item id
-        foreach($commande['items'] as $itemorder)
-        {
-            if ($itemorder['item_id'] == $order_item_id)
-            {
-                // We've got it
-                $product_type = $itemorder['product_type'];
-                break;
-            }
-        }
-
-        //print "Found product type = ".$product_type."\n";
-
-        if ($product_type == 'notfound') $product_type = 'simple';
-
-        return $product_type;
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
+        return [];
     }
 
     /**
-     * Return if type of an item of invoice (information comue from item of order)
-     *
-     * @param   array   $item       Item of invoice
-     * @param   array   $commande   Commande with items
-     * @param   array   $facture    Facture with items
-     * @return string
-     */
-    function getParentItemOfItem($item, $commande, $facture)
-    {
-        //print "Try to find invoice parent item id of invoice item_id=".$item['item_id']." (invoice ".$facture['increment_id'].") and order_item_id=".$item['order_item_id']." (order ".$commande['increment_id'].")\n";
-
-        $parent_item_id = 0;   // By default
-        $parent_item_id_in_order = 0;
-
-        $order_item_id = $item['order_item_id'];
-
-        // We scan item of order to find this order item id
-        foreach($commande['items'] as $itemorder)
-        {
-            if ($itemorder['item_id'] == $order_item_id)
-            {
-                // We've got it
-                $product_type = $itemorder['product_type'];
-
-                $parent_item_id_in_order = $itemorder['parent_item_id'];
-                break;
-            }
-        }
-
-        // If the item is linked to an order item id that has a parent order item id
-        if ($parent_item_id_in_order)
-        {
-            // We scan now invoice items to find the item that is linked to order item id $parent_item_id_in_order
-            foreach($facture['items'] as $itemfacture)
-            {
-                if ($itemfacture['order_item_id'] == $parent_item_id_in_order)
-                {
-                    // We've got it
-                    $parent_item_id = $itemfacture['item_id'];
-                    break;
-                }
-            }
-        }
-
-        //print "Found invoice parent_item_id=".$parent_item_id." and order parent_item_id=".$parent_item_id_in_order."\n";
-
-        return $parent_item_id;
-    }
-
-
-
-
-    // Now functions to get data on remote shop, from the remote id.
-
-
-    /**
-     * Return the magento's category tree
+     * Get remote category tree
      *
      * @return  array|boolean       Array with categories or false if error
      */
     public function getRemoteCategoryTree()
     {
-        dol_syslog("eCommerceRemoteAccessWoocommerce getRemoteCategoryTree session=".$this->session);
- /*       try {
-            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
-            $result = $this->client->call($this->session, 'catalog_category.tree');
-            return $result;
-            //dol_syslog($this->client->__getLastRequest());
-        } catch (SoapFault $fault) {
-            $this->errors[]=$this->site->name.': '.$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
-        }*/
-        return array();
-        //var_dump($result);
-        dol_syslog("eCommerceRemoteAccessWoocommerce getRemoteCategoryTree end. Nb of record of result = ".count($result));
-    }
+        dol_syslog(__METHOD__ . ": Get remote category tree for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs;
 
-    /**
-     * Return the magento's category att
-     *
-     * @return  array|boolean       Array with categories or false if error
-     */
-    /*public function getRemoteCategoryAtt()
-    {
-        dol_syslog("eCommerceRemoteAccessWoocommerce getRemoteCategoryAtt session=".$this->session);
-        try {
-            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
-            $result = $this->client->call($this->session, 'catalog_category_attribute.list');
-        } catch (SoapFault $fault) {
-            $this->errors[]=$this->site->name.': '.$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
+        $categories = [];
+        $idxPage = 1;
+        $per_page = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+
+        while (true) {
+            try {
+                $results = $this->client->get('products/categories',
+                    [
+                        'page' => $idxPage++,
+                        'per_page' => $per_page,
+                    ]
+                );
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceGetRemoteCategoryTree', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetRemoteCategoryTree', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
+            }
+            if (count($results) == 0) break;
+
+            foreach ($results as $category) {
+                $categories[$category['id']] = [
+                    'category_id' => $category['id'],  // id category
+                    'parent_id' => $category['parent'],
+                    'label' => $category['name'],
+                    'name' => $category['name'],
+                    'description' => $category['description'],
+                    'updated_at' => '',
+                ];
+            }
         }
-        dol_syslog("eCommerceRemoteAccessWoocommerce getRemoteCategoryAtt end");
-        return $result;
-    }*/
 
-    /**
-     * Return the magento's address id
-     *
-     * @param   int             $remote_thirdparty_id       Id of thirdparty
-     * @return  array|boolean                               Array with address id
-     */
-    public function getRemoteAddressIdForSociete($remote_thirdparty_id)
-    {
-        dol_syslog("eCommerceRemoteAccessWoocommerce getRemoteAddressIdForSociete session=".$this->session);
-        $result = array($remote_thirdparty_id);
-        dol_syslog("eCommerceRemoteAccessWoocommerce getRemoteAddressIdForSociete end");
-        return $result;
+        // Set tree
+        foreach ($categories as $category) {
+            $parent_id = $category['parent_id'];
+
+            if (!empty($parent_id)) {
+                if (!isset($categories[$parent_id]['children'])) {
+                    $categories[$parent_id]['level'] = 0;
+                    $categories[$parent_id]['children'] = [];
+                }
+
+                $categories[$parent_id]['children'][] = &$categories[$category['category_id']];
+            }
+        }
+
+        // Make tree
+        $categories_tree = ['level' => 0, 'children' => []];
+        foreach ($categories as $category) {
+            if (empty($category['parent_id'])) {
+                $categories_tree['children'][] = $category;
+            }
+        }
+
+        dol_syslog(__METHOD__ . ": end, " . count($categories) . " remote category recovered", LOG_DEBUG);
+        return $categories_tree;
     }
 
+    /**
+     * Desactivated because is not supported by woocommerce.
+     *
+     * @param   int     $remote_company_id  Id of company
+     *
+     * @return  array                       Array with address id
+     */
+    public function getRemoteAddressIdForSociete($remote_company_id)
+    {
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
+        return [$remote_company_id];
+    }
 
     /**
      * Return content of one category
      *
-     * @param   int             $category_id        Remote category id
-     * @return  boolean|unknown                     Return
+     * @param   int             $category_id    Remote category id
+     *
+     * @return  array|boolean                   Return category data
      */
     public function getCategoryData($category_id)
     {
-        $result = array();
-        dol_syslog("eCommerceRemoteAccessWoocommerce getCategoryData session=".$this->session);
-/*        try {
-            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
-            $result = $this->client->call($this->session, 'catalog_category.info', array('categoryId'=>$category_id));
-            //dol_syslog($this->client->__getLastRequest());
-        } catch (SoapFault $fault) {
-            $this->errors[]=$this->site->name.': '.$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
-            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+        dol_syslog(__METHOD__ . ": Get remote category for site ID {$this->site->id}", LOG_DEBUG);
+        global $langs;
+
+        $category = [];
+
+        try {
+            $result = $this->client->get('products/categories/' . $category_id);
+        } catch (HttpClientException $fault) {
+            $this->errors[] = $langs->trans('ECommerceWoocommerceGetCategoryData', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+            dol_syslog(__METHOD__ .
+                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetCategoryData', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
             return false;
-        }*/
-        dol_syslog("eCommerceRemoteAccessWoocommerce getCategoryData end");
-        return $result;
+        }
+
+        if (isset($result)) {
+            $category = [
+                'category_id' => $result['id'],  // id category
+                'parent_id' => $result['parent'],
+                'label' => $result['name'],
+                'name' => $result['name'],
+                'description' => $result['description'],
+                'updated_at' => '',
+            ];
+        }
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return $category;
     }
 
     /**
-     * Return the magento's order
+     * Return content of one order
      *
-     * @param   int         $remoteCommandeId       Id of remote order
-     * @return  object                              Order
+     * @param   int     $remoteOrderId  Remote order id
+     *
+     * @return  array                   Empty
      */
-    public function getRemoteCommande($remoteCommandeId)
+    public function getRemoteCommande($remoteOrderId)
     {
-        $commande = array();
-        try {
-            dol_syslog("getCommande begin");
-            $commande =  $this->client->get("orders/$remoteCommandeId");
-            dol_syslog("getCommande end");
-        } catch (HttpClientException $fault) {
-            if ($fault->getCode() != 404) {
-                $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-                dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            }
-        }
-        return $commande;
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
+        return [];
     }
-
-
 
     /**
      * Update the remote product
      *
-     * @param   int     $remote_id      Id of product on remote ecommerce
-	 * @param   Product $object         Product object
-     * @return  boolean                 True or false
+     * @param   int     $remote_id  Id of product on remote ecommerce
+     * @param   Product $object     Product object
+     *
+     * @return  boolean             True or false
      */
     public function updateRemoteProduct($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteProduct session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+        dol_syslog(__METHOD__ . ": Update the remote product ID $remote_id for Dolibarr product ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs;
 
+        $isProductVariation = false;
+        $remote_product_id = $remote_id;
+        $remote_product_variation_id = 0;
+        if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) { // Variations
+            $isProductVariation = true;
+            $remote_product_id = $idsProduct[1];
+            $remote_product_variation_id = $idsProduct[2];
+        }
+
+        // Set Weight
         $totalWeight = $object->weight;
         if ($object->weight_units < 50)   // >50 means a standard unit (power of 10 of official unit), > 50 means an exotic unit (like inch)
         {
-            $trueWeightUnit=pow(10, $object->weight_units);
+            $trueWeightUnit = pow(10, $object->weight_units);
             $totalWeight = sprintf("%f", $object->weight * $trueWeightUnit);
         }
 
-
         try {
-            if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) {
-                // Variations
-/*
-                // Product variation - Downloads properties
-                $downloads = [
-                    [
-                        'name' => '',       // string     File name.
-                        'file' => '',       // string     File URL.
-                    ],
-                ];
-*/
-/*
-                // Product variation - Dimensions properties
-                $dimensions = [
-                    'length'    => '',      // string   Product length (cm).
-                    'width'     => '',      // string   Product width (cm).
-                    'height'    => '',      // string   Product height (cm).
-                ];
-*/
-/*
-                // Product variation - Image properties
-                $images = [
-                    [
-                        'id'        => 0,       // integer	Image ID. Not required
-                        'src'       => '',      // string	Image URL.
-                        'name'      => '',      // string	Image name.
-                        'alt'       => '',      // string	Image alternative text.
-                        'position'  => 0,       // integer	Image position. 0 means that the image is featured.
-                    ],
-                ];
-*/
-/*
-                // Product variation - Attributes properties
-                $attributes = [
-                    [
-                        'id'        => 0,       // integer  Attribute ID.
-                        'name'      => '',      // string   Attribute name.
-                        'option'    => '',      // string   Selected attribute term name.
-                    ],
-                ];
-*/
-/*
-                // Product variation - Meta data properties
-                $meta_data = [
-                    'key'   => '',  // string	Meta key.
-                    'value' => '',  // string	Meta value.
-                ];
-*/
-                $variationData = array(
-                    'description' => $object->description,                  // string       Variation description.
-                    'sku' => $object->ref,                                  // string       Unique identifier.
-                    'regular_price' => $object->price,                      // string       Variation regular price.
-                    //'sale_price' => '',                                     // string       Variation sale price.
-                    //'date_on_sale_from' => '',                              // date-time    Start date of sale price, in the site’s timezone.
-                    //'date_on_sale_from_gmt' => '',                          // date-time    Start date of sale price, as GMT.
-                    //'date_on_sale_to' => '',                                // date-time    End date of sale price, in the site’s timezone.
-                    //'date_on_sale_to_gmt' => '',                            // date-time    End date of sale price, in the site’s timezone.
-                    //'visible' => '',                                        // boolean      Define if the attribute is visible on the “Additional information” tab in the product’s page. Default is true.
-                    //'virtual' => $object->type == Product::TYPE_SERVICE,    // boolean      If the variation is virtual. Default is false.
-                    //'downloadable' => '',                                   // boolean      If the variation is downloadable. Default is false.
-                    //'downloads' => $downloads,                              // array        List of downloadable files. See Product variation - Downloads properties
-                    //'download_limit' => '',                                 // integer      Number of times downloadable files can be downloaded after purchase. Default is -1.
-                    //'download_expiry' => '',                                // integer      Number of days until access to downloadable files expires. Default is -1.
-                    //'tax_status' => '',                                     // string       Tax status. Options: taxable, shipping and none. Default is taxable.
-                    //'tax_class' => '',                                      // string       Tax class.
-                    //'manage_stock' => '',                                   // boolean      Stock management at variation level. Default is false.
-                    //'stock_quantity' => '',                                 // integer      Stock quantity.
-                    //'in_stock' => '',                                       // boolean      Controls whether or not the variation is listed as “in stock” or “out of stock” on the frontend. Default is true.
-                    //'backorders' => '',                                     // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
-                    'weight' => $totalWeight,                               // string       Variation weight (kg).
-                    //'dimensions' => $dimensions,                            // object       Variation dimensions. See Product variation - Dimensions properties
-                    //'shipping_class' => '',                                 // string       Shipping class slug.
-                    //'image' => $images,                                     // object       Variation image data. See Product variation - Image properties
-                    //'attributes' => $attributes,                            // array        List of attributes. See Product variation - Attributes properties
-                    //'menu_order' => '',                                     // integer      Menu order, used to custom sort products.
-                    //'meta_data' => $meta_data,                              // array        Meta data. See Product variation - Meta data properties
-                );
-
-                // Product
-                // 'name'    => $object->label,			                    // string		Product name.
-                // 'status'  => $object->status ? 'publish' : 'pending',	// string		Product status (post status). Options: draft, pending, private and publish. Default is publish.
-
-                $result = $this->client->put("products/$idsProduct[1]/variations/$idsProduct[2]", $variationData);
+            if ($isProductVariation) { // Variations
+                $results = $this->client->get("products/$remote_product_id/variations/$remote_product_variation_id");
             } else {
-                // Product
-/*
-                // Product - Downloads properties
-                $downloads = [
-                    [
-                        'name' => '',       // string     File name.
-                        'file' => '',       // string     File URL.
-                    ],
-                ];
-*/
-/*
-                // Product - Dimensions properties
-                $dimensions = [
-                    'length' => '',     // string   Product length (cm).
-                    'width' => '',      // string   Product width (cm).
-                    'height' => '',     // string   Product height (cm).
-                ];
-*/
-/*
-                // Product - Categories properties
-                $categories = [
-                    [
-                        'id' => 0,      // integer  Category ID.
-                    ],
-                ];
-*/
-/*
-                // Product - Tags properties
-                $tags = [
-                    [
-                        'id' => 0,      // integer  Tag ID.
-                    ],
-                ];
-*/
-/*
-                // Product - Images properties
-                $images = [
-                    [
-                        'id' => 0,              // integer	Image ID. Not required
-                        'src' => '',            // string	Image URL.
-                        'name' => '',           // string	Image name.
-                        'alt' => '',            // string	Image alternative text.
-                        'position' => 0,        // integer	Image position. 0 means that the image is featured.
-                    ],
-                ];
-*/
-/*
-                // Product - Attributes properties
-                $attributes = [
-                    [
-                        'id' => 0,              // integer	Attribute ID. Not required
-                        'name' => '',           // string	Attribute name.
-                        'position' => 0,        // integer	Attribute position.
-                        'visible' => false,     // boolean	Define if the attribute is visible on the “Additional information” tab in the product’s page. Default is false.
-                        'variation' => false,   // boolean	Define if the attribute can be used as variation. Default is false.
-                        'options' => [],        // array	List of available term names of the attribute.
-                    ],
-                ];
-*/
-/*
-                // Product - Default attributes properties
-                $default_attributes = [
-                    'id' => 0,              // integer	Attribute ID. Not required
-                    'name' => '',           // string	Attribute name.
-                    'option' => '',         // string	Selected attribute term name.
-                ];
-*/
-/*
-                // Product - Meta data properties
-                $meta_data = [
-                    'key' => '', // string	Meta key.
-                    'value' => '', // string	Meta value.
-                ];
-*/
-                $productData = array(
-                    'name'                  => $object->label,			                // string		Product name.
-                    //'slug'                  => '',			                            // string		Product slug.
-                    //'type'                  => '',			                            // string		Product type. Options: simple, grouped, external and variable. Default is simple.
-                    'status'                => $object->status ? 'publish' : 'pending',	// string		Product status (post status). Options: draft, pending, private and publish. Default is publish.
-                    //'featured'              => false,		                            // boolean		Featured product. Default is false.
-                    //'catalog_visibility'    => '',                                      // string		Catalog visibility. Options: visible, catalog, search and hidden. Default is visible.
-                    'description'           => $object->description,                    // string		Product description.
-                    //'short_description'     => '',                                      // string		Product short description.
-                    'sku'                   => $object->ref,                            // string		Unique identifier.
-                    'regular_price'         => $object->price,                          // string		Product regular price.
-                    //'sale_price'            => '',                                      // string		Product sale price.
-                    //'date_on_sale_from'     => '',                                      // date-time	Start date of sale price, in the site’s timezone.
-                    //'date_on_sale_from_gmt' => '',                                      // date-time	Start date of sale price, as GMT.
-                    //'date_on_sale_to'       => '',                                      // date-time	End date of sale price, in the site’s timezone.
-                    //'date_on_sale_to_gmt'   => '',                                      // date-time	End date of sale price, in the site’s timezone.
-                    //'virtual'               => $object->type == Product::TYPE_SERVICE,  // boolean		If the product is virtual. Default is false.
-                    //'downloadable'          => false,                                   // boolean		If the product is downloadable. Default is false.
-                    //'downloads'             => $downloads,                              // array		List of downloadable files. See Product - Downloads properties
-                    //'download_limit'        => -1,                                      // integer		Number of times downloadable files can be downloaded after purchase. Default is -1.
-                    //'download_expiry'       => -1,                                      // integer		Number of days until access to downloadable files expires. Default is -1.
-                    //'external_url'          => '',                                      // string		Product external URL. Only for external products.
-                    //'button_text'           => '',                                      // string		Product external button text. Only for external products.
-                    //'tax_status'            => '',                                      // string		Tax status. Options: taxable, shipping and none. Default is taxable.
-                    //'tax_class'             => '',                                      // string		Tax class.
-                    //'manage_stock'          => false,                                   // boolean		Stock management at product level. Default is false.
-                    //'stock_quantity'        => $object->stock_reel,                     // integer		Stock quantity.
-                    //'in_stock'              => $object->stock_reel > 0,                 // boolean		Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
-                    //'backorders'            => '',                                      // string		If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
-                    //'sold_individually'     => false,                                   // boolean		Allow one item to be bought in a single order. Default is false.
-                    'weight'                => $totalWeight,                            // string		Product weight (kg).
-                    //'dimensions'            => $dimensions,                             // object		Product dimensions. See Product - Dimensions properties
-                    //'shipping_class'        => '',                                      // string		Shipping class slug.
-                    //'reviews_allowed'       => true,                                    // boolean		Allow reviews. Default is true.
-                    //'upsell_ids'            => [],                                      // array		List of up-sell products IDs.
-                    //'cross_sell_ids'        => [],                                      // array		List of cross-sell products IDs.
-                    //'parent_id'             => 0,                                       // integer		Product parent ID.
-                    //'purchase_note'         => '',                                      // string		Optional note to send the customer after purchase.
-                    //'categories'            => $categories,                             // array		List of categories. See Product - Categories properties
-                    //'tags'                  => $tags,                                   // array		List of tags. See Product - Tags properties
-                    //'images'                => $images,                                 // object		List of images. See Product - Images properties
-                    //'attributes'            => $attributes,			                    // array		List of attributes. See Product - Attributes properties
-                    //'default_attributes'    => $default_attributes,			            // array		Defaults variation attributes. See Product - Default attributes properties
-                    //'menu_order'            => 0,			                            // integer		Menu order, used to custom sort products.
-                    //'meta_data'             => $meta_data,                              // array		Meta data. See Product - Meta data properties
-                );
-
-                $result = $this->client->put("products/$remote_id", $productData);
+                $results = $this->client->get("products/$remote_product_id");
             }
-
-            dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteProduct end");
-            return true;
         } catch (HttpClientException $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+            dol_syslog(__METHOD__ .
+                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
             return false;
         }
+
+        // images
+        $images = [];
+        if (!empty($conf->global->ECOMMERCENG_ENABLE_SYNCHRO_IMAGES)) {
+            // Get current images
+            $current_images = [];
+            if (!empty($results) && isset($results['images']) && is_array($results['images'])) {
+                foreach ($results['images'] as $image) {
+                    $current_images[$image['name']] = $image['id'];
+                }
+            }
+
+            // Product - Images properties
+            $entity = isset($object->entity) ? $object->entity : $conf->entity;
+            if (!empty($conf->global->PRODUCT_USE_OLD_PATH_FOR_PHOTO)) {    // For backward compatiblity, we scan also old dirs
+                if ($object->type == Product::TYPE_PRODUCT) {
+                    $dir = $conf->product->multidir_output[$entity] . '/' . substr(substr("000" . $object->id, -2), 1, 1) . '/' . substr(substr("000" . $object->id, -2), 0, 1) . '/' . $object->id . "/photos/";
+                } else {
+                    $dir = $conf->service->multidir_output[$entity] . '/' . substr(substr("000" . $object->id, -2), 1, 1) . '/' . substr(substr("000" . $object->id, -2), 0, 1) . '/' . $object->id . "/photos/";
+                }
+            } else {
+                if ($object->type == Product::TYPE_PRODUCT) {
+                    $dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $object, 'product') . dol_sanitizeFileName($object->ref) . '/';
+                } else {
+                    $dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $object, 'product') . dol_sanitizeFileName($object->ref) . '/';
+                }
+            }
+            $photos = $object->liste_photos($dir);
+            foreach ($photos as $index => $photo) {
+                $img = [];
+
+                $filename = ecommerceng_wordpress_sanitize_file_name($photo['photo']);
+                if (!isset($current_images[$filename])) {
+                    $result = $this->worpressclient->postmedia("media", $dir . $photo['photo'], [
+                        'slug' => $object->id . '_' . $filename,
+                        'ping_status' => 'closed',
+                        'comment_status' => 'closed',
+                    ]);
+
+                    if ($result === null) {
+                        $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductSendImage', $remote_id, $this->site->name, implode('; ', $this->worpressclient->errors));
+                        dol_syslog(__METHOD__ . ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductSendImage', $remote_id, $this->site->name, implode('; ', $this->worpressclient->errors)), LOG_ERR);
+                        return false;
+                    }
+
+                    $img['id'] = $result['id'];
+                } else {
+                    $img['id'] = $current_images[$filename];
+                }
+
+                $img['name'] = $filename;
+                $img['position'] = $index;
+                $images[] = $img;
+
+                if ($isProductVariation) { // Get only one image for variation
+                    break;
+                }
+            }
+        }
+
+        // Product - Meta data properties
+        $object->fetch_optionals();
+
+        // Price
+        if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+            $price_level = !empty($this->site->price_level) ? $this->site->price_level : 1;
+            $price = $object->multiprices[$price_level];
+        } else {
+            $price = $object->price;
+        }
+
+        if ($isProductVariation) { // Variations
+            /*
+            // Product variation - Downloads properties
+            $downloads = [
+                [
+                    'name' => '',       // string     File name.
+                    'file' => '',       // string     File URL.
+                ],
+            ];
+
+            // Product variation - Dimensions properties
+            $dimensions = [
+                'length'    => '',      // string   Product length (cm).
+                'width'     => '',      // string   Product width (cm).
+                'height'    => '',      // string   Product height (cm).
+            ];
+
+            // Product variation - Image properties
+            $images = [
+                [
+                    'id'        => 0,       // integer	Image ID. Not required
+                    'src'       => '',      // string	Image URL.
+                    'name'      => '',      // string	Image name.
+                    'alt'       => '',      // string	Image alternative text.
+                    'position'  => 0,       // integer	Image position. 0 means that the image is featured.
+                ],
+            ];
+
+            // Product variation - Attributes properties
+            $attributes = [
+                [
+                    'id'        => 0,       // integer  Attribute ID.
+                    'name'      => '',      // string   Attribute name.
+                    'option'    => '',      // string   Selected attribute term name.
+                ],
+            ];
+
+            // Product variation - Meta data properties
+            $meta_data = [
+                'key'   => '',  // string	Meta key.
+                'value' => '',  // string	Meta value.
+            ];
+            */
+
+            $variationData = [
+                'description' => nl2br($object->array_options["options_ecommerceng_description_{$conf->entity}"]),                    // string       Variation description.
+                'sku' => $object->ref,                                  // string       Unique identifier.
+                'regular_price' => $price,                              // string       Variation regular price.
+                //'sale_price' => '',                                     // string       Variation sale price.
+                //'date_on_sale_from' => '',                              // date-time    Start date of sale price, in the site’s timezone.
+                //'date_on_sale_from_gmt' => '',                          // date-time    Start date of sale price, as GMT.
+                //'date_on_sale_to' => '',                                // date-time    End date of sale price, in the site’s timezone.
+                //'date_on_sale_to_gmt' => '',                            // date-time    End date of sale price, in the site’s timezone.
+                //'visible' => '',                                        // boolean      Define if the attribute is visible on the “Additional information” tab in the product’s page. Default is true.
+                //'virtual' => $object->type == Product::TYPE_SERVICE,    // boolean      If the variation is virtual. Default is false.
+                //'downloadable' => '',                                   // boolean      If the variation is downloadable. Default is false.
+                //'downloads' => $downloads,                              // array        List of downloadable files. See Product variation - Downloads properties
+                //'download_limit' => '',                                 // integer      Number of times downloadable files can be downloaded after purchase. Default is -1.
+                //'download_expiry' => '',                                // integer      Number of days until access to downloadable files expires. Default is -1.
+                'tax_status' => 'none',                                 // string       Tax status. Options: taxable, shipping and none. Default is taxable.
+                //'tax_class' => '',                                      // string       Tax class.
+                //'manage_stock' => '',                                   // boolean      Stock management at variation level. Default is false.
+                //'stock_quantity' => '',                                 // integer      Stock quantity.
+                //'in_stock' => '',                                       // boolean      Controls whether or not the variation is listed as “in stock” or “out of stock” on the frontend. Default is true.
+                //'backorders' => '',                                     // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
+                'weight' => (!empty($totalWeight) ? $totalWeight : ''),                               // string       Variation weight (kg).
+                //'dimensions' => $dimensions,                            // object       Variation dimensions. See Product variation - Dimensions properties
+                //'shipping_class' => '',                                 // string       Shipping class slug.
+                'image' => (!empty($images) ? $images[0] : ''),                                     // object       Variation image data. See Product variation - Image properties
+                //'attributes' => $attributes,                            // array        List of attributes. See Product variation - Attributes properties
+                //'menu_order' => '',                                     // integer      Menu order, used to custom sort products.
+                //'meta_data' => $meta_data,                              // array        Meta data. See Product variation - Meta data properties
+            ];
+
+            // Set tax
+            if (!empty($object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"])) {
+                $variationData['tax_status'] = 'taxable';
+                $variationData['tax_class'] = $object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"];
+            }
+
+            // Product
+            // 'name'    => $object->label,			                    // string		Product name.
+            // 'status'  => $object->status ? 'publish' : 'pending',	// string		Product status (post status). Options: draft, pending, private and publish. Default is publish.
+
+            try {
+                $result = $this->client->put("products/$remote_product_id/variations/$remote_product_variation_id", $variationData);
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductVariation', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductVariation', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
+            }
+        } else { // Product
+            /*
+            // Product - Downloads properties
+            $downloads = [
+                [
+                    'name' => '',       // string     File name.
+                    'file' => '',       // string     File URL.
+                ],
+            ];
+
+            // Product - Dimensions properties
+            $dimensions = [
+                'length' => '',     // string   Product length (cm).
+                'width' => '',      // string   Product width (cm).
+                'height' => '',     // string   Product height (cm).
+            ];
+
+            // Product - Categories properties
+            $categories = [
+                [
+                    'id' => 0,      // integer  Category ID.
+                ],
+            ];
+
+            // Product - Tags properties
+            $tags = [
+                [
+                    'id' => 0,      // integer  Tag ID.
+                ],
+            ];
+
+            // Product - Images properties
+            $images = [
+                [
+                    'id' => 0,              // integer	Image ID. Not required
+                    'src' => '',            // string	Image URL.
+                    'name' => '',           // string	Image name.
+                    'alt' => '',            // string	Image alternative text.
+                    'position' => 0,        // integer	Image position. 0 means that the image is featured.
+                ],
+            ];
+
+            // Product - Attributes properties
+            $attributes = [
+                [
+                    'id' => 0,              // integer	Attribute ID. Not required
+                    'name' => '',           // string	Attribute name.
+                    'position' => 0,        // integer	Attribute position.
+                    'visible' => false,     // boolean	Define if the attribute is visible on the “Additional information” tab in the product’s page. Default is false.
+                    'variation' => false,   // boolean	Define if the attribute can be used as variation. Default is false.
+                    'options' => [],        // array	List of available term names of the attribute.
+                ],
+            ];
+
+            // Product - Default attributes properties
+            $default_attributes = [
+                'id' => 0,              // integer	Attribute ID. Not required
+                'name' => '',           // string	Attribute name.
+                'option' => '',         // string	Selected attribute term name.
+            ];
+
+            // Product - Meta data properties
+            $meta_data = [
+                'key' => '', // string	Meta key.
+                'value' => '', // string	Meta value.
+            ];
+            */
+
+            // Get categories
+            $eCommerceCategory = new eCommerceCategory($this->db);
+            $cat = new Categorie($this->db);
+            $categories_list = $cat->containing($object->id, 'product');
+            $categories = [];
+            foreach ($categories_list as $category) {
+                if ($this->site->fk_cat_product != $category->id) {
+                    $ret = $eCommerceCategory->fetchByFKCategory($category->id, $this->site->id);
+                    if ($ret > 0) {
+                        $categories[] = ['id' => $eCommerceCategory->remote_id];
+                    }
+                }
+            }
+
+            $status = $object->array_options["options_ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"];
+
+            $productData = [
+                'name' => $object->label,                            // string		Product name.
+                //'slug'                  => '',			                            // string		Product slug.
+                //'type'                  => '',			                            // string		Product type. Options: simple, grouped, external and variable. Default is simple.
+                'status' => (!empty($status) ? $status : ''), //$object->status ? 'publish' : 'pending',	// string		Product status (post status). Options: draft, pending, private and publish. Default is publish.
+                //'featured'              => false,		                            // boolean		Featured product. Default is false.
+                //'catalog_visibility'    => '',                                      // string		Catalog visibility. Options: visible, catalog, search and hidden. Default is visible.
+                'description' => nl2br($object->array_options["options_ecommerceng_description_{$conf->entity}"]),                    // string		Product description.
+                'short_description' => nl2br($object->array_options["options_ecommerceng_short_description_{$conf->entity}"]),                                      // string		Product short description.
+                'sku' => $object->ref,                            // string		Unique identifier.
+                'regular_price' => $price,                          // string		Product regular price.
+                //'sale_price'            => '',                                      // string		Product sale price.
+                //'date_on_sale_from'     => '',                                      // date-time	Start date of sale price, in the site’s timezone.
+                //'date_on_sale_from_gmt' => '',                                      // date-time	Start date of sale price, as GMT.
+                //'date_on_sale_to'       => '',                                      // date-time	End date of sale price, in the site’s timezone.
+                //'date_on_sale_to_gmt'   => '',                                      // date-time	End date of sale price, in the site’s timezone.
+                //'virtual'               => $object->type == Product::TYPE_SERVICE,  // boolean		If the product is virtual. Default is false.
+                //'downloadable'          => false,                                   // boolean		If the product is downloadable. Default is false.
+                //'downloads'             => $downloads,                              // array		List of downloadable files. See Product - Downloads properties
+                //'download_limit'        => -1,                                      // integer		Number of times downloadable files can be downloaded after purchase. Default is -1.
+                //'download_expiry'       => -1,                                      // integer		Number of days until access to downloadable files expires. Default is -1.
+                //'external_url'          => '',                                      // string		Product external URL. Only for external products.
+                //'button_text'           => '',                                      // string		Product external button text. Only for external products.
+                'tax_status' => 'none',                                  // string		Tax status. Options: taxable, shipping and none. Default is taxable.
+                //'tax_class'             => '',                                      // string		Tax class.
+                //'manage_stock'          => false,                                   // boolean		Stock management at product level. Default is false.
+                //'stock_quantity'        => $object->stock_reel,                     // integer		Stock quantity.
+                //'in_stock'              => $object->stock_reel > 0,                 // boolean		Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
+                //'backorders'            => '',                                      // string		If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
+                //'sold_individually'     => false,                                   // boolean		Allow one item to be bought in a single order. Default is false.
+                'weight' => (!empty($totalWeight) ? $totalWeight : ''),                            // string		Product weight (kg).
+                //'dimensions'            => $dimensions,                             // object		Product dimensions. See Product - Dimensions properties
+                //'shipping_class'        => '',                                      // string		Shipping class slug.
+                //'reviews_allowed'       => true,                                    // boolean		Allow reviews. Default is true.
+                //'upsell_ids'            => [],                                      // array		List of up-sell products IDs.
+                //'cross_sell_ids'        => [],                                      // array		List of cross-sell products IDs.
+                //'parent_id'             => 0,                                       // integer		Product parent ID.
+                //'purchase_note'         => '',                                      // string		Optional note to send the customer after purchase.
+                'categories' => $categories,                             // array		List of categories. See Product - Categories properties
+                //'tags'                  => $tags,                                   // array		List of tags. See Product - Tags properties
+                'images' => (!empty($images) ? $images : ''),                                 // object		List of images. See Product - Images properties
+                //'attributes'            => $attributes,			                    // array		List of attributes. See Product - Attributes properties
+                //'default_attributes'    => $default_attributes,			            // array		Defaults variation attributes. See Product - Default attributes properties
+                //'menu_order'            => 0,			                            // integer		Menu order, used to custom sort products.
+                //'meta_data'             => $meta_data,                              // array		Meta data. See Product - Meta data properties
+            ];
+
+            // Set tax
+            if (!empty($object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"])) {
+                $productData['tax_status'] = 'taxable';
+                $productData['tax_class'] = $object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"];
+            }
+
+            try {
+                $result = $this->client->put("products/$remote_product_id", $productData);
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
+            }
+        }
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return true;
     }
 
     /**
      * Update the remote stock of product
      *
-     * @param   int         $remote_id      Id of product on remote ecommerce
-     * @param   Movement    $object         Movement object, enhanced with property qty_after be the trigger STOCK_MOVEMENT.
-     * @return  boolean                     True or false
+     * @param   int             $remote_id      Id of product on remote ecommerce
+     * @param   MouvementStock  $object         MouvementStock object, enhanced with property qty_after be the trigger STOCK_MOVEMENT.
+     *
+     * @return  boolean                         True or false
      */
     public function updateRemoteStockProduct($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteStockProduct session=".$this->session." product remote_id=".$remote_id." movement object->id=".$object->id.", new qty=".$object->qty_after);
+        dol_syslog(__METHOD__ . ": Update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_DEBUG);
+        global $langs;
 
-        // $object->qty is the qty of movement
-        try {
-            if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) {
-                // Variations
-                $variationData = array(
-                    //'manage_stock'      => '',                                      // boolean      Stock management at variation level. Default is false.
-                    'stock_quantity'    => $object->qty_after,                      // integer      Stock quantity.
-                    'in_stock'          => $object->qty_after > 0,                  // boolean      Controls whether or not the variation is listed as “in stock” or “out of stock” on the frontend. Default is true.
-                    //'backorders'        => '',                                      // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
-                );
+        if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) {
+            // Variations
+            $variationData = [
+                //'manage_stock'      => '',                      // boolean      Stock management at variation level. Default is false.
+                'stock_quantity' => $object->qty_after,         // integer      Stock quantity.
+                'in_stock' => $object->qty_after > 0,           // boolean      Controls whether or not the variation is listed as “in stock” or “out of stock” on the frontend. Default is true.
+                //'backorders'        => '',                      // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
+            ];
 
-                // Product
-                // 'name'    => $object->label,			                    // string		Product name.
-                // 'status'  => $object->status ? 'publish' : 'pending',	// string		Product status (post status). Options: draft, pending, private and publish. Default is publish.
-
+            try {
                 $result = $this->client->put("products/$idsProduct[1]/variations/$idsProduct[2]", $variationData);
-            } else {
-                $productData = array(
-                    //'manage_stock'      => false,                                   // boolean      Stock management at product level. Default is false.
-                    'stock_quantity'    => $object->qty_after,                      // integer      Stock quantity.
-                    'in_stock'          => $object->qty_after > 0,                  // boolean      Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
-                    //'backorders'        => '',                                      // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
-                );
-
-                $result = $this->client->put("products/$remote_id", $productData);
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProductVariation', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProductVariation', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
             }
+        } else {
+            $productData = [
+                //'manage_stock'      => false,                   // boolean      Stock management at product level. Default is false.
+                'stock_quantity' => $object->qty_after,         // integer      Stock quantity.
+                'in_stock' => $object->qty_after > 0,           // boolean      Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
+                //'backorders'        => '',                      // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
+            ];
 
-            dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteStockProduct end");
-            return true;
-        } catch (HttpClientException $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
+            try {
+                $result = $this->client->put("products/$remote_id", $productData);
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
+            }
         }
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return true;
     }
 
     /**
-     * Update the remote societe
+     * Update the remote company
      *
-     * @param   int     $remote_id      Id of societe on remote ecommerce
-     * @param   Societe $object         Societe object
-     * @return  boolean                 True or false
+     * @param   int     $remote_id  Id of company on remote ecommerce
+     * @param   Societe $object     Societe object
+     *
+     * @return  boolean             True or false
      */
     public function updateRemoteSociete($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteSociete session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
-/*
+        dol_syslog(__METHOD__ . ": Update the remote company ID $remote_id for Dolibarr company ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
+        global $langs;
+
+        /*
         // Customer - Meta data properties
         $meta_data = [
             'key' => '',        // string   Meta key.
             'value' => '',      // string   Meta value.
         ];
-*/
+        */
+        $companyData = [
+            'email' => $object->email,              // string   The email address for the customer. MANDATORY
+            //'first_name'    => '',                  // string   Customer first name.
+            //'last_name'     => $object->name,       // string   Customer last name.
+            //'username'      => '',                  // string   Customer login name.
+            //'password'      => '',                  // string   Customer password.
+            //'meta_data'     => $meta_data,          // array    Meta data. See Customer - Meta data properties
+        ];
+
         try {
-            $societeData = array(
-                'email'         => $object->email,      // string   The email address for the customer. MANDATORY
-                //'first_name'    => '',                  // string   Customer first name.
-                //'last_name'     => $object->name,       // string   Customer last name.
-                //'username'      => '',                  // string   Customer login name.
-                //'password'      => '',                  // string   Customer password.
-                //'meta_data'     => $meta_data,          // array    Meta data. See Customer - Meta data properties
-            );
-
-            $result = $this->client->put("customers/$remote_id", $societeData);
-
-            dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteSociete end");
-            return true;
+            $result = $this->client->put("customers/$remote_id", $companyData);
         } catch (HttpClientException $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
+            $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteSociete', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+            dol_syslog(__METHOD__ .
+                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteSociete', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
             return false;
         }
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return true;
     }
 
     /**
      * Update the remote contact
      *
-     * @param   int     $remote_id      Id of contact on remote ecommerce
-     * @param   Contact $object         Contact object
-     * @return  boolean                 True or false
+     * @param   int     $remote_id  Id of contact on remote ecommerce
+     * @param   Contact $object     Contact object
+     *
+     * @return  boolean             True or false
      */
     public function updateRemoteSocpeople($remote_id, $object)
     {
-        global $conf;
-
-        dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteSocpeople session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+        dol_syslog(__METHOD__ . ": Update the remote contact ID $remote_id for Dolibarr contact ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs;
 
         // Get societe
-        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
-        $societe = new Societe($this->db);
-        $societe->fetch($object->socid);
+        //require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+        //$societe = new Societe($this->db);
+        //$societe->fetch($object->socid);
 
-        $billingName = (empty($conf->global->ECOMMERCENG_BILLING_CONTACT_NAME)?'Billing':$conf->global->ECOMMERCENG_BILLING_CONTACT_NAME);      // Contact name treated as billing address.
-        $shippingName = (empty($conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME)?'Shipping':$conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME);  // Contact name treated as shipping address.
+        $billingName = (empty($conf->global->ECOMMERCENG_BILLING_CONTACT_NAME) ? 'Billing' : $conf->global->ECOMMERCENG_BILLING_CONTACT_NAME);      // Contact name treated as billing address.
+        $shippingName = (empty($conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME) ? 'Shipping' : $conf->global->ECOMMERCENG_SHIPPING_CONTACT_NAME);  // Contact name treated as shipping address.
 
-        try {
-            if ($object->lastname == $billingName) {
-                $address = explode("\n", $object->address);
-                // Billing
-                $contactData = [
-                    'billing' => [
-                        //'first_name'    => '',                                  // string   First name.
-                        //'last_name'     => '',                                  // string   Last name.
-                        //'company'       => $societe->name,                      // string   Company name.
-                        'address_1'     => isset($address[0])?$address[0]:'',   // string   Address line 1
-                        'address_2'     => isset($address[1])?implode(" ", array_slice($address, 1)):'',   // string   Address line 2
-                        'city'          => $object->town,                       // string   City name.
-                        //'state'         => '',                                  // string   ISO code or name of the state, province or district.
-                        'postcode'      => $object->zip,                        // string   Postal code.
-                        'country'       => getCountry($object->country_id, 2),  // string   ISO code of the country.
-                        'email'         => $object->email,                      // string   Email address.
-                        'phone'         => $object->phone_pro,                  // string   Phone number.
-                    ],
-                ];
-            } elseif ($object->lastname == $shippingName) {
-                $address = explode("\n", $object->address);
-                // Shipping
-                $contactData = [
-                    'shipping' => [
-                        //'first_name'    => '',                                  // string   First name.
-                        //'last_name'     => '',                                  // string   Last name.
-                        //'company'       => $societe->name,                      // string   Company name.
-                        'address_1'     => isset($address[0])?$address[0]:'',   // string   Address line 1
-                        'address_2'     => isset($address[1])?implode(" ", array_slice($address, 1)):'',   // string   Address line 2
-                        'city'          => $object->town,                       // string   City name.
-                        //'state'         => '',                                  // string   ISO code or name of the state, province or district.
-                        'postcode'      => $object->zip,                        // string   Postal code.
-                        'country'       => getCountry($object->country_id, 2),  // string   ISO code of the country.
-                    ],
-                ];
-            }
+        if ($object->lastname == $billingName) {
+            $address = explode("\n", $object->address);
+            // Billing
+            $contactData = [
+                'billing' => [
+                    //'first_name'    => '',                                  // string   First name.
+                    //'last_name'     => '',                                  // string   Last name.
+                    //'company'       => $societe->name,                      // string   Company name.
+                    'address_1' => isset($address[0]) ? $address[0] : '',   // string   Address line 1
+                    'address_2' => isset($address[1]) ? implode(" ", array_slice($address, 1)) : '',   // string   Address line 2
+                    'city' => $object->town,                       // string   City name.
+                    //'state'         => '',                                  // string   ISO code or name of the state, province or district.
+                    'postcode' => $object->zip,                        // string   Postal code.
+                    'country' => getCountry($object->country_id, 2),  // string   ISO code of the country.
+                    'email' => $object->email,                      // string   Email address.
+                    'phone' => $object->phone_pro,                  // string   Phone number.
+                ],
+            ];
+        } elseif ($object->lastname == $shippingName) {
+            $address = explode("\n", $object->address);
+            // Shipping
+            $contactData = [
+                'shipping' => [
+                    //'first_name'    => '',                                  // string   First name.
+                    //'last_name'     => '',                                  // string   Last name.
+                    //'company'       => $societe->name,                      // string   Company name.
+                    'address_1' => isset($address[0]) ? $address[0] : '',   // string   Address line 1
+                    'address_2' => isset($address[1]) ? implode(" ", array_slice($address, 1)) : '',   // string   Address line 2
+                    'city' => $object->town,                       // string   City name.
+                    //'state'         => '',                                  // string   ISO code or name of the state, province or district.
+                    'postcode' => $object->zip,                        // string   Postal code.
+                    'country' => getCountry($object->country_id, 2),  // string   ISO code of the country.
+                ],
+            ];
+        }
 
-            if (isset($contactData)) {
-                if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsCustomer) == 1) {
+        if (isset($contactData)) {
+            if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsCustomer) == 1) {
+                try {
                     $result = $this->client->put("customers/$idsCustomer[1]", $contactData);
+                } catch (HttpClientException $fault) {
+                    $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteSocpeople', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                    dol_syslog(__METHOD__ .
+                        ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteSocpeople', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                        ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                    return false;
                 }
             }
-
-            dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteSocpeople end");
-            return true;
-        } catch (HttpClientException $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
         }
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return true;
     }
 
     /**
      * Update the remote order
      *
-     * @param   int      $remote_id     Id of order on remote ecommerce
-	 * @param   Commande $object        Commande object
+     * @param   int         $remote_id  Id of order on remote ecommerce
+     * @param   Commande    $object     Commande object
+     *
      * @return  boolean                 True or false
      */
     public function updateRemoteCommande($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteCommande session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+        dol_syslog(__METHOD__ . ": Update the remote order ID $remote_id for Dolibarr order ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
+        global $langs;
 
-        try {
-            switch ($object->statut) {
-                //case Commande::STOCK_NOT_ENOUGH_FOR_ORDER: $status = ''; break;
-                case Commande::STATUS_CANCELED: $status = 'cancelled'; break;
-                //case Commande::STATUS_DRAFT: $status = ''; break;
-                case Commande::STATUS_VALIDATED: $status = 'pending'; break;
-                case Commande::STATUS_ACCEPTED: $status = 'processing'; break;
-                case Commande::STATUS_SHIPMENTONPROCESS: $status = 'processing'; break;
-                case Commande::STATUS_CLOSED: $status = 'completed'; break;
-            }
-
-            if (isset($status)) {
-                $commandeData = array(
-                    'status' => $status,  // string  Order status. Options: pending, processing, on-hold, completed, cancelled, refunded and failed.
-                );
-
-                $result = $this->client->put("orders/$remote_id", $commandeData);
-            }
-
-            dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteCommande end");
-
-            return true;
-        } catch (HttpClientException $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
+        $status = '';
+        switch ($object->statut) {
+            //case Commande::STOCK_NOT_ENOUGH_FOR_ORDER:  $status = ''; break;
+            case Commande::STATUS_CANCELED:             $status = 'cancelled'; break;
+            case Commande::STATUS_DRAFT:                $status = 'on-hold'; break;
+            case Commande::STATUS_VALIDATED:            $status = 'processing'; break;
+            //case Commande::STATUS_ACCEPTED:             $status = 'processing'; break;
+            case Commande::STATUS_SHIPMENTONPROCESS:    $status = 'processing'; break;
+            case Commande::STATUS_CLOSED:               $status = 'completed'; break;
         }
+
+        if (!empty($status)) {
+            $orderData = [
+                'status' => $status,  // string  Order status. Options: pending, processing, on-hold, completed, cancelled, refunded and failed.
+            ];
+
+            try {
+                $result = $this->client->put("orders/$remote_id", $orderData);
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
+            }
+        }
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return true;
     }
 
     /**
-     * Update the remote invoice
+     * Desactivated because is not supported by woocommerce.
      *
-     * @param   int      $remote_id     Id of invoice on remote ecommerce
+     * @param   int     $remote_id      Id of invoice on remote ecommerce
      * @param   Facture $object         Invoice object
+     *
      * @return  boolean                 True or false
      */
     public function updateRemoteFacture($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteFacture session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
-
-        $result = false;
-        /*
-        try {
-            $factureData = array(
-                'status' => $object->status,
-            );
-
-            $result = $this->client->call($this->session, 'invoice.update', array($remote_id, $factureData, null, 'order_id'));
-            //dol_syslog($this->client->__getLastRequest());
-        } catch (SoapFault $fault) {
-            $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-            return false;
-        }*/
-        dol_syslog("eCommerceRemoteAccessWoocommerce updateRemoteFacture end");
-        return $result;
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
+        return true;
     }
 
     /**
-     * Create shipment
+     * Desactivated because is not supported by woocommerce.
      *
-     * @param   int     $livraison              Object shipment ?
-     * @param   int     $remote_order_id        Id of order
+     * @param   int         $livraison          Object shipment ?
+     * @param   int         $remote_order_id    Id of remote order
+     *
      * @return  boolean                         True or false
      */
     public function createRemoteLivraison($livraison, $remote_order_id)
     {
-        $result = false;
-
-        dol_syslog("eCommerceRemoteAccessWoocommerce createRemoteLivraison session=" . $this->session . " dolibarr shipment id = " . $livraison->id . ", ref = " . $livraison->ref . ", order remote id = " . $remote_order_id);
-/*        $remoteCommande = $this->getRemoteCommande($remote_order_id); // SOAP request to get data
-        $livraisonArray = get_object_vars($livraison);
-        try {
-            $orderItemQty = array();
-            foreach ($remoteCommande['items'] as $productWoocommerce) {
-                foreach ($livraisonArray['lines'] as $lines) {
-                    if ($lines->product_ref == $productWoocommerce['sku']) {
-                        $orderItemQty[$productWoocommerce['item_id']] = $lines->qty_shipped;
-                    }
-                }
-            }
-            $result = $this->client->call($this->session, 'sales_order_shipment.create', array(
-                $remoteCommande['increment_id'],
-                $orderItemQty,
-                'Shipment Created from ' . ($livraison->newref ? $livraison->newref : $livraison->ref),
-                true,
-                true
-            ));
-            //dol_syslog($this->client->__getLastResponse());
-        } catch (SoapFault $fault) {
-            $this->errors[] = $this->site->name . ': ' . $fault->getMessage() . ' - ' . $fault->getCode();
-            dol_syslog(__METHOD__ . ': ' . $fault->getMessage() . '-' . $fault->getCode() . '-' . $fault->getTraceAsString(), LOG_WARNING);
-            return false;
-        }*/
-        dol_syslog("eCommerceRemoteAccessWoocommerce createRemoteLivraison end");
-        return $result;
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
+        return $remote_order_id;
     }
 
+    /**
+     * Create product
+     *
+     * @param   Product     $object     Object product
+     *
+     * @return  boolean                 True or false
+     */
+    public function createRemoteProduct($object)
+    {
+        dol_syslog(__METHOD__ . ": Create product from Dolibarr product ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs, $user;
 
+        // Set weight
+        $totalWeight = $object->weight;
+        if ($object->weight_units < 50)   // >50 means a standard unit (power of 10 of official unit), > 50 means an exotic unit (like inch)
+        {
+            $trueWeightUnit = pow(10, $object->weight_units);
+            $totalWeight = sprintf("%f", $object->weight * $trueWeightUnit);
+        }
 
+        // Product - Meta data properties
+        $object->fetch_optionals();
+
+        // Price
+        if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+            $price_level = !empty($this->site->price_level) ? $this->site->price_level : 1;
+            $price = $object->multiprices[$price_level];
+        } else {
+            $price = $object->price;
+        }
+
+        /*
+        // Product - Downloads properties
+        $downloads = [
+            [
+                'name' => '',       // string     File name.
+                'file' => '',       // string     File URL.
+            ],
+        ];
+
+        // Product - Dimensions properties
+        $dimensions = [
+            'length' => '',     // string   Product length (cm).
+            'width' => '',      // string   Product width (cm).
+            'height' => '',     // string   Product height (cm).
+        ];
+
+        // Product - Categories properties
+        $categories = [
+            [
+                'id' => 0,      // integer  Category ID.
+            ],
+        ];
+
+        // Product - Tags properties
+        $tags = [
+            [
+                'id' => 0,      // integer  Tag ID.
+            ],
+        ];
+
+        // Product - Images properties
+        $images = [
+            [
+                'id' => 0,              // integer	Image ID. Not required
+                'src' => '',            // string	Image URL.
+                'name' => '',           // string	Image name.
+                'alt' => '',            // string	Image alternative text.
+                'position' => 0,        // integer	Image position. 0 means that the image is featured.
+            ],
+        ];
+
+        // Product - Attributes properties
+        $attributes = [
+            [
+                'id' => 0,              // integer	Attribute ID. Not required
+                'name' => '',           // string	Attribute name.
+                'position' => 0,        // integer	Attribute position.
+                'visible' => false,     // boolean	Define if the attribute is visible on the “Additional information” tab in the product’s page. Default is false.
+                'variation' => false,   // boolean	Define if the attribute can be used as variation. Default is false.
+                'options' => [],        // array	List of available term names of the attribute.
+            ],
+        ];
+
+        // Product - Default attributes properties
+        $default_attributes = [
+            'id' => 0,              // integer	Attribute ID. Not required
+            'name' => '',           // string	Attribute name.
+            'option' => '',         // string	Selected attribute term name.
+        ];
+
+        // Product - Meta data properties
+        $meta_data = [
+            'key' => '', // string	Meta key.
+            'value' => '', // string	Meta value.
+        ];
+        */
+
+        // Get categories
+        $eCommerceCategory = new eCommerceCategory($this->db);
+        $cat = new Categorie($this->db);
+        $categories_list = $cat->containing($object->id, 'product');
+        $categories = [];
+        foreach ($categories_list as $category) {
+            if ($this->site->fk_cat_product != $category->id) {
+                $ret = $eCommerceCategory->fetchByFKCategory($category->id, $this->site->id);
+                if ($ret > 0) {
+                    $categories[] = ['id' => $eCommerceCategory->remote_id];
+                }
+            }
+        }
+
+        $status = $object->array_options["options_ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"];
+
+        // Product
+        $productData = [
+            'name' => $object->label,                            // string		Product name.
+            //'slug'                  => '',			                            // string		Product slug.
+            //'type'                  => '',			                            // string		Product type. Options: simple, grouped, external and variable. Default is simple.
+            'status' => (!empty($status) ? $status : ''), //$object->status ? 'publish' : 'pending',	// string		Product status (post status). Options: draft, pending, private and publish. Default is publish.
+            //'featured'              => false,		                            // boolean		Featured product. Default is false.
+            //'catalog_visibility'    => '',                                      // string		Catalog visibility. Options: visible, catalog, search and hidden. Default is visible.
+            'description' => $object->array_options["options_ecommerceng_description_{$conf->entity}"],                    // string		Product description.
+            'short_description' => $object->array_options["options_ecommerceng_short_description_{$conf->entity}"],                                      // string		Product short description.
+            'sku' => $object->ref,                            // string		Unique identifier.
+            'regular_price' => $price,                          // string		Product regular price.
+            //'sale_price'            => '',                                      // string		Product sale price.
+            //'date_on_sale_from'     => '',                                      // date-time	Start date of sale price, in the site’s timezone.
+            //'date_on_sale_from_gmt' => '',                                      // date-time	Start date of sale price, as GMT.
+            //'date_on_sale_to'       => '',                                      // date-time	End date of sale price, in the site’s timezone.
+            //'date_on_sale_to_gmt'   => '',                                      // date-time	End date of sale price, in the site’s timezone.
+            //'virtual'               => $object->type == Product::TYPE_SERVICE,  // boolean		If the product is virtual. Default is false.
+            //'downloadable'          => false,                                   // boolean		If the product is downloadable. Default is false.
+            //'downloads'             => $downloads,                              // array		List of downloadable files. See Product - Downloads properties
+            //'download_limit'        => -1,                                      // integer		Number of times downloadable files can be downloaded after purchase. Default is -1.
+            //'download_expiry'       => -1,                                      // integer		Number of days until access to downloadable files expires. Default is -1.
+            //'external_url'          => '',                                      // string		Product external URL. Only for external products.
+            //'button_text'           => '',                                      // string		Product external button text. Only for external products.
+            'tax_status' => 'none',                                  // string		Tax status. Options: taxable, shipping and none. Default is taxable.
+            //'tax_class'             => '',                                      // string		Tax class.
+            //'manage_stock'          => false,                                   // boolean		Stock management at product level. Default is false.
+            //'stock_quantity'        => $object->stock_reel,                     // integer		Stock quantity.
+            //'in_stock'              => $object->stock_reel > 0,                 // boolean		Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
+            //'backorders'            => '',                                      // string		If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
+            //'sold_individually'     => false,                                   // boolean		Allow one item to be bought in a single order. Default is false.
+            'weight' => (!empty($totalWeight)?$totalWeight:''),                            // string		Product weight (kg).
+            //'dimensions'            => $dimensions,                             // object		Product dimensions. See Product - Dimensions properties
+            //'shipping_class'        => '',                                      // string		Shipping class slug.
+            //'reviews_allowed'       => true,                                    // boolean		Allow reviews. Default is true.
+            //'upsell_ids'            => [],                                      // array		List of up-sell products IDs.
+            //'cross_sell_ids'        => [],                                      // array		List of cross-sell products IDs.
+            //'parent_id'             => 0,                                       // integer		Product parent ID.
+            //'purchase_note'         => '',                                      // string		Optional note to send the customer after purchase.
+            'categories' => $categories,                             // array		List of categories. See Product - Categories properties
+            //'tags'                  => $tags,                                   // array		List of tags. See Product - Tags properties
+            //'images'                => $images,                                 // object		List of images. See Product - Images properties
+            //'attributes'            => $attributes,			                    // array		List of attributes. See Product - Attributes properties
+            //'default_attributes'    => $default_attributes,			            // array		Defaults variation attributes. See Product - Default attributes properties
+            //'menu_order'            => 0,			                            // integer		Menu order, used to custom sort products.
+            //'meta_data'             => $meta_data,                              // array		Meta data. See Product - Meta data properties
+        ];
+
+        // Set tax
+        if (!empty($object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"])) {
+            $productData['tax_status'] = 'taxable';
+            $productData['tax_class'] = $object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"];
+        }
+
+        try {
+            $res = $this->client->post("products", $productData);
+        } catch (HttpClientException $fault) {
+            $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+            dol_syslog(__METHOD__ .
+                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCreateRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+            return false;
+        }
+
+        // Create remote link
+        $eCommerceProduct = new eCommerceProduct($this->db);
+        $eCommerceProduct->fk_product = $object->id;
+        $eCommerceProduct->fk_site = $this->site->id;
+        $eCommerceProduct->remote_id = $res['id'];
+        $res = $eCommerceProduct->create($user);
+        if ($res < 0) {
+            $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteProductLink', $object->id, $this->site->name, $eCommerceProduct->error);
+            dol_syslog(__METHOD__ . ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCreateRemoteProductLink', $object->id, $this->site->name, $eCommerceProduct->error), LOG_ERR);
+            return false;
+        }
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return true;
+    }
+
+    /**
+     * Send a file for remote order
+     *
+     * @param   int         $order_remote_id        Id of order on remote ecommerce
+     * @param   int         $company_remote_id      Id of company on remote ecommerce
+     * @param   Object      $object                 Object (invoice or shipping)
+     * @param   string      $file                   File path
+     * @param   Translate   $outputlangs            Lang output object
+     *
+     * @return  bool
+     */
+    public function sendFileForCommande($order_remote_id, $company_remote_id, $object, $file, $outputlangs)
+    {
+        dol_syslog(__METHOD__ . ": Send file '$file' for remote order ID $order_remote_id for site ID {$this->site->id}", LOG_DEBUG);
+        global $langs;
+
+        // Send file to WordPress
+        $result = $this->worpressclient->postmedia("media", $file, [
+            'slug' => $order_remote_id . '_' . $object->element,
+            'author' => $company_remote_id,
+            'post' => $order_remote_id,
+            'ping_status' => 'closed',
+            'comment_status' => 'closed',
+        ]);
+        if ($result === null) {
+            $this->errors[] = $langs->trans('ECommerceWoocommerceSendFileForCommandeInWordpress', $order_remote_id, $this->site->name, implode('; ', $this->worpressclient->errors));
+            dol_syslog(__METHOD__ . ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceSendFileForCommandeInWordpress', $order_remote_id, $this->site->name, implode('; ', $this->worpressclient->errors)), LOG_ERR);
+            return false;
+        }
+
+        // Set meta data in remote commande
+        $commandeData = [
+            'meta_data' => [
+                [
+                    'key' => 'file_for_' . $object->element,
+                    'value' => [
+                        'id' => $result['id'],
+                        'link' => $result['link'],
+                        'source_url' => $result['source_url'],
+                    ],
+                ],
+            ]
+        ];
+        try {
+            $result = $this->client->put("orders/$order_remote_id", $commandeData);
+        } catch (HttpClientException $fault) {
+            $this->errors[] = $langs->trans('ECommerceWoocommerceSendFileForCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+            dol_syslog(__METHOD__ .
+                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceSendFileForCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+            return false;
+        }
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return true;
+    }
+
+    /**
+     * Get tax rate from tax class name
+     *
+     * @param  string   $tax_class      Tax class name
+     * @param  string   $tax_status     Tax status
+     *
+     * @return float                    Tax rate
+     */
+    private function getTaxRate($tax_class, $tax_status = 'taxable')
+    {
+        //dol_syslog(__METHOD__ . ": Get tax rate, tax_classe: $tax_class, tax_status: $tax_status", LOG_DEBUG);
+        global $conf, $mysoc;
+
+        $tax_rate = 0;
+
+        // $tax_status => Tax status. Options: taxable, shipping and none. Default is taxable
+        if ($tax_status != 'none') {
+            $tax_class = !empty($tax_class) ? $tax_class : 'standard';
+            $tax_rate = '';
+
+            // Retrieve all woocommerce tax classes
+            if (!isset($this->woocommerceTaxes) || !isset($this->woocommerceTaxes['classes'][$tax_class])) {
+                $this->setWoocommerceTaxes();
+            }
+
+            // Get woocommerce tax if one only
+            if (isset($this->woocommerceTaxes['classes'][$tax_class]) && count($this->woocommerceTaxes['classes'][$tax_class]) == 1) {
+                $tax_rate = $this->woocommerceTaxes['classes'][$tax_class];
+                $tax_rate = array_values($tax_rate);
+                $tax_rate = doubleval($tax_rate[0]['rate']);
+
+                // Get near dolibarr tax for woocommerce tax rate
+                $tax = $this->_getClosestDolibarrTaxRate($tax_rate);
+                if (isset($tax)) {
+                    $tax_rate = $tax;
+                }
+            }
+
+            if ($tax_rate == '') {
+                $tax_rate = $conf->global->ECOMMERCE_WOOCOMMERCE_DEFAULT_TVA;
+            }
+        }
+
+        //dol_syslog(__METHOD__ . ": end, return $tax_rate", LOG_DEBUG);
+        return $tax_rate;
+    }
+
+    /**
+     * Get tax class for show in extrafields
+     *
+     * @param  string   $tax_class      Tax class name
+     * @param  string   $tax_status     Tax status
+     *
+     * @return string                   Tax class name
+     */
+    private function getTaxClass($tax_class, $tax_status = 'taxable')
+    {
+        //dol_syslog(__METHOD__ . ": Get tax class name, tax_class: $tax_class, tax_status: $tax_status", LOG_DEBUG);
+
+        // $tax_status => Tax status. Options: taxable, shipping and none. Default is taxable
+        if ($tax_status != 'none') {
+            $tax_class = !empty($tax_class) ? $tax_class : 'standard';
+        } else {
+            $tax_class = '';
+        }
+
+        //dol_syslog(__METHOD__ . ": end, return $tax_class", LOG_DEBUG);
+        return $tax_class;
+    }
 
     /**
      * Calcul tax rate and return the closest dolibarr tax rate.
      *
-     * @param float $priceHT         Price HT
-     * @param float $taxAmount       Tax amount
+     * @param   float   $priceHT        Price HT
+     * @param   float   $taxAmount      Tax amount
+     *
+     * @return  float                   Tax rate
      */
-    private function getTaxRate($priceHT, $taxAmount)
+    private function getClosestDolibarrTaxRate($priceHT, $taxAmount)
     {
-        $taxRate = 0;
-        if ($taxAmount != 0)
-        {
+        //dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, priceHT: $priceHT, priceHT: $taxAmount", LOG_DEBUG);
+        $tax_rate = 0;
+        if ($taxAmount != 0) {
             //calcul tax rate from remote site
-            $tempTaxRate = ($taxAmount / $priceHT) * 100;
-            //get all dolibarr tax rates
-            if (!isset($this->taxRates))
-                $this->setTaxRates();
-            if (count($this->taxRates))
-            {
-                $min = 1;
-                $rate = 0;
-                foreach ($this->taxRates as $dolibarrTaxRate)
-                {
-                    $diff = $tempTaxRate - $dolibarrTaxRate['taux'];
-                    if ($diff < 0)
-                        $diff = (-1 * $diff);
-                    if ($diff < $min)
-                    {
-                        $min = $diff;
-                        $rate = $dolibarrTaxRate['taux'];
-                    }
-                }
-                if ($rate > 0)
-                    $taxRate = $rate;
+            $shipping_tax_rate = ($taxAmount / $priceHT) * 100;
+
+            // Get near dolibarr tax for woocommerce tax rate
+            $tax = $this->_getClosestDolibarrTaxRate($shipping_tax_rate);
+            if (isset($tax)) {
+                $tax_rate = $tax;
             }
         }
-        return $taxRate;
+
+        //dol_syslog(__METHOD__ . ": end, return $tax_rate", LOG_DEBUG);
+        return $tax_rate;
     }
 
     /**
      * Retrieve all Dolibarr tax rates
+     *
+     * @return  void
      */
-    private function setTaxRates()
+    private function setDolibarrTaxes()
     {
-        $taxTable = new eCommerceDict($this->db, MAIN_DB_PREFIX . "c_tva");
-        $this->taxRates = $taxTable->getAll();
+        //dol_syslog(__METHOD__ . ": Retrieve all Dolibarr tax rates", LOG_DEBUG);
+
+   		$resql = $this->db->query("SELECT DISTINCT taux FROM ".MAIN_DB_PREFIX."c_tva ORDER BY taux DESC");
+   		if ($resql) {
+            $taxesTable = [];
+
+            while ($tax = $this->db->fetch_object($resql)) {
+                $taxesTable[] = $tax->taux;
+            }
+
+            $this->dolibarrTaxes = $taxesTable;
+        }
+
+        //dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+    }
+
+    /**
+     * Retrieve all Dolibarr tax rates
+     *
+     * @return  void
+     */
+    /*    private function setDolibarrTaxes()
+    {
+        dol_syslog(__METHOD__ . ": Retrieve all Dolibarr tax rates", LOG_DEBUG);
+
+   		$resql = $this->db->query("SELECT t.*, c.code AS country FROM ".MAIN_DB_PREFIX."c_tva AS t LEFT JOIN ".MAIN_DB_PREFIX."c_country AS c ON t.fk_pays = c.rowid");
+   		if ($resql) {
+            $taxesTable = [ 'taxes' => [], 'countries' => [] ];
+
+            while ($tax = $this->db->fetch_array($resql)) {
+                $taxesTable['taxes'][] = $tax;
+                if (!empty($tax['country'])) {
+                    $taxesTable['countries'][$tax['country']][] = $tax;
+                }
+            }
+
+            $this->dolibarrTaxes = $taxesTable;
+        }
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+    }*/
+
+    /**
+     * Update all Woocommerce tax classes in dict
+     *
+     * @return array|false    List of woocommerce tax class or false if error
+     */
+    public function getAllWoocommerceTaxClass()
+    {
+        dol_syslog(__METHOD__ . ": Retrieve all Woocommerce tax classes", LOG_DEBUG);
+        global $langs;
+
+        try {
+            $tax_classes = $this->client->get('taxes/classes');
+        } catch (HttpClientException $fault) {
+            $this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommerceTaxClass', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+            dol_syslog(__METHOD__ .
+                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetAllWoocommerceTaxClass', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+            return false;
+        }
+
+        $taxClassesTable = [];
+        foreach ($tax_classes as $tax_class) {
+            unset($tax_class['_links']);
+            $taxClassesTable[$tax_class['slug']] = $tax_class;
+        }
+
+        dol_syslog(__METHOD__ . ": end, return: ".json_encode($taxClassesTable), LOG_DEBUG);
+        return $taxClassesTable;
+    }
+
+    /**
+     * Retrieve all Woocommerce tax rates
+     *
+     * @return boolean
+     */
+    private function setWoocommerceTaxes()
+    {
+        dol_syslog(__METHOD__ . ": Retrieve all Woocommerce tax rates", LOG_DEBUG);
+        global $conf, $langs;
+
+        $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+
+        $taxesTable = [ 'taxes' => [], 'classes' => [], 'countries' => [], 'states' => [], 'postcodes' => [], 'cities' => []];
+        $idxPage = 0;
+        do {
+            $idxPage++;
+            try {
+                $taxes = $this->client->get('taxes',
+                    [
+                        'page' => $idxPage,
+                        'per_page' => $nb_max_by_request,
+                    ]
+                );
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceGetWoocommerceTaxes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetWoocommerceTaxes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                return false;
+            }
+
+            foreach ($taxes as $tax) {
+                $id = $tax['id'];
+                unset($tax['_links']);
+
+                $taxesTable['taxes'][$id] = $tax;
+                if (!empty($tax['class'])) {
+                    $taxesTable['classes'][$tax['class']][$id] = $tax;
+                }
+                if (!empty($tax['country'])) {
+                    $taxesTable['countries'][$tax['country']][$id] = $tax;
+                }
+                if (!empty($tax['state'])) {
+                    $taxesTable['states'][$tax['state']][$id] = $tax;
+                }
+                if (!empty($tax['postcode'])) {
+                    $taxesTable['postcodes'][$tax['postcode']][$id] = $tax;
+                }
+                if (!empty($tax['city'])) {
+                    $taxesTable['cities'][$tax['city']][$id] = $tax;
+                }
+            }
+        } while (!empty($taxes));
+
+        $this->woocommerceTaxes = $taxesTable;
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return true;
+    }
+
+    /**
+     * Get closest dolibarr tax rate
+     *
+     * @param  string   $tax_rate       Tax rate
+     *
+     * @return float                    Closest dolibarr tax rate
+     */
+    private function _getClosestDolibarrTaxRate($tax_rate)
+    {
+        //dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, tax_rate: $tax_rate", LOG_DEBUG);
+
+        $tax = null;
+
+        // Retrieve all dolibarr tax
+        if (!isset($this->dolibarrTaxes)) {
+            $this->setDolibarrTaxes();
+        }
+
+        // Get closest dolibarr tax for woocommerce tax
+        if (is_array($this->dolibarrTaxes) && count($this->dolibarrTaxes) > 0) {
+            $closestTax = 0;
+            foreach ($this->dolibarrTaxes as $tax) {
+                if (abs($tax - $tax_rate) < abs($tax_rate - $closestTax)) {
+                    $closestTax = $tax;
+                }
+            }
+            $tax = $closestTax;
+        }
+
+        //dol_syslog(__METHOD__ . ": end, return ".(isset($tax)?json_encode($tax):'null'), LOG_DEBUG);
+        return $tax;
+    }
+
+    /**
+     * Get closest dolibarr tax
+     *
+     * @param  string   $country_code   Country code
+     * @param  string   $tax_rate       Tax rate
+     *
+     * @return float                    Near dolibarr tax
+     */
+    /*private function getClosestDolibarCountryTax($country_code, $tax_rate)
+    {
+        dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, country_code: $country_code, tax_rate: $tax_rate", LOG_DEBUG);
+        global $langs;
+
+        $tax = null;
+
+        // Get country code from default language if empty
+        if (empty($country_code)) $country_code = substr($langs->defaultlang, -2);
+
+        // Retrieve all dolibarr tax
+        if (!isset($this->dolibarrTaxes) || !isset($this->dolibarrTaxes['countries'][$country_code])) {
+            $this->setDolibarrTaxes();
+        }
+
+        // Get closest dolibarr tax for woocommerce tax
+        $dolibarrTaxes = $this->dolibarrTaxes['countries'][$country_code];
+        if (is_array($dolibarrTaxes)) {
+            $closestTaxes = [];
+            foreach ($dolibarrTaxes as $tax) {
+                $near = $tax['taux'] - $tax_rate;
+                if (!isset($closestTaxes[$near]) || $closestTaxes[$near]['taux'] < $tax['taux']) {
+                    $nearTaxes[$near] = $tax;
+                }
+            }
+            ksort($closestTaxes);
+            reset($closestTaxes);
+            $tax = $closestTaxes[0];
+        }
+
+        dol_syslog(__METHOD__ . ": end, return ".(isset($tax)?json_encode($tax):'null'), LOG_DEBUG);
+        return $tax;
+    }*/
+
+    /**
+     * Get request groups of ID for get datas of remotes objects.
+     *
+     * @param   array   $remoteObject       List of ids of remote objects
+     * @param   int     $nb_max_by_request  Nb remote ID by request
+     * @param   int     $toNb               Max nb
+     * @return  array                       List of request groups of ID
+     */
+    private function getRequestGroups($remoteObject, $nb_max_by_request, $toNb=0)
+    {
+        //dol_syslog(__METHOD__ . ": Get request groups of ID: " . implode(', ', $remoteObject), LOG_DEBUG);
+
+        $idx = 0;
+        $request = [];
+        $request_groups = [];
+
+        foreach ($remoteObject as $remote_object_id) {
+            if ($toNb > 0 && $idx > $toNb) break;
+
+            if (($idx++ % $nb_max_by_request) == 0) {
+                if (count($request)) $request_groups[] = $request;
+                $request = [];
+            }
+
+            $request[] = $remote_object_id;
+        }
+        if (count($request)) $request_groups[] = $request;
+
+        //dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return $request_groups;
+    }
+
+    /**
+     * Get DateTime object in current timezone from gmt date time.
+     *
+     * @param   string   $datetime          GMT date time
+     *
+     * @return  DateTime                    DateTime in current Time Zone
+     */
+    private function getDateTimeFromGMTDateTime($datetime)
+    {
+        //dol_syslog(__METHOD__ . ": Get DateTime object in current timezone from gmt date time: $datetime", LOG_DEBUG);
+
+        $dt = new DateTime($datetime, $this->gmtTimeZone);
+        $dt->setTimezone($this->currentTimeZone);
+
+        //dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return $dt;
     }
 
     public function __destruct()
     {
-        //ini_set("memory_limit", "528M");
+        ini_set("memory_limit", "528M");
     }
-
 }
-

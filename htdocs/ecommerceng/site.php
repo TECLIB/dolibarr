@@ -214,19 +214,19 @@ if ($id)
 		// Count into Magento
 	    if (! GETPOST('test_with_no_categ_count'))
 	    {
-			if (! $error) $nbCategoriesToUpdate = $synchro->getNbCategoriesToUpdate(true);
+			if (! $error && empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) $nbCategoriesToUpdate = $synchro->getNbCategoriesToUpdate(true);
 			else $nbCategoriesToUpdate='?';
 			if ($nbCategoriesToUpdate < 0) $error++;
 	    }
 	    if (! GETPOST('test_with_no_product_count'))
 	    {
-	    	if (! $error) $nbProductToUpdate = $synchro->getNbProductToUpdate(true);
+	    	if (! $error && empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) $nbProductToUpdate = $synchro->getNbProductToUpdate(true);
 	    	else $nbProductToUpdate='?';
 			if ($nbProductToUpdate < 0) $error++;
 	    }
 	    if (! GETPOST('test_with_no_thirdparty_count'))
 	    {
-	    	if (! $error) $nbSocieteToUpdate = $synchro->getNbSocieteToUpdate(true);
+	    	if (! $error && empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) $nbSocieteToUpdate = $synchro->getNbSocieteToUpdate(true);
 	    	else $nbSocieteToUpdate='?';
 	    	if ($nbSocieteToUpdate < 0) $error++;
 	    }
@@ -234,7 +234,7 @@ if ($id)
 	    {
 		    if (! empty($conf->commande->enabled))
 	        {
-    	        if (! $error) $nbCommandeToUpdate = $synchro->getNbCommandeToUpdate(true);
+    	        if (! $error && empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) $nbCommandeToUpdate = $synchro->getNbCommandeToUpdate(true);
     	        else $nbCommandeToUpdate='?';
         	    if ($nbCommandeToUpdate < 0) $error++;
             }
@@ -243,7 +243,7 @@ if ($id)
 	    {
 		    if (! empty($conf->facture->enabled))
 	        {
-	            if (! $error) $nbFactureToUpdate = $synchro->getNbFactureToUpdate(true);
+	            if (! $error && empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) $nbFactureToUpdate = $synchro->getNbFactureToUpdate(true);
     	        else $nbFactureToUpdate='?';
 	            if ($nbFactureToUpdate < 0) $error++;
 	        }

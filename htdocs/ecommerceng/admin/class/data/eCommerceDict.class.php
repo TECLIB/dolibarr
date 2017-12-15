@@ -95,6 +95,141 @@ class eCommerceDict
     }
 
     /**
+     * Get all lines from database match with keys (array(field=>array(value, type)))
+     * @param   array   $keys    Keys for the search array(field_name=>array('value'=>value, 'type'=>type) (type (optionnel: string, like, date)
+     * @return  array
+     */
+    public function search($keys)
+    {
+    	$lines = array();
+
+		$sql = "SELECT * FROM `".$this->table."`";
+		if (is_array($keys) && count($keys) > 0) {
+            $fields = array();
+            foreach ($keys as $field => $value) {
+                switch ($value['type']) {
+                    case 'string':
+                        $key = "= '".$this->db->escape($value['value'])."'";
+                        break;
+                    case 'like':
+                        $key = "LIKE '".$this->db->escape($value['value'])."'";
+                        break;
+                    case 'date':
+                        $key = "= '".$this->db->idate($value['value'])."'";
+                        break;
+                    default:
+                        $key = '= '.$this->db->escape($value['value']);
+                        break;
+                }
+                $fields[] = $field.' '.$key;
+            }
+            $sql .= " WHERE ".implode(' AND ', $fields);
+        }
+
+		$result = $this->db->query($sql);
+		if ($result) {
+            while ($obj = $this->db->fetch_array($result)) {
+                $lines[] = $obj;
+            }
+        }
+
+		return $lines;
+    }
+
+    /**
+     * Update all lines from database match with keys
+     * @param   array   $values     Values for the search array(field_name=>array('value'=>value, 'type'=>type) (type (optionnel: string, date)
+     * @param   array   $keys       Keys for the search array(field_name=>array('value'=>value, 'type'=>type) (type (optionnel: string, like, date)
+     * @return  boolean
+     */
+    public function update($values, $keys)
+    {
+		$sql = "UPDATE `".$this->table."` SET ";
+        if (is_array($values) && count($values) > 0) {
+            $fields = array();
+            foreach ($values as $field => $value) {
+                switch ($value['type']) {
+                    case 'string':
+                        $key = "= '" . $this->db->escape($value['value']) . "'";
+                        break;
+                    case 'date':
+                        $key = "= '" . $this->db->idate($value['value']) . "'";
+                        break;
+                    default:
+                        $key = '= ' . $this->db->escape($value['value']);
+                        break;
+                }
+                $fields[] = $field . ' ' . $key;
+            }
+            $sql .= implode(' AND ', $fields);
+        }
+        if (is_array($keys) && count($keys) > 0) {
+            $fields = array();
+            foreach ($keys as $field => $value) {
+                switch ($value['type']) {
+                    case 'string':
+                        $key = "= '" . $this->db->escape($value['value']) . "'";
+                        break;
+                    case 'like':
+                        $key = "LIKE '" . $this->db->escape($value['value']) . "'";
+                        break;
+                    case 'date':
+                        $key = "= '" . $this->db->idate($value['value']) . "'";
+                        break;
+                    default:
+                        $key = '= ' . $this->db->escape($value['value']);
+                        break;
+                }
+                $fields[] = $field . ' ' . $key;
+            }
+            $sql .= " WHERE " . implode(' AND ', $fields);
+        }
+
+		$result = $this->db->query($sql);
+		if ($result) {
+            return true;
+        }
+
+		return false;
+    }
+
+    /**
+     * Insert line to database
+     * @param   array   $fields     Fields for insert
+     * @param   array   $values     Values for the insert array(field_name=>array('value'=>value, 'type'=>type) (type (optionnel: string, date)
+     * @return  boolean
+     */
+    public function insert($fields, $values)
+    {
+        $values_list = array();
+        if (is_array($values) && count($values) > 0) {
+            foreach ($fields as $field) {
+                if (isset($values[$field])) {
+                    switch ($values[$field]['type']) {
+                        case 'string':
+                            $values_list[] = "'" . $this->db->escape($values[$field]['value']) . "'";
+                            break;
+                        case 'date':
+                            $values_list[] = "'" . $this->db->idate($values[$field]['value']) . "'";
+                            break;
+                        default:
+                            $values_list[] = $this->db->escape($values[$field]['value']);
+                            break;
+                    }
+                }
+            }
+        }
+
+        $sql = "INSERT INTO `".$this->table."` (".implode(', ', $fields).") VALUES(".implode(', ', $values_list).")";
+		$result = $this->db->query($sql);
+		if ($result) {
+            return true;
+        }
+
+		return false;
+    }
+
+    /**
      * Get the value of ECOMMERCE_COMPANY_ANONYMOUS from db
      * @return int > 0 if OK, 0 if KO
      */

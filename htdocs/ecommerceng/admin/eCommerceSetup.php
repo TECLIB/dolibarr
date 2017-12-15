@@ -37,14 +37,18 @@ if (! $res) die("Include of main fails");
 
 require_once(DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php');
+require_once DOL_DOCUMENT_ROOT.'/includes/OAuth/bootstrap.php';
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerceng/admin/class/gui/eCommerceMenu.class.php');
 dol_include_once('/ecommerceng/lib/eCommerce.lib.php');
 
+use OAuth\Common\Storage\DoliStorage;
 
 $langs->load('admin');
 $langs->load('companies');
+$langs->load("oauth");
 $langs->load('ecommerce@ecommerceng');
+$langs->load('woocommerce@ecommerceng');
 
 $siteId = null;
 $errors = array();
@@ -52,6 +56,11 @@ $success = array();
 //CHECK ACCESS
 if (!$user->admin || !$user->rights->ecommerceng->site)
     accessforbidden();
+
+$error = GETPOST('error', 'alpha');
+if (!empty($error)) {
+    setEventMessage($error, 'errors');
+}
 
 //DATABASE ACCESS
 $siteDb = new eCommerceSite($db);
@@ -118,15 +127,16 @@ if ($_POST['site_form_detail_action'] == 'save')
         $siteDb->filter_value = $_POST['ecommerce_filter_value'];
         $siteDb->fk_cat_societe = $_POST['ecommerce_fk_cat_societe'];
         $siteDb->fk_cat_product = $_POST['ecommerce_fk_cat_product'];
+        $siteDb->fk_anonymous_thirdparty = $_POST['ecommerce_fk_anonymous_thirdparty']>0?$_POST['ecommerce_fk_anonymous_thirdparty']:null;
         $siteDb->fk_warehouse = $_POST['ecommerce_fk_warehouse'];
         $siteDb->stock_sync_direction = $_POST['ecommerce_stock_sync_direction'];
         $siteDb->last_update = $_POST['ecommerce_last_update'];
         //$siteDb->timeout = $_POST['ecommerce_timeout'];
         $siteDb->magento_use_special_price = ($_POST['ecommerce_magento_use_special_price'] ? 1 : 0);
-        $siteDb->magento_price_type = $_POST['ecommerce_magento_price_type'];
+        $siteDb->ecommerce_price_type = $_POST['ecommerce_price_type'];
 
-        // TODO Save this into table of ecommerce_site, field fk_thirdparty instead of global var.
-        dolibarr_set_const($db, 'ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER', GETPOST('ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER','int'));
+        $siteDb->oauth_id = $_POST['ecommerce_oauth_id'];
+        $siteDb->oauth_secret = $_POST['ecommerce_oauth_secret'];
 
         $result = 0;
         if (intval($_POST['ecommerce_id']))
@@ -138,12 +148,102 @@ if ($_POST['site_form_detail_action'] == 'save')
             $result = $siteDb->create($user);
         }
 
+        $error = '';
+        if ($result > 0) {
+            if ($siteDb->type == 2) { // Woocommerce
+                $result = ecommerceng_add_extrafields($db, $langs, [
+                    [
+                        'attrname' => "ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}",
+                        'label' => $langs->trans('ECommercengWoocommerceStatus', $siteDb->name),
+                        'type' => 'select',
+                        'pos' => 1,
+                        'size' => '',
+                        'elementtype' => 'product',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => array('options' => array(
+                            "draft" => $langs->trans('ECommercengWoocommerceStatusDraft', $siteDb->name),
+                            "pending" => $langs->trans('ECommercengWoocommerceStatusPending', $siteDb->name),
+                            "private" => $langs->trans('ECommercengWoocommerceStatusPrivate', $siteDb->name),
+                            "publish" => $langs->trans('ECommercengWoocommerceStatusPublish', $siteDb->name),
+                        )),
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 0,
+                    ],[
+                        'attrname' => "ecommerceng_description_{$conf->entity}",
+                        'label' => 'ECommercengWoocommerceDescription',
+                        'type' => 'text',
+                        'pos' => 2,
+                        'size' => '',
+                        'elementtype' => 'product',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => '',
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 0,
+                    ],
+                    [
+                        'attrname' => "ecommerceng_short_description_{$conf->entity}",
+                        'label' => 'ECommercengWoocommerceShortDescription',
+                        'type' => 'text',
+                        'pos' => 3,
+                        'size' => '',
+                        'elementtype' => 'product',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => '',
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 0,
+                    ],
+                    [
+                        'attrname' => "ecommerceng_tax_class_{$siteDb->id}_{$conf->entity}",
+                        'label' => $langs->trans('ECommercengWoocommerceTaxClass', $siteDb->name),
+                        'type' => 'sellist',
+                        'pos' => 4,
+                        'size' => '',
+                        'elementtype' => 'product',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => array('options' => array("c_ecommerceng_tax_class:label:code::active=1 AND site_id={$siteDb->id} AND entity={$conf->entity}" => null)),
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 0,
+                    ],
+                    [
+                        'attrname' => "ecommerceng_online_payment_{$conf->entity}",
+                        'label' => 'ECommercengWoocommerceOnlinePayment',
+                        'type' => 'boolean',
+                        'pos' => 1,
+                        'size' => '1',
+                        'elementtype' => 'commande',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => '',
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 0,
+                    ],
+                ], $error);
+            }
+        }
+
         if ($result > 0)
         {
             $eCommerceMenu = new eCommerceMenu($db, $siteDb);
             $eCommerceMenu->updateMenu();
             $db->commit();
 
+            if ($siteDb->type == 2) { // Woocommerce
+                ecommerceng_update_woocommerce_dict_tax_class($db, $siteDb);
+            }
             if (!empty($conf->global->PRODUIT_MULTIPRICES) && $siteDb->price_level != $last_price_level) {
                 updatePriceLevel($siteDb);
             }
@@ -152,7 +252,11 @@ if ($_POST['site_form_detail_action'] == 'save')
         } else
         {
             $db->rollback();
-            setEventMessages($siteDb->error, $siteDb->errors, 'errors');
+            if (!empty($error)) {
+                setEventMessage($error, 'errors');
+            } else {
+                setEventMessages($siteDb->error, $siteDb->errors, 'errors');
+            }
         }
     }
     else
@@ -176,6 +280,12 @@ elseif ($_POST['site_form_detail_action'] == 'delete')
         $success[] = $langs->trans('ECommerceDeleteOk');
         $siteDb->id = null;
         unset($_POST);
+    }
+}
+// Update dictionary for tax class of woocommerce
+elseif ($_POST['site_form_detail_action'] == 'update_woocommerce_tax_class') {
+    if (ecommerceng_update_woocommerce_dict_tax_class($db, $siteDb)) {
+        setEventMessage($langs->trans('ECommercengWoocommerceDictTaxClassUpdated'));
     }
 }
 
@@ -212,6 +322,17 @@ $ecommerceId = ($_POST['ecommerce_id'] ? $_POST['ecommerce_id'] : $siteDb->id);
 $ecommerceName = ($_POST['ecommerce_name'] ? $_POST['ecommerce_name'] : $siteDb->name);
 $ecommerceType = ($_POST['ecommerce_type'] ? $_POST['ecommerce_type'] : intval($siteDb->type));
 $ecommerceWebserviceAddress = ($_POST['ecommerce_webservice_address'] ? $_POST['ecommerce_webservice_address'] : $siteDb->webservice_address);
+$ecommerceWebserviceAddressTest = '';
+if (!empty($ecommerceWebserviceAddress)) {
+    switch ($ecommerceType) {
+        case 1: // Magento
+            $ecommerceWebserviceAddressTest = $ecommerceWebserviceAddress .(substr($ecommerceWebserviceAddress, -1, 1)!='/'?'/':''). 'api/?wsdl';
+            break;
+        case 2: // Woocommerce
+            $ecommerceWebserviceAddressTest = $ecommerceWebserviceAddress .(substr($ecommerceWebserviceAddress, -1, 1)!='/'?'/':''). 'wp-json/';
+            break;
+    }
+}
 $ecommerceUserName = ($_POST['ecommerce_user_name'] ? $_POST['ecommerce_user_name'] : $siteDb->user_name);
 $ecommerceUserPassword = ($_POST['ecommerce_user_password'] ? $_POST['ecommerce_user_password'] : $siteDb->user_password);
 $ecommercePriceLevel = ($_POST['ecommerce_price_level'] ? $_POST['ecommerce_price_level'] : $siteDb->price_level);
@@ -219,15 +340,55 @@ $ecommerceFilterLabel = ($_POST['ecommerce_filter_label'] ? $_POST['ecommerce_fi
 $ecommerceFilterValue = ($_POST['ecommerce_filter_value'] ? $_POST['ecommerce_filter_value'] : $siteDb->filter_value);
 $ecommerceFkCatSociete = ($_POST['ecommerce_fk_cat_societe'] ? $_POST['ecommerce_fk_cat_societe'] : intval($siteDb->fk_cat_societe));
 $ecommerceFkCatProduct = ($_POST['ecommerce_fk_cat_product'] ? $_POST['ecommerce_fk_cat_product'] : intval($siteDb->fk_cat_product));
+$ecommerceFkAnonymousThirdparty = ($_POST['ecommerce_fk_anonymous_thirdparty'] ? $_POST['ecommerce_fk_anonymous_thirdparty'] : intval($siteDb->fk_anonymous_thirdparty));
 $ecommerceFkWarehouse = ($_POST['ecommerce_fk_warehouse'] ? $_POST['ecommerce_fk_warehouse'] : intval($siteDb->fk_warehouse));
 $ecommerceStockSyncDirection = ($_POST['ecommerce_stock_sync_direction'] ? $_POST['ecommerce_stock_sync_direction'] : $siteDb->stock_sync_direction);
 $ecommerceMagentoUseSpecialPrice = ($_POST['ecommerce_magento_use_special_price'] ? $_POST['ecommerce_magento_use_special_price'] : intval($siteDb->magento_use_special_price));
-$ecommerceMagentoPriceType = ($_POST['ecommerce_magento_price_type'] ? $_POST['ecommerce_magento_price_type'] : $siteDb->ecommerce_magento_price_type);
+$ecommercePriceType = ($_POST['ecommerce_price_type'] ? $_POST['ecommerce_price_type'] : $siteDb->ecommerce_price_type);
 /*$ecommerceTimeout = 300;
 if (isset($_POST['ecommerce_timeout']))
     $ecommerceTimeout = $_POST['ecommerce_timeout'];
 elseif (isset($siteDb->timeout))
     $ecommerceTimeout = $siteDb->timeout;*/
+$ecommerceOAuth = false;
+$ecommerceOAuthGenerateToken = false;
+if (!empty($ecommerceId)) {
+    if ($ecommerceType == 2) {
+        $ecommerceOAuth = true;
+        $ecommerceOAuthWordpressOAuthSetupUri = $ecommerceWebserviceAddress . (substr($ecommerceWebserviceAddress, -1, 1) != '/' ? '/' : '') . 'wp-admin/admin.php?page=wo_settings#clients';
+    }
+
+    if ($ecommerceOAuth) {
+        $ecommerceOAuthRedirectUri = dol_buildpath('/custom/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php', 2).'?ecommerce_id='.$ecommerceId;
+        $ecommerceOAuthId = ($_POST['ecommerce_oauth_id'] ? $_POST['ecommerce_oauth_id'] : $siteDb->oauth_id);
+        $ecommerceOAuthSecret = ($_POST['ecommerce_oauth_secret'] ? $_POST['ecommerce_oauth_secret'] : $siteDb->oauth_secret);
+
+        // Token
+        $ecommerceOAuthTokenObj = null;
+        $storage = new DoliStorage($db, $conf);
+        try {
+            $ecommerceOAuthTokenObj = $storage->retrieveAccessToken('ECommerce_'.$ecommerceId);
+        } catch(Exception $e) {}
+        $ecommerceOAuthGenerateToken = (!empty($ecommerceOAuthId) && !empty($ecommerceOAuthSecret) || is_object($ecommerceOAuthTokenObj));
+
+        $ecommerceOAuthBackToUri = urlencode(dol_buildpath('/custom/ecommerceng/admin/eCommerceSetup.php', 2).'?ecommerce_id='.$ecommerceId);
+
+        if (is_object($ecommerceOAuthTokenObj)) {
+            $ecommerceOAuthTokenExpired = ($ecommerceOAuthTokenObj->getEndOfLife() !== $ecommerceOAuthTokenObj::EOL_NEVER_EXPIRES && $ecommerceOAuthTokenObj->getEndOfLife() !== $ecommerceOAuthTokenObj::EOL_UNKNOWN && time() > ($ecommerceOAuthTokenObj->getEndOfLife() - 30));
+
+            $ecommerceOAuthHasRefreshToken = !empty($ecommerceOAuthTokenObj->getRefreshToken());
+
+            $endoflife = $ecommerceOAuthTokenObj->getEndOfLife();
+            if ($endoflife == $ecommerceOAuthTokenObj::EOL_NEVER_EXPIRES) {
+                $ecommerceOAuthTokenExpireDate = $langs->trans("Never");
+            } elseif ($endoflife == $ecommerceOAuthTokenObj::EOL_UNKNOWN) {
+                $ecommerceOAuthTokenExpireDate = $langs->trans("Unknown");
+            } else {
+                $ecommerceOAuthTokenExpireDate = dol_print_date($endoflife, "dayhour");
+            }
+        }
+    }
+}
 
 $ecommerceLastUpdate = $siteDb->last_update;
 $var = true;
