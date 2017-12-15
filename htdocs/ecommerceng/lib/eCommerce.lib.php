@@ -453,13 +453,15 @@ function ecommerceng_update_woocommerce_dict_tax_class($db, $site)
     return true;
 }
 
-function get_company_by_email($db, $email)
+function get_company_by_email($db, $email, $site=0)
 {
     $email = $db->escape($email);
 
     $sql = "SELECT s.rowid FROM " . MAIN_DB_PREFIX . "societe AS s";
     $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople AS sp ON sp.fk_soc = s.rowid";
-    $sql .= " WHERE s.email = '$email' OR sp.email = '$email'";
+    if ($site > 0) $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_societe AS es ON es.fk_societe = s.rowid";
+    $sql .= " WHERE (s.email = '$email' OR sp.email = '$email')";
+    if ($site > 0) $sql .= " AND es.fk_site = $site";
     $sql .= " GROUP BY s.rowid";
 
     $resql = $db->query($sql);

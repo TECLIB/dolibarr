@@ -141,7 +141,8 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function connect()
     {
-        dol_syslog(__METHOD__ . ": Connect to API webservice_address=" . $this->site->webservice_address . " user_name=" . $this->site->user_name . " user_password=" . $this->site->user_password . " for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Connect to API webservice_address=" . $this->site->webservice_address . " user_name=" .
+            $this->site->user_name . " user_password=" . $this->site->user_password . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
         $response_timeout = (empty($conf->global->MAIN_USE_RESPONSE_TIMEOUT) ? 30 : $conf->global->MAIN_USE_RESPONSE_TIMEOUT);    // Response timeout
@@ -190,7 +191,7 @@ class eCommerceRemoteAccessWoocommerce
             return false;
         }
 
-        dol_syslog(__METHOD__ . ": end, ok");
+        dol_syslog(__METHOD__ . ": end, ok", LOG_DEBUG);
         return true;
     }
 
@@ -204,7 +205,8 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function getSocieteToUpdate($fromDate, $toDate)
     {
-        dol_syslog(__METHOD__ . ": start gt = " . (!empty($fromDate) ? dol_print_date($fromDate, 'standard') : 'none') . ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": start gt = " . (!empty($fromDate) ? dol_print_date($fromDate, 'standard') : 'none') .
+            ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
         $last_update = [];
@@ -253,10 +255,9 @@ class eCommerceRemoteAccessWoocommerce
         //important - order by last update
         if (count($result)) {
             array_multisort($last_update, SORT_ASC, $result);
-            $result = array_values($result);
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return $result;
     }
 
@@ -270,7 +271,8 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function getProductToUpdate($fromDate, $toDate)
     {
-        dol_syslog(__METHOD__ . ": start gt = " . (!empty($fromDate) ? dol_print_date($fromDate, 'standard') : 'none') . ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": start gt = " . (!empty($fromDate) ? dol_print_date($fromDate, 'standard') : 'none') .
+            ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
         $last_update = [];
@@ -310,25 +312,22 @@ class eCommerceRemoteAccessWoocommerce
 
                 // Product
                 if ((!isset($from_date) || $from_date < $date_product) && (!isset($to_date) || $date_product <= $to_date)) {
-                    $update = true;
+                    $id = $product['id'];
+                    $result[$id] = $id;
+                    $last_update[$id] = $date_product->format('Y-m-d H:i:s');
                 }
 
                 // Variations
                 if (!$update) {
                     foreach ($product['variations'] as $variation) {
-                        $date = $this->getDateTimeFromGMTDateTime(!empty($variation['updated_at']) ? $variation['updated_at'] : $variation['created_at']);
+                        $date_variation = $this->getDateTimeFromGMTDateTime(!empty($variation['updated_at']) ? $variation['updated_at'] : $variation['created_at']);
 
-                        if ((!isset($from_date) || $from_date < $date) && (!isset($to_date) || $date <= $to_date)) {
-                            $update = true;
-                            break;
+                        if ((!isset($from_date) || $from_date < $date_variation) && (!isset($to_date) || $date_variation <= $to_date)) {
+                            $id = $product['id'].'|'.$variation['id'];
+                    $result[$id] = $id;
+                            $last_update[$id] = $date_variation->format('Y-m-d H:i:s');
                         }
                     }
-                }
-
-                if ($update) {
-                    $id = $product['id'];
-                    $result[$id] = $id;
-                    $last_update[$id] = $date_product->format('Y-m-d H:i:s');
                 }
             }
         }
@@ -336,10 +335,9 @@ class eCommerceRemoteAccessWoocommerce
         //important - order by last update
         if (count($result)) {
             array_multisort($last_update, SORT_ASC, $result);
-            $result = array_values($result);
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return $result;
     }
 
@@ -353,7 +351,8 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function getCommandeToUpdate($fromDate, $toDate)
     {
-        dol_syslog(__METHOD__ . ": start gt = " . (!empty($fromDate) ? dol_print_date($fromDate, 'standard') : 'none') . ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": start gt = " . (!empty($fromDate) ? dol_print_date($fromDate, 'standard') : 'none') .
+            ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
         $last_update = [];
@@ -401,10 +400,9 @@ class eCommerceRemoteAccessWoocommerce
         //important - order by last update
         if (count($result)) {
             array_multisort($last_update, SORT_ASC, $result);
-            $result = array_values($result);
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return $result;
     }
 
@@ -418,7 +416,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function getFactureToUpdate($fromDate, $toDate)
     {
-        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
         return [];
     }
 
@@ -431,7 +429,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function convertRemoteObjectIntoDolibarrSociete($remoteObject, $toNb=0)
     {
-        dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote companies ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote companies ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
         $companies = [];
@@ -439,7 +437,7 @@ class eCommerceRemoteAccessWoocommerce
         $requestGroups = $this->getRequestGroups($remoteObject, $nb_max_by_request, $toNb);
 
         foreach ($requestGroups as $request) {
-            dol_syslog(__METHOD__ . ": Get partial remote companies ID: " . implode(', ', $request));
+            dol_syslog(__METHOD__ . ": Get partial remote companies ID: " . implode(', ', $request), LOG_DEBUG);
             try {
                 $results = $this->client->get('customers',
                     [
@@ -473,16 +471,25 @@ class eCommerceRemoteAccessWoocommerce
                             'vatnumber' => null,
                             'note_private' => "Site: '{$this->site->name}' - ID: {$company['id']}",
                             'country_id' => getCountry($company['billing']['country'], 3),
+                            'remote_datas' => $company,
                         ];
                     }
                     // User
-                    elseif (!empty($company['first_name']) || !empty($company['last_name']) || !empty($company['billing']['first_name']) || !empty($company['billing']['first_name'])) {
+                    else {
+                        $firstname = !empty($company['first_name']) ? $company['first_name'] : $company['billing']['first_name'];
+                        $lastname = !empty($company['last_name']) ? $company['last_name'] : $company['billing']['last_name'];
+                        if (!empty($firstname) && !empty($lastname)) {
+                            $name = dolGetFirstLastname($firstname, $lastname);
+                        } elseif (!empty($firstname)) {
+                            $name = dolGetFirstLastname($firstname, $langs->trans("ECommercengWoocommerceLastnameNotInformed"));
+                        } else {
+                            $name = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                        }
                         $companies[] = [
                             'remote_id' => $company['id'],
                             'last_update' => $last_update->format('Y-m-d H:i:s'),
                             'type' => 'user',
-                            'name' => dolGetFirstLastname(!empty($company['first_name']) ? $company['first_name'] : $company['billing']['first_name'],
-                                                          !empty($company['last_name']) ? $company['last_name'] : $company['billing']['last_name']),
+                            'name' => $name,
                             'name_alias' => null,
                             'email' => $company['email'],
                             'email_key' => $company['email'],
@@ -490,9 +497,8 @@ class eCommerceRemoteAccessWoocommerce
                             'vatnumber' => null,
                             'note_private' => "Site: '{$this->site->name}' - ID: {$company['id']}",
                             'country_id' => getCountry($company['billing']['country'], 3),
+                            'remote_datas' => $company,
                         ];
-                    } else {
-                        dol_syslog(__METHOD__ . ": customer without company name, first name and last name is omitted (Remote ID: {$company['id']})", LOG_WARNING);
                     }
                 }
             }
@@ -507,70 +513,52 @@ class eCommerceRemoteAccessWoocommerce
             array_multisort($last_update, SORT_ASC, $companies);
         }
 
-        dol_syslog(__METHOD__ . ": end, converted " . count($companies) . " remote companies");
+        dol_syslog(__METHOD__ . ": end, converted " . count($companies) . " remote companies", LOG_DEBUG);
         return $companies;
     }
 
     /**
      * Call Woocommerce API to get contact datas and put into dolibarr contact class.
      *
-     * @param   array           $remoteObject List of ids of remote company get contacts to convert
-     * @param   int             $toNb         Max nb
+     * @param   array           $remoteCompany Remote company infos
      * @return  array|boolean                 List of contact sorted by update time or false if error.
      */
-    public function convertRemoteObjectIntoDolibarrSocpeople($remoteObject, $toNb=0)
+    public function convertRemoteObjectIntoDolibarrSocpeople($remoteCompany)
     {
-        dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote companies ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}");
-        global $conf, $langs;
+        dol_syslog(__METHOD__ . ": Get remote contacts ID: {$remoteCompany["id"]} for site ID {$this->site->id}", LOG_DEBUG);
+        global $langs;
 
         $contacts = [];
-        $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
-        $requestGroups = $this->getRequestGroups($remoteObject, $nb_max_by_request, $toNb);
+        $last_update = $this->getDateTimeFromGMTDateTime(!empty($remoteCompany['date_modified_gmt']) ? $remoteCompany['date_modified_gmt'] : $remoteCompany['date_created_gmt']);
 
-        foreach ($requestGroups as $request) {
-            dol_syslog(__METHOD__ . ": Get partial remote companies ID: " . implode(', ', $request));
-            try {
-                $results = $this->client->get('customers',
-                    [
-                        'per_page' => $nb_max_by_request,
-                        'include' => implode(',', $request),
-                    ]
-                );
-            } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSocpeople', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
-                dol_syslog(__METHOD__ .
-                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSocpeople', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
-                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-                return false;
-            }
-
-            if (is_array($results)) {
-                foreach ($results as $company) {
-                    $last_update = $this->getDateTimeFromGMTDateTime(!empty($company['date_modified_gmt']) ? $company['date_modified_gmt'] : $company['date_created_gmt']);
-
-                    $bContact = $company['billing'];
+        $bContact = $remoteCompany['billing'];
                     if (!empty($bContact['address_1']) || !empty($bContact['address_2']) || !empty($bContact['postcode']) ||
                         !empty($bContact['city']) || !empty($bContact['country']) ||
                         !empty($bContact['email']) || !empty($bContact['phone'])
                     ) {
+            $firstname = !empty($bContact['first_name']) ? $bContact['first_name'] : $remoteCompany['first_name'];
+            $lastname = !empty($bContact['last_name']) ? $bContact['last_name'] : $remoteCompany['last_name'];
+            if (!empty($firstname) && empty($lastname)) {
+                $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+            } elseif (empty($firstname) && empty($lastname)) {
+                $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+            }
                         $contacts[] = [
                             'remote_id' => null,
                             'last_update' => $last_update->format('Y-m-d H:i:s'),
-                            'name' => dolGetFirstLastname(!empty($bContact['first_name']) ? $bContact['first_name'] : $company['first_name'],
-                                                          !empty($bContact['last_name']) ? $bContact['last_name'] : $company['last_name']),
-                            'firstname' => !empty($bContact['first_name']) ? $bContact['first_name'] : $company['first_name'],
-                            'lastname' => !empty($bContact['last_name']) ? $bContact['last_name'] : $company['last_name'],
+                'firstname' => $firstname,
+                'lastname' => $lastname,
                             'address' => $bContact['address_1'] . (!empty($bContact['address_1']) && !empty($bContact['address_2']) ? "\n" : "") . $bContact['address_2'],
                             'zip' => $bContact['postcode'],
                             'town' => $bContact['city'],
                             'country_id' => getCountry($bContact['country'], 3),
-                            'email' => !empty($bContact['email']) ? $bContact['email'] : $company['email'],
+                'email' => !empty($bContact['email']) ? $bContact['email'] : $remoteCompany['email'],
                             'phone' => $bContact['phone'],
                             'fax' => null,
                         ];
                     }
 
-                    $sContact = $company['shipping'];
+        $sContact = $remoteCompany['shipping'];
                     if (!empty($sContact['address_1']) || !empty($sContact['address_2']) ||
                         !empty($sContact['postcode']) || !empty($sContact['city']) ||
                         !empty($sContact['country'])
@@ -580,37 +568,30 @@ class eCommerceRemoteAccessWoocommerce
                             $bContact['postcode'] != $sContact['postcode'] || $bContact['city'] != $sContact['city'] ||
                             $bContact['country'] != $sContact['country']
                         ) {
+                $firstname = !empty($sContact['first_name']) ? $sContact['first_name'] : $remoteCompany['first_name'];
+                $lastname = !empty($sContact['last_name']) ? $sContact['last_name'] : $remoteCompany['last_name'];
+                if (!empty($firstname) && empty($lastname)) {
+                    $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+                } elseif (empty($firstname) && empty($lastname)) {
+                    $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                }
                             $contacts[] = [
                                 'remote_id' => null,
                                 'last_update' => $last_update->format('Y-m-d H:i:s'),
-                                'name' => dolGetFirstLastname(!empty($sContact['first_name']) ? $sContact['first_name'] : $company['first_name'],
-                                                              !empty($sContact['last_name']) ? $sContact['last_name'] : $company['last_name']),
-                                'firstname' => !empty($sContact['first_name']) ? $sContact['first_name'] : $company['first_name'],
-                                'lastname' => !empty($sContact['last_name']) ? $sContact['last_name'] : $company['last_name'],
+                    'firstname' => $firstname,
+                    'lastname' => $lastname,
                                 'address' => $sContact['address_1'] . (!empty($sContact['address_1']) && !empty($sContact['address_2']) ? "\n" : "") . $sContact['address_2'],
                                 'zip' => $sContact['postcode'],
                                 'town' => $sContact['city'],
                                 'country_id' => getCountry($sContact['country'], 3),
-                                'email' => "",
-                                'phone' => "",
+                    'email' => null,
+                    'phone' => null,
                                 'fax' => null,
                             ];
                         }
                     }
-                }
-            }
-        }
 
-        //important - order by last update
-        if (count($contacts)) {
-            $last_update = [];
-            foreach ($contacts as $key => $row) {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $contacts);
-        }
-
-        dol_syslog(__METHOD__ . ": end, converted " . count($contacts) . " remote contacts");
+        dol_syslog(__METHOD__ . ": end, converted " . count($contacts) . " remote contacts", LOG_DEBUG);
         return $contacts;
     }
 
@@ -623,17 +604,30 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function convertRemoteObjectIntoDolibarrProduct($remoteObject, $toNb=0)
     {
-        dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote products ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote products ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
         $canvas = '';
         $products = [];
+        $remoteVariationObject = [];
+        $products_last_update = [];
         $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
 
         // Products
-        $requestGroups = $this->getRequestGroups($remoteObject, $nb_max_by_request, $toNb);
+        $newRemoteObject = [];
+        $remoteObject = array_slice($remoteObject, 0, $toNb);
+        foreach ($remoteObject as $id) {
+            if (($pos = strpos($id, '|')) !== false) {
+                $variation_id = substr($id,$pos+1);
+                $id = substr($id,0,$pos);
+                if (!isset($remoteVariationObject[$id])) $remoteVariationObject[$id] = [];
+                $remoteVariationObject[$id][] = $variation_id;
+            }
+            $newRemoteObject[$id] = $id;
+        }
+        $requestGroups = $this->getRequestGroups($newRemoteObject, $nb_max_by_request);
         foreach ($requestGroups as $request) {
-            dol_syslog(__METHOD__ . ": Get partial remote products ID: " . implode(', ', $request));
+            dol_syslog(__METHOD__ . ": Get ".count($request)." partial remote products ID: " . implode(', ', $request), LOG_DEBUG);
             try {
                 $results = $this->client->get('products',
                     [
@@ -672,10 +666,15 @@ class eCommerceRemoteAccessWoocommerce
 
                     $last_update_product = $this->getDateTimeFromGMTDateTime(!empty($product['date_modified_gmt']) ? $product['date_modified_gmt'] : $product['date_created_gmt']);
 
+                    $remote_id = $product['id'];  // id product
+                    $last_update = $last_update_product->format('Y-m-d H:i:s');
+
                     // Produit de base
-                    $products[] = [
-                        'remote_id' => $product['id'],  // id product
-                        'last_update' => $last_update_product->format('Y-m-d H:i:s'),
+                    if (in_array($remote_id, $remoteObject, true)) {
+                        $products_last_update[$remote_id] = $last_update;
+                        $products[$remote_id] = [
+                            'remote_id' => $remote_id,
+                            'last_update' => $last_update,
                         'fk_product_type' => ($product['virtual'] ? 1 : 0), // 0 (product) or 1 (service)
                         'ref' => $product['sku'],
                         'label' => $product['name'],
@@ -701,11 +700,12 @@ class eCommerceRemoteAccessWoocommerce
                         ],
                         'images' => $images,
                     ];
+                    }
 
                     // Variations
-                    $requestGroupsVariations = $this->getRequestGroups($product['variations'], $nb_max_by_request);
+                    $requestGroupsVariations = $this->getRequestGroups($remoteVariationObject[$product['id']], $nb_max_by_request);
                     foreach ($requestGroupsVariations as $requestVariations) {
-                        dol_syslog(__METHOD__ . ": Get products variations of remote product (ID:{$product['id']}): " . implode(', ', $requestVariations));
+                        dol_syslog(__METHOD__ . ": Get ".count($requestVariations)." products variations of remote product (ID:{$product['id']}): " . implode(', ', $requestVariations), LOG_DEBUG);
                         try {
                             $results = $this->client->get('products/' . $product['id'] . '/variations',
                                 [
@@ -740,12 +740,19 @@ class eCommerceRemoteAccessWoocommerce
                                     }
                                 }
 
-                                $products[] = [
-                                    'remote_id' => $product['id'] . '|' . $variation['id'],  // id product | id variation
-                                    'last_update' => $last_update_product->format('Y-m-d H:i:s'),
+                                $last_update_product_variation = $this->getDateTimeFromGMTDateTime(!empty($variation['date_modified_gmt']) ? $variation['date_modified_gmt'] : $variation['date_created_gmt']);
+
+                                $remote_id = $product['id'] . '|' . $variation['id'];  // id product | id variation
+                                $last_update = $last_update_product_variation->format('Y-m-d H:i:s');
+
+                                // Variation
+                                $products_last_update[$remote_id] = $last_update;
+                                $products[$remote_id] = [
+                                    'remote_id' => $remote_id,
+                                    'last_update' => $last_update,
                                     'fk_product_type' => ($variation['virtual'] ? 1 : 0), // 0 (product) or 1 (service)
                                     'ref' => $variation['sku'],
-                                    'label' => $product['label'] . $attributesLabel,
+                                    'label' => $product['name'] . $attributesLabel,
                                     'weight' => $variation['weight'],
                                     'price' => $variation['price'],
                                     'envente' => 1,
@@ -775,14 +782,10 @@ class eCommerceRemoteAccessWoocommerce
 
         //important - order by last update
         if (count($products)) {
-            $last_update = [];
-            foreach ($products as $key => $row) {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $products);
+            array_multisort($products_last_update, SORT_ASC, $products);
         }
 
-        dol_syslog(__METHOD__ . ": end, converted " . count($products) . " remote products");
+        dol_syslog(__METHOD__ . ": end, converted " . count($products) . " remote products", LOG_DEBUG);
         return $products;
     }
 
@@ -795,7 +798,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function convertRemoteObjectIntoDolibarrCommande($remoteObject, $toNb=0)
     {
-        dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote orders ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote orders ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
         $orders = [];
@@ -803,7 +806,7 @@ class eCommerceRemoteAccessWoocommerce
         $requestGroups = $this->getRequestGroups($remoteObject, $nb_max_by_request, $toNb);
 
         foreach ($requestGroups as $request) {
-            dol_syslog(__METHOD__ . ": Get partial remote orders ID: " . implode(', ', $request));
+            dol_syslog(__METHOD__ . ": Get partial remote orders ID: " . implode(', ', $request), LOG_DEBUG);
             try {
                 $results = $this->client->get('orders',
                     [
@@ -848,13 +851,19 @@ class eCommerceRemoteAccessWoocommerce
 
                     // Set billing's address
                     $bContact = $order['billing'];
+                    $firstname = $bContact['first_name'];
+                    $lastname = $bContact['last_name'];
+                    if (!empty($firstname) && empty($lastname)) {
+                        $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+                    } elseif (empty($firstname) && empty($lastname)) {
+                        $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                    }
                     $contactBilling = [
                         'remote_id' => "",
-                        'type' => eCommerceSocpeople::CONTACT_TYPE_ORDER,
+                        'type' => 1, //eCommerceSocpeople::CONTACT_TYPE_ORDER,
                         'last_update' => $last_update->format('Y-m-d H:i:s'),
-                        'name' => dolGetFirstLastname($bContact['first_name'], $bContact['last_name']),
-                        'firstname' => $bContact['first_name'],
-                        'lastname' => $bContact['last_name'],
+                        'firstname' => $firstname,
+                        'lastname' => $lastname,
                         'address' => $bContact['address_1'] . (!empty($bContact['address_1']) && !empty($bContact['address_2']) ? "\n" : "") . $bContact['address_2'],
                         'zip' => $bContact['postcode'],
                         'town' => $bContact['city'],
@@ -866,7 +875,7 @@ class eCommerceRemoteAccessWoocommerce
 
                     // Set invoice's address
                     $contactInvoice = $contactBilling;
-                    $contactInvoice['type'] = eCommerceSocpeople::CONTACT_TYPE_INVOICE;
+                    $contactInvoice['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_INVOICE;
 
                     // Set shipping's address
                     $sContact = $order['shipping'];
@@ -879,28 +888,34 @@ class eCommerceRemoteAccessWoocommerce
                             $bContact['postcode'] != $sContact['postcode'] || $bContact['city'] != $sContact['city'] ||
                             $bContact['country'] != $sContact['country']
                         ) {
+                            $firstname = $sContact['first_name'];
+                            $lastname = $sContact['last_name'];
+                            if (!empty($firstname) && empty($lastname)) {
+                                $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+                            } elseif (empty($firstname) && empty($lastname)) {
+                                $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                            }
                             $contactShipping = [
                                 'remote_id' => "",
-                                'type' => eCommerceSocpeople::CONTACT_TYPE_ORDER,
+                                'type' => 1, //eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
                                 'last_update' => $last_update->format('Y-m-d H:i:s'),
-                                'name' => dolGetFirstLastname($sContact['first_name'], $sContact['last_name']),
-                                'firstname' => $sContact['first_name'],
-                                'lastname' => $sContact['last_name'],
+                                'firstname' => $firstname,
+                                'lastname' => $lastname,
                                 'address' => $sContact['address_1'] . (!empty($sContact['address_1']) && !empty($sContact['address_2']) ? "\n" : "") . $sContact['address_2'],
                                 'zip' => $sContact['postcode'],
                                 'town' => $sContact['city'],
                                 'country_id' => getCountry($sContact['country'], 3),
-                                'email' => "",
-                                'phone' => "",
+                                'email' => null,
+                                'phone' => null,
                                 'fax' => null,
                             ];
                         } else {
                             $contactShipping = $contactBilling;
-                            $contactShipping['type'] = eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
+                            $contactShipping['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
                         }
                     } else {
                         $contactShipping = $contactBilling;
-                        $contactShipping['type'] = eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
+                        $contactShipping['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
                     }
 
                     // Set delivery as service
@@ -921,9 +936,9 @@ class eCommerceRemoteAccessWoocommerce
                     switch ($orderStatus) {
                         case 'on-hold': $status = Commande::STATUS_DRAFT; break;
                         case 'pending': $status = Commande::STATUS_DRAFT; break;
-                        case 'processing': $status = Commande::STATUS_VALIDATED; break;
+                        case 'processing': $status = !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_ORDER_PROCESSING_STATUS_TO_DRAFT)?Commande::STATUS_DRAFT:Commande::STATUS_VALIDATED; break;
                         case 'completed': $status = Commande::STATUS_CLOSED; break;
-                        case 'refunded': $status = Commande::STATUS_CLOSED; break;
+                        case 'refunded': $status = Commande::STATUS_CANCELED; break;
                         case 'cancelled': $status = Commande::STATUS_CANCELED; break;
                         case 'failed': $status = Commande::STATUS_CANCELED; break;
                     }
@@ -982,7 +997,7 @@ class eCommerceRemoteAccessWoocommerce
             array_multisort($last_update, SORT_ASC, $orders);
         }
 
-        dol_syslog(__METHOD__ . ": end, converted " . count($orders) . " remote orders");
+        dol_syslog(__METHOD__ . ": end, converted " . count($orders) . " remote orders", LOG_DEBUG);
         return $orders;
     }
 
@@ -995,7 +1010,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function convertRemoteObjectIntoDolibarrFacture($remoteObject, $toNb=0)
     {
-        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
         return [];
     }
 
@@ -1006,7 +1021,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function getRemoteCategoryTree()
     {
-        dol_syslog(__METHOD__ . ": Get remote category tree for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Get remote category tree for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
         $categories = [];
@@ -1064,7 +1079,7 @@ class eCommerceRemoteAccessWoocommerce
             }
         }
 
-        dol_syslog(__METHOD__ . ": end, " . count($categories) . " remote category recovered");
+        dol_syslog(__METHOD__ . ": end, " . count($categories) . " remote category recovered", LOG_DEBUG);
         return $categories_tree;
     }
 
@@ -1077,7 +1092,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function getRemoteAddressIdForSociete($remote_company_id)
     {
-        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
         return [$remote_company_id];
     }
 
@@ -1090,7 +1105,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function getCategoryData($category_id)
     {
-        dol_syslog(__METHOD__ . ": Get remote category for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Get remote category for site ID {$this->site->id}", LOG_DEBUG);
         global $langs;
 
         $category = [];
@@ -1116,7 +1131,7 @@ class eCommerceRemoteAccessWoocommerce
             ];
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return $category;
     }
 
@@ -1129,7 +1144,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function getRemoteCommande($remoteOrderId)
     {
-        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
         return [];
     }
 
@@ -1143,7 +1158,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function updateRemoteProduct($remote_id, $object)
     {
-        dol_syslog(__METHOD__ . ": Update the remote product ID $remote_id for Dolibarr product ID {$object->id} for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Update the remote product ID $remote_id for Dolibarr product ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
         $isProductVariation = false;
@@ -1488,7 +1503,7 @@ class eCommerceRemoteAccessWoocommerce
             }
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return true;
     }
 
@@ -1502,7 +1517,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function updateRemoteStockProduct($remote_id, $object)
     {
-        dol_syslog(__METHOD__ . ": Update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_DEBUG);
         global $langs;
 
         if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) {
@@ -1542,7 +1557,7 @@ class eCommerceRemoteAccessWoocommerce
             }
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return true;
     }
 
@@ -1556,7 +1571,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function updateRemoteSociete($remote_id, $object)
     {
-        dol_syslog(__METHOD__ . ": Update the remote company ID $remote_id for Dolibarr company ID {$object->id} for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Update the remote company ID $remote_id for Dolibarr company ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $langs;
 
         /*
@@ -1585,7 +1600,7 @@ class eCommerceRemoteAccessWoocommerce
             return false;
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return true;
     }
 
@@ -1599,7 +1614,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function updateRemoteSocpeople($remote_id, $object)
     {
-        dol_syslog(__METHOD__ . ": Update the remote contact ID $remote_id for Dolibarr contact ID {$object->id} for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Update the remote contact ID $remote_id for Dolibarr contact ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
         // Get societe
@@ -1660,7 +1675,7 @@ class eCommerceRemoteAccessWoocommerce
             }
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return true;
     }
 
@@ -1674,7 +1689,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function updateRemoteCommande($remote_id, $object)
     {
-        dol_syslog(__METHOD__ . ": Update the remote order ID $remote_id for Dolibarr order ID {$object->id} for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Update the remote order ID $remote_id for Dolibarr order ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $langs;
 
         $status = '';
@@ -1704,7 +1719,7 @@ class eCommerceRemoteAccessWoocommerce
             }
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return true;
     }
 
@@ -1718,7 +1733,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function updateRemoteFacture($remote_id, $object)
     {
-        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
         return true;
     }
 
@@ -1732,7 +1747,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function createRemoteLivraison($livraison, $remote_order_id)
     {
-        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
         return $remote_order_id;
     }
 
@@ -1745,7 +1760,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function createRemoteProduct($object)
     {
-        dol_syslog(__METHOD__ . ": Create product from Dolibarr product ID {$object->id} for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Create product from Dolibarr product ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs, $user;
 
         // Set weight
@@ -1926,7 +1941,7 @@ class eCommerceRemoteAccessWoocommerce
             return false;
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return true;
     }
 
@@ -1943,7 +1958,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function sendFileForCommande($order_remote_id, $company_remote_id, $object, $file, $outputlangs)
     {
-        dol_syslog(__METHOD__ . ": Send file '$file' for remote order ID $order_remote_id for site ID {$this->site->id}");
+        dol_syslog(__METHOD__ . ": Send file '$file' for remote order ID $order_remote_id for site ID {$this->site->id}", LOG_DEBUG);
         global $langs;
 
         // Send file to WordPress
@@ -1983,7 +1998,7 @@ class eCommerceRemoteAccessWoocommerce
             return false;
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return true;
     }
 
@@ -1997,7 +2012,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     private function getTaxRate($tax_class, $tax_status = 'taxable')
     {
-        dol_syslog(__METHOD__ . ": Get tax rate, tax_classe: $tax_class, tax_status: $tax_status");
+        //dol_syslog(__METHOD__ . ": Get tax rate, tax_classe: $tax_class, tax_status: $tax_status", LOG_DEBUG);
         global $conf, $mysoc;
 
         $tax_rate = 0;
@@ -2030,7 +2045,7 @@ class eCommerceRemoteAccessWoocommerce
             }
         }
 
-        dol_syslog(__METHOD__ . ": end, return $tax_rate");
+        //dol_syslog(__METHOD__ . ": end, return $tax_rate", LOG_DEBUG);
         return $tax_rate;
     }
 
@@ -2044,7 +2059,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     private function getTaxClass($tax_class, $tax_status = 'taxable')
     {
-        dol_syslog(__METHOD__ . ": Get tax class name, tax_class: $tax_class, tax_status: $tax_status");
+        //dol_syslog(__METHOD__ . ": Get tax class name, tax_class: $tax_class, tax_status: $tax_status", LOG_DEBUG);
 
         // $tax_status => Tax status. Options: taxable, shipping and none. Default is taxable
         if ($tax_status != 'none') {
@@ -2053,7 +2068,7 @@ class eCommerceRemoteAccessWoocommerce
             $tax_class = '';
         }
 
-        dol_syslog(__METHOD__ . ": end, return $tax_class");
+        //dol_syslog(__METHOD__ . ": end, return $tax_class", LOG_DEBUG);
         return $tax_class;
     }
 
@@ -2067,7 +2082,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     private function getClosestDolibarrTaxRate($priceHT, $taxAmount)
     {
-        dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, priceHT: $priceHT, priceHT: $taxAmount");
+        //dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, priceHT: $priceHT, priceHT: $taxAmount", LOG_DEBUG);
         $tax_rate = 0;
         if ($taxAmount != 0) {
             //calcul tax rate from remote site
@@ -2080,7 +2095,7 @@ class eCommerceRemoteAccessWoocommerce
             }
         }
 
-        dol_syslog(__METHOD__ . ": end, return $tax_rate");
+        //dol_syslog(__METHOD__ . ": end, return $tax_rate", LOG_DEBUG);
         return $tax_rate;
     }
 
@@ -2091,7 +2106,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     private function setDolibarrTaxes()
     {
-        dol_syslog(__METHOD__ . ": Retrieve all Dolibarr tax rates");
+        //dol_syslog(__METHOD__ . ": Retrieve all Dolibarr tax rates", LOG_DEBUG);
 
    		$resql = $this->db->query("SELECT DISTINCT taux FROM ".MAIN_DB_PREFIX."c_tva ORDER BY taux DESC");
    		if ($resql) {
@@ -2104,7 +2119,7 @@ class eCommerceRemoteAccessWoocommerce
             $this->dolibarrTaxes = $taxesTable;
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        //dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
     }
 
     /**
@@ -2114,7 +2129,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     /*    private function setDolibarrTaxes()
     {
-        dol_syslog(__METHOD__ . ": Retrieve all Dolibarr tax rates");
+        dol_syslog(__METHOD__ . ": Retrieve all Dolibarr tax rates", LOG_DEBUG);
 
    		$resql = $this->db->query("SELECT t.*, c.code AS country FROM ".MAIN_DB_PREFIX."c_tva AS t LEFT JOIN ".MAIN_DB_PREFIX."c_country AS c ON t.fk_pays = c.rowid");
    		if ($resql) {
@@ -2130,7 +2145,7 @@ class eCommerceRemoteAccessWoocommerce
             $this->dolibarrTaxes = $taxesTable;
         }
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
     }*/
 
     /**
@@ -2140,15 +2155,15 @@ class eCommerceRemoteAccessWoocommerce
      */
     public function getAllWoocommerceTaxClass()
     {
-        dol_syslog(__METHOD__ . ": Retrieve all Woocommerce tax classes");
+        dol_syslog(__METHOD__ . ": Retrieve all Woocommerce tax classes", LOG_DEBUG);
         global $langs;
 
         try {
             $tax_classes = $this->client->get('taxes/classes');
         } catch (HttpClientException $fault) {
-            $this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+            $this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommerceTaxClass', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .
-                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetAllWoocommerceTaxClass', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                 ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
             return false;
         }
@@ -2159,7 +2174,7 @@ class eCommerceRemoteAccessWoocommerce
             $taxClassesTable[$tax_class['slug']] = $tax_class;
         }
 
-        dol_syslog(__METHOD__ . ": end, return: ".json_encode($taxClassesTable));
+        dol_syslog(__METHOD__ . ": end, return: ".json_encode($taxClassesTable), LOG_DEBUG);
         return $taxClassesTable;
     }
 
@@ -2170,7 +2185,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     private function setWoocommerceTaxes()
     {
-        dol_syslog(__METHOD__ . ": Retrieve all Woocommerce tax rates");
+        dol_syslog(__METHOD__ . ": Retrieve all Woocommerce tax rates", LOG_DEBUG);
         global $conf, $langs;
 
         $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
@@ -2187,9 +2202,9 @@ class eCommerceRemoteAccessWoocommerce
                     ]
                 );
             } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSocpeople', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                $this->errors[] = $langs->trans('ECommerceWoocommerceGetWoocommerceTaxes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
-                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSocpeople', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetWoocommerceTaxes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                     ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
                 return false;
             }
@@ -2219,7 +2234,7 @@ class eCommerceRemoteAccessWoocommerce
 
         $this->woocommerceTaxes = $taxesTable;
 
-        dol_syslog(__METHOD__ . ": end");
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return true;
     }
 
@@ -2232,7 +2247,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     private function _getClosestDolibarrTaxRate($tax_rate)
     {
-        dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, tax_rate: $tax_rate");
+        //dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, tax_rate: $tax_rate", LOG_DEBUG);
 
         $tax = null;
 
@@ -2252,7 +2267,7 @@ class eCommerceRemoteAccessWoocommerce
             $tax = $closestTax;
         }
 
-        dol_syslog(__METHOD__ . ": end, return ".(isset($tax)?json_encode($tax):'null'));
+        //dol_syslog(__METHOD__ . ": end, return ".(isset($tax)?json_encode($tax):'null'), LOG_DEBUG);
         return $tax;
     }
 
@@ -2266,7 +2281,7 @@ class eCommerceRemoteAccessWoocommerce
      */
     /*private function getClosestDolibarCountryTax($country_code, $tax_rate)
     {
-        dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, country_code: $country_code, tax_rate: $tax_rate");
+        dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, country_code: $country_code, tax_rate: $tax_rate", LOG_DEBUG);
         global $langs;
 
         $tax = null;
@@ -2294,7 +2309,7 @@ class eCommerceRemoteAccessWoocommerce
             $tax = $closestTaxes[0];
         }
 
-        dol_syslog(__METHOD__ . ": end, return ".(isset($tax)?json_encode($tax):'null'));
+        dol_syslog(__METHOD__ . ": end, return ".(isset($tax)?json_encode($tax):'null'), LOG_DEBUG);
         return $tax;
     }*/
 
@@ -2308,9 +2323,9 @@ class eCommerceRemoteAccessWoocommerce
      */
     private function getRequestGroups($remoteObject, $nb_max_by_request, $toNb=0)
     {
-        dol_syslog(__METHOD__ . ": Get request groups of ID: " . implode(', ', $remoteObject));
+        //dol_syslog(__METHOD__ . ": Get request groups of ID: " . implode(', ', $remoteObject), LOG_DEBUG);
 
-        $idx = 1;
+        $idx = 0;
         $request = [];
         $request_groups = [];
 
@@ -2326,7 +2341,7 @@ class eCommerceRemoteAccessWoocommerce
         }
         if (count($request)) $request_groups[] = $request;
 
-        dol_syslog(__METHOD__ . ": end");
+        //dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return $request_groups;
     }
 
@@ -2339,12 +2354,12 @@ class eCommerceRemoteAccessWoocommerce
      */
     private function getDateTimeFromGMTDateTime($datetime)
     {
-        dol_syslog(__METHOD__ . ": Get DateTime object in current timezone from gmt date time: $datetime");
+        //dol_syslog(__METHOD__ . ": Get DateTime object in current timezone from gmt date time: $datetime", LOG_DEBUG);
 
         $dt = new DateTime($datetime, $this->gmtTimeZone);
         $dt->setTimezone($this->currentTimeZone);
 
-        dol_syslog(__METHOD__ . ": end");
+        //dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return $dt;
     }
 

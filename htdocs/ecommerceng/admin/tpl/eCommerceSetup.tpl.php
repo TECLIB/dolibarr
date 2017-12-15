@@ -146,9 +146,7 @@ $var=!$var;
 				<tr <?php print $bc[$var] ?>>
 					<td><span><?php print $langs->trans('ThirdPartyForNonLoggedUsers') ?></span></td>
 					<td>
-						<?php
-                            print $form->select_company($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER, 'ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER', '', 1);
-						?>
+						<?php print $form->select_company($ecommerceFkAnonymousThirdparty, 'ecommerce_fk_anonymous_thirdparty', '', 1); ?>
 					</td>
 					<td><?php print $langs->trans('SynchUnkownCustomersOnThirdParty') ?></td>
 				</tr>

@@ -25,6 +25,8 @@ ECommerceWoocommerceUpdateRemoteSociete=Erreur de mise à jour de la société d
 ECommerceWoocommerceUpdateRemoteSocpeople=Erreur de mise à jour des contacts/adresses de la société distante 'id:%s' sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteStockProduct=Erreur de mise à jour des stocks de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteStockProductVariation=Erreur de mise à jour des stocks du produit distant 'id:%s' sur le site '%s': %s
+ECommerceWoocommerceGetAllWoocommerceTaxClass=Erreur de récupération des données des classes de taxes sur le site '%s': %s
+ECommerceWoocommerceGetWoocommerceTaxes=Erreur de récupération des données des taxes sur le site '%s': %s
 
 ECommercengWoocommerceStatus=Statut pour le site "%s"
 ECommercengWoocommerceDescription=Description boutique
@@ -43,3 +45,6 @@ ECommercengWoocommerceStatusDraft=Draft
 ECommercengWoocommerceStatusPending=Pending
 ECommercengWoocommerceStatusPrivate=Private
 ECommercengWoocommerceStatusPublish=Publish
+
+ECommercengWoocommerceWithoutFirstnameLastname=No firstname/lastname informed
+ECommercengWoocommerceLastnameNotInformed=[Lastname not informed]

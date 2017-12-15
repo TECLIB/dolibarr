@@ -127,6 +127,7 @@ if ($_POST['site_form_detail_action'] == 'save')
         $siteDb->filter_value = $_POST['ecommerce_filter_value'];
         $siteDb->fk_cat_societe = $_POST['ecommerce_fk_cat_societe'];
         $siteDb->fk_cat_product = $_POST['ecommerce_fk_cat_product'];
+        $siteDb->fk_anonymous_thirdparty = $_POST['ecommerce_fk_anonymous_thirdparty']>0?$_POST['ecommerce_fk_anonymous_thirdparty']:null;
         $siteDb->fk_warehouse = $_POST['ecommerce_fk_warehouse'];
         $siteDb->stock_sync_direction = $_POST['ecommerce_stock_sync_direction'];
         $siteDb->last_update = $_POST['ecommerce_last_update'];
@@ -136,9 +137,6 @@ if ($_POST['site_form_detail_action'] == 'save')
 
         $siteDb->oauth_id = $_POST['ecommerce_oauth_id'];
         $siteDb->oauth_secret = $_POST['ecommerce_oauth_secret'];
-
-        // TODO Save this into table of ecommerce_site, field fk_thirdparty instead of global var.
-        dolibarr_set_const($db, 'ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER', GETPOST('ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER','int'));
 
         $result = 0;
         if (intval($_POST['ecommerce_id']))
@@ -342,6 +340,7 @@ $ecommerceFilterLabel = ($_POST['ecommerce_filter_label'] ? $_POST['ecommerce_fi
 $ecommerceFilterValue = ($_POST['ecommerce_filter_value'] ? $_POST['ecommerce_filter_value'] : $siteDb->filter_value);
 $ecommerceFkCatSociete = ($_POST['ecommerce_fk_cat_societe'] ? $_POST['ecommerce_fk_cat_societe'] : intval($siteDb->fk_cat_societe));
 $ecommerceFkCatProduct = ($_POST['ecommerce_fk_cat_product'] ? $_POST['ecommerce_fk_cat_product'] : intval($siteDb->fk_cat_product));
+$ecommerceFkAnonymousThirdparty = ($_POST['ecommerce_fk_anonymous_thirdparty'] ? $_POST['ecommerce_fk_anonymous_thirdparty'] : intval($siteDb->fk_anonymous_thirdparty));
 $ecommerceFkWarehouse = ($_POST['ecommerce_fk_warehouse'] ? $_POST['ecommerce_fk_warehouse'] : intval($siteDb->fk_warehouse));
 $ecommerceStockSyncDirection = ($_POST['ecommerce_stock_sync_direction'] ? $_POST['ecommerce_stock_sync_direction'] : $siteDb->stock_sync_direction);
 $ecommerceMagentoUseSpecialPrice = ($_POST['ecommerce_magento_use_special_price'] ? $_POST['ecommerce_magento_use_special_price'] : intval($siteDb->magento_use_special_price));

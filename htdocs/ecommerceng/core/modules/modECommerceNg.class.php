@@ -19,6 +19,7 @@
 
 
 require_once(DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php');
+require_once(DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php');
 require_once(DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php');
 
 dol_include_once('/ecommerceng/admin/class/gui/eCommerceMenu.class.php');
@@ -56,11 +57,11 @@ class modECommerceNg extends DolibarrModules
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
 		$this->description = "Module to synchronise Dolibarr with ECommerce platform (currently ecommerce supported: Magento, WooCommerce)";
 		$this->descriptionlong = "See page https://wiki.dolibarr.org/index.php/Module_Magento_EN for more information";
-		$this->editor_name = 'TecLib';
+		$this->editor_name = 'TecLib, Open-Dsi';
 		$this->editor_url = 'http://www.teclib.com';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '4.0.2';
+		$this->version = '4.0.3';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)

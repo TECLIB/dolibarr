@@ -199,3 +199,5 @@ ECommerceRemoteAccessUpdateRemoteStockProduct=Erreur de mise à jour des stocks 
 ECommerceRemoteAccessUpdateRemoteStockProductVariation=Erreur de mise à jour des stocks du produit distant 'id:%s' sur le site '%s': %s
 
 ECommerceSyncheCommerceProductDownloadImageError=Erreur de récupération de l'image (%s) pour le produit 'id:%s' du produit distant 'id:%s' sur le site '%s'
+
+ECommerceNoDescForProductLine=L'api n'a pas pu récupérer la description du produit

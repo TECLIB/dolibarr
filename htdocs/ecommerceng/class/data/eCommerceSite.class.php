@@ -41,6 +41,7 @@ class eCommerceSite // extends CommonObject
 	var $filter_value;
 	var $fk_cat_societe;
 	var $fk_cat_product;
+    var $fk_anonymous_thirdparty;
 	var $fk_warehouse;
 	var $stock_sync_direction;
 	var $last_update;
@@ -114,6 +115,7 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->filter_value)) $this->filter_value=trim($this->filter_value);
 		if (isset($this->fk_cat_societe)) $this->fk_cat_societe=trim($this->fk_cat_societe);
 		if (isset($this->fk_cat_product)) $this->fk_cat_product=trim($this->fk_cat_product);
+        if (isset($this->fk_anonymous_thirdparty)) $this->fk_anonymous_thirdparty=trim($this->fk_anonymous_thirdparty);
 		if (isset($this->fk_warehouse)) $this->fk_warehouse=trim($this->fk_warehouse);
 		if (isset($this->stock_sync_direction)) $this->stock_sync_direction=trim($this->stock_sync_direction);
 		if (isset($this->timeout)) $this->timeout=trim($this->timeout);
@@ -136,6 +138,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= "filter_value,";
 		$sql.= "fk_cat_societe,";
 		$sql.= "fk_cat_product,";
+        $sql.= "fk_anonymous_thirdparty,";
 		$sql.= "fk_warehouse,";
 		$sql.= "stock_sync_direction,";
 		$sql.= "last_update,";
@@ -155,6 +158,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " ".(! isset($this->filter_value)?'NULL':"'".$this->db->escape($this->filter_value)."'").",";
 		$sql.= " ".($this->fk_cat_societe > 0 ? $this->fk_cat_societe : "NULL").",";
 		$sql.= " ".($this->fk_cat_product > 0 ? $this->fk_cat_product : "NULL").",";
+        $sql.= " ".($this->fk_anonymous_thirdparty > 0 ? $this->fk_anonymous_thirdparty : "NULL").",";
 		$sql.= " ".($this->fk_warehouse > 0 ? $this->fk_warehouse : "NULL").",";
 		$sql.= " ".($this->stock_sync_direction ? "'".$this->stock_sync_direction."'" : "'none'").",";
 		$sql.= " ".(! isset($this->last_update) || strlen($this->last_update)==0?'NULL':"'".$this->db->idate($this->last_update)."'").",";
@@ -177,7 +181,7 @@ class eCommerceSite // extends CommonObject
 
             //create an entry for anonymous company
             $eCommerceSociete = new eCommerceSociete($this->db);
-            $eCommerceSociete->fk_societe = dolibarr_get_const($this->db, 'ECOMMERCE_COMPANY_ANONYMOUS');
+            $eCommerceSociete->fk_societe = $this->fk_anonymous_thirdparty;
 			$eCommerceSociete->fk_site = $this->id;
 			$eCommerceSociete->remote_id = 0;
 			if ($eCommerceSociete->create($user)<0)
@@ -227,6 +231,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.filter_value,";
 		$sql.= " t.fk_cat_societe,";
 		$sql.= " t.fk_cat_product,";
+        $sql.= " t.fk_anonymous_thirdparty,";
 		$sql.= " t.fk_warehouse,";
 		$sql.= " t.stock_sync_direction,";
 		$sql.= " t.last_update,";
@@ -258,6 +263,7 @@ class eCommerceSite // extends CommonObject
 				$this->filter_value = $obj->filter_value;
 				$this->fk_cat_societe = $obj->fk_cat_societe;
 				$this->fk_cat_product = $obj->fk_cat_product;
+                $this->fk_anonymous_thirdparty = $obj->fk_anonymous_thirdparty;
 				$this->fk_warehouse = $obj->fk_warehouse;
 				$this->stock_sync_direction = $obj->stock_sync_direction;
 				$this->last_update = $this->db->jdate($obj->last_update);
@@ -306,6 +312,7 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->filter_value)) $this->filter_value=trim($this->filter_value);
 		if (isset($this->fk_cat_societe)) $this->fk_cat_societe=trim($this->fk_cat_societe);
 		if (isset($this->fk_cat_product)) $this->fk_cat_product=trim($this->fk_cat_product);
+        if (isset($this->fk_anonymous_thirdparty)) $this->fk_anonymous_thirdparty=trim($this->fk_anonymous_thirdparty);
 		if (isset($this->fk_warehouse)) $this->fk_warehouse=trim($this->fk_warehouse);
 		if (isset($this->timeout)) $this->timeout=trim($this->timeout);
 		if (isset($this->oauth_id)) $this->oauth_id=trim($this->oauth_id);
@@ -327,6 +334,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " filter_value=".(isset($this->filter_value)?"'".$this->db->escape($this->filter_value)."'":"null").",";
 		$sql.= " fk_cat_societe=".($this->fk_cat_societe > 0 ? $this->fk_cat_societe:"null").",";
 		$sql.= " fk_cat_product=".($this->fk_cat_product > 0 ? $this->fk_cat_product:"null").",";
+        $sql.= " fk_anonymous_thirdparty=".($this->fk_anonymous_thirdparty > 0 ? $this->fk_anonymous_thirdparty:"null").",";
 		$sql.= " fk_warehouse=".($this->fk_warehouse > 0 ? $this->fk_warehouse:"null").",";
 		$sql.= " stock_sync_direction=".($this->stock_sync_direction ? "'".$this->stock_sync_direction."'":"'none'").",";
 		$sql.= " last_update=".((isset($this->last_update) && $this->last_update != '') ? "'".$this->db->idate($this->last_update)."'" : 'null').",";
@@ -345,7 +353,36 @@ class eCommerceSite // extends CommonObject
 
 		if (! $error)
 		{
-			if (! $notrigger)
+            $eCommerceSociete = new eCommerceSociete($this->db);
+            if ($eCommerceSociete->fetchByRemoteId(0, $this->id) > 0) {
+                if (isset($this->fk_anonymous_thirdparty)) {
+                    // update an entry for anonymous company
+                    $eCommerceSociete->fk_societe = $this->fk_anonymous_thirdparty;
+                    if ($eCommerceSociete->update($user) < 0) {
+                        $error++;
+                        $this->errors[] = "Error " . $this->db->lasterror();
+                    }
+                } else {
+                    // delete an entry for anonymous company
+                    if ($eCommerceSociete->delete($user) < 0) {
+                        $error++;
+                        $this->errors[] = "Error " . $this->db->lasterror();
+                    }
+                }
+            } else {
+                // create an entry for anonymous company
+                $eCommerceSociete = new eCommerceSociete($this->db);
+                $eCommerceSociete->fk_societe = $this->fk_anonymous_thirdparty;
+                $eCommerceSociete->fk_site = $this->id;
+                $eCommerceSociete->remote_id = 0;
+                if ($eCommerceSociete->create($user)<0)
+                {
+                    $error++;
+                    $this->errors[]="Error ".$this->db->lasterror();
+                }
+            }
+
+			if (! $notrigger && !$error)
 			{
 	            // Uncomment this and change MYOBJECT to your own tag if you
 	            // want this action call a trigger.
@@ -510,6 +547,7 @@ class eCommerceSite // extends CommonObject
 		$this->filter_value='';
 		$this->fk_cat_societe='';
 		$this->fk_cat_product='';
+        $this->fk_anonymous_thirdparty='';
 		$this->fk_warehouse='';
 		$this->stock_sync_direction='none';
 		$this->last_update='';

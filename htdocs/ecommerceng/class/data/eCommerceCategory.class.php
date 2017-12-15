@@ -396,7 +396,7 @@ class eCommerceCategory // extends CommonObject
                     $catObj = new Categorie($this->db);
                     $ret = $catObj->fetch($obj->fk_category);
                     if ($ret > 0) {
-                        $diffvalues = $catObj->label != $remoteCatToCheck['name'] || $catObj->description != $remoteCatToCheck['description'];
+                        $diffvalues = $catObj->label != trim($remoteCatToCheck['name']) || $catObj->description != trim($remoteCatToCheck['description']);
                     }
                 } else {
                     $now = $toDate;  // Dolibarr's category time
