@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 4.0.2.0
+
+- D'un champ complémetaire oublié pour la fiche d'un produit d'un site woocommerce
+- Affiche du lien de test sur les parametres du site que si l'adresse du site est renseigné
+- Ajout de la description de l'erreur lors du fonctionnement de l'OAuth 2
+- Corrections mineures
+
 ## 4.0.1.0
 
 - Ajout OAuth2 pour Wordpress
