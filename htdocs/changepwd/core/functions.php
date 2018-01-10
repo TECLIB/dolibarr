@@ -1,19 +1,20 @@
 <?php
- 
+
 $message = array();
 $message_css = "";
- 
-function changePassword($user,$oldPassword,$newPassword,$newPasswordCnf){
+
+function changePassword($user,$oldPassword,$newPassword,$newPasswordCnf)
+{
   global $message;
   global $message_css;
- 
+
   $server = "dc1.teclib.infra";
   $dn = "ou=people,dc=teclib,dc=infra";
-    
+
   error_reporting(0);
   $con = ldap_connect($server);
   ldap_set_option($con, LDAP_OPT_PROTOCOL_VERSION, 3);
-   
+
   $user_search = ldap_search($con,$dn,"(|(uid=$user)(mail=$user))");
   $user_get = ldap_get_entries($con, $user_search);
   $user_entry = ldap_first_entry($con, $user_search);
@@ -91,7 +92,7 @@ function changePassword($user,$oldPassword,$newPassword,$newPasswordCnf){
     $message[] = "<div style='color:red; font-weight:bold;'>Error E200 - Impossible de se connecter au serveur, vous ne pouvez pour l'instant pas modifier votre mot de passe.</div>";
     return false;
   }
-  
+
   $auth_entry = ldap_first_entry($con, $user_search);
   $mail_addresses = ldap_get_values($con, $auth_entry, "mail");
   $given_names = ldap_get_values($con, $auth_entry, "givenName");
@@ -101,7 +102,7 @@ function changePassword($user,$oldPassword,$newPassword,$newPasswordCnf){
 
   $entry = array();
   $entry["userPassword"] = "$encoded_newPassword";
-   
+
   if (ldap_modify($con,$user_dn,$entry) === false){
     $error = ldap_error($con);
     $errno = ldap_errno($con);
@@ -112,5 +113,3 @@ function changePassword($user,$oldPassword,$newPassword,$newPasswordCnf){
     $message[] = "<div style='color:green; font-weight:bold;'>Le mot de passe pour l'utilisateur $user_id a été changé.<br/>Votre nouveau mot de passe est maintenant actif.</div>";
   }
 }
- 
-?>

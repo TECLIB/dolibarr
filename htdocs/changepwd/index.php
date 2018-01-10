@@ -18,6 +18,11 @@ if (! $res) die("Include of main fails");
 
 dol_include_once('/changepwd/core/functions.php');
 
+
+/*
+ * View
+ */
+
 llxHeader();
 
 if ( $_SESSION['uid'] > 0 ) {
@@ -114,3 +119,5 @@ echo '</div>';
 echo '</div>';
 
 llxFooter();
+
+$db->close();
