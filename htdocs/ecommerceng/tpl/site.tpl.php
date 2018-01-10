@@ -1,5 +1,7 @@
 <?php
 
+use Stripe\BankAccount;
+
 // Protection to avoid direct call of template
 if (empty($conf) || ! is_object($conf))
 {
@@ -36,20 +38,18 @@ if (is_object($site))
 
     print '<table class="centpercent nobordernopadding">';
 
+    // Summary
     print '<tr><td>';
-
     print $langs->trans("ECommerceLastCompleteSync", $site->name).' : ';
     if ($site->last_update) print '<strong>'.dol_print_date($site->last_update, 'dayhoursec').'</strong>';
     else print '<strong>'.$langs->trans("ECommerceNoUpdateSite").'</strong>';
-
     print '</td><td align="right"></td></tr>';
 
-    print '<tr><td>';
+    // Restrict date
+    print '<tr style="line-height: 2em"><td>';
 
     print $langs->trans("RestrictCountAndSynchForRecordBefore").' ';
-    //print '(YYYYMMDDHHMMSS) ';
     print '<input type="text" name="to_date" value="'.dol_escape_htmltag($to_date).'" placeholder="YYYYMMDDHHMMSS">';
-
     print '</td><td>';
     $button.='<input type="submit" class="button" name="refresh" style="margin-right: 15px" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=refresh" value="'.$langs->trans('RefreshCount').'">';
     print $button;
@@ -62,18 +62,16 @@ if (is_object($site))
 
     print '</td></tr>';
 
-    print '<tr><td>';
-
+    // Restrict nb
+    print '<tr style="line-height: 2em"><td>';
     print $langs->trans("RestrictNbInSync").' ';
-    //print '(YYYYMMDDHHMMSS) ';
     print '<input type="text" name="to_nb" placeholder="0" value="'.dol_escape_htmltag($to_nb).'">';
-
     print '</td><td>';
     print '</td></tr>';
 
     if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER))
     {
-        print '<tr><td>';
+        print '<tr style="line-height: 2em"><td>';
 
         print $langs->trans("SynchUnkownCustomersOnThirdParty").' : ';
         $nonloggedthirdparty=new Societe($db);
@@ -82,12 +80,23 @@ if (is_object($site))
         print '</td><td align="right"></td></tr>';
     }
 
+    if (! empty($conf->global->ECOMMERCENG_BANK_ID_FOR_PAYMENT))
+    {
+    	print '<tr style="line-height: 2em"><td>';
+
+    	print $langs->trans("BankAccountForPayments").' : ';
+    	$bankforpayment=new Account($db);
+    	$result = $bankforpayment->fetch($conf->global->ECOMMERCENG_BANK_ID_FOR_PAYMENT);
+    	print $bankforpayment->getNomUrl(1);
+    	print '</td><td align="right"></td></tr>';
+    }
+
     print '</table>';
 
 
     print '<br>'."\n";
     ?>
-	<div class="div-table-responsive">
+	<div class="div-table-responsive-no-min">
 	<table class="noborder" width="100%">
 		<tr class="liste_titre">
 			<td><?php print $langs->trans('ECommerceObjectToUpdate') ?></td>
@@ -288,7 +297,7 @@ if (is_object($site))
 
 	dol_fiche_end();
 
-	print '<br>';
+	print '<br><br>';
 
     $head = array();
     $head[1][0] = '?id='.$site->id;

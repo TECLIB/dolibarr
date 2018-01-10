@@ -2422,6 +2422,9 @@ class eCommerceSynchro
 
             if (! $error && is_array($factures))
             {
+            	$paymenttypeidforcard = 0;
+            	$paymenttypeidforchq = 0;
+
                 // Local filter to exclude bundles and other complex types
 //                $productsTypesOk = array('simple', 'virtual', 'downloadable');
 
@@ -2472,6 +2475,12 @@ class eCommerceSynchro
                     //if societe and commande exists start
                     if ($societeExists > 0 && $synchCommandeExists > 0)
                     {
+						/*
+						var_dump($factureArray['remote_id'].' - '.$factureArray['remote_invoice']['increment_id'].' - '.$factureArray['ref_client'].' - '.$factureArray['remote_order']['increment_id'].' - '.$factureArray['remote_invoice']['grand_total']);
+						//var_dump($factureArray);
+						var_dump($factureArray['remote_invoice']);
+						*/
+
                         //check if facture exists in eCommerceFacture (with remote id)
                         $synchFactureExists = $this->eCommerceFacture->fetchByRemoteId($factureArray['remote_id'], $this->eCommerceSite->id);
                         if ($synchFactureExists > 0)
@@ -2522,21 +2531,84 @@ class eCommerceSynchro
                                     {
                                         if ($dBFacture->statut != Facture::STATUS_CLOSED)
                                         {
-                                            // Enter payments
-                                            //$dBFacture->cloture($this->user);
+                                            // Enter payments. Same code is in invoice creation later.
+
+                                        	/*
+                                        	// With Magento, the info of payment is on the order, even if there is several payments for 1 order !!!
+
+                                        	// Set payment method id
+                                        	$paymenttypeid = 0;
+                                        	if (in_array($factureArray['remote_order']["payment"]['method'], array('checkmo')))
+                                        	{
+                                        		if (empty($paymenttypeidforchq)) 		// Id in llx_c_paiement (for VIR, CHQ, CB, ...)
+                                        		{
+                                        			$paymenttypeidforchq = dol_getIdFromCode($this->db, 'CHQ', 'c_paiement');
+                                        		}
+                                        		$paymenttypeid = $paymenttypeidforchq;
+                                        	}
+                                        	if (empty($paymenttypeid) || in_array($factureArray['remote_order']["payment"]['method'], array('ccsave')))
+                                        	{
+                                        		if (empty($paymenttypeidforcard)) 			// Id in llx_c_paiement (for VIR, CHQ, CB, ...)
+                                        		{
+                                        			$paymenttypeidforcard = dol_getIdFromCode($this->db, 'CB', 'c_paiement');
+                                        		}
+                                        	}
+                                        	if (empty($paymenttypeid)) $paymenttypeid = $paymenttypeidforcard;
+
+                                        	// Set bank id
+                                        	$accountid = empty($conf->global->ECOMMERCENG_BANK_ID_FOR_PAYMENT)?0:$conf->global->ECOMMERCENG_BANK_ID_FOR_PAYMENT;
+                                        	if (! empty($conf->banque->enabled) && empty($accountid))
+                                        	{
+                                        		$this->errors[] = 'BankModuleOnButECOMMERCENG_BANK_ID_FOR_PAYMENTNotSet';
+                                        		$error++;
+                                        	}
+
+                                        	if (! $error)
+                                        	{
+                                        		$chqbankname = $factureArray['remote_order']["payment"]['echeck_bank_name'];
+                                        		$chqsendername = $factureArray['remote_order']["payment"]['echeck_account_name'];
+                                        		if (empty($chqsendername)) $chqsendername = $factureArray['remote_order']["payment"]['cc_owner'];
+                                        		$paymentnote = 'Payment recorded when creating invoice from remote payment';
+                                        		if (! empty($factureArray['remote_order']["payment"]['cc_type'])) $paymentnote .= ' - CC type '.$factureArray['remote_order']["payment"]['cc_type'];
+                                        		if (! empty($factureArray['remote_order']["payment"]['cc_last4'])) $paymentnote .= ' - CC last4 '.$factureArray['remote_order']["payment"]['cc_last4'];
+
+                                        		$payment = new Paiement($this->db);
+
+                                        		$payment->datepaye = $dBFacture->date;
+                                        		$payment->paiementid = $paymenttypeid;
+                                        		$payment->num_paiement = $factureArray['remote_order']["payment"]['echeck_routing_number'];
+
+                                        		//$factureArray['remote_order']["payment"] is one record with sum of different payments/invoices.
+                                        		//$factureArray['remote_invoice']["payment"] is one record the payment of invoices (Magento seems to do one payment for one invoice, but have several invoices if several payments).
+                                        		$payment->amounts=array($dBFacture->id => $factureArray['remote_invoice']['grand_total']);
+
+                                        		$payment->note=$paymentnote;
+
+                                        		$resultpayment = $payment->create($user, 1);
+
+                                        		if ($resultpayment < 0)
+                                        		{
+                                        			$error++;
+                                        			$this->errors[] = "Failed to create payment on invoice ".$dBFacture->ref.' resultpayment='.$resultpayment;
+                                        			$this->errors = array_merge($this->errors, $payment->errors);
+                                        		}
+                                        	}
+
+                                        	if (! $error)
+                                        	{
+                                        		$label='(CustomerInvoicePayment)';
+                                        		if ($dBFacture->type == Facture::TYPE_CREDIT_NOTE) $label='(CustomerInvoicePaymentBack)';  // Refund of a credit note
+                                        		$result=$payment->addPaymentToBank($user,'payment',$label,$accountid,$chqsendername,$chqbankname);
+                                        		if ($result < 0)
+                                        		{
+                                        			setEventMessages($paiement->error, $paiement->errors, 'errors');
+                                        			$error++;
+                                        		}
+                                        	}
+
+                                        	*/
+
                                             $payment = new Paiement($this->db);
-                                            /*
-                                             $payment->datepaye = 'ee';
-                                             $payment->paiementid = 0;
-                                             $payment->num_paiement = 0;
-                                             $payment->amounts=array();
-                                             $resultpayment = $payment->create($user);
-                                             if ($resultpayment < 0)
-                                             {
-                                             $error++;
-                                             $this->errors[] = "Failed to create payment";
-                                             }
-                                             */
 
                                             $dBFacture->set_paid($this->user, '', '');
                                         }
@@ -2714,7 +2786,12 @@ class eCommerceSynchro
                                         $idWareHouse = 0;
                                         // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
                                         //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
-                                        $dBFacture->validate($this->user, '', $idWareHouse);
+                                        $result = $dBFacture->validate($this->user, '', $idWareHouse);
+                                        if ($result < 0)
+                                        {
+                                        	$error++;
+                                        	$this->errors = array_merge($this->errors, $dBFacture->errors);
+                                        }
                                     }
                                 }
 
@@ -2723,43 +2800,110 @@ class eCommerceSynchro
                                 {
                                     if ($dBFacture->statut != Facture::STATUS_VALIDATED)
                                     {
-                                        $dBFacture->setStatut(Facture::STATUS_VALIDATED, $dBFacture->id, $dBFacture->table_element);
+                                    	$result = $dBFacture->setStatut(Facture::STATUS_VALIDATED, $dBFacture->id, $dBFacture->table_element);
+                                    	if ($result < 0)
+                                    	{
+                                    		$error++;
+                                    		$this->errors = array_merge($this->errors, $dBFacture->errors);
+                                    	}
                                     }
                                 }
                                 if ($factureArray['status'] == Facture::STATUS_ABANDONED)
                                 {
                                     if ($dBFacture->statut != Facture::STATUS_ABANDONED)
                                     {
-                                        $dBFacture->set_canceled($this->user, $factureArray['close_code'], $factureArray['close_note']);
+                                    	$result = $dBFacture->set_canceled($this->user, $factureArray['close_code'], $factureArray['close_note']);
+                                    	if ($result < 0)
+                                    	{
+                                    		$error++;
+                                    		$this->errors = array_merge($this->errors, $dBFacture->errors);
+                                    	}
                                     }
                                 }
                                 if ($factureArray['status'] == Facture::STATUS_CLOSED)
                                 {
                                     if ($dBFacture->statut != Facture::STATUS_CLOSED)
                                     {
-                                        // Enter payment
-                                        // Magento seems to do one payment for one invoice
+                                        // Enter payment. Same code is in invoice update before.
 
-                                        $payment = new Paiement($this->db);
-                                        /*
-                                        $payment->datepaye = 'ee';
-                                        $payment->paiementid = 0;
-                                        $payment->num_paiement = 0;
-                                        $payment->amounts=array();
-                                        $resultpayment = $payment->create($user);
-                                        if ($resultpayment < 0)
+                                    	// With Magento, the info of payment is on the order, even if there is several payments for 1 order !!!
+
+                                    	// Set payment method id
+                                    	$paymenttypeid = 0;
+                                    	if (in_array($factureArray['remote_order']["payment"]['method'], array('checkmo')))
+                                    	{
+                                    		if (empty($paymenttypeidforchq)) 		// Id in llx_c_paiement (for VIR, CHQ, CB, ...)
+	                                    	{
+	                                    		$paymenttypeidforchq = dol_getIdFromCode($this->db, 'CHQ', 'c_paiement');
+	                                        }
+	                                        $paymenttypeid = $paymenttypeidforchq;
+                                    	}
+                                    	if (empty($paymenttypeid) || in_array($factureArray['remote_order']["payment"]['method'], array('ccsave')))
+                                    	{
+                                    		if (empty($paymenttypeidforcard)) 			// Id in llx_c_paiement (for VIR, CHQ, CB, ...)
+	                                    	{
+    	                                		$paymenttypeidforcard = dol_getIdFromCode($this->db, 'CB', 'c_paiement');
+        	                            	}
+                                    	}
+                                    	if (empty($paymenttypeid)) $paymenttypeid = $paymenttypeidforcard;
+
+										// Set bank id
+                                        $accountid = empty($conf->global->ECOMMERCENG_BANK_ID_FOR_PAYMENT)?0:$conf->global->ECOMMERCENG_BANK_ID_FOR_PAYMENT;
+                                        if (! empty($conf->banque->enabled) && empty($accountid))
                                         {
-                                            $error++;
-                                            $this->errors[] = "Failed to create payment";
-                                            $this->errors = array_merge($this->errors, $payment->errors);
+                                        	$this->errors[] = 'BankModuleOnButECOMMERCENG_BANK_ID_FOR_PAYMENTNotSet';
+                                        	$error++;
                                         }
-                                        */
 
-                                        //$factureArray['remote_order']["payment"] is one record with summ of different payments/invoices.
+                                        if (! $error)
+                                        {
+	                                        $chqbankname = $factureArray['remote_order']["payment"]['echeck_bank_name'];
+	                                        $chqsendername = $factureArray['remote_order']["payment"]['echeck_account_name'];
+	                                        if (empty($chqsendername)) $chqsendername = $factureArray['remote_order']["payment"]['cc_owner'];
+	                                        $paymentnote = 'Payment recorded when creating invoice from remote payment';
+	                                        if (! empty($factureArray['remote_order']["payment"]['cc_type'])) $paymentnote .= ' - CC type '.$factureArray['remote_order']["payment"]['cc_type'];
+	                                        if (! empty($factureArray['remote_order']["payment"]['cc_last4'])) $paymentnote .= ' - CC last4 '.$factureArray['remote_order']["payment"]['cc_last4'];
+
+	                                        $payment = new Paiement($this->db);
+
+	                                        $payment->datepaye = $dBFacture->date;
+	                                        $payment->paiementid = $paymenttypeid;
+	                                        $payment->num_paiement = $factureArray['remote_order']["payment"]['echeck_routing_number'];
+
+											//$factureArray['remote_order']["payment"] is one record with sum of different payments/invoices.
+											//$factureArray['remote_invoice']["payment"] is one record the payment of invoices (Magento seems to do one payment for one invoice, but have several invoices if several payments).
+											$payment->amounts=array($dBFacture->id => $factureArray['remote_invoice']['grand_total']);
+
+	                                        $payment->note=$paymentnote;
+
+	                                        $resultpayment = $payment->create($user, 1);
+
+	                                        if ($resultpayment < 0)
+	                                        {
+	                                            $error++;
+	                                            $this->errors[] = "Failed to create payment on invoice ".$dBFacture->ref.' resultpayment='.$resultpayment;
+	                                            $this->errors = array_merge($this->errors, $payment->errors);
+	                                        }
+                                        }
+
+                                        if (! $error)
+                                        {
+                                        	$label='(CustomerInvoicePayment)';
+                                        	if ($dBFacture->type == Facture::TYPE_CREDIT_NOTE) $label='(CustomerInvoicePaymentBack)';  // Refund of a credit note
+                                        	$result=$payment->addPaymentToBank($user,'payment',$label,$accountid,$chqsendername,$chqbankname);
+                                        	if ($result < 0)
+                                        	{
+                                        		setEventMessages($paiement->error, $paiement->errors, 'errors');
+                                        		$error++;
+                                        	}
+                                        }
 
                                         //exit;
-
-                                        $dBFacture->set_paid($this->user, '', '');
+										/* done into payment->create
+										if (! $error)
+										{
+                                        	$dBFacture->set_paid($this->user, '', '');
+										}*/
                                     }
                                 }
 
@@ -2810,7 +2954,7 @@ class eCommerceSynchro
                         else
                         {
                             $error++;
-                            $this->errors[] = $this->langs->trans('ECommerceSynchCommandeError');
+                            $this->errors[] = $this->langs->trans('ECommerceSyncheCommandeFactureError');
                         }
                     }
                     else

@@ -63,14 +63,19 @@ class eCommerceDict
 		}
 		return $object;
     }
+
     /**
      * Get all lines from database
+     *
+     * @param	string	$sqlfilters		Sql filters. Example 'WHERE fk_pays = 1'
      * @return array
      */
-    public function getAll()
+    public function getAll($sqlfilters='')
     {
     	$lines = array();
 		$sql = "SELECT * FROM ".$this->table;
+		if ($sqlfilters) $sql .= ' '.$sqlfilters;
+
 		$result = $this->db->query($sql);
 		if ($result)
 		{

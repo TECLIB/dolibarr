@@ -158,4 +158,5 @@ RestrictCountAndSynchForRecordBefore=Restrict count and synchronize for record w
 RestrictNbInSync=Restrict number of record of same object to synchronize in same request
 SynchUnkownCustomersOnThirdParty=Use the following thirdparty for orders done on unknown customers (non logged customers)
 ThirdPartyForNonLoggedUsers=Third party for anonymous/non logged users
-
+BankAccountForPayments=Bank account for invoice payments
+SynchPaymentsOnWichBankAccount=Bank account to use for payments when creating a paid invoice from Magento

@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0
+
+- Add option ECOMMERCENG_BANK_ID_FOR_PAYMENT so payments are now recorded.
+- Manage Magento shopping cart/coupon discounts.
+
 ## 3.9.1.0
 
 - Add option ECOMMERCENG_THIRDPARTY_UNIQUE_ON to search existing thirdparties from email instead of name.

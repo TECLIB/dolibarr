@@ -33,9 +33,14 @@ if (! $res && file_exists("../../../main.inc.php")) $res=@include("../../../main
 if (! $res) die("Include of main fails");
 
 include_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
+include_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
 dol_include_once("/ecommerceng/class/business/eCommerceSynchro.class.php");
 
 $langs->load("ecommerce@ecommerceng");
+$langs->load("admin");
+$langs->load("ecommerce");
+
+
 $errors = array();
 $success = array();
 $site = null;
@@ -45,9 +50,6 @@ $nbProductInDolibarr=0;
 $nbSocieteInDolibarr = 0;
 $nbCommandeInDolibarr = 0;
 $nbFactureInDolibarr = 0;
-
-$langs->load("admin");
-$langs->load("ecommerce");
 
 // Protection if external user
 if ($user->societe_id > 0 || !$user->rights->ecommerceng->read)

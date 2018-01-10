@@ -162,6 +162,18 @@ $var=!$var;
 <?php
 $var=!$var;
 ?>
+				<tr <?php print $bc[$var] ?>>
+					<td><span><?php print $langs->trans('BankAccountForPayments') ?></span></td>
+					<td>
+						<?php
+						$form->select_comptes($conf->global->ECOMMERCENG_BANK_ID_FOR_PAYMENT,'ECOMMERCENG_BANK_ID_FOR_PAYMENT',0,'',2);
+						?>
+					</td>
+					<td><?php print $langs->trans('SynchPaymentsOnWichBankAccount') ?></td>
+				</tr>
+<?php
+$var=!$var;
+?>
 				<!-- Filter are not used at this time
 				<tr <?php print $bc[$var] ?>>
 					<td><?php print $langs->trans('ECommerceFilterLabel') ?></td>

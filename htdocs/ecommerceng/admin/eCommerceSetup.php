@@ -127,6 +127,7 @@ if ($_POST['site_form_detail_action'] == 'save')
 
         // TODO Save this into table of ecommerce_site, field fk_thirdparty instead of global var.
         dolibarr_set_const($db, 'ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER', GETPOST('ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER','int'));
+        dolibarr_set_const($db, 'ECOMMERCENG_BANK_ID_FOR_PAYMENT', GETPOST('ECOMMERCENG_BANK_ID_FOR_PAYMENT','int'));
 
         $result = 0;
         if (intval($_POST['ecommerce_id']))

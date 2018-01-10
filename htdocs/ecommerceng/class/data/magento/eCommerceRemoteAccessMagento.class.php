@@ -1018,13 +1018,16 @@ class eCommerceRemoteAccessMagento
 					$commande = $this->getRemoteCommande($facture['order_id']);
 
 					foreach ($facture['items'] as $item) {
-						// var_dump($item); // show invoice item as it is from magento
+						//var_dump($item); // show invoice item as it is from magento
 
 						$product_type = $this->getProductTypeOfItem($item, $commande, $facture);
 						$parent_item_id = $this->getParentItemOfItem($item, $commande, $facture);
 
 						// If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
 						if ($product_type == 'configurable') {
+
+							$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
+
 							$configurableItems[$item['item_id']] = array(
 							'item_id' => $item['item_id'],
 							'id_remote_product' => $item['product_id'],
@@ -1032,22 +1035,25 @@ class eCommerceRemoteAccessMagento
 							'product_type' => $product_type,
 							'price' => $item['price'],
 							'qty' => $item['qty'],
-							'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
+							'tva_tx' => $vatrateforitem
 							);
 						} else {
 							// If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
 							if (! array_key_exists($parent_item_id, $configurableItems)) {
-								$items[] = array(
+
+								$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
+
+								$tmpitem = array(
 								'item_id' => $item['item_id'],
 								'id_remote_product' => $item['product_id'],
 								'description' => $item['name'],
 								'product_type' => $product_type,
 								'price' => $item['price'],
 								'qty' => $item['qty'],
-								'tva_tx' => $this->getTaxRate($item['row_total'], $item['tax_amount'])
+								'tva_tx' => $vatrateforitem
 								);
 							} else {
-								$items[] = array(
+								$tmpitem = array(
 								'item_id' => $item['item_id'],
 								'id_remote_product' => $item['product_id'],
 								'description' => $item['name'],
@@ -1056,6 +1062,23 @@ class eCommerceRemoteAccessMagento
 								'qty' => $item['qty'],
 								'tva_tx' => $configurableItems[$parent_item_id]['tva_tx']
 								);
+							}
+
+							$items[] = $tmpitem;
+
+							// There is a fixed discount, we must include it into a new line
+							if ($item['discount_amount'])
+							{
+								$tmpitemdiscount = array(
+								'item_id' => 'discount_with_vat_'.$tmpitem['tva_tx'].'_for_'.$item['item_id'],
+								'description' => 'Discount',
+								'product_type' => $product_type,
+								'price' => -1 * $item['discount_amount'],
+								'qty' => 1,
+								'tva_tx' => $tmpitem['tva_tx']
+								);
+
+								$items[] = $tmpitemdiscount;
 							}
 						}
 					}
@@ -1140,7 +1163,7 @@ class eCommerceRemoteAccessMagento
 						$close_note = 'Holded on ECommerce';
 					}
 
-					// add invoice to invoices
+					// add invoice to array of invoices
 					$factures[] = array(
 					'last_update' => $facture['updated_at'],
 					'remote_id' => $facture['invoice_id'],
@@ -1686,7 +1709,7 @@ class eCommerceRemoteAccessMagento
 
 
     /**
-     * Calcul tax rate and return the closest dolibarr tax rate.
+     * Calculate tax rate from amount and return the closest dolibarr tax rate.
      *
      * @param float $priceHT         Price HT
      * @param float $taxAmount       Tax amount
@@ -1694,14 +1717,16 @@ class eCommerceRemoteAccessMagento
     private function getTaxRate($priceHT, $taxAmount)
     {
         $taxRate = 0;
-        if ($taxAmount != 0)
+        if ($taxAmount != 0 && $priceHT != 0)
         {
             //calcul tax rate from remote site
-            $tempTaxRate = ($taxAmount / $priceHT) * 100;
-            //get all dolibarr tax rates
+        	$tempTaxRate = ($taxAmount / $priceHT) * 100;		// $tempTaxRate is for example 20 for 20%
+
+            //load all dolibarr tax rates
             if (!isset($this->taxRates))
                 $this->setTaxRates();
-            if (count($this->taxRates))
+
+            if (is_array($this->taxRates) && count($this->taxRates))
             {
                 $min = 1;
                 $rate;
@@ -1720,6 +1745,8 @@ class eCommerceRemoteAccessMagento
                     $taxRate = $rate;
             }
         }
+
+        dol_syslog("getTaxRate priceHT=".$priceHT." taxAmount=".$taxAmount." => rate = ".$taxRate);
         return $taxRate;
     }
 
@@ -1728,8 +1755,10 @@ class eCommerceRemoteAccessMagento
      */
     private function setTaxRates()
     {
+    	global $mysoc;
+
         $taxTable = new eCommerceDict($this->db, MAIN_DB_PREFIX . "c_tva");
-        $this->taxRates = $taxTable->getAll();
+        $this->taxRates = $taxTable->getAll('WHERE fk_pays = '.$mysoc->country_id);
     }
 
     public function __destruct()
