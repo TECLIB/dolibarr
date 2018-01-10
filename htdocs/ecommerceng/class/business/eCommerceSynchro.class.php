@@ -1049,14 +1049,15 @@ class eCommerceSynchro
                             $dBSociete->email = $societeArray['email'];
                             $dBSociete->client = $societeArray['client'];
                             $dBSociete->tva_intra = $societeArray['vatnumber'];
-                            $dBSociete->tva_assuj = 1;      // tba_intra is not saved if this field is not set
+                            $dBSociete->tva_assuj = 1;      // tva_intra is not saved if this field is not set
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                            if (empty($dBSociete->client)) $dBSociete->client = 3;		// If thirdparty not yet a customer, we force it as customer
 
                             $result = $dBSociete->update($dBSociete->id, $this->user);
                             if ($result < 0)
                             {
                                 $error++;
-                                $this->errors[]=$this->langs->trans('ECommerceSynchSocieteUpdateError').' '.$dBSociete->error;
+                                $this->errors[]=$this->langs->trans('ECommerceSynchSocieteUpdateError').' thirdparty id='.$dBSociete->id.' '.$dBSociete->error;
                                 $this->errors = array_merge($this->errors, $dBSociete->errors);
                             }
                         }

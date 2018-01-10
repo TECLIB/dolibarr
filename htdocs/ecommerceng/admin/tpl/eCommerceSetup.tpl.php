@@ -18,6 +18,13 @@
  * or see http://www.gnu.org/
  */
 
+// Protection to avoid direct call of template
+if (empty($conf) || ! is_object($conf))
+{
+	print "Error, template page can't be called as URL";
+	exit;
+}
+
 include_once DOL_DOCUMENT_ROOT.'/product/class/html.formproduct.class.php';
 
 $formproduct = new FormProduct($db);
