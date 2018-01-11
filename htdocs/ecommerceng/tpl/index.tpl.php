@@ -7,6 +7,8 @@ if (empty($conf) || ! is_object($conf))
 	exit;
 }
 
+$form = new Form($db);
+
 
 llxHeader();
 
