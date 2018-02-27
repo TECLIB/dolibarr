@@ -47,7 +47,7 @@ class ActionsAutoattachfile
     /**
      * getFormMail
      */
-    function getFormMail($parameters, &$object, &$action, $hookmanager) 
+    function getFormMail($parameters, &$object, &$action, $hookmanager)
     {
     	global $conf,$langs;
     	$langs->load('sendproductdoc@sendproductdoc');
@@ -58,20 +58,21 @@ class ActionsAutoattachfile
     	{
     	   $keytoavoidconflict = empty($parameters['trackid'])?'':'-'.$parameters['trackid'];
     	}
-    	
+
     	$nbFiles=0;
-    	
+
     	if (GETPOST('action','aZ09') == 'presend' && GETPOST('mode') == 'init')
     	{
     		// Get current content of list of files
 			$listofpaths = (! empty($_SESSION["listofpaths".$keytoavoidconflict])) ? explode(';',$_SESSION["listofpaths".$keytoavoidconflict]) : array();
 			$listofnames = (! empty($_SESSION["listofnames".$keytoavoidconflict])) ? explode(';',$_SESSION["listofnames".$keytoavoidconflict]) : array();
 			$listofmimes = (! empty($_SESSION["listofmimes".$keytoavoidconflict])) ? explode(';',$_SESSION["listofmimes".$keytoavoidconflict]) : array();
+
 			if ($object->param['models'] == 'propal_send')
     		{
     			$nbFiles += $this->_addFiles($object, $listofpaths, $listofnames, $listofmimes, $conf->autoattachfile->dir_output.'/proposals');
     		}
-    		
+
     	    if ($object->param['models'] == 'order_send')
     		{
     			$nbFiles += $this->_addFiles($object, $listofpaths, $listofnames, $listofmimes, $conf->autoattachfile->dir_output.'/orders');
@@ -87,35 +88,36 @@ class ActionsAutoattachfile
     		$_SESSION["listofnames".$keytoavoidconflict]=join(';',$listofnames);
     		$_SESSION["listofmimes".$keytoavoidconflict]=join(';',$listofmimes);
     	}
-    
+
     	return 0;
     }
-    
+
 	/**
 	 * Add files from the list as e-mail attachments
 	 */
-	private function _addFiles($form, &$listofpaths, &$listofnames, &$listofmimes, $path) 
+	private function _addFiles($form, &$listofpaths, &$listofnames, &$listofmimes, $path)
 	{
 		global $conf,$langs,$user;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 		$fileList = dol_dir_list($path,'files',0);
 		$nbFiles = 0;
 
 		$vardir=$conf->user->dir_output."/".$user->id;
 		$upload_dir_tmp = $vardir.'/temp';
-		
-		dol_mkdir($upload_dir_tmp);
-		
+
+		$result = dol_mkdir($upload_dir_tmp);
+
 		foreach($fileList as $fileParams) {
 			// Attachment in the e-mail
 			$file = $fileParams['fullname'];
 			$newfile = $upload_dir_tmp.'/'.basename($file);
 
 			$result=dol_copy($file, $newfile, 0, 1);
+			dol_syslog("result=".$result);
 			if (! $result) dol_syslog(get_class($this).'::_addFiles failed to move file from '.$file.' to '.$newfile, LOG_ERR);
-			
-			if (! in_array($newfile, $listofpaths)) 
+
+			if (! in_array($newfile, $listofpaths))
 			{
 				$listofpaths[] = $newfile;
 				$listofnames[] = basename($newfile);
@@ -123,7 +125,7 @@ class ActionsAutoattachfile
 				$nbFiles++;
 			}
 		}
-		
+
 		return $nbFiles;
 	}
 
