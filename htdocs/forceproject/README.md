@@ -3,7 +3,8 @@
 ## Features
 
 Check a project is linked to allow to validate proposal or order. 
-It may also replace key '{PROJECTREF\-X}' with ref of linked project if found into ref (X is number of chars of project ref
+It may also replace key 'projectref' or {PROJECTREF-X} (with X = length of a project ref) 
+with ref of linked project, if the key is found into the mask of numbering.
 
 
 
