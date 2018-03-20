@@ -51,7 +51,7 @@ class modForceProject extends DolibarrModules
 		// Module label (no space allowed), used if translation string 'ModuleXXXName' not found (where XXX is value of numeric property 'numero' of module)
 		$this->name = preg_replace('/^mod/i','',get_class($this));
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
-		$this->description = "Check a project is linked to allow to validate proposal or order. It may also replace key '_projectref_' with ref of linked project if found into ref.";
+		$this->description = "Check a project is linked to allow to validate proposal or order. It may also replace key 'projectref' or {PROJECTREF-X} (with X = length of project ref) with ref of linked project if found into ref.";
         $this->editor_name = 'TecLib';
         $this->editor_url = 'http://www.teclib.com';
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
