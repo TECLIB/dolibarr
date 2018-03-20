@@ -146,10 +146,12 @@ class InterfaceForceProject
 	            		// Clean current ref of propal, so we can make again later a getNextNumRef and get same value for invoice number
 	            		$sql="UPDATE ".MAIN_DB_PREFIX."propal SET ref = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
 	            		$resql=$this->db->query($sql);
-	            		
+
 		            	$savmask=$conf->global->PROPALE_SAPHIR_MASK;
 		            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/projectref/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);	// For proposal, counter is started to 1 for each project
-						//var_dump($conf->global->PROPALE_SAPHIR_MASK);
+		            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);
+		            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/%%+/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);
+		            	//var_dump($conf->global->PROPALE_SAPHIR_MASK);
 		            	$newref=$object->getNextNumRef($object->thirdparty);
 		            	//var_dump($newref);
 		            	//$newref=$projectref.substr($newref,7);
@@ -214,9 +216,11 @@ class InterfaceForceProject
 	            		// Clean current ref of invoice, so we can make again later a getNextNumRef and get same value for invoice number
 	            		$sql="UPDATE ".MAIN_DB_PREFIX."commande SET ref = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
 	            		$resql=$this->db->query($sql);
-	            		
+
 		            	$savmask=$conf->global->COMMANDE_SAPHIR_MASK;
 		            	$conf->global->COMMANDE_SAPHIR_MASK=preg_replace('/projectref/',$projectref,$conf->global->COMMANDE_SAPHIR_MASK);
+		            	$conf->global->COMMANDE_SAPHIR_MASK=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->COMMANDE_SAPHIR_MASK);
+		            	$conf->global->COMMANDE_SAPHIR_MASK=preg_replace('/%%+/',$projectref,$conf->global->COMMANDE_SAPHIR_MASK);
 		            	$newref=$object->getNextNumRef($object->thirdparty);
 		            	//$newref=$projectref.substr($newref,7);
 		            	$conf->global->COMMANDE_SAPHIR_MASK=$savmask;
@@ -274,7 +278,7 @@ class InterfaceForceProject
                     $newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
                     $newref=preg_replace('/%%+/',$projectref,$newref);
 
-                    // If we want the counter of new invoice to start to 1 for each project 
+                    // If we want the counter of new invoice to start to 1 for each project
                     // The tag {PROJECTREF\-[1-9]\} must be present into ref numbering mask to have this working.
                     if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
                     {
