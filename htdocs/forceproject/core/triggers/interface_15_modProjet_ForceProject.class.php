@@ -19,9 +19,10 @@
  */
 
 /**
- *	\file       htdocs/forceproject/core/modules/triggers/interface_50_modProject_ForceProject.class.php
+ *	\file       htdocs/forceproject/core/modules/triggers/interface_15_modProject_ForceProject.class.php
  *  \ingroup    forceproject
- *  \brief      Trigger file for forceproject module
+ *  \brief      Trigger file for forceproject module. This trigger must be called before the trigger
+ *  			on actions and notifications.
  */
 
 
@@ -167,6 +168,7 @@ class InterfaceForceProject
 	            	if ($resql)
 	            	{
 	            		$object->ref=$newref;
+	            		$object->newref=$newref;
 	            		$ok=1;
 	            	}
 	            	else
@@ -235,6 +237,7 @@ class InterfaceForceProject
 	            	if ($resql)
 	            	{
 	            		$object->ref=$newref;
+	            		$object->newref=$newref;
 	            		$ok=1;
 	            	}
 	            	else
@@ -352,6 +355,7 @@ class InterfaceForceProject
                     if ($resql)
                     {
                         $object->ref=$newref;
+                        $object->newref=$newref;
                         $ok=1;
                     }
                     else
