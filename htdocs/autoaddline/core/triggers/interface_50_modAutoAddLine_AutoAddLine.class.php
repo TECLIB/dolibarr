@@ -32,8 +32,7 @@
  */
 
 /**
- *      \class      InterfaceDemo
- *      \brief      Class of triggers for demo module
+ *      Class of triggers for autoaddline module
  */
 class InterfaceAutoAddLine
 {
@@ -42,9 +41,10 @@ class InterfaceAutoAddLine
 
     /**
      *   Constructor.
-     *   @param      Database   db      Database handler
+     *
+     *   @param      Database   $db      Database handler
      */
-    function InterfaceAutoAddLine($db)
+    function __construct($db)
     {
         $this->db = $db;
 
@@ -97,15 +97,16 @@ class InterfaceAutoAddLine
 
     /**
      *      Function called when a Dolibarrr business event is done.
-     *      All functions "run_trigger" are triggered if file is inside directory htdocs/includes/triggers
-     *      @param      action      Code de l'evenement
-     *      @param      object      Objet concerne
-     *      @param      user        Objet user
-     *      @param      langs       Objet langs
-     *      @param      conf        Objet conf
-     *      @return     int         <0 if KO, 0 if no triggered ran, >0 if OK
+     *      All functions "runTrigger" are triggered if file is inside directory htdocs/includes/triggers
+     *
+     *      @param      string		$action      Code de l'evenement
+     *      @param      Object		$object      Objet concerne
+     *      @param      User		$user        Objet user
+     *      @param      Translate	$langs       Objet langs
+     *      @param      Conf		$conf        Objet conf
+     *      @return     int         			<0 if KO, 0 if no triggered ran, >0 if OK
      */
-    function run_trigger($action, $object, $user, $langs, $conf)
+    function runTrigger($action, $object, $user, $langs, $conf)
     {
         // Put here code you want to execute when a Dolibarr business events occurs.
         // Data and type of action are stored into $object and $action
@@ -178,10 +179,9 @@ class InterfaceAutoAddLine
 
         if (!$error)
             return 1;
-        
+
         return -1;
     }
 
 }
 
-?>
