@@ -798,8 +798,8 @@ class eCommerceRemoteAccessMagento
 								'price' => $configurableItems[$item['parent_item_id']]['price'],
 								'qty' => $item['qty_ordered'],
 								'tva_tx' => $configurableItems[$item['parent_item_id']]['tva_tx'],
-								'remote_simple_sku' => $item['simple_sku'],
-								'remote_long_sku' => $item['sku']
+								'remote_simple_sku' => $configurableItems[$item['parent_item_id']]['remote_simple_sku'],
+								'remote_long_sku' => $configurableItems[$item['parent_item_id']]['remote_long_sku']
 								);
 							}
 						}
