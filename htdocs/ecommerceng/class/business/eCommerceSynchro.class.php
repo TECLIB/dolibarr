@@ -2220,7 +2220,12 @@ class eCommerceSynchro
                                             $idWareHouse = 0;
                                             // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
                                             //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
-                                            $dBCommande->valid($this->user, $idWareHouse);
+                                            $resultvalidorder = $dBCommande->valid($this->user, $idWareHouse);
+                                            if ($resultvalidorder < 0)
+                                            {
+                                            	$this->errors = array_merge($this->errors, $dBCommande->errors);
+                                            	$error++;
+                                            }
                                         }
                                     }
 
@@ -2508,7 +2513,13 @@ class eCommerceSynchro
                                             $idWareHouse = 0;
                                             // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
                                             //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
-                                            $dBFacture->validate($this->user, '', $idWareHouse);
+                                            $resultvalidinvoice = $dBFacture->validate($this->user, '', $idWareHouse);
+                                            if ($resultvalidinvoice < 0)
+                                            {
+                                            	$this->errors = array_merge($this->errors, $dBCommande->errors);
+                                            	$error++;
+                                            }
+
                                         }
                                     }
 
