@@ -771,7 +771,9 @@ class eCommerceRemoteAccessMagento
 							'product_type' => $item['product_type'],
 							'price' => $item['price'],
 							'qty' => $item['qty_ordered'],
-							'tva_tx' => $item['tax_percent']
+							'tva_tx' => $item['tax_percent'],
+							'remote_simple_sku' => $item['simple_sku'],
+							'remote_long_sku' => $item['sku']
 							);
 						} else {
 							// If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
@@ -783,7 +785,9 @@ class eCommerceRemoteAccessMagento
 								'product_type' => $item['product_type'],
 								'price' => $item['price'],
 								'qty' => $item['qty_ordered'],
-								'tva_tx' => $item['tax_percent']
+								'tva_tx' => $item['tax_percent'],
+								'remote_simple_sku' => $item['simple_sku'],
+								'remote_long_sku' => $item['sku']
 								);
 							} else {
 								$items[] = array(
@@ -793,7 +797,9 @@ class eCommerceRemoteAccessMagento
 								'product_type' => $item['product_type'],
 								'price' => $configurableItems[$item['parent_item_id']]['price'],
 								'qty' => $item['qty_ordered'],
-								'tva_tx' => $configurableItems[$item['parent_item_id']]['tva_tx']
+								'tva_tx' => $configurableItems[$item['parent_item_id']]['tva_tx'],
+								'remote_simple_sku' => $item['simple_sku'],
+								'remote_long_sku' => $item['sku']
 								);
 							}
 						}

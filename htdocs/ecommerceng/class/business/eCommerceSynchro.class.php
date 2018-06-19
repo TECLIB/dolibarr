@@ -2136,6 +2136,12 @@ class eCommerceSynchro
                                                 $buyprice = $productFournisseur->fourn_unitprice;
                                             }*/
 
+                                            $array_options = array();
+                                            if (! empty($conf->ECOMMERCENG_STORE_LONG_SKU) && ! empty($item['remote_long_sku']))	// For Magento when it return long sku
+                                            {
+                                            	$array_options = array('options_long_sku'=>$item['remote_long_sku']);	// To store into the extrafields 'long_sku' the value of sku+option suffix
+                                            }
+
                                             $result = $dBCommande->addline($item['description'], $item['price'], $item['qty'], $item['tva_tx'], 0, 0,
                                                 $this->eCommerceProduct->fk_product, //fk_product
                                                 0, //remise_percent
@@ -2150,7 +2156,9 @@ class eCommerceSynchro
                                                 0, //special_code
                                                 0, // fk_parent_line
                                                 0, // fk_prod four_price
-                                                $buyprice
+                                                $buyprice,
+                                            	'',
+                                            	$array_options
                                                 );
                                             dol_syslog("result=".$result);
                                             if ($result <= 0)
