@@ -1,7 +1,5 @@
 <?php
 
-use Stripe\BankAccount;
-
 // Protection to avoid direct call of template
 if (empty($conf) || ! is_object($conf))
 {
@@ -25,7 +23,7 @@ if (is_object($site))
     $head[1][1] = $langs->trans("Direction").' : Ecommerce -> Dolibarr';
     $head[1][2] = 'ecommerce2dolibarr';
 
-    dol_fiche_head($head, 'ecommerce2dolibarr', '');
+    dol_fiche_head($head, 'ecommerce2dolibarr', '', (((float) DOL_VERSION < 7) ? 0 : -1));
 
     print '<form name="form_count" id="form_count" action="'.$_SERVER['PHP_SELF'].'" method="post">';
     print '<input type="hidden" name="id" value="'.$site->id.'">';
@@ -65,7 +63,7 @@ if (is_object($site))
     // Restrict nb
     print '<tr style="line-height: 2em"><td>';
     print $langs->trans("RestrictNbInSync").' ';
-    print '<input type="text" name="to_nb" placeholder="0" value="'.dol_escape_htmltag($to_nb).'">';
+    print '<input type="text" name="to_nb" class="width50" placeholder="0" value="'.dol_escape_htmltag($to_nb).'">';
     print '</td><td>';
     print '</td></tr>';
 
@@ -304,7 +302,7 @@ if (is_object($site))
     $head[1][1] = $langs->trans("Direction").' : Dolibarr -> Ecommerce';
     $head[1][2] = 'dolibarr2ecommerce';
 
-    dol_fiche_head($head, 'dolibarr2ecommerce', '');
+    dol_fiche_head($head, 'dolibarr2ecommerce', '', (((float) DOL_VERSION < 7) ? 0 : -1));
 
 	print $langs->trans("SyncIsAutomaticInRealTime", $site->name)."\n";
 
@@ -322,7 +320,7 @@ if (is_object($site))
 		$head[1][1] = $langs->trans("DangerZone");
 		$head[1][2] = 'dangerzone';
 
-   		dol_fiche_head($head, 'dangerzone', '');
+		dol_fiche_head($head, 'dangerzone', '', (((float) DOL_VERSION < 7) ? 0 : -1));
 
 	    print '<div class="nodebugtools inline-block">';
 		print '<a style="color: #600" id="showtools">'.$langs->trans("ShowDebugTools").'</a>';

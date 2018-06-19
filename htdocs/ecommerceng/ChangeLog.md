@@ -4,6 +4,7 @@
 
 - Add option ECOMMERCENG_BANK_ID_FOR_PAYMENT so payments are now recorded.
 - Manage Magento shopping cart/coupon discounts.
+- Add option ECOMMERCENG_ENABLE_LOG_IN_NOTE
 
 ## 3.9.1.0
 

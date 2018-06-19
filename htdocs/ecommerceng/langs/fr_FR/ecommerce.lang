@@ -108,7 +108,7 @@ NbInDolibarr=Nb dans l'ERP
 NbInDolibarrLinkedToE=Nb dans l'ERP lié à la boutique
 ModuleCustomerOrderDisabled=Non géré (module Commande Client désactivé)
 ECommerceLastCompleteSync=Date de la dernière synchro <strong>de %s vers Dolibarr</strong> réalisée ENTIEREMENT (=plus aucun élément à synchroniser)
-WithMagentoThirdIsModifiedIfAddressModified=Avec Magento, un tiers sera vue modifié aussi si un de ces contacts/address a été modifié
+WithMagentoThirdIsModifiedIfAddressModified=Avec Magento, un tiers sera vue modifié aussi si un de ses contacts/address a été modifié
 SyncSocieteFirst=Synchroniser d'abord les tiers
 SyncCommandeFirst=Synchroniser d'abord les commandes
 OnlyProductsIn=Only products with category <b>%s</b> or sub-categories of '<b>%s</b>' are synchronized from Dolibarr to Magento
