@@ -2137,7 +2137,7 @@ class eCommerceSynchro
                                             }*/
 
                                             $array_options = array();
-                                            if (! empty($conf->ECOMMERCENG_STORE_LONG_SKU) && ! empty($item['remote_long_sku']))	// For Magento when it return long sku
+                                            if (! empty($conf->global->ECOMMERCENG_STORE_LONG_SKU) && ! empty($item['remote_long_sku']))	// For Magento when it return long sku
                                             {
                                             	$array_options = array('options_long_sku'=>$item['remote_long_sku']);	// To store into the extrafields 'long_sku' the value of sku+option suffix
                                             }
