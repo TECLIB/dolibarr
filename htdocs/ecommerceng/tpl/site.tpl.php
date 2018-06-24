@@ -67,10 +67,9 @@ if (is_object($site))
     print '</td><td>';
     print '</td></tr>';
 
-    if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER))
+    if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER) && $conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER > 0)
     {
         print '<tr style="line-height: 2em"><td>';
-
         print $langs->trans("SynchUnkownCustomersOnThirdParty").' : ';
         $nonloggedthirdparty=new Societe($db);
         $result = $nonloggedthirdparty->fetch($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER);
@@ -78,10 +77,9 @@ if (is_object($site))
         print '</td><td align="right"></td></tr>';
     }
 
-    if (! empty($conf->global->ECOMMERCENG_BANK_ID_FOR_PAYMENT))
+    if (! empty($conf->global->ECOMMERCENG_BANK_ID_FOR_PAYMENT) && $conf->global->ECOMMERCENG_BANK_ID_FOR_PAYMENT > 0)
     {
     	print '<tr style="line-height: 2em"><td>';
-
     	print $langs->trans("BankAccountForPayments").' : ';
     	$bankforpayment=new Account($db);
     	$result = $bankforpayment->fetch($conf->global->ECOMMERCENG_BANK_ID_FOR_PAYMENT);
