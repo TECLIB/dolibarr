@@ -1942,7 +1942,7 @@ class eCommerceSynchro
                     else
                     {
                         // This is an unknown customer. May be a non logged customer.
-                        if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER))
+                    	if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER) && $conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER > 0)
                         {
                             $societeExists = 1;
                             $this->eCommerceSociete->fk_societe = $conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER;
@@ -2474,7 +2474,7 @@ class eCommerceSynchro
                     else
                     {
                         // This is an unknown customer. May be a non logged customer.
-                        if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER))
+                    	if (! empty($conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER) && $conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER > 0)
                         {
                             $societeExists = 1;
                             $this->eCommerceSociete->fk_societe = $conf->global->ECOMMERCENG_USE_THIS_THIRDPARTY_FOR_NONLOGGED_CUSTOMER;
