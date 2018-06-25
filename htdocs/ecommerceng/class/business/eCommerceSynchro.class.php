@@ -1377,6 +1377,11 @@ class eCommerceSynchro
             //if no previous synchro exists (not found in table of links)
             else
             {
+            	if (! empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE))
+            	{
+            		$dBContact->note_private.="Last eCommerce contact received:\n".dol_trunc(serialize(var_export($socpeopleArray['remote_id'], true)), 65000);
+            	}
+
                 $result = $dBContact->create($this->user);
                 if ($result < 0)
                 {
