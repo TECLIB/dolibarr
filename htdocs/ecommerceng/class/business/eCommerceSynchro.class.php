@@ -1322,7 +1322,7 @@ class eCommerceSynchro
             {
                 $dBContact->socid = $socpeopleArray['fk_soc'];
                 $dBContact->fk_soc = $socpeopleArray['fk_soc'];
-                //$dBContact->fk_pays = $socpeopleArray['fk_pays'];
+
                 $dBContact->lastname = $socpeopleArray['lastname'];
                 $dBContact->town = dol_trunc($socpeopleArray['town'], 30, 'right', 'UTF-8', 1);
                 $dBContact->ville = $dBContact->town;
@@ -1340,6 +1340,14 @@ class eCommerceSynchro
                 $dBContact->phone_pro = dol_trunc($socpeopleArray['phone'], 30, 'right', 'UTF-8', 1);
                 $dBContact->fax = dol_trunc($socpeopleArray['fax'], 30, 'right', 'UTF-8', 1);
                 $dBContact->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+
+                // Get country id from country code 'US', 'FR', ...
+                if ($socpeopleArray['country_code'])
+                {
+                	include_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
+                	$tmpcountryid = getCountry($socpeopleArray['country_code'], 3);
+                	if (is_numeric($tmpcountryid) && $tmpcountryid > 0) $dBContact->country_id = $tmpcountryid;
+                }
 
                 $contactExists = $this->getContactIdFromInfos($dBContact);
             }

@@ -492,7 +492,7 @@ class eCommerceRemoteAccessMagento
                             'address' => $socpeople['street'],
                             'town' => $socpeople['city'],
                             'zip' => $socpeople['postcode'],
-                            'country_code' => $socpeople['country_id'],
+                            'country_code' => $socpeople['country_id'],			// 'US', 'FR', ...
                             'phone' => $socpeople['telephone'],
                             'fax' => $socpeople['fax'],
                             'firstname' => $socpeople['firstname'],
