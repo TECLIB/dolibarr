@@ -1443,7 +1443,7 @@ class eCommerceRemoteAccessMagento
 			    'description' => $object->description,
 			    //'short_description' => 'Product short description',
 			    'weight' => $object->weight,
-			    'status' => $object->status,
+			    'status' => ($object->status==1?1:2),
 			    'country_of_manufacture' => $object->country_code,
 			    //'url_key' => 'product-url-key',
 			    //'url_path' => 'product-url-path',
