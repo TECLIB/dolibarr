@@ -1287,6 +1287,12 @@ class eCommerceSynchro
     {
         global $conf;
 
+	//If there's no remote_id. For example an order without delivery address
+	if (!$socpeopleArray['remote_id'] || $socpeopleArray['remote_id'] == '') {
+            dol_syslog("***** eCommerceSynchro synchSocPeople remote_id is empty !");
+	    return false;
+	}
+
         $error=0;
 
         try {
