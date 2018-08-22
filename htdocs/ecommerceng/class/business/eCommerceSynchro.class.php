@@ -1281,7 +1281,7 @@ class eCommerceSynchro
      * Synchronize socpeople to update for a society: Create or update it into dolibarr, then update the ecommerce_socpeople table.
      *
      * @param   array   $socpeopleArray     Array with all params to synchronize
-     * @return  int                         Id of socpeople into Dolibarr if OK and false if KO
+     * @return  int                         Id of socpeople into Dolibarr if OK, 0 if no sync to do and false if KO
      */
     public function synchSocpeople($socpeopleArray)
     {
@@ -1289,8 +1289,8 @@ class eCommerceSynchro
 
 	//If there's no remote_id. For example an order without delivery address
 	if (!$socpeopleArray['remote_id'] || $socpeopleArray['remote_id'] == '') {
-            dol_syslog("***** eCommerceSynchro synchSocPeople remote_id is empty !");
-	    return false;
+            dol_syslog("***** eCommerceSynchro synchSocPeople remote_id is empty, sync is ignored !");
+	    return 0;
 	}
 
         $error=0;
