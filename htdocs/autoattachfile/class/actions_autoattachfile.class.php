@@ -61,7 +61,7 @@ class ActionsAutoattachfile
 
     	$nbFiles=0;
 
-    	if ((GETPOST('action','aZ09') == 'presend' && GETPOST('mode') == 'init') || GETPOST('modelmailselected','int'))
+    	if ((GETPOST('action','aZ09') == 'presend' && GETPOST('mode') == 'init') || (GETPOST('modelmailselected','int') && ! GETPOST('removedfile','alpha')))
     	{
     		// Get current content of list of files
 			$listofpaths = (! empty($_SESSION["listofpaths".$keytoavoidconflict])) ? explode(';',$_SESSION["listofpaths".$keytoavoidconflict]) : array();
