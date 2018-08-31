@@ -305,13 +305,13 @@ Default Store View"
     ["lastname"]=>
     string(13) "Customer last"
     ["street"]=>
-    string(22) "Rue Camponac, Bloc 20b"
+    string(22) "Rue schtroumph"
     ["city"]=>
     string(6) "Pessac"
     ["email"]=>
-    string(22) "contact@destailleur.fr"
+    string(22) "contact@myemail.com"
     ["telephone"]=>
-    string(10) "0662724322"
+    string(10) "0123456789"
     ["country_id"]=>
     string(2) "FR"
     ["firstname"]=>
@@ -360,13 +360,13 @@ Default Store View"
     ["lastname"]=>
     string(13) "Customer last"
     ["street"]=>
-    string(22) "Rue Camponac, Bloc 20b"
+    string(22) "Rue schtroumph"
     ["city"]=>
     string(6) "Pessac"
     ["email"]=>
-    string(22) "contact@destailleur.fr"
+    string(22) "contact@myemail.fr"
     ["telephone"]=>
-    string(10) "0662724322"
+    string(10) "0123456789"
     ["country_id"]=>
     string(2) "FR"
     ["firstname"]=>
