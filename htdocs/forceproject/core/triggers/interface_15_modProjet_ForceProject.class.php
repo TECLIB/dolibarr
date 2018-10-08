@@ -184,6 +184,15 @@ class InterfaceForceProject
 				}
 			}
         }
+        if ($action == 'PROPAL_CLOSE_REFUSED' && (! empty($conf->global->FORCEPROJECT_PROPAL_CLOSE_REFUSED_REASON_REQUIRED)))
+        {
+        	if (empty($object->array_options['options_reasonnotsigned']))
+        	{
+        		$langs->load("forceproject@forceproject");
+        		$this->errors[]=$langs->trans("PleaseEnterAReasonBefore");
+        		$ok=-1;
+        	}
+        }
 
     	// Actions
         if ($action == 'ORDER_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_ORDER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))

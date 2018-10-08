@@ -17,7 +17,7 @@
  */
 
 /**
- *	    \file       htdocs/forceproject/admin/autoattachfile.php
+ *	    \file       htdocs/forceproject/admin/forceproject.php
  *      \ingroup    forceproject
  *      \brief      Page to setup module ForceProject
  */
