@@ -192,6 +192,26 @@ class InterfaceForceProject
         		$this->errors[]=$langs->trans("PleaseEnterAReasonBefore");
         		$ok=-1;
         	}
+        	else
+        	{
+        		if (isset($object->array_options['options_probasigna']))
+        		{
+        			$object->array_options['options_probasigna'] = 0;
+        			$sql="UPDATE ".MAIN_DB_PREFIX."propal_extrafields SET probasigna = 0 WHERE fk_object=".$object->id;
+        			$resql=$this->db->query($sql);
+        		}
+        		$ok=1;
+        	}
+        }
+        if ($action == 'PROPAL_CLOSE_SIGNED' && (! empty($conf->global->FORCEPROJECT_PROPAL_CLOSE_REFUSED_REASON_REQUIRED)))
+        {
+        	if (isset($object->array_options['options_probasigna']))
+        	{
+        		$object->array_options['options_probasigna'] = 100;
+        		$sql="UPDATE ".MAIN_DB_PREFIX."propal_extrafields SET probasigna = 100 WHERE fk_object=".$object->id;
+        		$resql=$this->db->query($sql);
+        	}
+        	$ok=1;
         }
 
     	// Actions
