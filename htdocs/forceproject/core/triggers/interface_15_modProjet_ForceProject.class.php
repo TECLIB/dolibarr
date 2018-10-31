@@ -208,7 +208,8 @@ class InterfaceForceProject
         	if (isset($object->array_options['options_probasigna']))
         	{
         		$object->array_options['options_probasigna'] = 100;
-        		$sql="UPDATE ".MAIN_DB_PREFIX."propal_extrafields SET probasigna = 100 WHERE fk_object=".$object->id;
+        		$object->array_options['options_date_cloture'] = dol_now();
+        		$sql="UPDATE ".MAIN_DB_PREFIX."propal_extrafields SET probasigna = 100, date_cloture = '".$this->db->idate(dol_now())."' WHERE fk_object=".$object->id;
         		$resql=$this->db->query($sql);
         	}
         	$ok=1;
