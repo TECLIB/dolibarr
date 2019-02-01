@@ -1,0 +1,39 @@
+# Module label 'ModuleAdvancedDiscountName'
+ModuleAdvancedDiscountName = Gestion avancées des promotions et remises
+# Module description 'ModuleAdvancedDiscountDesc'
+ModuleAdvancedDiscountDesc = Module de gestion avancées des promotions et remises
+
+#
+# Page d'administration
+#
+AdvancedDiscountSetup = Configuration du module Gestion Avancée des remises/promotions
+Settings = Réglages
+AdvancedDiscountSetupPage = Page de configuration du module Gestion Avancée des remises/promotions
+
+#
+# Page À propos
+#
+About = À propos
+AdvancedDiscountAbout = À propos de Gestion Avancée des remises/promotions
+AdvancedDiscountAboutPage = Page à propos de Gestion Avancée des remises/promotions
+
+AdvancedDiscount=Réduction/Promotions
+DiscountsOrPromotions=Réductions/promotions
+NewDiscount=Nouvelle réduction/promotion
+RulesAndActions=Règles et Actions
+DeleteAdvancedDiscount=Supprimer réduction/promotion
+ConfirmDeleteAdvancedDiscount=Etes vous sur de vouloir supprimer cette réduction/promotion ?
+ClonedvancedDiscount=Cloner réduction/promotion
+ConfirmCloneAdvancedDiscount=Etes vous sur de vouloir cloner cette réduction/promotion ?
+CustomerCountryIs=Le pays du client est (La valeur est le code pays)
+CustomerHasTag=Le client a le tag/catégorie (La valeur est la ref du tag/categorie)
+ContainsProduct=L'objet contient le produit (La valeur est la ref du produit)
+TotalGreaterThanOrEqualTo=Total hors taxe >= (La valeur est le montant)
+ObjectFixedDiscount=Remise fixe (La valeur est le montant)
+ObjectPercentDiscount=Remise en pourcentage (La valeur est le pourcentage)
+ItemFixedDiscount=Remise fixe sur la ligne produit (La valeur est le montant)
+ItemPercentDiscount=Remise en pourcentage sur la ligne produit (La valeur est le pourcentage)
+Rules=Règles
+NoteWhenDiscountApplied=Notez que les règles sont vérifiées et les actions appliquées lorsque vous ajoutez une nouvelle ligne dans un devis, commande ou facture. Si l'object est créé par clonage ou est généré depuis un autre object, rien n'est fait afin de rester fidèle à la source. Pour les remises en pourcentage, elles ne sont appliquées que si il n'y a pas déjà une remise en poucentage appliquée manuellement et supérieures. 
+ErrorCanAddItemActionIfNoItemRule=On ne peut ajouter une action sur un article si aucune règle sur article n'a été définie
+ErrorValueCantBeNegative=La valeure ne peut etre négative

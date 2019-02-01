@@ -1,0 +1,45 @@
+# Module label 'ModuleAdvancedDiscountName'
+ModuleAdvancedDiscountName = AdvancedDiscount
+# Module description 'ModuleAdvancedDiscountDesc'
+ModuleAdvancedDiscountDesc = AdvancedDiscount description
+
+#
+# Admin page
+#
+AdvancedDiscountSetup = Advanced Discount setup
+Settings = Settings
+AdvancedDiscountSetupPage = Advanced Discount setup page
+ADVANCEDDISCOUNTS_MYPARAM1 = My param 1
+ADVANCEDDISCOUNTS_MYPARAM1Tooltip = My param 1 tooltip
+ADVANCEDDISCOUNTS_MYPARAM2=My param 2
+ADVANCEDDISCOUNTS_MYPARAM2Tooltip=My param 2 tooltip
+
+
+#
+# About page
+#
+About = About
+AdvancedDiscountAbout = About Advanced Discount
+AdvancedDiscountAboutPage = Advanced Discount about page
+
+AdvancedDiscount=Discount/Promotions
+DiscountsOrPromotions=Discounts/promotions
+NewDiscount=New discount/promotion
+RulesAndActions=Rules and Actions
+DeleteAdvancedDiscount=Delete discount/promotion
+ConfirmDeleteAdvancedDiscount=Are you sure you want to delete this discount/promotion ?
+CloneAdvancedDiscount=Clone discount/promotion
+ConfirmCloneAdvancedDiscount=Are you sure you want to clone this discount/promotion ?
+CustomerCountryIs=Customer country is (value is country code)
+CustomerHasTag=Customer has tag/category (value is ref of tag/category)
+ContainsProduct=Object contains product (value is product ref)
+TotalGreaterThanOrEqualTo=Total without tax >= (value is amount)
+ObjectFixedDiscount=Fixed discount (value is amount)
+ObjectPercentDiscount=Percent discount (value is percentage)
+ItemFixedDiscount=Item fixed discount (value is amount)
+ItemPercentDiscount=Item percent discount (value is percentage)
+Rules=Rules
+NoteWhenDiscountApplied=Note that rules are only checked and actions executed when you add a new line into a proposal, order or invoice. If the object is created by cloning or is generated from another object, nothing is done. About percentage discount, they are applied only if there is not already a percentage discount that is higher.  
+ErrorCanAddItemActionIfNoItemRule=We can't add an action on item if there is no rule on items
+ErrorValueCantBeNegative=Value can't be negative
+
