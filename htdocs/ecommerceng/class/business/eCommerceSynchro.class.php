@@ -2038,7 +2038,14 @@ class eCommerceSynchro
                                     {
                                         if ($dBCommande->statut != Commande::STATUS_DRAFT)
                                         {
-                                            $dBCommande->set_draft($user, 0);
+                                            if ((float) DOL_VERSION < 10)
+                                            {
+	                                            $dBCommande->set_draft($user, 0);
+                                            }
+                                            else
+                                            {
+	                                            $dBCommande->setDraft$user, 0);
+                                            }
                                         }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_VALIDATED)

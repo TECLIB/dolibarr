@@ -54,7 +54,9 @@ if (count($sites))
 	</form>
 	<br>
 
-	<?php print_titre($langs->trans("MainSyncSetup")); ?>
+	<?php
+	print '<div class="titre">'.$langs->trans("MainSyncSetup").'</div>';
+	?>
 
 	<form name="site_form_detail" id="site_form_detail" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
 			<input type="hidden" name="token" value="<?php print $_SESSION['newtoken'] ?>">
@@ -296,7 +298,7 @@ $var=!$var;
 <?php
 if ($conf->stock->enabled)
 {
-    print_titre($langs->trans("StockSyncSetup"));
+    print '<div class="titre">'.$langs->trans("StockSyncSetup").'</div>';
 
     $var=!$var;
 ?>
