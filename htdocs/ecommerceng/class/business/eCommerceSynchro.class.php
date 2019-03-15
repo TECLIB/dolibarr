@@ -2044,7 +2044,7 @@ class eCommerceSynchro
                                             }
                                             else
                                             {
-	                                            $dBCommande->setDraft$user, 0);
+	                                            $dBCommande->setDraft($user, 0);
                                             }
                                         }
                                     }
