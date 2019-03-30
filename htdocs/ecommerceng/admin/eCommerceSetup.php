@@ -142,6 +142,8 @@ if ($_POST['site_form_detail_action'] == 'save')
 
         if ($result > 0)
         {
+            $sites = $siteDb->listSites();  // Reload after create
+
             $eCommerceMenu = new eCommerceMenu($db, $siteDb);
             $eCommerceMenu->updateMenu();
             $db->commit();
@@ -173,6 +175,8 @@ elseif ($_POST['site_form_detail_action'] == 'delete')
     }
     else
     {
+        $sites = $siteDb->listSites();  // Reload after delete
+
         $eCommerceMenu = new eCommerceMenu($db, $siteDb);
         $eCommerceMenu->updateMenu();
         $success[] = $langs->trans('ECommerceDeleteOk');
