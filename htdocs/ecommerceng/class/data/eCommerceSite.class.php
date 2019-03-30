@@ -49,7 +49,8 @@ class eCommerceSite // extends CommonObject
 	var $magento_price_type;
 
 	//The site type name is used to define class name in eCommerceRemoteAccess class
-    private $siteTypes = array(1=>'magento', 2=>'woocommerce');
+    private $siteTypes = array(1=>'magento', 2=>'woocommerce', 3=>'prestashop');
+
 
     /**
      * Constructor

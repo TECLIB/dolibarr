@@ -81,6 +81,7 @@ elseif ($site_form_select_site)
 if ($siteId != null)
     $siteDb->fetch($siteId);
 
+
 /*
  * Actions
  */
@@ -185,16 +186,6 @@ elseif ($_POST['site_form_detail_action'] == 'delete')
 /*
  *  View
  */
-
-if (! extension_loaded('soap'))
-{
-    llxHeader();
-
-    print info_admin($langs->trans("ErrorModuleSoapRequired"));
-
-    llxFooter();
-    exit;
-}
 
 $classCategorie = new Categorie($db);
 $productCategories = $classCategorie->get_full_arbo('product');

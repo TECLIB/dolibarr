@@ -8,8 +8,8 @@ ECommerceMagentoUseSpecialPriceDescription=Check to import Magento's special pri
 ECommerceMagentoUseSpecialPrice=Use Magento's special price
 ECommerceDashboard=ECommerce synchronization management dashboard
 ECommerceSetup=Ecommerce module configuration
-ECommerceAddNewSite=Add a new Ecommerce site
-ECommerceCreateSite=Create a new Ecommerce site
+ECommerceAddNewSite=Add a new Ecommerce platform
+ECommerceCreateSite=Create a new Ecommerce platform
 ECommerceSetupSite=Ecommerce configuration
 ECommerceSiteName=Ecommerce name
 ECommerceCatProduct=Products category
@@ -116,7 +116,7 @@ ECommerceErrorsynchProduct=Error during synchronization of products
 
 ECommerceSynchFactureErrorSocieteNotExists=Error, the customer with remote_id = %s was not yet synchronized. Complete synchronizing of thirdparties first.
 ECommerceSynchFactureErrorCommandeNotExists=Error, the order with remote_id = %s was not yet synchronized. Complete synchronizing of orders first.
-
+SelectYourSite=Select your E-Commerce platform (choose "Add" to add a new ecommerce)
 WarningStockProductNotFilled=Warehouse for stock is not defined. It means you won't be able to create products into Dolibarr from eCommerce if you choose the 'Stock synchronization direction' to value 'From ecommerce to dolibarr' and if stock is not empty on eCommerce side.
 SyncCategFirst=Synchronize categories first
 SyncSocieteFirst=Synchronize thirdparties first

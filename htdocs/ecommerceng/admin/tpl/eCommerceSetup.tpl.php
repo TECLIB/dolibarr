@@ -37,6 +37,7 @@ print_fiche_titre($langs->trans("ECommerceSetup"),$linkback,'setup');
 	<script type="text/javascript" src="<?php print dol_buildpath('/ecommerceng/js/form.js',1); ?>"></script>
 	<br>
 	<form id="site_form_select" name="site_form_select" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
+		<?php echo $langs->trans("SelectYourSite").' : '; ?>
 		<select class="flat" id="site_form_select_site" name="site_form_select_site" onchange="eCommerceSubmitForm('site_form_select')">
 			<option value="0"><?php print $langs->trans('ECommerceAddNewSite') ?></option>
 <?php
@@ -88,8 +89,15 @@ $var=!$var;
 											print ' selected="selected"';
 										print ' value="'.$key.'">'.$langs->trans($value).'</option>';
 									}
-								?>
+?>
 						</select>
+							<?php
+							// Check if SOAP is on for Magento and WooCommerce
+							if ($ecommerceType && in_array($ecommerceType, array(1, 2)) && ! extension_loaded('soap'))
+                            {
+                                print info_admin($langs->trans("ErrorModuleSoapRequired"), 0, 0, 'error');
+                            }
+    						?>
 					</td>
 					<td><?php print $langs->trans('ECommerceSiteTypeDescription') ?></td>
 				</tr>
