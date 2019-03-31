@@ -129,33 +129,89 @@ class eCommerceRemoteAccessPrestashop
     {
         global $conf;
 
-        return array();
-
         try {
-            dol_syslog("getSocieteToUpdate start gt = ".dol_print_date($fromDate, 'standard').", lt = ".dol_print_date($toDate, 'standard'));
-            $filter = array(
-                array('updated_at' => array('from' => dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard')))
-            );
-            $result = $this->client->call($this->session, 'customer.list', $filter);
+            dol_syslog("getSocieteToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
+            $filter = '['.dol_print_date($fromDate+1, 'dayrfc').','.dol_print_date($toDate, 'dayrfc').']';
+            //$filter = '[1]';      filter[active]
+            //var_dump($filter);
+            //$result = $this->client->call($this->session, 'catalog_product.list', $filter);
+            global $conf;
+
+            $this->start     = $options['start'];
+            $this->end       = $options['end'];
+            $this->per_page  = $options['per_page'];
+            $this->categorie = $options['categorie'];
+            $this->search    = $options['search'];
+
+            if ($this->end == 0) {
+                $this->end = $this->per_page;
+            }
+
+            $urltouse = preg_replace('/\/api\/?$/', '', $this->site->webservice_address);
+
+            try {
+                include_once DOL_DOCUMENT_ROOT.'/admin/dolistore/class/PSWebServiceLibrary.class.php';
+                $this->api = new PrestaShopWebservice($urltouse, $this->site->user_password, $this->debug_api);
+                dol_syslog("Call API with webservice_address = ".$urltouse);
+                // $this->site->user_password is for the login of basic auth. There is no password.
+
+                // Here we set the option array for the Webservice : we want products resources
+                $opt             = array();
+                $opt['resource']       = 'customers';
+                $opt['display']        = 'full';
+                $opt['sort']           = 'date_upd_DESC';
+                $opt['filter[date_upd]'] = $filter;
+                $opt['date']           = 1;
+                $opt['limit']          = "0,501";
+                //$opt['output_format']  = 'JSON';
+
+                // Call API to get the detail
+                dol_syslog("Call API with opt = ".var_export($opt, true));
+                $xml                   = $this->api->get($opt);
+                $this->customers       = $xml->customers->children();
+            } catch (PrestaShopWebserviceException $e) {
+                // Here we are dealing with errors
+                $trace = $e->getTrace();
+                if ($trace[0]['args'][0] == 404) die('Bad ID');
+                elseif ($trace[0]['args'][0] == 401) die('You are not authorized, with current API key, to read customers');
+                else
+                {
+                    print 'Can not access to '.$urltouse.'<br>';
+                    print $e->getMessage();
+                }
+            }
+
+            if (count($this->customers) > 500)
+            {
+                $this->errors[]='Prestashop API are not able to return more than 500 customers. Try to use a lower date to restrict number of qualified record to sync.';
+                return false;
+            }
+
+            $results = array();
+            //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
+            foreach ($this->customers as $object)
+            {
+                //if (in_array($product['type'], $productsTypesOk))
+                //{
+                $results[] = $object;
+                //}
+            }
 
             // Add debug
             if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
-                fwrite($h, "----- getSocieteToUpdate this->client->call(...");
-                fwrite($h, $this->client->__getLastRequestHeaders());
-                fwrite($h, $this->client->__getLastRequest());
-                fwrite($h, $this->client->__getLastResponseHeaders());
-                fwrite($h, $this->client->__getLastResponse());
+                fwrite($h, "----- getSocieteToUpdate this->api->get(...");
+                fwrite($h, var_export($opt, true));
+                fwrite($h, var_export($xml, true));
                 fclose($h);
             }
 
-            dol_syslog("getSocieteToUpdate end (found ".count($result)." record)");
-            return $result;
+            dol_syslog("getSocieteToUpdate end (found ".count($results)." record)");
+            return $results;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
-            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+            fwrite($h, var_export($opt, true));
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -174,9 +230,9 @@ class eCommerceRemoteAccessPrestashop
 
         try {
             dol_syslog("getProductToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            $filter = 'from:'.dol_print_date($fromDate+1, 'standard').'to:'.dol_print_date($toDate, 'standard');
+            $filter = '['.dol_print_date($fromDate+1, 'dayrfc').','.dol_print_date($toDate, 'dayrfc').']';
             //$filter = '[1]';      filter[active]
-
+            //var_dump($filter);
             //$result = $this->client->call($this->session, 'catalog_product.list', $filter);
             global $conf;
 
@@ -202,10 +258,11 @@ class eCommerceRemoteAccessPrestashop
                 $opt             = array();
                 $opt['resource']       = 'products';
                 $opt['display']        = '[id,name,id_default_image,id_category_default,reference,price,condition,show_price,date_add,date_upd,description_short,description,module_version]';
-                $opt['sort']           = 'id_desc';
-                //$opt['filter[date_upd]'] = $filter;
-                $opt['limit']          = "0,10";
-                // $opt['filter[id]'] contais list of product id that are result of search
+                $opt['sort']           = 'date_upd_DESC';
+                $opt['filter[date_upd]'] = $filter;
+                $opt['date']           = 1;
+                $opt['limit']          = "0,501";
+                //$opt['output_format']  = 'JSON';
 
                 // Call API to get the detail
                 dol_syslog("Call API with opt = ".var_export($opt, true));
@@ -215,7 +272,7 @@ class eCommerceRemoteAccessPrestashop
                 // Here we are dealing with errors
                 $trace = $e->getTrace();
                 if ($trace[0]['args'][0] == 404) die('Bad ID');
-                elseif ($trace[0]['args'][0] == 401) die('Bad auth key');
+                elseif ($trace[0]['args'][0] == 401) die('You are not authorized, with current API key, to read products');
                 else
                 {
                     print 'Can not access to '.$urltouse.'<br>';
@@ -223,14 +280,19 @@ class eCommerceRemoteAccessPrestashop
                 }
             }
 
+            if (count($this->products) > 500)
+            {
+                $this->errors[]='Prestashop API are not able to return more than 500 products. Try to use a lower date to restrict number of qualified record to sync.';
+                return false;
+            }
 
             $results = array();
             //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
-            foreach ($result as $product)
+            foreach ($this->products as $object)
             {
                 //if (in_array($product['type'], $productsTypesOk))
                 //{
-                    $results[] = $product;
+                    $results[] = $object;
                 //}
             }
 
@@ -265,49 +327,90 @@ class eCommerceRemoteAccessPrestashop
     {
         global $conf;
 
-        return array();
-
         try {
             dol_syslog("getCommandeToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            $filter = array(
-                array('updated_at' => array('from' => dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard'))),
-            );
+            $filter = '['.dol_print_date($fromDate+1, 'dayrfc').','.dol_print_date($toDate, 'dayrfc').']';
+            //$filter = '[1]';      filter[active]
+            //var_dump($filter);
+            //$result = $this->client->call($this->session, 'catalog_product.list', $filter);
+            global $conf;
 
-            $result = $this->client->call($this->session, 'sales_order.list', $filter);		// 'order.list' is an alias
-            // TODO Restrict to get only increment_id and update_at ?
+            $this->start     = $options['start'];
+            $this->end       = $options['end'];
+            $this->per_page  = $options['per_page'];
+            $this->categorie = $options['categorie'];
+            $this->search    = $options['search'];
+
+            if ($this->end == 0) {
+                $this->end = $this->per_page;
+            }
+
+            $urltouse = preg_replace('/\/api\/?$/', '', $this->site->webservice_address);
+
+            try {
+                include_once DOL_DOCUMENT_ROOT.'/admin/dolistore/class/PSWebServiceLibrary.class.php';
+                $this->api = new PrestaShopWebservice($urltouse, $this->site->user_password, $this->debug_api);
+                dol_syslog("Call API with webservice_address = ".$urltouse);
+                // $this->site->user_password is for the login of basic auth. There is no password.
+
+                // Here we set the option array for the Webservice : we want products resources
+                $opt             = array();
+                $opt['resource']       = 'orders';
+                $opt['display']        = '[id,name,id_default_image,id_category_default,reference,price,condition,show_price,date_add,date_upd,description_short,description,module_version]';
+                $opt['sort']           = 'date_upd_DESC';
+                $opt['filter[date_upd]'] = $filter;
+                $opt['date']           = 1;
+                $opt['limit']          = "0,501";
+                //$opt['output_format']  = 'JSON';
+
+                // Call API to get the detail
+                dol_syslog("Call API with opt = ".var_export($opt, true));
+                $xml                   = $this->api->get($opt);
+                $this->orders          = $xml->orders->children();
+            } catch (PrestaShopWebserviceException $e) {
+                // Here we are dealing with errors
+                $trace = $e->getTrace();
+                if ($trace[0]['args'][0] == 404) die('Bad ID');
+                elseif ($trace[0]['args'][0] == 401) die('You are not authorized, with current API key, to read orders');
+                else
+                {
+                    print 'Can not access to '.$urltouse.'<br>';
+                    print $e->getMessage();
+                }
+            }
+
+            if (count($this->orders) > 500)
+            {
+                $this->errors[]='Prestashop API are not able to return more than 500 products. Try to use a lower date to restrict number of qualified record to sync.';
+                return false;
+            }
+
+            $results = array();
+            //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
+            foreach ($this->orders as $object)
+            {
+                //if (in_array($product['type'], $productsTypesOk))
+                //{
+                $results[] = $object;
+                //}
+            }
 
             // Add debug
             if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
-                fwrite($h, "----- getCommandeToUpdate this->client->call(...");
-                fwrite($h, $this->client->__getLastRequestHeaders());
-                fwrite($h, $this->client->__getLastRequest());
-                fwrite($h, $this->client->__getLastResponseHeaders());
-                fwrite($h, $this->client->__getLastResponse());
+                fwrite($h, "----- getCommandeToUpdate this->api->get(...");
+                fwrite($h, var_export($opt, true));
+                fwrite($h, var_export($xml, true));
                 fclose($h);
             }
 
-            dol_syslog("getCommandeToUpdate end (found ".count($result)." record)");
-            return $result;
+            dol_syslog("getCommandeToUpdate end (found ".count($results)." record)");
+            return $results;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
-            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+            fwrite($h, var_export($opt, true));
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
-
-            // Add debug
-            if (! empty($conf->global->ECOMMERCENG_DEBUG))
-            {
-                $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
-                fwrite($h, "----- getCommandeToUpdate this->client->call(...");
-                fwrite($h, $this->client->__getLastRequestHeaders());
-                fwrite($h, $this->client->__getLastRequest());
-                fwrite($h, $this->client->__getLastResponseHeaders());
-                fwrite($h, $this->client->__getLastResponse());
-                fclose($h);
-            }
-
             return false;
         }
     }
@@ -323,33 +426,89 @@ class eCommerceRemoteAccessPrestashop
     {
         global $conf;
 
-        return array();
-
         try {
             dol_syslog("getFactureToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            $filter = array(
-                array('updated_at' => array('from' => dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard'))),
-            );
-            $result = $this->client->call($this->session, 'sales_order_invoice.list', $filter);
+            $filter = '['.dol_print_date($fromDate+1, 'dayrfc').','.dol_print_date($toDate, 'dayrfc').']';
+            //$filter = '[1]';      filter[active]
+            //var_dump($filter);
+            //$result = $this->client->call($this->session, 'catalog_product.list', $filter);
+            global $conf;
+
+            $this->start     = $options['start'];
+            $this->end       = $options['end'];
+            $this->per_page  = $options['per_page'];
+            $this->categorie = $options['categorie'];
+            $this->search    = $options['search'];
+
+            if ($this->end == 0) {
+                $this->end = $this->per_page;
+            }
+
+            $urltouse = preg_replace('/\/api\/?$/', '', $this->site->webservice_address);
+
+            try {
+                include_once DOL_DOCUMENT_ROOT.'/admin/dolistore/class/PSWebServiceLibrary.class.php';
+                $this->api = new PrestaShopWebservice($urltouse, $this->site->user_password, $this->debug_api);
+                dol_syslog("Call API with webservice_address = ".$urltouse);
+                // $this->site->user_password is for the login of basic auth. There is no password.
+
+                // Here we set the option array for the Webservice : we want products resources
+                $opt             = array();
+                $opt['resource']       = 'invoices';
+                $opt['display']        = '[id,name,id_default_image,id_category_default,reference,price,condition,show_price,date_add,date_upd,description_short,description,module_version]';
+                $opt['sort']           = 'date_upd_DESC';
+                $opt['filter[date_upd]'] = $filter;
+                $opt['date']           = 1;
+                $opt['limit']          = "0,501";
+                //$opt['output_format']  = 'JSON';
+
+                // Call API to get the detail
+                dol_syslog("Call API with opt = ".var_export($opt, true));
+                $xml                   = $this->api->get($opt);
+                $this->invoices        = $xml->invoices->children();
+            } catch (PrestaShopWebserviceException $e) {
+                // Here we are dealing with errors
+                $trace = $e->getTrace();
+                if ($trace[0]['args'][0] == 404) die('Bad ID');
+                elseif ($trace[0]['args'][0] == 401) die('You are not authorized, with current API key, to read invoices');
+                else
+                {
+                    print 'Can not access to '.$urltouse.'<br>';
+                    print $e->getMessage();
+                }
+            }
+
+            if (count($this->invoices) > 500)
+            {
+                $this->errors[]='Prestashop API are not able to return more than 500 products. Try to use a lower date to restrict number of qualified record to sync.';
+                return false;
+            }
+
+            $results = array();
+            //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
+            foreach ($this->invoices as $object)
+            {
+                //if (in_array($product['type'], $productsTypesOk))
+                //{
+                $results[] = $object;
+                //}
+            }
 
             // Add debug
             if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
-                fwrite($h, "----- getFactureToUpdate this->client->call(...");
-                fwrite($h, $this->client->__getLastRequestHeaders());
-                fwrite($h, $this->client->__getLastRequest());
-                fwrite($h, $this->client->__getLastResponseHeaders());
-                fwrite($h, $this->client->__getLastResponse());
+                fwrite($h, "----- getFactureToUpdate this->api->get(...");
+                fwrite($h, var_export($opt, true));
+                fwrite($h, var_export($xml, true));
                 fclose($h);
             }
 
-            dol_syslog("getFactureToUpdate end (found ".count($result)." record)");
-            return $result;
+            dol_syslog("getFactureToUpdate end (found ".count($results)." record)");
+            return $results;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
-            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+            fwrite($h, var_export($opt, true));
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
