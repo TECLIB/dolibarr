@@ -79,16 +79,18 @@ class eCommerceRemoteAccessPrestashop
             //dol_syslog("eCommerceRemoteAccessPrestashop Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".preg_replace('/./','*',$this->site->user_password));
             dol_syslog("eCommerceRemoteAccessPrestashop Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".$this->site->user_password);
 
-            // TODO Add option to manage mode "non WSDL". location and uri should be set on $params.
-            $this->client = new SoapClient($this->site->webservice_address, $params);
+            dol_syslog("eCommerceRemoteAccessPrestashop There is no connect process on PrestaShop");
 
-            dol_syslog("eCommerceRemoteAccessPrestashop new SoapClient ok. Now we call SOAP login method");
+            // TODO Add option to manage mode "non WSDL". location and uri should be set on $params.
+            //$this->client = new SoapClient($this->site->webservice_address, $params);
+
+            //dol_syslog("eCommerceRemoteAccessPrestashop new SoapClient ok. Now we call SOAP login method");
 
             //xdebug_disable();
-            $this->session = $this->client->login($this->site->user_name, $this->site->user_password);
+            //$this->session = $this->client->login($this->site->user_name, $this->site->user_password);
             //xdebug_enable();
 
-            dol_syslog("eCommerceRemoteAccessPrestashop connected with session=".$this->session);
+            //dol_syslog("eCommerceRemoteAccessPrestashop connected with session=".$this->session);
 
             return true;
         }
@@ -126,6 +128,8 @@ class eCommerceRemoteAccessPrestashop
     public function getSocieteToUpdate($fromDate, $toDate)
     {
         global $conf;
+
+        return array();
 
         try {
             dol_syslog("getSocieteToUpdate start gt = ".dol_print_date($fromDate, 'standard').", lt = ".dol_print_date($toDate, 'standard'));
@@ -170,34 +174,73 @@ class eCommerceRemoteAccessPrestashop
 
         try {
             dol_syslog("getProductToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            $filter = array(
-                array('updated_at' => array('from'=> dol_print_date($fromDate+1, 'standard'), 'to' => dol_print_date($toDate, 'standard'))),
-                //array('type_id', array('in' => array('simple', 'virtual', 'configurable', 'downloadable')))
-            );
-            //$filter = array(array('sku' => 'B-561801'));
-            //$filter = array(array('product_id' => 1148));
+            $filter = 'from:'.dol_print_date($fromDate+1, 'standard').'to:'.dol_print_date($toDate, 'standard');
+            //$filter = '[1]';      filter[active]
 
-            $result = $this->client->call($this->session, 'catalog_product.list', $filter);
+            //$result = $this->client->call($this->session, 'catalog_product.list', $filter);
+            global $conf;
+
+            $this->start     = $options['start'];
+            $this->end       = $options['end'];
+            $this->per_page  = $options['per_page'];
+            $this->categorie = $options['categorie'];
+            $this->search    = $options['search'];
+
+            if ($this->end == 0) {
+                $this->end = $this->per_page;
+            }
+
+            $urltouse = preg_replace('/\/api\/?$/', '', $this->site->webservice_address);
+
+            try {
+                include_once DOL_DOCUMENT_ROOT.'/admin/dolistore/class/PSWebServiceLibrary.class.php';
+                $this->api = new PrestaShopWebservice($urltouse, $this->site->user_password, $this->debug_api);
+                dol_syslog("Call API with webservice_address = ".$urltouse);
+                // $this->site->user_password is for the login of basic auth. There is no password.
+
+                // Here we set the option array for the Webservice : we want products resources
+                $opt             = array();
+                $opt['resource']       = 'products';
+                $opt['display']        = '[id,name,id_default_image,id_category_default,reference,price,condition,show_price,date_add,date_upd,description_short,description,module_version]';
+                $opt['sort']           = 'id_desc';
+                //$opt['filter[date_upd]'] = $filter;
+                $opt['limit']          = "0,10";
+                // $opt['filter[id]'] contais list of product id that are result of search
+
+                // Call API to get the detail
+                dol_syslog("Call API with opt = ".var_export($opt, true));
+                $xml                   = $this->api->get($opt);
+                $this->products        = $xml->products->children();
+            } catch (PrestaShopWebserviceException $e) {
+                // Here we are dealing with errors
+                $trace = $e->getTrace();
+                if ($trace[0]['args'][0] == 404) die('Bad ID');
+                elseif ($trace[0]['args'][0] == 401) die('Bad auth key');
+                else
+                {
+                    print 'Can not access to '.$urltouse.'<br>';
+                    print $e->getMessage();
+                }
+            }
+
 
             $results = array();
-            $productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
+            //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
             foreach ($result as $product)
             {
-                if (in_array($product['type'], $productsTypesOk))
-                {
+                //if (in_array($product['type'], $productsTypesOk))
+                //{
                     $results[] = $product;
-                }
+                //}
             }
 
             // Add debug
             if (! empty($conf->global->ECOMMERCENG_DEBUG))
             {
                 $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
-                fwrite($h, "----- getProductToUpdate this->client->call(...");
-                fwrite($h, $this->client->__getLastRequestHeaders());
-                fwrite($h, $this->client->__getLastRequest());
-                fwrite($h, $this->client->__getLastResponseHeaders());
-                fwrite($h, $this->client->__getLastResponse());
+                fwrite($h, "----- getProductToUpdate this->api->get(...");
+                fwrite($h, var_export($opt, true));
+                fwrite($h, var_export($xml, true));
                 fclose($h);
             }
 
@@ -205,8 +248,7 @@ class eCommerceRemoteAccessPrestashop
             return $results;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
-            dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
-            dol_syslog($this->client->__getLastRequest(), LOG_WARNING);
+            fwrite($h, var_export($opt, true));
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
@@ -222,6 +264,8 @@ class eCommerceRemoteAccessPrestashop
     public function getCommandeToUpdate($fromDate, $toDate)
     {
         global $conf;
+
+        return array();
 
         try {
             dol_syslog("getCommandeToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
@@ -278,6 +322,8 @@ class eCommerceRemoteAccessPrestashop
     public function getFactureToUpdate($fromDate, $toDate)
     {
         global $conf;
+
+        return array();
 
         try {
             dol_syslog("getFactureToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
@@ -1296,14 +1342,15 @@ class eCommerceRemoteAccessPrestashop
     /**
      * Return the magento's category tree
      *
-     * @return  array|boolean       Array with categories or false if error
+     * @return  array|boolean       Array with categories or false if error:
+     *                              array(array('level'=>, 'updated_at'=>, 'category_id'=> ), ...)
      */
     public function getRemoteCategoryTree()
     {
         dol_syslog("eCommerceRemoteAccessPrestashop getRemoteCategoryTree");
         try {
-            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
-            $result = $this->client->call($this->session, 'catalog_category.tree');
+            //$result = $this->client->call($this->session, 'catalog_category.tree');
+            $result = array();
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
             $this->errors[]=$this->site->name.': '.$fault->getMessage().'-'.$fault->getCode();
@@ -1328,7 +1375,6 @@ class eCommerceRemoteAccessPrestashop
     {
         dol_syslog("eCommerceRemoteAccessPrestashop getRemoteCategoryAtt session=".$this->session);
         try {
-            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category_attribute.list');
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
@@ -1352,7 +1398,6 @@ class eCommerceRemoteAccessPrestashop
     {
         dol_syslog("eCommerceRemoteAccessPrestashop getRemoteAddressIdForSociete remote customer_id=".$remote_thirdparty_id);
         try {
-            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'customer_address.list', array('customerId'=>$remote_thirdparty_id));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
@@ -1377,7 +1422,6 @@ class eCommerceRemoteAccessPrestashop
     {
         dol_syslog("eCommerceRemoteAccessPrestashop getCategoryData remote category_id=".$category_id);
         try {
-            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category.info', array('categoryId'=>$category_id));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {

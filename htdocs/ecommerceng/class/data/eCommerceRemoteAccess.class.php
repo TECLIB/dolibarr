@@ -79,9 +79,9 @@ class eCommerceRemoteAccess
     /**
      * Get societe to update from instantiated class in the constructor
      *
-     * @param   datetime    $fromDate Updates from this date
-     * @param   datetime    $toDate   Updates to this date
-     * @return  array                 Array of remote societe
+     * @param   integer    $fromDate Updates from this date
+     * @param   integer    $toDate   Updates to this date
+     * @return  array                Array of remote societe
      */
     public function getSocieteToUpdate($fromDate, $toDate)
 	{

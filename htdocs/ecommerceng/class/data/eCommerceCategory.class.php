@@ -540,7 +540,9 @@ class eCommerceCategory // extends CommonObject
      * 		Function to put each category of a tree in a unique array. Children are always after parents.
      *
      * 		@param	   array       $tree          Array containing arrays of the same kind
+     *                                            array(array('level'=>0, '...', 'children'=>array('level'=>1, '...', 'children'=>array ...
      *      @param     array       $resanswer     Array containing each category on a unique level (without the tree root)
+     *                                            array(array('level'=>, '...'), array('level'=>, '...'), ..., array('level'=>, '...'));
      * 		@return    void
      */
     public function cuttingCategoryTreeFromMagentoToDolibarrNew($tree, &$resanswer)

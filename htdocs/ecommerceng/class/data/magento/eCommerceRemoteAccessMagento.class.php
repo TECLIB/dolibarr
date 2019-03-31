@@ -1296,13 +1296,13 @@ class eCommerceRemoteAccessMagento
     /**
      * Return the magento's category tree
      *
-     * @return  array|boolean       Array with categories or false if error
+     * @return  array|boolean       Array with categories or false if error:
+     *                              array(array('level'=>, 'updated_at'=>, 'category_id'=> ,'children'=>array(...
      */
     public function getRemoteCategoryTree()
     {
         dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree");
         try {
-            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category.tree');
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
@@ -1328,7 +1328,6 @@ class eCommerceRemoteAccessMagento
     {
         dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryAtt session=".$this->session);
         try {
-            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category_attribute.list');
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
@@ -1352,7 +1351,6 @@ class eCommerceRemoteAccessMagento
     {
         dol_syslog("eCommerceRemoteAccessMagento getRemoteAddressIdForSociete remote customer_id=".$remote_thirdparty_id);
         try {
-            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'customer_address.list', array('customerId'=>$remote_thirdparty_id));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {
@@ -1377,7 +1375,6 @@ class eCommerceRemoteAccessMagento
     {
         dol_syslog("eCommerceRemoteAccessMagento getCategoryData remote category_id=".$category_id);
         try {
-            //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category.info', array('categoryId'=>$category_id));
             //dol_syslog($this->client->__getLastRequest());
         } catch (SoapFault $fault) {

@@ -107,7 +107,7 @@ class eCommerceSynchro
         }
         catch (Exception $e)
         {
-            $this->errors[] = $this->langs->trans('ECommerceConnectErrorCheckUsernamePasswordAndAdress');
+            $this->errors[] = 'ERRCON03 '.$this->langs->trans('ECommerceConnectErrorCheckUsernamePasswordAndAdress');
         }
     }
 
@@ -122,7 +122,7 @@ class eCommerceSynchro
         {
             if (! $this->eCommerceRemoteAccess->connect())
             {
-                $this->error = $this->langs->trans('ECommerceConnectErrorCheckUsernamePasswordAndAdress');
+                $this->error = 'ERRCON01 '.$this->langs->trans('ECommerceConnectErrorCheckUsernamePasswordAndAdress');
                 $this->errors[] = $this->error;
                 $this->errors= array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
                 dol_syslog("eCommerceSynchro Connect error ".$this->error, LOG_DEBUG);
@@ -137,7 +137,8 @@ class eCommerceSynchro
         }
         catch (Exception $e)
         {
-            $this->errors[] = $this->langs->trans('ECommerceConnectErrorCheckUsernamePasswordAndAdress');
+            $this->errors[] = 'ERRCON02 '.$this->langs->trans('ECommerceConnectErrorCheckUsernamePasswordAndAdress');
+            $this->errors[] = 'Exception in connect : '.$e->getMessage();
         }
 
         return -1;
@@ -471,7 +472,16 @@ class eCommerceSynchro
                 if (is_array($tmp))
                 {
                     $resanswer = array();
-                    eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
+
+                    // Reformat the array of categories
+                    if ($this->eCommerceSite->type == 1)    // Magento
+                    {
+                        eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
+                    }
+                    else
+                    {
+                        $resanswer = $tmp;
+                    }
 
                     $this->initECommerceCategory(); // Initialise 2 properties eCommerceCategory and eCommerceMotherCategory
 
