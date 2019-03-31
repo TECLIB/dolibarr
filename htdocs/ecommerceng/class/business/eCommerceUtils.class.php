@@ -42,7 +42,7 @@ class eCommerceUtils
     /**
      * Constructor
      *
-     * @param Database          $db           Database handler
+     * @param DoliDB            $db           Database handler
      * @param eCommerceSite     $site         Object eCommerceSite
      * @param datetime          $toDate       Ending date to synch all data modified before this date (null by default = until now)
      * @param int               $toNb         Max nb of record to count or synch (Used only for synch, not for count for the moment !)

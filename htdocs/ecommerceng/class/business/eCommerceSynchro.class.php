@@ -3076,7 +3076,7 @@ class eCommerceSynchro
     /**
      * Synchronize shipment
      *
-     * @param   Shipment    $livraison          Shipment object
+     * @param   Expedition  $livraison          Shipment object
      * @param   int         $remote_order_id    Remote id of order
      * @return  bool                            true or false
      */
@@ -3095,7 +3095,6 @@ class eCommerceSynchro
     }
 
 
-
     /**
      * Return dictionnary entry for a code
      *
@@ -3110,53 +3109,6 @@ class eCommerceSynchro
         return $settlementTerms['rowid'];
     }
 
-    /*private function getAnonymousConstValue()
-    {
-        $table = MAIN_DB_PREFIX . "const";
-        $eCommerceDict = new eCommerceDict($this->db, $table);
-        return $eCommerceDict->getAnonymousConstValue();
-    }*/
-
-    /**
-     * Check if constant ECOMMERCE_COMPANY_ANONYMOUS exists with value of the generic thirdparty id.
-     *
-     * @return	int		    <0 if KO, eCommerceAnonymous->id if OK
-     */
-    /*public function checkAnonymous()
-    {
-        $dbAnonymousExists=0;
-
-        //check if dbSociete anonymous exists
-        $dBSociete = new Societe($this->db);
-        $anonymousId = $this->getAnonymousConstValue();             // Get id into var ECOMMERCE_COMPANY_ANONYMOUS if it exists
-        if ($anonymousId > 0)
-        {
-            $dbAnonymousExists = $dBSociete->fetch($anonymousId);
-        }
-        if ($dbAnonymousExists > 0)
-        {
-            $eCommerceSocieteAnonymous = new eCommerceSociete($this->db);
-            $eCommerceAnonymousExists = $eCommerceSocieteAnonymous->fetchByFkSociete($anonymousId, $this->eCommerceSite->id);   // search into llx_ecommerce_societe
-            if ($eCommerceAnonymousExists < 0)  // If entry not found into llx_ecommerce_site, we create it.
-            {
-                $eCommerceSocieteAnonymous->fk_societe = $anonymousId;
-                $eCommerceSocieteAnonymous->fk_site = $this->eCommerceSite->id;
-                $eCommerceSocieteAnonymous->remote_id = 0;
-
-                if ($eCommerceSocieteAnonymous->create($this->user) < 0)
-                {
-                    $this->errors[] = $this->langs->trans('ECommerceAnonymousCreateFailed') . ' ' . $this->langs->trans('ECommerceReboot');
-                    return -1;
-                }
-            }
-            return $eCommerceSocieteAnonymous->id;
-        }
-        else
-        {
-            $this->errors[] = $this->langs->trans('ECommerceNoDbAnonymous') . ' ' . $this->langs->trans('ECommerceReboot');
-            return -1;
-        }
-    }*/
 
     /**
      * Delete any data linked to synchronization, then delete synchro's datas to clean sync
