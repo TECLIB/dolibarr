@@ -7,7 +7,7 @@ if (empty($conf) || ! is_object($conf))
 	exit;
 }
 
-
+var_dump($site->id);
 llxHeader();
 
 if (is_object($site))

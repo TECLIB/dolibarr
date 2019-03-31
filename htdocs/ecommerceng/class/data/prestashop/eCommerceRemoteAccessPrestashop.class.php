@@ -25,7 +25,7 @@ dol_include_once('/ecommerceng/class/data/eCommerceSociete.class.php');
 /**
  * Class for access remote sites
  */
-class eCommerceRemoteAccessMagento
+class eCommerceRemoteAccessPrestashop
 {
 
     private $site;
@@ -76,19 +76,19 @@ class eCommerceRemoteAccessMagento
             var_dump($aaa);
             exit;*/
 
-            //dol_syslog("eCommerceRemoteAccessMagento Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".preg_replace('/./','*',$this->site->user_password));
-            dol_syslog("eCommerceRemoteAccessMagento Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".$this->site->user_password);
+            //dol_syslog("eCommerceRemoteAccessPrestashop Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".preg_replace('/./','*',$this->site->user_password));
+            dol_syslog("eCommerceRemoteAccessPrestashop Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".$this->site->user_password);
 
             // TODO Add option to manage mode "non WSDL". location and uri should be set on $params.
             $this->client = new SoapClient($this->site->webservice_address, $params);
 
-            dol_syslog("eCommerceRemoteAccessMagento new SoapClient ok. Now we call SOAP login method");
+            dol_syslog("eCommerceRemoteAccessPrestashop new SoapClient ok. Now we call SOAP login method");
 
             //xdebug_disable();
             $this->session = $this->client->login($this->site->user_name, $this->site->user_password);
             //xdebug_enable();
 
-            dol_syslog("eCommerceRemoteAccessMagento connected with session=".$this->session);
+            dol_syslog("eCommerceRemoteAccessPrestashop connected with session=".$this->session);
 
             return true;
         }
@@ -103,7 +103,7 @@ class eCommerceRemoteAccessMagento
                 if (! empty($conf->global->ECOMMERCENG_DEBUG))
                 {
                     $h=fopen(DOL_DATA_ROOT.'/dolibarr_ecommerceng.log', 'a+');
-                    fwrite($h, "----- eCommerceRemoteAccessMagento this->client->login(...");
+                    fwrite($h, "----- eCommerceRemoteAccessPrestashop this->client->login(...");
                     fwrite($h, $this->client->__getLastRequestHeaders());
                     fwrite($h, $this->client->__getLastRequest());
                     fwrite($h, $this->client->__getLastResponseHeaders());
@@ -1033,7 +1033,7 @@ class eCommerceRemoteAccessMagento
 						// If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
 						if ($product_type == 'configurable') {
 
-							$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
+							$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Prestashop, the tax_amount is the amount of tax for the line after removing the part of discount
 
 							$configurableItems[$item['item_id']] = array(
 							'item_id' => $item['item_id'],
@@ -1048,7 +1048,7 @@ class eCommerceRemoteAccessMagento
 							// If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
 							if (! array_key_exists($parent_item_id, $configurableItems)) {
 
-								$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
+								$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Prestashop, the tax_amount is the amount of tax for the line after removing the part of discount
 
 								$tmpitem = array(
 								'item_id' => $item['item_id'],
@@ -1300,7 +1300,7 @@ class eCommerceRemoteAccessMagento
      */
     public function getRemoteCategoryTree()
     {
-        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree");
+        dol_syslog("eCommerceRemoteAccessPrestashop getRemoteCategoryTree");
         try {
             //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category.tree');
@@ -1315,7 +1315,7 @@ class eCommerceRemoteAccessMagento
             return false;
         }
         //var_dump($result);
-        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryTree end. Result is a tree of arrays with children in attribute children");
+        dol_syslog("eCommerceRemoteAccessPrestashop getRemoteCategoryTree end. Result is a tree of arrays with children in attribute children");
         return $result;
     }
 
@@ -1326,7 +1326,7 @@ class eCommerceRemoteAccessMagento
      */
     /*public function getRemoteCategoryAtt()
     {
-        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryAtt session=".$this->session);
+        dol_syslog("eCommerceRemoteAccessPrestashop getRemoteCategoryAtt session=".$this->session);
         try {
             //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category_attribute.list');
@@ -1338,7 +1338,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
-        dol_syslog("eCommerceRemoteAccessMagento getRemoteCategoryAtt end");
+        dol_syslog("eCommerceRemoteAccessPrestashop getRemoteCategoryAtt end");
         return $result;
     }*/
 
@@ -1350,7 +1350,7 @@ class eCommerceRemoteAccessMagento
      */
     public function getRemoteAddressIdForSociete($remote_thirdparty_id)
     {
-        dol_syslog("eCommerceRemoteAccessMagento getRemoteAddressIdForSociete remote customer_id=".$remote_thirdparty_id);
+        dol_syslog("eCommerceRemoteAccessPrestashop getRemoteAddressIdForSociete remote customer_id=".$remote_thirdparty_id);
         try {
             //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'customer_address.list', array('customerId'=>$remote_thirdparty_id));
@@ -1362,7 +1362,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
-        dol_syslog("eCommerceRemoteAccessMagento getRemoteAddressIdForSociete end");
+        dol_syslog("eCommerceRemoteAccessPrestashop getRemoteAddressIdForSociete end");
         return $result;
     }
 
@@ -1375,7 +1375,7 @@ class eCommerceRemoteAccessMagento
      */
     public function getCategoryData($category_id)
     {
-        dol_syslog("eCommerceRemoteAccessMagento getCategoryData remote category_id=".$category_id);
+        dol_syslog("eCommerceRemoteAccessPrestashop getCategoryData remote category_id=".$category_id);
         try {
             //$result = $this->client->call($this->session, 'auguria_dolibarrapi_catalog_category.tree');
             $result = $this->client->call($this->session, 'catalog_category.info', array('categoryId'=>$category_id));
@@ -1387,7 +1387,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
-        dol_syslog("eCommerceRemoteAccessMagento getCategoryData end");
+        dol_syslog("eCommerceRemoteAccessPrestashop getCategoryData end");
         return $result;
     }
 
@@ -1401,7 +1401,7 @@ class eCommerceRemoteAccessMagento
     {
         $commande = array();
         try {
-            dol_syslog("eCommerceRemoteAccessMagento getRemoteCommande begin remote order_id=".$remoteCommandeId);
+            dol_syslog("eCommerceRemoteAccessPrestashop getRemoteCommande begin remote order_id=".$remoteCommandeId);
             $result = $this->client->call($this->session, 'sales_order.list', array(array('order_id' => $remoteCommandeId)));
             //dol_syslog($this->client->__getLastRequest());
             if (count($result == 1))
@@ -1409,7 +1409,7 @@ class eCommerceRemoteAccessMagento
                 $commande = $this->client->call($this->session, 'sales_order.info', $result[0]['increment_id']);
                 //dol_syslog($this->client->__getLastRequest());
             }
-            dol_syslog("eCommerceRemoteAccessMagento getRemoteCommande end");
+            dol_syslog("eCommerceRemoteAccessPrestashop getRemoteCommande end");
         } catch (SoapFault $fault) {
             $this->errors[]=$this->site->name.': '.$fault->getMessage().'-'.$fault->getCode();
             dol_syslog($this->client->__getLastRequestHeaders(), LOG_WARNING);
@@ -1431,7 +1431,7 @@ class eCommerceRemoteAccessMagento
      */
     public function updateRemoteProduct($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteProduct session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteProduct session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
 
         $result = false;
 
@@ -1467,7 +1467,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteProduct end");
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteProduct end");
         return $result;
     }
 
@@ -1480,7 +1480,7 @@ class eCommerceRemoteAccessMagento
      */
     public function updateRemoteStockProduct($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteStockProduct session=".$this->session." product remote_id=".$remote_id." movement object->id=".$object->id.", new qty=".$object->qty_after);
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteStockProduct session=".$this->session." product remote_id=".$remote_id." movement object->id=".$object->id.", new qty=".$object->qty_after);
 
         $result = false;
 
@@ -1513,7 +1513,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteStockProduct end");
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteStockProduct end");
         return $result;
     }
 
@@ -1526,7 +1526,7 @@ class eCommerceRemoteAccessMagento
      */
     public function updateRemoteSociete($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteSociete session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteSociete session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
 
         $result = false;
 
@@ -1552,7 +1552,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteSociete end");
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteSociete end");
         return $result;
     }
 
@@ -1565,7 +1565,7 @@ class eCommerceRemoteAccessMagento
      */
     public function updateRemoteSocpeople($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteSocpeople session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteSocpeople session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
 
         $result = false;
 
@@ -1596,7 +1596,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteSocpeople end");
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteSocpeople end");
         return $result;
     }
 
@@ -1609,7 +1609,7 @@ class eCommerceRemoteAccessMagento
      */
     public function updateRemoteCommande($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteCommande session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteCommande session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
 
         $result = true;
 
@@ -1634,7 +1634,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteCommande end");
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteCommande end");
         return $result;
     }
 
@@ -1647,7 +1647,7 @@ class eCommerceRemoteAccessMagento
      */
     public function updateRemoteFacture($remote_id, $object)
     {
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteFacture session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteFacture session=".$this->session." remote_id=".$remote_id." object->id=".$object->id);
 
         $result = false;
         /*
@@ -1665,7 +1665,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
             return false;
         }*/
-        dol_syslog("eCommerceRemoteAccessMagento updateRemoteFacture end");
+        dol_syslog("eCommerceRemoteAccessPrestashop updateRemoteFacture end");
         return $result;
     }
 
@@ -1680,15 +1680,15 @@ class eCommerceRemoteAccessMagento
     {
         $result = false;
 
-        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison session=" . $this->session . " dolibarr shipment id = " . $livraison->id . ", ref = " . $livraison->ref . ", order remote id = " . $remote_order_id);
+        dol_syslog("eCommerceRemoteAccessPrestashop createRemoteLivraison session=" . $this->session . " dolibarr shipment id = " . $livraison->id . ", ref = " . $livraison->ref . ", order remote id = " . $remote_order_id);
         $remoteCommande = $this->getRemoteCommande($remote_order_id); // SOAP request to get data
         $livraisonArray = get_object_vars($livraison);
         try {
             $orderItemQty = array();
-            foreach ($remoteCommande['items'] as $productMagento) {
+            foreach ($remoteCommande['items'] as $productPrestashop) {
                 foreach ($livraisonArray['lines'] as $lines) {
-                    if ($lines->product_ref == $productMagento['sku']) {
-                        $orderItemQty[$productMagento['item_id']] = $lines->qty_shipped;
+                    if ($lines->product_ref == $productPrestashop['sku']) {
+                        $orderItemQty[$productPrestashop['item_id']] = $lines->qty_shipped;
                     }
                 }
             }
@@ -1708,7 +1708,7 @@ class eCommerceRemoteAccessMagento
             dol_syslog($this->client->__getLastResponse(),LOG_WARNING);
             return false;
         }
-        dol_syslog("eCommerceRemoteAccessMagento createRemoteLivraison end");
+        dol_syslog("eCommerceRemoteAccessPrestashop createRemoteLivraison end");
         return $result;
     }
 

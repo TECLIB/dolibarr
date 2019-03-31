@@ -49,10 +49,11 @@ class eCommerceRemoteAccessWoocommerce
 
     /**
      *      Constructor
+     *
      *      @param      DoliDB      $db         Database handler
      *      @param      string      $site       eCommerceSite
      */
-    function eCommerceRemoteAccessWoocommerce($db, $site)
+    function __construct($db, $site)
     {
         $this->db = $db;
         $this->site = $site;

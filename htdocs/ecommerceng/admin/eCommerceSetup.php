@@ -58,6 +58,7 @@ $siteDb = new eCommerceSite($db);
 
 $sites = $siteDb->listSites();
 $siteTypes = $siteDb->getSiteTypes();
+$siteTypesLabel = $siteDb->getSiteTypesLabel();
 $site_form_select_site = 0;
 
 // Set $site_form_select_site on first site.

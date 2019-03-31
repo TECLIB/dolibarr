@@ -78,8 +78,8 @@ if (count($sites))
 						<select class="flat" name="ecommerce_type">
 							<option value="0">&nbsp;</option>
 							<?php
-								if (count($siteTypes))
-									foreach ($siteTypes as $key=>$value)
+								if (count($siteTypesLabel))
+								    foreach ($siteTypesLabel as $key=>$value)
 									{
 										print '
 											<option';
@@ -90,8 +90,8 @@ if (count($sites))
 ?>
 						</select>
 							<?php
-							// Check if SOAP is on for Magento and WooCommerce
-							if ($ecommerceType && in_array($ecommerceType, array(1, 2)) && ! extension_loaded('soap'))
+							// Check if SOAP is on for platform that need SOAP
+							if ($ecommerceType && in_array($ecommerceType, array(1, 2, 3)) && ! extension_loaded('soap'))
                             {
                                 print info_admin($langs->trans("ErrorModuleSoapRequired"), 0, 0, 'error');
                             }

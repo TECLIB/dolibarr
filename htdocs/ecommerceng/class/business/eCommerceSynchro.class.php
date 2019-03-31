@@ -305,8 +305,11 @@ class eCommerceSynchro
 
     public function getNbCategoriesInDolibarrLinkedToE($excludeid = 0)
     {
-        $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE type = 0";
+        $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_category";
+        $sql.=" WHERE type = 0";
+        $sql.=" AND fk_site = ".$this->eCommerceSite->id;
         $sql.=" AND fk_category <> ".$excludeid;
+
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -337,6 +340,8 @@ class eCommerceSynchro
     public function getNbProductInDolibarrLinkedToE()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_product";
+        $sql.=" WHERE fk_site = ".$this->eCommerceSite->id;
+
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -371,6 +376,7 @@ class eCommerceSynchro
     public function getNbSocieteInDolibarrLinkedToE()
     {
         $sql="SELECT COUNT(s.rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_societe as s";
+        $sql.=" WHERE fk_site = ".$this->eCommerceSite->id;
 
         $resql=$this->db->query($sql);
         if ($resql)
@@ -402,6 +408,8 @@ class eCommerceSynchro
     public function getNbCommandeInDolibarrLinkedToE()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_commande";
+        $sql.=" WHERE fk_site = ".$this->eCommerceSite->id;
+
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -432,6 +440,8 @@ class eCommerceSynchro
     public function getNbFactureInDolibarrLinkedToE()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_facture";
+        $sql.=" WHERE fk_site = ".$this->eCommerceSite->id;
+
         $resql=$this->db->query($sql);
         if ($resql)
         {
