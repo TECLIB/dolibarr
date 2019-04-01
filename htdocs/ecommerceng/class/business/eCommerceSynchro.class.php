@@ -474,7 +474,7 @@ class eCommerceSynchro
                     $resanswer = array();
 
                     // Reformat the array of categories
-                    if ($this->eCommerceSite->type == 1)    // Magento
+                    if ($this->eCommerceSite->type == $this->eCommerceSite::TYPE_MAGENTO)    // Magento
                     {
                         eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
                     }
@@ -1235,16 +1235,19 @@ class eCommerceSynchro
                         // We can disable this to have contact/address of thirdparty synchronize only when an order or invoice is synchronized
                         if (! $error)
                         {
-                            dol_syslog("Make a remote call to get contacts");   // Slow because done on each thirdparty to sync.
-                            $listofaddressids=$this->eCommerceRemoteAccess->getRemoteAddressIdForSociete($societeArray['remote_id']);   // Ask contacts to magento
-                            if (is_array($listofaddressids))
+                            if ($this->eCommerceSite->type != $this->eCommerceSite::TYPE_PRESTASHOP)
                             {
-                                $socpeoples = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSocpeople($listofaddressids);
-                                foreach($socpeoples as $tmpsocpeople)
+                                dol_syslog("Make a remote call to get contacts");   // Slow because done on each thirdparty to sync.
+                                $listofaddressids=$this->eCommerceRemoteAccess->getRemoteAddressIdForSociete($societeArray['remote_id']);   // Ask contacts to magento
+                                if (is_array($listofaddressids))
                                 {
-                                    $tmpsocpeople['fk_soc']=$dBSociete->id;
-                                    $tmpsocpeople['type']=1;    // address of company
-                                    $socpeopleCommandeId = $this->synchSocpeople($tmpsocpeople);
+                                    $socpeoples = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSocpeople($listofaddressids);
+                                    foreach($socpeoples as $tmpsocpeople)
+                                    {
+                                        $tmpsocpeople['fk_soc']=$dBSociete->id;
+                                        $tmpsocpeople['type']=1;    // address of company
+                                        $socpeopleCommandeId = $this->synchSocpeople($tmpsocpeople);
+                                    }
                                 }
                             }
                         }
@@ -1920,7 +1923,7 @@ class eCommerceSynchro
      */
     public function synchCommande($toNb=0)
     {
-        global $conf, $user;
+        global $conf;
 
         $error = 0;
 
@@ -2019,7 +2022,7 @@ class eCommerceSynchro
                                 $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
                                 $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
 
-                                $result = $dBCommande->update($user);
+                                $result = $dBCommande->update($this->user);
                                 if ($result <= 0)
                                 {
                                     $error++;
@@ -2060,11 +2063,11 @@ class eCommerceSynchro
                                         {
                                             if ((float) DOL_VERSION < 10)
                                             {
-	                                            $dBCommande->set_draft($user, 0);
+	                                            $dBCommande->set_draft($this->user, 0);
                                             }
                                             else
                                             {
-	                                            $dBCommande->setDraft($user, 0);
+	                                            $dBCommande->setDraft($this->user, 0);
                                             }
                                         }
                                     }
@@ -2089,14 +2092,14 @@ class eCommerceSynchro
                                             $idWareHouse = 0;
                                             // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
                                             //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
-                                            $dBCommande->cancel(0, $idWarehouse);
+                                            $dBCommande->cancel(0, $idWareHouse);
                                         }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CLOSED)
                                     {
                                         if ($dBCommande->statut != Commande::STATUS_CLOSED)
                                         {
-                                            $dBCommande->cloture($user);
+                                            $dBCommande->cloture($this->user);
                                         }
                                         // order in Dolibarr not yet billed and billed status in ecommerce is done
                                         if (! $dBCommande->billed && $commandeArray['billed'] == 1)
@@ -2454,7 +2457,7 @@ class eCommerceSynchro
      */
     public function synchFacture($toNb=0)
     {
-        global $conf, $user;
+        global $conf;
 
         $error = 0;
 
@@ -2649,7 +2652,7 @@ class eCommerceSynchro
 
                                         		$payment->note=$paymentnote;
 
-                                        		$resultpayment = $payment->create($user, 1);
+                                        		$resultpayment = $payment->create($this->user, 1);
 
                                         		if ($resultpayment < 0)
                                         		{
@@ -2663,7 +2666,7 @@ class eCommerceSynchro
                                         	{
                                         		$label='(CustomerInvoicePayment)';
                                         		if ($dBFacture->type == Facture::TYPE_CREDIT_NOTE) $label='(CustomerInvoicePaymentBack)';  // Refund of a credit note
-                                        		$result=$payment->addPaymentToBank($user,'payment',$label,$accountid,$chqsendername,$chqbankname);
+                                        		$result=$payment->addPaymentToBank($this->user,'payment',$label,$accountid,$chqsendername,$chqbankname);
                                         		if ($result < 0)
                                         		{
                                         			setEventMessages($paiement->error, $paiement->errors, 'errors');
@@ -2941,7 +2944,7 @@ class eCommerceSynchro
 
 	                                        $payment->note=$paymentnote;
 
-	                                        $resultpayment = $payment->create($user, 1);
+	                                        $resultpayment = $payment->create($this->user, 1);
 
 	                                        if ($resultpayment < 0)
 	                                        {
@@ -2955,7 +2958,7 @@ class eCommerceSynchro
                                         {
                                         	$label='(CustomerInvoicePayment)';
                                         	if ($dBFacture->type == Facture::TYPE_CREDIT_NOTE) $label='(CustomerInvoicePaymentBack)';  // Refund of a credit note
-                                        	$result=$payment->addPaymentToBank($user,'payment',$label,$accountid,$chqsendername,$chqbankname);
+                                        	$result=$payment->addPaymentToBank($this->user,'payment',$label,$accountid,$chqsendername,$chqbankname);
                                         	if ($result < 0)
                                         	{
                                         		setEventMessages($paiement->error, $paiement->errors, 'errors');

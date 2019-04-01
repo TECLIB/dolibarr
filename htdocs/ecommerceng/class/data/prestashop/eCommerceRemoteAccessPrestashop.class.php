@@ -129,6 +129,9 @@ class eCommerceRemoteAccessPrestashop
     {
         global $conf;
 
+        $error = 0;
+        $results = array();
+
         try {
             dol_syslog("getSocieteToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
             $filter = '['.dol_print_date($fromDate+1, 'dayrfc').','.dol_print_date($toDate, 'dayrfc').']';
@@ -156,10 +159,11 @@ class eCommerceRemoteAccessPrestashop
                 // $this->site->user_password is for the login of basic auth. There is no password.
 
                 // Here we set the option array for the Webservice : we want products resources
+                // id, id_default_group, id_lang, newsletter_date_add, ip_registration_newsletter, last_passwd_gen, secure_key, deleted, passwd, lastname, firstname, email, id_gender, birthday, newsletter, optin, website, company, siret, ape, outstanding_allow_amount, show_public_prices, id_risk, max_payment_days, active, note, is_guest, id_shop, id_shop_group, date_add, date_upd
                 $opt             = array();
                 $opt['resource']       = 'customers';
-                $opt['display']        = 'full';
-                $opt['sort']           = 'date_upd_DESC';
+                $opt['display']        = '[id,id_lang,deleted,lastname,firstname,email,company,siret,ape,active,date_add,date_upd]';
+                $opt['sort']           = 'date_upd_ASC';
                 $opt['filter[date_upd]'] = $filter;
                 $opt['date']           = 1;
                 $opt['limit']          = "0,501";
@@ -172,29 +176,35 @@ class eCommerceRemoteAccessPrestashop
             } catch (PrestaShopWebserviceException $e) {
                 // Here we are dealing with errors
                 $trace = $e->getTrace();
-                if ($trace[0]['args'][0] == 404) die('Bad ID');
-                elseif ($trace[0]['args'][0] == 401) die('You are not authorized, with current API key, to read customers');
+                if ($trace[0]['args'][0] == 404) $this->error = 'Bad ID';
+                elseif ($trace[0]['args'][0] == 401) $this->error = 'You are not authorized, with current API key, to read customers';
                 else
                 {
-                    print 'Can not access to '.$urltouse.'<br>';
-                    print $e->getMessage();
+                    $this->error = 'Can not access to '.$urltouse.'<br>'.$e->getMessage();
                 }
+                $this->errors[]=$this->error;
+                dol_syslog(__METHOD__.': '.$this->error, LOG_WARNING);
+                $error++;
             }
 
             if (count($this->customers) > 500)
             {
-                $this->errors[]='Prestashop API are not able to return more than 500 customers. Try to use a lower date to restrict number of qualified record to sync.';
-                return false;
+                $this->error='Prestashop API are not able to return more than 500 customers. Try to use a lower date to restrict number of qualified record to sync.';
+                $this->errors[]=$this->error;
+                dol_syslog(__METHOD__.': '.$this->error, LOG_WARNING);
+                $error++;
             }
 
-            $results = array();
-            //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
-            foreach ($this->customers as $object)
+            if (! $error)
             {
-                //if (in_array($product['type'], $productsTypesOk))
-                //{
-                $results[] = $object;
-                //}
+                //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
+                foreach ($this->customers as $object)
+                {
+                    //if (in_array($product['type'], $productsTypesOk))
+                    //{
+                    $results[] = $object;
+                    //}
+                }
             }
 
             // Add debug
@@ -208,7 +218,8 @@ class eCommerceRemoteAccessPrestashop
             }
 
             dol_syslog("getSocieteToUpdate end (found ".count($results)." record)");
-            return $results;
+            if (! $error) return $results;
+            else return false;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             fwrite($h, var_export($opt, true));
@@ -227,6 +238,9 @@ class eCommerceRemoteAccessPrestashop
     public function getProductToUpdate($fromDate, $toDate)
     {
         global $conf;
+
+        $error = 0;
+        $results = array();
 
         try {
             dol_syslog("getProductToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
@@ -258,7 +272,7 @@ class eCommerceRemoteAccessPrestashop
                 $opt             = array();
                 $opt['resource']       = 'products';
                 $opt['display']        = '[id,name,id_default_image,id_category_default,reference,price,condition,show_price,date_add,date_upd,description_short,description,module_version]';
-                $opt['sort']           = 'date_upd_DESC';
+                $opt['sort']           = 'date_upd_ASC';
                 $opt['filter[date_upd]'] = $filter;
                 $opt['date']           = 1;
                 $opt['limit']          = "0,501";
@@ -271,29 +285,35 @@ class eCommerceRemoteAccessPrestashop
             } catch (PrestaShopWebserviceException $e) {
                 // Here we are dealing with errors
                 $trace = $e->getTrace();
-                if ($trace[0]['args'][0] == 404) die('Bad ID');
-                elseif ($trace[0]['args'][0] == 401) die('You are not authorized, with current API key, to read products');
+                if ($trace[0]['args'][0] == 404) $this->error = 'Bad ID';
+                elseif ($trace[0]['args'][0] == 401) $this->error = 'You are not authorized, with current API key, to read products';
                 else
                 {
-                    print 'Can not access to '.$urltouse.'<br>';
-                    print $e->getMessage();
+                    $this->error = 'Can not access to '.$urltouse.'<br>'.$e->getMessage();
                 }
+                $this->errors[]=$this->error;
+                dol_syslog(__METHOD__.': '.$this->error, LOG_WARNING);
+                $error++;
             }
 
             if (count($this->products) > 500)
             {
-                $this->errors[]='Prestashop API are not able to return more than 500 products. Try to use a lower date to restrict number of qualified record to sync.';
+                $this->error='Prestashop API are not able to return more than 500 products. Try to use a lower date to restrict number of qualified record to sync.';
+                $this->errors[]=$this->error;
+                dol_syslog(__METHOD__.': '.$this->error, LOG_WARNING);
                 return false;
             }
 
-            $results = array();
-            //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
-            foreach ($this->products as $object)
+            if (! $error)
             {
-                //if (in_array($product['type'], $productsTypesOk))
-                //{
-                    $results[] = $object;
-                //}
+                //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
+                foreach ($this->products as $object)
+                {
+                    //if (in_array($product['type'], $productsTypesOk))
+                    //{
+                        $results[] = $object;
+                    //}
+                }
             }
 
             // Add debug
@@ -307,7 +327,8 @@ class eCommerceRemoteAccessPrestashop
             }
 
             dol_syslog("getProductToUpdate end (found ".count($results)." record)");
-            return $results;
+            if (! $error) return $results;
+            else return false;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             fwrite($h, var_export($opt, true));
@@ -326,6 +347,9 @@ class eCommerceRemoteAccessPrestashop
     public function getCommandeToUpdate($fromDate, $toDate)
     {
         global $conf;
+
+        $error = 0;
+        $results = array();
 
         try {
             dol_syslog("getCommandeToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
@@ -354,10 +378,11 @@ class eCommerceRemoteAccessPrestashop
                 // $this->site->user_password is for the login of basic auth. There is no password.
 
                 // Here we set the option array for the Webservice : we want products resources
+                // id, id_address_delivery, id_address_invoice, id_cart, id_currency, id_lang, id_customer, id_carrier, current_state, module, invoice_number, invoice_date, delivery_number, delivery_date, valid, date_add, date_upd, shipping_number, id_shop_group, id_shop, secure_key, payment, recyclable, gift, gift_message, mobile_theme, total_discounts, total_discounts_tax_incl, total_discounts_tax_excl, total_paid, total_paid_tax_incl, total_paid_tax_excl, total_paid_real, total_products, total_products_wt, total_shipping, total_shipping_tax_incl, total_shipping_tax_excl, carrier_tax_rate, total_wrapping, total_wrapping_tax_incl, total_wrapping_tax_excl, round_mode, round_type, conversion_rate, reference
                 $opt             = array();
                 $opt['resource']       = 'orders';
-                $opt['display']        = '[id,name,id_default_image,id_category_default,reference,price,condition,show_price,date_add,date_upd,description_short,description,module_version]';
-                $opt['sort']           = 'date_upd_DESC';
+                $opt['display']        = '[id,reference,id_customer,id_carrier,current_state,total_discounts,total_discounts_tax_incl,total_discounts_tax_excl,total_paid, total_paid_tax_incl,total_paid_tax_excl,total_paid_real,total_products,total_products_wt,total_shipping,total_shipping_tax_incl,total_shipping_tax_excl,date_add,date_upd]';
+                $opt['sort']           = 'date_upd_ASC';
                 $opt['filter[date_upd]'] = $filter;
                 $opt['date']           = 1;
                 $opt['limit']          = "0,501";
@@ -370,29 +395,35 @@ class eCommerceRemoteAccessPrestashop
             } catch (PrestaShopWebserviceException $e) {
                 // Here we are dealing with errors
                 $trace = $e->getTrace();
-                if ($trace[0]['args'][0] == 404) die('Bad ID');
-                elseif ($trace[0]['args'][0] == 401) die('You are not authorized, with current API key, to read orders');
+                if ($trace[0]['args'][0] == 404) $this->error = 'Bad ID';
+                elseif ($trace[0]['args'][0] == 401) $this->error = 'You are not authorized, with current API key, to read orders';
                 else
                 {
-                    print 'Can not access to '.$urltouse.'<br>';
-                    print $e->getMessage();
+                    $this->error = 'Can not access to '.$urltouse.'<br>'.$e->getMessage();
                 }
+                $this->errors[]=$this->error;
+                dol_syslog(__METHOD__.': '.$this->error, LOG_WARNING);
+                $error++;
             }
 
             if (count($this->orders) > 500)
             {
-                $this->errors[]='Prestashop API are not able to return more than 500 products. Try to use a lower date to restrict number of qualified record to sync.';
+                $this->error='Prestashop API are not able to return more than 500 products. Try to use a lower date to restrict number of qualified record to sync.';
+                $this->errors[]=$this->error;
+                dol_syslog(__METHOD__.': '.$this->error, LOG_WARNING);
                 return false;
             }
 
-            $results = array();
-            //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
-            foreach ($this->orders as $object)
+            if (! $error)
             {
-                //if (in_array($product['type'], $productsTypesOk))
-                //{
-                $results[] = $object;
-                //}
+                //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
+                foreach ($this->orders as $object)
+                {
+                    //if (in_array($product['type'], $productsTypesOk))
+                    //{
+                    $results[] = $object;
+                    //}
+                }
             }
 
             // Add debug
@@ -406,7 +437,8 @@ class eCommerceRemoteAccessPrestashop
             }
 
             dol_syslog("getCommandeToUpdate end (found ".count($results)." record)");
-            return $results;
+            if (! $error) return $results;
+            else return false;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             fwrite($h, var_export($opt, true));
@@ -425,6 +457,9 @@ class eCommerceRemoteAccessPrestashop
     public function getFactureToUpdate($fromDate, $toDate)
     {
         global $conf;
+
+        $error = 0;
+        $results = array();
 
         try {
             dol_syslog("getFactureToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
@@ -453,10 +488,11 @@ class eCommerceRemoteAccessPrestashop
                 // $this->site->user_password is for the login of basic auth. There is no password.
 
                 // Here we set the option array for the Webservice : we want products resources
+                // id, id_order, number, delivery_number, delivery_date, total_discount_tax_excl, total_discount_tax_incl, total_paid_tax_excl, total_paid_tax_incl, total_products, total_products_wt, total_shipping_tax_excl, total_shipping_tax_incl, shipping_tax_computation_method, total_wrapping_tax_excl, total_wrapping_tax_incl, shop_address, invoice_address, delivery_address, note, date_add, date_upd
                 $opt             = array();
-                $opt['resource']       = 'invoices';
-                $opt['display']        = '[id,name,id_default_image,id_category_default,reference,price,condition,show_price,date_add,date_upd,description_short,description,module_version]';
-                $opt['sort']           = 'date_upd_DESC';
+                $opt['resource']       = 'order_invoices';
+                $opt['display']        = '[id,id_order,number,total_discount_tax_excl,total_discount_tax_incl,total_paid_tax_excl,total_paid_tax_incl,total_products,total_products_wt,total_shipping_tax_excl,total_shipping_tax_incl,shipping_tax_computation_method,total_wrapping_tax_excl,total_wrapping_tax_incl,shop_address,invoice_address,delivery_address,date_add,date_upd]';
+                $opt['sort']           = 'date_upd_ASC';
                 $opt['filter[date_upd]'] = $filter;
                 $opt['date']           = 1;
                 $opt['limit']          = "0,501";
@@ -469,29 +505,35 @@ class eCommerceRemoteAccessPrestashop
             } catch (PrestaShopWebserviceException $e) {
                 // Here we are dealing with errors
                 $trace = $e->getTrace();
-                if ($trace[0]['args'][0] == 404) die('Bad ID');
-                elseif ($trace[0]['args'][0] == 401) die('You are not authorized, with current API key, to read invoices');
+                if ($trace[0]['args'][0] == 404) $this->error = 'Bad ID';
+                elseif ($trace[0]['args'][0] == 401) $this->error = 'You are not authorized, with current API key, to read invoices';
                 else
                 {
-                    print 'Can not access to '.$urltouse.'<br>';
-                    print $e->getMessage();
+                    $this->error = 'Can not access to '.$urltouse.'<br>'.$e->getMessage();
                 }
+                $this->errors[]=$this->error;
+                dol_syslog(__METHOD__.': '.$this->error, LOG_WARNING);
+                $error++;
             }
 
             if (count($this->invoices) > 500)
             {
-                $this->errors[]='Prestashop API are not able to return more than 500 products. Try to use a lower date to restrict number of qualified record to sync.';
+                $this->error='Prestashop API are not able to return more than 500 products. Try to use a lower date to restrict number of qualified record to sync.';
+                $this->errors[]=$this->error;
+                dol_syslog(__METHOD__.': '.$this->error, LOG_WARNING);
                 return false;
             }
 
-            $results = array();
-            //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
-            foreach ($this->invoices as $object)
+            if (! $error)
             {
-                //if (in_array($product['type'], $productsTypesOk))
-                //{
-                $results[] = $object;
-                //}
+                //$productsTypesOk = array('simple', 'virtual', 'downloadable');  // We exclude configurable. TODO Get them ?
+                foreach ($this->invoices as $object)
+                {
+                    //if (in_array($product['type'], $productsTypesOk))
+                    //{
+                    $results[] = $object;
+                    //}
+                }
             }
 
             // Add debug
@@ -505,7 +547,8 @@ class eCommerceRemoteAccessPrestashop
             }
 
             dol_syslog("getFactureToUpdate end (found ".count($results)." record)");
-            return $results;
+            if (! $error) return $results;
+            else return false;
         } catch (SoapFault $fault) {
             $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
             fwrite($h, var_export($opt, true));
@@ -577,7 +620,7 @@ class eCommerceRemoteAccessPrestashop
         if ($nbremote)
         {
             // Create n groups of $maxsizeofmulticall records max to call the multiCall
-            $callsgroup = array();
+            /*$callsgroup = array();
             $calls=array();
             foreach ($remoteObject as $rsociete)
             {
@@ -587,9 +630,9 @@ class eCommerceRemoteAccessPrestashop
                     $calls=array();
                 }
 
-                if ($rsociete['customer_id'])
+                if ($rsociete->id)
                 {
-                    $calls[] = array('customer.info', $rsociete['customer_id']);
+                    $calls[] = $rsociete->id;
                 }
 
                 $nbsynchro++;   // nbsynchro is now number of calls to do
@@ -615,7 +658,8 @@ class eCommerceRemoteAccessPrestashop
                     dol_syslog(__METHOD__.': '.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString(), LOG_WARNING);
                     return false;
                 }
-            }
+            }*/
+            $results =  $remoteObject;
 
             if (count($results))
             {
@@ -623,7 +667,7 @@ class eCommerceRemoteAccessPrestashop
                 $last_update=array();
                 foreach ($results as $key => $row)
                 {
-                    $last_update[$key] = $row['updated_at'];
+                    $last_update[$key] = (string) $row->date_upd;
                 }
                 array_multisort($last_update, SORT_ASC, $results);
 
@@ -634,13 +678,13 @@ class eCommerceRemoteAccessPrestashop
                     if ($toNb > 0 && $counter > $toNb) break;
 
                     $newobj=array(
-                            'remote_id' => $societe['customer_id'],
-                            'last_update' => $societe['updated_at'],
-                            'name' => dolGetFirstLastname($societe['firstname'], $societe['lastname']),
-                            'name_alias' => $this->site->name.' id '.$societe['customer_id'],                // See also the delete in eCommerceSociete
-                            'email' => $societe['email'],
+                            'remote_id' => (int) $societe->id,
+                            'last_update' => (string) $societe->date_upd,
+                            'name' => dolGetFirstLastname((string) $societe->firstname, (string) $societe->lastname),
+                            'name_alias' => $this->site->name.' id '.(string) $societe->id,                // See also the delete in eCommerceSociete
+                            'email' => (string) $societe->email,
                             'client' => 3, //for client/prospect
-                            'vatnumber' => $societe['taxvat']
+                            'vatnumber' => '???'
                     );
                     $societes[] = $newobj;
                 }

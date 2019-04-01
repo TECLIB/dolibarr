@@ -52,6 +52,10 @@ class eCommerceSite // extends CommonObject
     private $siteTypes = array(1=>'Magento', 2=>'WooCommerce', 3=>'Prestashop');
     private $siteTypesLabel = array(1=>'Magento 1.9', 2=>'WooCommerce', 3=>'Prestashop 1.6');
 
+    const TYPE_MAGENTO = 1;
+    const TYPE_WOOCOMMERCE = 2;
+    const TYPE_PRESTASHOP = 3;
+
 
     /**
      * Constructor
