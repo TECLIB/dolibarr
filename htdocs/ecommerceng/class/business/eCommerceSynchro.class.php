@@ -544,7 +544,14 @@ class eCommerceSynchro
             if (!isset($this->productToUpdate) || $force == true)
             {
                 $lastupdatedate = $this->getProductLastUpdateDate($force);
-                $this->productToUpdate = $this->eCommerceRemoteAccess->getProductToUpdate($lastupdatedate, $this->toDate);
+                if ($lastupdatedate <= $this->toDate)
+                {
+                    $this->productToUpdate = $this->eCommerceRemoteAccess->getProductToUpdate($lastupdatedate, $this->toDate);
+                }
+                else
+                {
+                    $this->productToUpdate = array();
+                }
             }
             if (empty($this->productToUpdate) && (! empty($this->error) || !empty($this->errors) || !empty($this->eCommerceRemoteAccess->error) || !empty($this->eCommerceRemoteAccess->errors)))
             {
@@ -556,6 +563,7 @@ class eCommerceSynchro
         } catch (Exception $e) {
             $this->errors[] = $this->langs->trans('ECommerceErrorGetProductToUpdate');
         }
+        return -1;
     }
 
     /**
@@ -570,7 +578,14 @@ class eCommerceSynchro
             if (!isset($this->societeToUpdate) || $force == true)
             {
                 $lastupdatedate=$this->getSocieteLastUpdateDate($force);
-                $this->societeToUpdate = $this->eCommerceRemoteAccess->getSocieteToUpdate($lastupdatedate, $this->toDate);
+                if ($lastupdatedate <= $this->toDate)
+                {
+                    $this->societeToUpdate = $this->eCommerceRemoteAccess->getSocieteToUpdate($lastupdatedate, $this->toDate);
+                }
+                else
+                {
+                    $this->societeToUpdate = array();
+                }
             }
             if (empty($this->societeToUpdate) && (! empty($this->error) || !empty($this->errors) || !empty($this->eCommerceRemoteAccess->error) || !empty($this->eCommerceRemoteAccess->errors)))
             {
@@ -582,6 +597,7 @@ class eCommerceSynchro
         } catch (Exception $e) {
             $this->errors[] = $this->langs->trans('ECommerceErrorGetSocieteToUpdate');
         }
+        return -1;
     }
 
     /**
@@ -596,7 +612,14 @@ class eCommerceSynchro
             if (!isset($this->commandeToUpdate) || $force == true)
             {
                 $lastupdatedate=$this->getCommandeLastUpdateDate($force);
-                $this->commandeToUpdate = $this->eCommerceRemoteAccess->getCommandeToUpdate($lastupdatedate, $this->toDate);
+                if ($lastupdatedate <= $this->toDate)
+                {
+                    $this->commandeToUpdate = $this->eCommerceRemoteAccess->getCommandeToUpdate($lastupdatedate, $this->toDate);
+                }
+                else
+                {
+                    $this->commandeToUpdate = array();
+                }
             }
             if (empty($this->commandeToUpdate) && (! empty($this->error) || !empty($this->errors) || !empty($this->eCommerceRemoteAccess->error) || !empty($this->eCommerceRemoteAccess->errors)))
             {
@@ -609,6 +632,7 @@ class eCommerceSynchro
         } catch (Exception $e) {
             $this->errors[] = $this->langs->trans('ECommerceErrorGetCommandeToUpdate');
         }
+        return -1;
     }
 
     /**
@@ -623,7 +647,14 @@ class eCommerceSynchro
             if (!isset($this->factureToUpdate) || $force == true)
             {
                 $lastupdatedate=$this->getFactureLastUpdateDate($force);
-                $this->factureToUpdate = $this->eCommerceRemoteAccess->getFactureToUpdate($lastupdatedate, $this->toDate);
+                if ($lastupdatedate <= $this->toDate)
+                {
+                    $this->factureToUpdate = $this->eCommerceRemoteAccess->getFactureToUpdate($lastupdatedate, $this->toDate);
+                }
+                else
+                {
+                    $this->factureToUpdate = array();
+                }
             }
             if (empty($this->factureToUpdate) && (! empty($this->error) || !empty($this->errors) || !empty($this->eCommerceRemoteAccess->error) || !empty($this->eCommerceRemoteAccess->errors)))
             {
@@ -635,6 +666,7 @@ class eCommerceSynchro
         } catch (Exception $e) {
             $this->errors[] = $this->langs->trans('ECommerceErrorGetFactureToUpdate');
         }
+        return -1;
     }
 
 
@@ -1056,7 +1088,7 @@ class eCommerceSynchro
                     dol_syslog("-- Start thirdparty remote_id=".$societeArray['remote_id']." site=".$this->eCommerceSite->id);
                     $synchExists = $this->eCommerceSociete->fetchByRemoteId($societeArray['remote_id'], $this->eCommerceSite->id);
                     $dBSociete = new Societe($this->db);
-
+                    var_dump($synchExists);exit;
                     //if societe exists in eCommerceSociete, societe must exists in societe
                     if ($synchExists > 0 && isset($this->eCommerceSociete->fk_societe))
                     {

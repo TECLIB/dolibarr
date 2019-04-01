@@ -134,7 +134,7 @@ class eCommerceRemoteAccessPrestashop
 
         try {
             dol_syslog("getSocieteToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            $filter = '['.dol_print_date($fromDate+1, 'dayrfc').','.dol_print_date($toDate, 'dayrfc').']';
+            $filter = '['.dol_print_date($fromDate+1, 'standard').','.dol_print_date($toDate, 'standard').']';
             //$filter = '[1]';      filter[active]
             //var_dump($filter);
             //$result = $this->client->call($this->session, 'catalog_product.list', $filter);
@@ -244,7 +244,7 @@ class eCommerceRemoteAccessPrestashop
 
         try {
             dol_syslog("getProductToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            $filter = '['.dol_print_date($fromDate+1, 'dayrfc').','.dol_print_date($toDate, 'dayrfc').']';
+            $filter = '['.dol_print_date($fromDate+1, 'standard').','.dol_print_date($toDate, 'standard').']';
             //$filter = '[1]';      filter[active]
             //var_dump($filter);
             //$result = $this->client->call($this->session, 'catalog_product.list', $filter);
@@ -353,7 +353,7 @@ class eCommerceRemoteAccessPrestashop
 
         try {
             dol_syslog("getCommandeToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            $filter = '['.dol_print_date($fromDate+1, 'dayrfc').','.dol_print_date($toDate, 'dayrfc').']';
+            $filter = '['.dol_print_date($fromDate+1, 'standard').','.dol_print_date($toDate, 'standard').']';
             //$filter = '[1]';      filter[active]
             //var_dump($filter);
             //$result = $this->client->call($this->session, 'catalog_product.list', $filter);
@@ -463,7 +463,7 @@ class eCommerceRemoteAccessPrestashop
 
         try {
             dol_syslog("getFactureToUpdate start gt=".dol_print_date($fromDate, 'standard')." lt=".dol_print_date($toDate, 'standard'));
-            $filter = '['.dol_print_date($fromDate+1, 'dayrfc').','.dol_print_date($toDate, 'dayrfc').']';
+            $filter = '['.dol_print_date($fromDate+1, 'standard').','.dol_print_date($toDate, 'standard').']';
             //$filter = '[1]';      filter[active]
             //var_dump($filter);
             //$result = $this->client->call($this->session, 'catalog_product.list', $filter);
@@ -705,6 +705,7 @@ class eCommerceRemoteAccessPrestashop
      * @param   int     $toNb               Max nb. Not used for socpeople.
      * @return  array                       societe
      */
+    /*
     public function convertRemoteObjectIntoDolibarrSocpeople($listofids, $toNb=0)
     {
         $socpeoples = array();
@@ -759,7 +760,7 @@ class eCommerceRemoteAccessPrestashop
         dol_syslog("convertRemoteObjectIntoDolibarrSocPeople end (found ".count($socpeoples)." record)");
         return $socpeoples;
     }
-
+    */
 
     /**
      * Put the remote data into product dolibarr data from instantiated class in the constructor
@@ -787,6 +788,7 @@ class eCommerceRemoteAccessPrestashop
         if ($nbremote)
         {
             // Create n groups of $maxsizeofmulticall records max to call the multiCall
+            /*
             $callsgroup = array();
             $calls=array();
             foreach ($remoteObject as $rproduct)
@@ -839,6 +841,8 @@ class eCommerceRemoteAccessPrestashop
                     return false;
                 }
             }
+            */
+            $results =  $remoteObject;
 
             // See file example_product_array_returned_by_magento.txt
 
@@ -848,7 +852,7 @@ class eCommerceRemoteAccessPrestashop
                 $last_update=array();
                 foreach ($results as $key => $row)
                 {
-                    $last_update[$key] = $row['updated_at'];
+                    $last_update[$key] = (string) $row->date_upd;
                 }
                 array_multisort($last_update, SORT_ASC, $results);
 
@@ -942,10 +946,9 @@ class eCommerceRemoteAccessPrestashop
             $last_update=array();
             foreach ($remoteObject as $key => $row)
             {
-                $last_update[$key] = $row['updated_at'];
+                $last_update[$key] = (string) $row->date_upd;
             }
             array_multisort($last_update, SORT_ASC, $remoteObject);
-            //var_dump($remoteObject);exit;
 
             // Create n groups of $maxsizeofmulticall records max to call the multiCall
             $callsgroup = array();
@@ -962,9 +965,9 @@ class eCommerceRemoteAccessPrestashop
                     $calls=array();
                 }
 
-                if ($rcommande['increment_id'])
+                if ((int) $rcommande->id)
                 {
-                    $calls[] = array('sales_order.info', $rcommande['increment_id']);
+                    $calls[] = (int) $rcommande->id;
                 }
 
                 $nbsynchro++;   // nbsynchro is now number of calls to do
@@ -972,7 +975,6 @@ class eCommerceRemoteAccessPrestashop
             if (count($calls)) $callsgroup[]=$calls;    // Add new group for the remain lot of calls not yet added
 
             dol_syslog("convertRemoteObjectIntoDolibarrCommande Call WS to get detail for the ".count($remoteObject)." objects (restricted to ".$toNb.", ".count($callsgroup)." calls with ".$maxsizeofmulticall." max of records each) then create a Dolibarr array for each object");
-            //var_dump($callsgroup);exit;
 
             $results=array();
             $nbcall=0;
@@ -981,7 +983,9 @@ class eCommerceRemoteAccessPrestashop
                 try {
                     $nbcall++;
                     dol_syslog("convertRemoteObjectIntoDolibarrCommande Call WS nb ".$nbcall." (".count($calls)." record)");
-                    $resulttmp = $this->client->multiCall($this->session, $calls);
+                    //$resulttmp = $this->client->multiCall($this->session, $calls);
+
+
                     $results=array_merge($results, $resulttmp);
                 } catch (SoapFault $fault) {
                     $this->errors[]=$fault->getMessage().'-'.$fault->getCode();
@@ -992,12 +996,14 @@ class eCommerceRemoteAccessPrestashop
                 }
             }
 
+            $results =  $remoteObject;
+
             if (count($results))
             {
                 foreach ($results as $commande)
                 {
                     // Process order
-                    dol_syslog("- Process order remote_id=".$commande['order_id']." last_update=".$commande['updated_at']." societe remote_id=".$commande['customer_id']);
+                    dol_syslog("- Process order remote_id=".(int) $commande->id." last_update=".(string) $commande->updated_at." societe remote_id=".(int) $commande->id_customer);
 
                     if (! count($commande['items']))
                     {
@@ -1208,7 +1214,7 @@ class eCommerceRemoteAccessPrestashop
             $last_update=array();
             foreach ($remoteObject as $key => $row)
             {
-                $last_update[$key] = $row['updated_at'];
+                $last_update[$key] = (string) $row->date_upd;
             }
             array_multisort($last_update, SORT_ASC, $remoteObject);
 
@@ -1227,9 +1233,9 @@ class eCommerceRemoteAccessPrestashop
                     $calls=array();
                 }
 
-                if ($rfacture['increment_id'])
+                if ((int) $rfacture->id)
                 {
-                    $calls[] = array('sales_order_invoice.info', $rfacture['increment_id']);
+                    $calls[] = (int) $rfacture->id;
                 }
 
                 $nbsynchro++;   // nbsynchro is now number of calls to do
@@ -1252,6 +1258,8 @@ class eCommerceRemoteAccessPrestashop
                     //echo 'convertRemoteObjectIntoDolibarrFacture :'.$fault->getMessage().'-'.$fault->getCode().'-'.$fault->getTraceAsString();
                 }
             }
+
+            $results =  $remoteObject;
 
             if (count($results))
             {
@@ -1619,7 +1627,7 @@ class eCommerceRemoteAccessPrestashop
      * Return content of one category
      *
      * @param   int             $category_id        Remote category id
-     * @return  boolean|unknown                     Return
+     * @return  boolean|null                        Return
      */
     public function getCategoryData($category_id)
     {
@@ -1721,9 +1729,9 @@ class eCommerceRemoteAccessPrestashop
     /**
      * Update the remote stock of product
      *
-     * @param   int         $remote_id      Id of product on remote ecommerce
-     * @param   Movement    $object         Movement object, enhanced with property qty_after be the trigger STOCK_MOVEMENT.
-     * @return  boolean                     True or false
+     * @param   int             $remote_id      Id of product on remote ecommerce
+     * @param   StockMovement   $object         Movement object, enhanced with property qty_after be the trigger STOCK_MOVEMENT.
+     * @return  boolean                         True or false
      */
     public function updateRemoteStockProduct($remote_id, $object)
     {
