@@ -440,8 +440,50 @@ class InterfaceForceProject
             	return -1;
             }
         }
+
+        if ($action == 'PROJECT_MODIFY' && ! empty($conf->global->FORCEPROJECT_NEW_PROJECT_REF_ON_NEW_THIRDPARTY))
+        {
+            if ($object->oldcopy->socid && $object->socid && $object->socid != $object->oldcopy->socid)
+            {
+                $thirdparty = new Societe($this->db);
+                $thirdparty->fetch($object->socid);
+
+                $defaultref='';
+                $modele = empty($conf->global->PROJECT_ADDON)?'mod_project_simple':$conf->global->PROJECT_ADDON;
+
+                // Search template files
+                $file=''; $classname=''; $filefound=0;
+                $dirmodels=array_merge(array('/'), (array) $conf->modules_parts['models']);
+                foreach($dirmodels as $reldir)
+                {
+                    $file=dol_buildpath($reldir."core/modules/project/".$modele.'.php', 0);
+                    if (file_exists($file))
+                    {
+                        $filefound=1;
+                        $classname = $modele;
+                        break;
+                    }
+                }
+
+                if ($filefound)
+                {
+                    $result=dol_include_once($reldir."core/modules/project/".$modele.'.php');
+                    $modProject = new $classname;
+
+                    $defaultref = $modProject->getNextValue($thirdparty, $object);
+                }
+
+                if (is_numeric($defaultref) && $defaultref <= 0) $defaultref='';
+
+                if ($defaultref)
+                {
+                    $object->ref = $defaultref;
+
+                    $object->update($user, 1);
+                }
+            }
+        }
+
         return $ok;
     }
-
 }
-
