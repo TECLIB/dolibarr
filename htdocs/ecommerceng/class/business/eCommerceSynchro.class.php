@@ -2027,6 +2027,8 @@ class eCommerceSynchro
                         }
                     }
 
+                    $dateoffset = (empty($conf->global->ECOMMERCENG_DATE_OFFSET)?0:$conf->global->ECOMMERCENG_DATE_OFFSET);
+
                     //if societe exists start
                     if ($societeExists > 0)
                     {
@@ -2037,9 +2039,9 @@ class eCommerceSynchro
                             $result = 1;
 
                             $tmpdateorder1=dol_print_date($dBCommande->date_commande, 'dayrfc');
-                            $tmpdateorder2=dol_print_date(strtotime($commandeArray['date_commande']), 'dayrfc');
+                            $tmpdateorder2=dol_print_date(strtotime($commandeArray['date_commande'])+$dateoffset, 'dayrfc');
                             $tmpdatedeliv1=dol_print_date($dBCommande->date_livraison, 'dayrfc');
-                            $tmpdatedeliv2=dol_print_date(strtotime($commandeArray['date_livraison']), 'dayrfc');
+                            $tmpdatedeliv2=dol_print_date(strtotime($commandeArray['date_livraison'])+$dateoffset, 'dayrfc');
 
                             $dBCommande->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
@@ -2051,8 +2053,8 @@ class eCommerceSynchro
                                 dol_syslog("Some info has changed on order, we update order");
 
                                 $dBCommande->ref_client = $commandeArray['ref_client'];
-                                $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
-                                $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
+                                $dBCommande->date_commande = strtotime($commandeArray['date_commande']+$dateoffset);
+                                $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']+$dateoffset);
 
                                 $result = $dBCommande->update($this->user);
                                 if ($result <= 0)
@@ -2155,8 +2157,8 @@ class eCommerceSynchro
                                 $dBCommande->statut=Commande::STATUS_DRAFT;             // STATUS_DRAFT by default at creation
                                 $dBCommande->ref_client = $commandeArray['ref_client'];
                                 $dBCommande->ref_ext = $this->eCommerceSite->name.'-'.$commandeArray['ref_client'];
-                                $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
-                                $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
+                                $dBCommande->date_commande = strtotime($commandeArray['date_commande'])+$dateoffset;
+                                $dBCommande->date_livraison = strtotime($commandeArray['date_livraison'])+$dateoffset;
                                 $dBCommande->socid = $this->eCommerceSociete->fk_societe;
                                 $input_method_id = dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');  // Order mode. Not visible with some Dolibarr versions
                                 $dBCommande->source=$input_method_id;
