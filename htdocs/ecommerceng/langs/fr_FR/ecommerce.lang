@@ -44,6 +44,7 @@ ECommerceUpdateSite=Synchronisation détaillée du site
 ECommerceUpdateAll=Tout synchroniser pour ce site
 ECommerceReset=Supprimer de Dolibarr toutes les données issues de synchronisation de la boutique Ecommerce
 ECommerceResetLink=Supprimer les enregistrements liens entre Dolibarr et la boutique Ecommerce
+ECommerceMenuShort=ECommerce
 ECommerceMenu=ECommerce synchro.
 ECommerceSetupCatProductEmpty=Une catégorie produit est obligatoire.
 ECommerceSetupCatSocieteEmpty=Une catégorie client est obligatoire.

@@ -55,7 +55,7 @@ class eCommerceMenu
     	//define top menu
     	$menu[0]=array(	'fk_menu'=>'',
     					'type'=>'top',
-    					'titre'=>'ECommerceMenu',
+    					'titre'=>'ECommerceMenuShort',
     					'mainmenu'=>'ecommerceng',
     					'leftmenu'=>'ecommerceng',
     					'url'=>'/ecommerceng/index.php',

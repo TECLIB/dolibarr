@@ -44,6 +44,7 @@ ECommerceUpdateSite=Synchronization detail of this site
 ECommerceUpdateAll=Synchronize all objects
 ECommerceReset=Delete all links and Dolibarr linked record
 ECommerceResetLink=Delete all link records between Dolibarr and Ecommerce
+ECommerceMenuShort=ECommerce
 ECommerceMenu=ECommerce Sync
 ECommerceSetupCatProductEmpty=Product category is required.
 ECommerceSetupCatSocieteEmpty=Customer category is required.
