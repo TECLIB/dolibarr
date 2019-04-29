@@ -65,7 +65,7 @@ class mod_project_teclib extends ModeleNumRefProjects
 	*  @param   Project		$project	Object project
 	*  @return  string					Value if OK, 0 if KO
 	*/
-    function getNextValue($objsoc=0,$project='')
+    function getNextValue($objsoc=null, $project='')
     {
 		global $db,$conf;
 
