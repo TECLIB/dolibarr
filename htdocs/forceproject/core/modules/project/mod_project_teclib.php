@@ -116,10 +116,12 @@ class mod_project_teclib extends ModeleNumRefProjects
 		//$numFinalNew="0210-100";
 		//var_dump($numFinalOld);
 		//var_dump($numFinalNew);
-		$tmpold=preg_replace('/^\d+\-/','',$numFinalOld);
-		$tmpnew=preg_replace('/^\d+\-/','',$numFinalNew);
-		//var_dump($tmpold);
-		//var_dump($tmpnew);
+		$tmpold=preg_replace('/^[a-z0-9]+\-/i','',$numFinalOld);
+		$tmpnew=preg_replace('/^[a-z0-9]+\-/i','',$numFinalNew);
+/*		var_dump($tmpold);
+		var_dump($tmpnew);
+		var_dump($numFinalNew);
+		exit;*/
 		$numFinal = $numFinalNew;
 		if (((int) $tmpold) > ((int) $tmpnew))
 		{
