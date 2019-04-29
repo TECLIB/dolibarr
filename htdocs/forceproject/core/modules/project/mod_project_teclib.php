@@ -78,39 +78,12 @@ class mod_project_teclib extends ModeleNumRefProjects
 			$filteronentity = false;
 
 			$oldmask='{cccc}-{00}';
-			$customercode=$objsoc->code_client;
+			//$customercode=$objsoc->code_client;
 			$numFinalOld=get_next_value($db,$oldmask,'projet','ref'," AND fk_soc = ".$objsoc->id,$objsoc,'', 'next', $filteronentity);
 
 			$mask='{cccc}-{000}';
-			$customercode=$objsoc->code_client;
+			//$customercode=$objsoc->code_client;
 			$numFinalNew=get_next_value($db,$mask,'projet','ref'," AND fk_soc = ".$objsoc->id,$objsoc,'', 'next', $filteronentity);
-/*
-			$sql = " SELECT ref FROM llx_projet WHERE fk_soc = ".$objsoc->id." ORDER BY ref DESC";
-
-			dol_syslog("mod_project_teclib::getNextValue sql=".$sql);
-
-			$result = $db->query($sql);
-			if ($result) {
-				$num = $db->num_rows($result);
-
-				if ($num > 0 && $objsoc->code_client)
-				{
-					$obj = $db->fetch_object($result);
-
-					$nextRef = explode("-",$obj->ref);
-					$nextRef = $nextRef[1]+1;
-					$nextRef = sprintf("%03d",$nextRef);
-					return $objsoc->code_client."-".$nextRef;
-				} elseif(!empty($objsoc->code_client)) {
-					return $objsoc->code_client."-001";
-				} else {
-					return "####-001";	// Happened if customer code not defined
-				}
-			}
-			else dol_print_error($db);
-      	}
-      	else return "####-000";
-*/
 		}
 
 		//$numFinalNew="0210-100";
