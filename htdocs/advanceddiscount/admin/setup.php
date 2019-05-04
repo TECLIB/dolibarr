@@ -133,6 +133,7 @@ else
 	else
 	{
 		print '<br>'.$langs->trans("NothingToSetup");
+		print '<br>'.$langs->trans("YouCanCreateDiscountsFromMenuTools");
 	}
 }
 
