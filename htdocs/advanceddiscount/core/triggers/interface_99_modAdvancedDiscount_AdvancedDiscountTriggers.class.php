@@ -220,8 +220,9 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 							}
 							elseif ($rules['type'] == 'customercategory')
 							{
-								$category = new Categorie($db);
-								$result = $category->fetch($rules['value'], '', 'customer');
+								$category = new Categorie($this->db);
+								if (is_numeric($rules['value'])) $result = $category->fetch($rules['value'], '', 'customer');
+								else $result = $category->fetch(0, $rules['value'], 'customer');
 								if ($result > 0)
 								{
 									$found = $category->containsObject('customer', $parentobject->thirdparty->id);
