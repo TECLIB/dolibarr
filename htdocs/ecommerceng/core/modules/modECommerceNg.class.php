@@ -154,7 +154,7 @@ class modECommerceNg extends DolibarrModules
 		$r++;
 		$this->rights[$r][0] = 107101;
 		$this->rights[$r][1] = 'See synchronization status';
-		$this->rights[$r][3] = 1;
+		$this->rights[$r][3] = 0;
 		$this->rights[$r][4] = 'read';
 
 		$r++;
