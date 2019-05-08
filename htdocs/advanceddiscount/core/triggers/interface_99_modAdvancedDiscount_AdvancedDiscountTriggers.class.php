@@ -196,7 +196,9 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 		        $resql=$this->db->query($sql);
 		        if ($resql)
 		        {
-		        	$arrayofpromotionqualified = array();
+		            include_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
+
+		            $arrayofpromotionqualified = array();
 
 		        	$num_rows = $this->db->num_rows($resql);
 		        	$i=0;
