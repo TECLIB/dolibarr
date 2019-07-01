@@ -141,8 +141,9 @@ class InterfaceForceProject
 	            	$newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
 	            	$newref=preg_replace('/%%+/',$projectref,$newref);
 
-	            	// If we want the counter to start to 1 for each project
-	            	if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
+	            	// If this is the first time we set the counter and we want the counter to start to 1 for each project
+	            	// The tag {PROJECTREF\-[1-9]\} must be present into ref numbering mask to have this working.
+	            	if (preg_match('/\(PROV/', $object->ref) && ! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
 	            	{
 	            		// Clean current ref of propal, so we can make again later a getNextNumRef and get same value for invoice number
 	            		$sql="UPDATE ".MAIN_DB_PREFIX."propal SET ref = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
@@ -242,8 +243,9 @@ class InterfaceForceProject
 	            	$newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
 	            	$newref=preg_replace('/%%+/',$projectref,$newref);
 
-	            	// If we want the counter to start to 1 for each project
-	            	if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
+	            	// If this is the first time we set the counter and we want the counter to start to 1 for each project
+	            	// The tag {PROJECTREF\-[1-9]\} must be present into ref numbering mask to have this working.
+	            	if (preg_match('/\(PROV/', $object->ref) && ! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
 	            	{
 	            		// Clean current ref of invoice, so we can make again later a getNextNumRef and get same value for invoice number
 	            		$sql="UPDATE ".MAIN_DB_PREFIX."commande SET ref = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
@@ -311,9 +313,9 @@ class InterfaceForceProject
                     $newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
                     $newref=preg_replace('/%%+/',$projectref,$newref);
 
-                    // If we want the counter of new invoice to start to 1 for each project
+                    // If this is the first time we set the counter and we want the counter to start to 1 for each project
                     // The tag {PROJECTREF\-[1-9]\} must be present into ref numbering mask to have this working.
-                    if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
+                    if (preg_match('/\(PROV/', $object->ref) && ! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT))
                     {
                         if ($object->type == 1)
                         {
@@ -376,7 +378,7 @@ class InterfaceForceProject
                         }
                     }
 
-                    dol_syslog("We validate order ".$object->id." oldref=".$object->ref." newref=".$newref." projectid=".$projectid." projectref=".$projectref);
+                    dol_syslog("We validate invoice ".$object->id." oldref=".$object->ref." newref=".$newref." projectid=".$projectid." projectref=".$projectref);
 
                     $sql="UPDATE ".MAIN_DB_PREFIX."facture SET facnumber = '".$this->db->escape($newref)."' WHERE rowid=".$object->id;
                     dol_syslog("sql=".$sql);
