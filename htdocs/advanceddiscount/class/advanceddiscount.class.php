@@ -130,9 +130,9 @@ class AdvancedDiscount extends CommonObject
 	 */
 	//public $class_element_line = 'AdvancedDiscountline';
 	/**
-	 * @var array  Array of child tables (child tables to delete before deleting a record)
+	 * @var array	List of child tables. To test if we can delete object.
 	 */
-	//protected $childtables=array('advanceddiscountdet');
+	//protected $childtables=array();
 	/**
 	 * @var AdvancedDiscountLine[]     Array of subtable lines
 	 */
