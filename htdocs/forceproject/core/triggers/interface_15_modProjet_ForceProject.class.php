@@ -302,7 +302,7 @@ class InterfaceForceProject
                 $projectid=$object->projet->id;
                 $projectref=$object->projet->ref;
 
-                $sql="SELECT facnumber as ref FROM ".MAIN_DB_PREFIX."facture WHERE rowid=".$object->id;
+                $sql="SELECT ref FROM ".MAIN_DB_PREFIX."facture WHERE rowid=".$object->id;
 
                 $resql=$this->db->query($sql);
                 if ($resql)
@@ -320,7 +320,7 @@ class InterfaceForceProject
                         if ($object->type == 1)
                         {
                         	// Clean current ref of invoice, so we can make again later a getNextNumRef and get same value for invoice number
-                        	$sql="UPDATE ".MAIN_DB_PREFIX."facture SET facnumber = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
+                        	$sql="UPDATE ".MAIN_DB_PREFIX."facture SET ref = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
                         	$resql=$this->db->query($sql);
 
                         	$savmask=$conf->global->FACTURE_MERCURE_MASK_REPLACEMENT;
@@ -335,7 +335,7 @@ class InterfaceForceProject
                         elseif ($object->type == 2)
                         {
                         	// Clean current ref of invoice, so we can make again later a getNextNumRef and get same value for invoice number
-                        	$sql="UPDATE ".MAIN_DB_PREFIX."facture SET facnumber = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
+                        	$sql="UPDATE ".MAIN_DB_PREFIX."facture SET ref = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
                         	$resql=$this->db->query($sql);
 
                             $savmask=$conf->global->FACTURE_MERCURE_MASK_CREDIT;
@@ -350,7 +350,7 @@ class InterfaceForceProject
                         elseif ($object->type == 3)
                         {
                         	// Clean current ref of invoice, so we can make again later a getNextNumRef and get same value for invoice number
-                        	$sql="UPDATE ".MAIN_DB_PREFIX."facture SET facnumber = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
+                        	$sql="UPDATE ".MAIN_DB_PREFIX."facture SET ref = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
                         	$resql=$this->db->query($sql);
 
                             $savmask=$conf->global->FACTURE_MERCURE_MASK_DEPOSIT;
@@ -365,7 +365,7 @@ class InterfaceForceProject
                         else
                         {
                         	// Clean current ref of invoice, so we can make again later a getNextNumRef and get same value for invoice number
-                        	$sql="UPDATE ".MAIN_DB_PREFIX."facture SET facnumber = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
+                        	$sql="UPDATE ".MAIN_DB_PREFIX."facture SET ref = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
                         	$resql=$this->db->query($sql);
 
                             $savmask=$conf->global->FACTURE_MERCURE_MASK_INVOICE;
@@ -380,7 +380,7 @@ class InterfaceForceProject
 
                     dol_syslog("We validate invoice ".$object->id." oldref=".$object->ref." newref=".$newref." projectid=".$projectid." projectref=".$projectref);
 
-                    $sql="UPDATE ".MAIN_DB_PREFIX."facture SET facnumber = '".$this->db->escape($newref)."' WHERE rowid=".$object->id;
+                    $sql="UPDATE ".MAIN_DB_PREFIX."facture SET ref = '".$this->db->escape($newref)."' WHERE rowid=".$object->id;
                     dol_syslog("sql=".$sql);
                     $resql=$this->db->query($sql);
 
