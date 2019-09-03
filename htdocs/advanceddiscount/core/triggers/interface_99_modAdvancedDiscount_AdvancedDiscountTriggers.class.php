@@ -148,7 +148,7 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 		        }
 		        if ($action == 'LINEBILL_INSERT')
 		        {
-		        	include_once DOL_DOCUMENT_ROOT.'/facture/class/facture.class.php';
+		        	include_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
 		        	$parentobject = new Facture($this->db);
 		        	$parentobject->fetch($object->fk_facture);
 		        }
