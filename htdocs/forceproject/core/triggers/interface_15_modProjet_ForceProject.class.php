@@ -103,12 +103,12 @@ class InterfaceForceProject
      *      $object->fk_element
      *      $object->elementtype
      *
-     *      @param	string	$action     Event code (COMPANY_CREATE, PROPAL_VALIDATE, ...)
-     *      @param  Object	$object     Object action is done on
-     *      @param  User	$user       Object user
-     *      @param  Langs	$langs      Object langs
-     *      @param  Conf	$conf       Object conf
-     *      @return int         		<0 if KO, 0 if no action are done, >0 if OK
+     *      @param	string	  $action     Event code (COMPANY_CREATE, PROPAL_VALIDATE, ...)
+     *      @param  Object	  $object     Object action is done on
+     *      @param  User	  $user       Object user
+     *      @param  Translate $langs      Object langs
+     *      @param  Conf	  $conf       Object conf
+     *      @return int         		  <0 if KO, 0 if no action are done, >0 if OK
      */
     function runTrigger($action,$object,$user,$langs,$conf)
     {
