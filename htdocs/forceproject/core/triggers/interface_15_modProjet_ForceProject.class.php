@@ -114,6 +114,8 @@ class InterfaceForceProject
     {
 		$ok=0;
 
+		if (empty($conf->forceproject->enabled)) return 0;     // If module is not enabled, we do nothing
+
 		// Actions
         if ($action == 'PROPAL_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_PROPOSAL) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
         {
@@ -161,6 +163,44 @@ class InterfaceForceProject
 				       	//var_dump($newref); exit;
 	            	}
 	            	dol_syslog("We validate proposal ".$object->id." oldref=".$object->ref." newref=".$newref." projectid=".$projectid." projectref=".$projectref);
+                    $error = 0;
+
+
+	            	// Rename directory if dir was a temporary ref
+	            	if (preg_match('/^[\(]?PROV/i', $object->ref))
+	            	{
+	            	    // Now we rename also files into index
+	            	    $sql = 'UPDATE '.MAIN_DB_PREFIX."ecm_files set filename = CONCAT('".$this->db->escape($object->newref)."', SUBSTR(filename, ".(strlen($object->ref)+1).")), filepath = 'propale/".$this->db->escape($object->newref)."'";
+	            	    $sql.= " WHERE filename LIKE '".$this->db->escape($object->ref)."%' AND filepath = 'propale/".$object->db->escape($object->ref)."' and entity = ".$conf->entity;
+	            	    $resql = $this->db->query($sql);
+	            	    if (! $resql) { $error++; $this->error = $this->db->lasterror(); }
+
+	            	    // We rename directory ($this->ref = old ref, $num = new ref) in order not to lose the attachments
+	            	    $oldref = dol_sanitizeFileName($object->ref);
+	            	    $newref = dol_sanitizeFileName($newref);
+	            	    $dirsource = $conf->propal->multidir_output[$object->entity?$object->entity:$conf->entity].'/'.$oldref;
+	            	    $dirdest = $conf->propal->multidir_output[$object->entity?$object->entity:$conf->entity].'/'.$newref;
+
+	            	    if (! $error && file_exists($dirsource))
+	            	    {
+	            	        dol_syslog(get_class($this)."::validate rename dir ".$dirsource." into ".$dirdest);
+	            	        if (@rename($dirsource, $dirdest))
+	            	        {
+	            	            dol_syslog("Rename ok");
+	            	            // Rename docs starting with $oldref with $newref
+	            	            $listoffiles=dol_dir_list($dirdest, 'files', 1, '^'.preg_quote($oldref, '/'));
+	            	            foreach($listoffiles as $fileentry)
+	            	            {
+	            	                $dirsource=$fileentry['name'];
+	            	                $dirdest=preg_replace('/^'.preg_quote($oldref, '/').'/', $newref, $dirsource);
+	            	                $dirsource=$fileentry['path'].'/'.$dirsource;
+	            	                $dirdest=$fileentry['path'].'/'.$dirdest;
+	            	                @rename($dirsource, $dirdest);
+	            	            }
+	            	        }
+	            	    }
+	            	}
+
 
 		            $sql="UPDATE ".MAIN_DB_PREFIX."propal SET ref = '".$this->db->escape($newref)."' WHERE rowid=".$object->id;
 					dol_syslog("sql=".$sql);
@@ -261,6 +301,44 @@ class InterfaceForceProject
 		            	//var_dump($newref); exit;
 	            	}
 	            	dol_syslog("We validate order ".$object->id." oldref=".$object->ref." newref=".$newref." projectid=".$projectid." projectref=".$projectref);
+	            	$error = 0;
+
+
+	            	// Rename directory if dir was a temporary ref
+	            	if (preg_match('/^[\(]?PROV/i', $object->ref))
+	            	{
+	            	    // Now we rename also files into index
+	            	    $sql = 'UPDATE '.MAIN_DB_PREFIX."ecm_files set filename = CONCAT('".$this->db->escape($object->newref)."', SUBSTR(filename, ".(strlen($object->ref)+1).")), filepath = 'commande/".$this->db->escape($object->newref)."'";
+	            	    $sql.= " WHERE filename LIKE '".$this->db->escape($object->ref)."%' AND filepath = 'commande/".$object->db->escape($object->ref)."' and entity = ".$conf->entity;
+	            	    $resql = $this->db->query($sql);
+	            	    if (! $resql) { $error++; $this->error = $this->db->lasterror(); }
+
+	            	    // We rename directory ($this->ref = old ref, $num = new ref) in order not to lose the attachments
+	            	    $oldref = dol_sanitizeFileName($object->ref);
+	            	    $newref = dol_sanitizeFileName($newref);
+	            	    $dirsource = $conf->commande->multidir_output[$object->entity?$object->entity:$conf->entity].'/'.$oldref;
+	            	    $dirdest = $conf->commande->multidir_output[$object->entity?$object->entity:$conf->entity].'/'.$newref;
+
+	            	    if (! $error && file_exists($dirsource))
+	            	    {
+	            	        dol_syslog(get_class($this)."::validate rename dir ".$dirsource." into ".$dirdest);
+	            	        if (@rename($dirsource, $dirdest))
+	            	        {
+	            	            dol_syslog("Rename ok");
+	            	            // Rename docs starting with $oldref with $newref
+	            	            $listoffiles=dol_dir_list($dirdest, 'files', 1, '^'.preg_quote($oldref, '/'));
+	            	            foreach($listoffiles as $fileentry)
+	            	            {
+	            	                $dirsource=$fileentry['name'];
+	            	                $dirdest=preg_replace('/^'.preg_quote($oldref, '/').'/', $newref, $dirsource);
+	            	                $dirsource=$fileentry['path'].'/'.$dirsource;
+	            	                $dirdest=$fileentry['path'].'/'.$dirdest;
+	            	                @rename($dirsource, $dirdest);
+	            	            }
+	            	        }
+	            	    }
+	            	}
+
 
 		            $sql="UPDATE ".MAIN_DB_PREFIX."commande SET ref = '".$this->db->escape($newref)."' WHERE rowid=".$object->id;
 					dol_syslog("sql=".$sql);
@@ -379,6 +457,44 @@ class InterfaceForceProject
                     }
 
                     dol_syslog("We validate invoice ".$object->id." oldref=".$object->ref." newref=".$newref." projectid=".$projectid." projectref=".$projectref);
+                    $error = 0;
+
+
+                    // Rename directory if dir was a temporary ref
+                    if (preg_match('/^[\(]?PROV/i', $object->ref))
+                    {
+                        // Now we rename also files into index
+                        $sql = 'UPDATE '.MAIN_DB_PREFIX."ecm_files set filename = CONCAT('".$this->db->escape($object->newref)."', SUBSTR(filename, ".(strlen($object->ref)+1).")), filepath = 'facture/".$this->db->escape($object->newref)."'";
+                        $sql.= " WHERE filename LIKE '".$this->db->escape($object->ref)."%' AND filepath = 'facture/".$object->db->escape($object->ref)."' and entity = ".$conf->entity;
+                        $resql = $this->db->query($sql);
+                        if (! $resql) { $error++; $this->error = $this->db->lasterror(); }
+
+                        // We rename directory ($this->ref = old ref, $num = new ref) in order not to lose the attachments
+                        $oldref = dol_sanitizeFileName($object->ref);
+                        $newref = dol_sanitizeFileName($newref);
+                        $dirsource = $conf->facture->multidir_output[$object->entity?$object->entity:$conf->entity].'/'.$oldref;
+                        $dirdest = $conf->facture->multidir_output[$object->entity?$object->entity:$conf->entity].'/'.$newref;
+
+                        if (! $error && file_exists($dirsource))
+                        {
+                            dol_syslog(get_class($this)."::validate rename dir ".$dirsource." into ".$dirdest);
+                            if (@rename($dirsource, $dirdest))
+                            {
+                                dol_syslog("Rename ok");
+                                // Rename docs starting with $oldref with $newref
+                                $listoffiles=dol_dir_list($dirdest, 'files', 1, '^'.preg_quote($oldref, '/'));
+                                foreach($listoffiles as $fileentry)
+                                {
+                                    $dirsource=$fileentry['name'];
+                                    $dirdest=preg_replace('/^'.preg_quote($oldref, '/').'/', $newref, $dirsource);
+                                    $dirsource=$fileentry['path'].'/'.$dirsource;
+                                    $dirdest=$fileentry['path'].'/'.$dirdest;
+                                    @rename($dirsource, $dirdest);
+                                }
+                            }
+                        }
+                    }
+
 
                     $sql="UPDATE ".MAIN_DB_PREFIX."facture SET ref = '".$this->db->escape($newref)."' WHERE rowid=".$object->id;
                     dol_syslog("sql=".$sql);
