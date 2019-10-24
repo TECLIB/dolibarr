@@ -31,6 +31,7 @@ TypeOfJustificative=Type of justificative documents
 JustificativeDocumentsSetup = JustificativeDocuments setup
 Settings = Settings
 JustificativeDocumentsSetupPage = JustificativeDocuments setup page
+AboutInfoTecLib=This module is developped and distributed by Laurent Destailleur for TecLib, <a href="http://www.teclib.com">www.teclib.com</a> (A Dolibarr Preferred Partner company).
 JUSTIFICATIVEDOCUMENTS_MYPARAM1 = My param 1
 JUSTIFICATIVEDOCUMENTS_MYPARAM1Tooltip = My param 1 tooltip
 JUSTIFICATIVEDOCUMENTS_MYPARAM2=My param 2
