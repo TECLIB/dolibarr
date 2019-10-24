@@ -23,6 +23,7 @@ ModuleJustificativeDocumentsName = Justificative Documents
 ModuleJustificativeDocumentsDesc = Allow each user to submit justificative documents
 
 JustificativeDocuments=Justificative documents
+TypeOfJustificative=Type of justificative documents
 
 #
 # Admin page
