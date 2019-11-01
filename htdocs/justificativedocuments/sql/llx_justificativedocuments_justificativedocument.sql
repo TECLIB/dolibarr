@@ -18,19 +18,19 @@ CREATE TABLE llx_justificativedocuments_justificativedocument(
 	-- BEGIN MODULEBUILDER FIELDS
 	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL, 
 	ref varchar(128) DEFAULT '(PROV)' NOT NULL, 
-	label varchar(255), 
-	amount double(24,8) DEFAULT NULL, 
-	qty real, 
-	fk_soc integer, 
 	fk_project integer, 
 	description text, 
 	note_public text, 
 	note_private text, 
 	date_creation datetime NOT NULL, 
 	tms timestamp, 
+	fk_user integer NOT NULL, 
 	fk_user_creat integer NOT NULL, 
 	fk_user_modif integer, 
 	import_key varchar(14), 
-	status integer NOT NULL
+	status integer NOT NULL, 
+	fk_type integer NOT NULL, 
+	date_start date, 
+	date_end date
 	-- END MODULEBUILDER FIELDS
 ) ENGINE=innodb;

@@ -205,8 +205,60 @@ if ($action == 'create')
 
 	print '<table class="border centpercent tableforfieldcreate">'."\n";
 
+	$object->fields = dol_sort_array($object->fields, 'position');
+
+	foreach($object->fields as $key => $val)
+	{
+	    // Discard if extrafield is a hidden field on form
+	    if (abs($val['visible']) != 1) continue;
+
+	    if (array_key_exists('enabled', $val) && isset($val['enabled']) && ! verifCond($val['enabled'])) continue;	// We don't want this field
+
+	    // Show field for type
+	    if ($key == 'fk_type')
+	    {
+    	    print '<tr id="field_'.$key.'">';
+    	    print '<td class="titlefieldcreate fieldrequired">';
+    	    print $langs->trans("Type");
+    	    print '</td><td>';
+    	    $array = array('ee'=>'rr');
+    	    print $form->selectarray('fk_type', $array);
+    	    print '</td>';
+    	    print '</tr>';
+	    }
+	    elseif ($key == 'fk_user')
+	    {
+	        print '<tr id="field_'.$key.'">';
+	        print '<td class="titlefieldcreate fieldrequired">';
+	        print $langs->trans("User");
+	        print '</td><td>';
+	        //$array = array('ee'=>'rr');
+	        print $form->select_dolusers($user->id, 'fk_user', 0, null, 0, 'hierarchyme');
+	        print '</td>';
+	        print '</tr>';
+	    } else {
+    	    print '<tr id="field_'.$key.'">';
+    	    print '<td';
+    	    print ' class="titlefieldcreate';
+    	    if ($val['notnull'] > 0) print ' fieldrequired';
+    	    if ($val['type'] == 'text' || $val['type'] == 'html') print ' tdtop';
+    	    print '"';
+    	    print '>';
+    	    if (! empty($val['help'])) print $form->textwithpicto($langs->trans($val['label']), $langs->trans($val['help']));
+    	    else print $langs->trans($val['label']);
+    	    print '</td>';
+    	    print '<td>';
+    	    if (in_array($val['type'], array('int', 'integer'))) $value = GETPOST($key, 'int');
+    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOST($key, 'none');
+    	    else $value = GETPOST($key, 'alpha');
+    	    print $object->showInputField($val, $key, $value, '', '', '', 0);
+    	    print '</td>';
+    	    print '</tr>';
+	    }
+	}
+
 	// Common attributes
-	include DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
+	//include DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
 
 	// Other attributes
 	include DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_add.tpl.php';
@@ -241,8 +293,60 @@ if (($id || $ref) && $action == 'edit')
 
 	print '<table class="border centpercent tableforfieldedit">'."\n";
 
+	$object->fields = dol_sort_array($object->fields, 'position');
+
+	foreach($object->fields as $key => $val)
+	{
+	    // Discard if extrafield is a hidden field on form
+	    if (abs($val['visible']) != 1 && abs($val['visible']) != 4) continue;
+
+	    if (array_key_exists('enabled', $val) && isset($val['enabled']) && ! verifCond($val['enabled'])) continue;	// We don't want this field
+
+	    // Show field for type
+	    if ($key == 'fk_type')
+	    {
+	        print '<tr id="field_'.$key.'">';
+	        print '<td class="titlefieldcreate fieldrequired">';
+	        print $langs->trans("Type");
+	        print '</td><td>';
+	        $array = array('ee'=>'rr');
+	        print $form->selectarray('fk_type', $array);
+	        print '</td>';
+	        print '</tr>';
+	    }
+	    elseif ($key == 'fk_user')
+	    {
+	        print '<tr id="field_'.$key.'">';
+	        print '<td class="titlefieldcreate fieldrequired">';
+	        print $langs->trans("User");
+	        print '</td><td>';
+	        //$array = array('ee'=>'rr');
+	        print $form->select_dolusers($object->fk_user, 'fk_user', 0, null, 0, 'hierarchyme');
+	        print '</td>';
+	        print '</tr>';
+	    } else {
+    	    print '<tr><td';
+    	    print ' class="titlefieldcreate';
+    	    if ($val['notnull'] > 0) print ' fieldrequired';
+    	    if ($val['type'] == 'text' || $val['type'] == 'html') print ' tdtop';
+    	    print '">';
+    	    if (! empty($val['help'])) print $form->textwithpicto($langs->trans($val['label']), $langs->trans($val['help']));
+    	    else print $langs->trans($val['label']);
+    	    print '</td>';
+    	    print '<td>';
+    	    if (in_array($val['type'], array('int', 'integer'))) $value = GETPOSTISSET($key)?GETPOST($key, 'int'):$object->$key;
+    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOSTISSET($key)?GETPOST($key, 'none'):$object->$key;
+    	    else $value = GETPOSTISSET($key)?GETPOST($key, 'alpha'):$object->$key;
+    	    //var_dump($val.' '.$key.' '.$value);
+    	    if ($val['noteditable']) print $object->showOutputField($val, $key, $value, '', '', '', 0);
+    	    else print $object->showInputField($val, $key, $value, '', '', '', 0);
+    	    print '</td>';
+    	    print '</tr>';
+	    }
+	}
+
 	// Common attributes
-	include DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_edit.tpl.php';
+	//include DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_edit.tpl.php';
 
 	// Other attributes
 	include DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_edit.tpl.php';

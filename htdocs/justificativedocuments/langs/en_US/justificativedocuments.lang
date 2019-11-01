@@ -21,7 +21,7 @@
 ModuleJustificativeDocumentsName = Justificative Documents
 # Module description 'ModuleJustificativeDocumentsDesc'
 ModuleJustificativeDocumentsDesc = Allow each user to submit justificative documents
-
+JustificativeDocument=Justivicative document
 JustificativeDocuments=Justificative documents
 TypeOfJustificative=Type of justificative documents
 

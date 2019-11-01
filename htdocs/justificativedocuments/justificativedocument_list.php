@@ -153,6 +153,9 @@ if (is_array($extrafields->attributes[$object->table_element]['label']) && count
 $object->fields = dol_sort_array($object->fields, 'position');
 $arrayfields = dol_sort_array($arrayfields, 'position');
 
+$permtoread = $user->rights->justificativedocuments->justificativedocuments->read;
+$permtowrite = $user->rights->justificativedocuments->justificativedocuments->write;
+$permtodelete = $user->rights->justificativedocuments->justificativedocuments->delete;
 
 
 /*
@@ -190,8 +193,6 @@ if (empty($reshook))
 	// Mass actions
 	$objectclass='JustificativeDocument';
 	$objectlabel='JustificativeDocument';
-	$permtoread = $user->rights->justificativedocuments->read;
-	$permtodelete = $user->rights->justificativedocuments->delete;
 	$uploaddir = $conf->justificativedocuments->dir_output;
 	include DOL_DOCUMENT_ROOT.'/core/actions_massactions.inc.php';
 }
@@ -346,7 +347,7 @@ $arrayofmassactions =  array(
     //'builddoc'=>$langs->trans("PDFMerge"),
     //'presend'=>$langs->trans("SendByMail"),
 );
-if ($user->rights->justificativedocuments->delete) $arrayofmassactions['predelete']='<span class="fa fa-trash paddingrightonly"></span>'.$langs->trans("Delete");
+if ($permtodelete) $arrayofmassactions['predelete']='<span class="fa fa-trash paddingrightonly"></span>'.$langs->trans("Delete");
 if (GETPOST('nomassaction', 'int') || in_array($massaction, array('presend','predelete'))) $arrayofmassactions=array();
 $massactionbutton=$form->selectMassAction('', $arrayofmassactions);
 
@@ -360,7 +361,7 @@ print '<input type="hidden" name="sortorder" value="'.$sortorder.'">';
 print '<input type="hidden" name="page" value="'.$page.'">';
 print '<input type="hidden" name="contextpage" value="'.$contextpage.'">';
 
-$newcardbutton = dolGetButtonTitle($langs->trans('New'), '', 'fa fa-plus-circle', dol_buildpath('/justificativedocuments/justificativedocument_card.php', 1).'?action=create&backtopage='.urlencode($_SERVER['PHP_SELF']), '', $user->rights->justificativedocuments->write);
+$newcardbutton = dolGetButtonTitle($langs->trans('New'), '', 'fa fa-plus-circle', dol_buildpath('/justificativedocuments/justificativedocument_card.php', 1).'?action=create&backtopage='.urlencode($_SERVER['PHP_SELF']), '', $permtowrite);
 
 print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'title_companies', 0, $newcardbutton, '', $limit);
 
@@ -593,8 +594,8 @@ if (in_array('builddoc', $arrayofmassactions) && ($nbtotalofrecords === '' || $n
 	$urlsource.=str_replace('&amp;', '&', $param);
 
 	$filedir=$diroutputmassaction;
-	$genallowed=$user->rights->justificativedocuments->read;
-	$delallowed=$user->rights->justificativedocuments->write;
+	$genallowed=$permtoread;
+	$delallowed=$permtowrite;
 
 	print $formfile->showdocuments('massfilesarea_justificativedocuments', '', $filedir, $urlsource, 0, $delallowed, '', 1, 1, 0, 48, 1, $param, $title, '', '', '', null, $hidegeneratedfilelistifempty);
 }
