@@ -106,8 +106,7 @@ include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php';  // Must be inclu
 
 $permissionnote = $user->rights->justificativedocuments->justificativedocuments->write;		// Used by the include of actions_setnotes.inc.php
 $permissiondellink = $user->rights->justificativedocuments->justificativedocuments->write;	// Used by the include of actions_dellink.inc.php
-$permissionedit = $user->rights->justificativedocuments->justificativedocuments->write; 		// Used by the include of actions_lineupdown.inc.php
-$permissiontoadd = $user->rights->justificativedocuments->justificativedocuments->write; 		// Used by the include of actions_addupdatedelete.inc.php
+$permissiontoadd = $user->rights->justificativedocuments->justificativedocuments->write; 	// Used by the include of actions_addupdatedelete.inc.php// Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
 $permissiontodelete = $user->rights->justificativedocuments->justificativedocuments->delete || ($permissiontoadd && $object->status == 0);
 
 

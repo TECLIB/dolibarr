@@ -179,8 +179,8 @@ if (empty($reshook))
 	// Mass actions
 	$objectclass='AdvancedDiscount';
 	$objectlabel='AdvancedDiscount';
-	$permtoread = $user->rights->advanceddiscount->read;
-	$permtodelete = $user->rights->advanceddiscount->delete;
+	$permissiontoread = $user->rights->advanceddiscount->read;
+	$permissiontodelete = $user->rights->advanceddiscount->delete;
 	$uploaddir = $conf->advanceddiscount->dir_output;
 	include DOL_DOCUMENT_ROOT.'/core/actions_massactions.inc.php';
 }

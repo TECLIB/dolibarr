@@ -106,7 +106,7 @@ if (! empty($conf->justificativedocuments->enabled) && $user->rights->justificat
 
 		print '<table class="noborder" width="100%">';
 		print '<tr class="liste_titre">';
-		print '<th colspan="3">'.$langs->trans("DraftOrders").($num?' <span class="badge">'.$num.'</span>':'').'</th></tr>';
+		print '<th colspan="3">'.$langs->trans("DraftOrders").($num?'<span class="badge marginleftonlyshort">'.$num.'</span>':'').'</th></tr>';
 
 		$var = true;
 		if ($num > 0)
