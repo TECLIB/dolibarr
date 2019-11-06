@@ -1,5 +1,6 @@
 <?php
-/* Copyright (C) 2019 Laurent Destailleur  <eldy@users.sourceforge.net>
+/* Copyright (C) 2017 Laurent Destailleur  <eldy@users.sourceforge.net>
+ * Copyright (C) ---Put here your own copyright and developer email---
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,9 +17,9 @@
  */
 
 /**
- *   	\file       justificativedocument_card.php
+ *   	\file       justificativetype_card.php
  *		\ingroup    justificativedocuments
- *		\brief      Page to create/edit/view justificativedocument
+ *		\brief      Page to create/edit/view justificativetype
  */
 
 //if (! defined('NOREQUIREDB'))              define('NOREQUIREDB','1');					// Do not create database handler $db
@@ -58,8 +59,8 @@ if (! $res) die("Include of main fails");
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcompany.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
-dol_include_once('/justificativedocuments/class/justificativedocument.class.php');
-dol_include_once('/justificativedocuments/lib/justificativedocuments_justificativedocument.lib.php');
+dol_include_once('/justificativedocuments/class/justificativetype.class.php');
+dol_include_once('/justificativedocuments/lib/justificativedocuments_justificativetype.lib.php');
 
 // Load translation files required by the page
 $langs->loadLangs(array("justificativedocuments@justificativedocuments","other"));
@@ -70,15 +71,15 @@ $ref        = GETPOST('ref', 'alpha');
 $action		= GETPOST('action', 'aZ09');
 $confirm    = GETPOST('confirm', 'alpha');
 $cancel     = GETPOST('cancel', 'aZ09');
-$contextpage= GETPOST('contextpage', 'aZ')?GETPOST('contextpage', 'aZ'):'justificativedocumentcard';   // To manage different context of search
+$contextpage= GETPOST('contextpage', 'aZ')?GETPOST('contextpage', 'aZ'):'justificativetypecard';   // To manage different context of search
 $backtopage = GETPOST('backtopage', 'alpha');
 //$lineid   = GETPOST('lineid', 'int');
 
 // Initialize technical objects
-$object=new JustificativeDocument($db);
+$object=new JustificativeType($db);
 $extrafields = new ExtraFields($db);
 $diroutputmassaction=$conf->justificativedocuments->dir_output . '/temp/massgeneration/'.$user->id;
-$hookmanager->initHooks(array('justificativedocumentcard','globalcard'));     // Note that conf->hooks_modules contains array
+$hookmanager->initHooks(array('justificativetypecard','globalcard'));     // Note that conf->hooks_modules contains array
 
 // Fetch optionals attributes and labels
 $extrafields->fetch_name_optionals_label($object->table_element);
@@ -99,15 +100,16 @@ if (empty($action) && empty($id) && empty($ref)) $action='view';
 include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php';  // Must be include, not include_once.
 
 // Security check - Protection if external user
-//if ($user->societe_id > 0) access_forbidden();
-//if ($user->societe_id > 0) $socid = $user->societe_id;
-//$isdraft = (($object->statut == JustificativeDocument::STATUS_DRAFT) ? 1 : 0);
+//if ($user->socid > 0) access_forbidden();
+//if ($user->socid > 0) $socid = $user->socid;
+//$isdraft = (($object->statut == $object::STATUS_DRAFT) ? 1 : 0);
 //$result = restrictedArea($user, 'justificativedocuments', $object->id, '', '', 'fk_soc', 'rowid', $isdraft);
 
-$permissionnote = $user->rights->justificativedocuments->justificativedocuments->write;		// Used by the include of actions_setnotes.inc.php
-$permissiondellink = $user->rights->justificativedocuments->justificativedocuments->write;	// Used by the include of actions_dellink.inc.php
-$permissiontoadd = $user->rights->justificativedocuments->justificativedocuments->write; 	// Used by the include of actions_addupdatedelete.inc.php// Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
-$permissiontodelete = $user->rights->justificativedocuments->justificativedocuments->delete || ($permissiontoadd && $object->status == 0);
+$permissiontoread = $user->rights->justificativedocuments->justificativetype->read;
+$permissiontoadd = $user->rights->justificativedocuments->justificativetype->write; 	// Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
+$permissiontodelete = $user->rights->justificativedocuments->justificativetype->delete || ($permissiontoadd && isset($object->status) && $object->status == $object::STATUS_DRAFT);
+$permissionnote = $user->rights->justificativedocuments->justificativetype->write;		// Used by the include of actions_setnotes.inc.php
+$permissiondellink = $user->rights->justificativedocuments->justificativetype->write;	// Used by the include of actions_dellink.inc.php
 
 
 
@@ -123,13 +125,13 @@ if (empty($reshook))
 {
     $error=0;
 
-    $backurlforlist = dol_buildpath('/justificativedocuments/justificativedocument_list.php', 1);
+    $backurlforlist = dol_buildpath('/justificativedocuments/justificativetype_list.php', 1);
 
     if (empty($backtopage) || ($cancel && empty($id))) {
     	if (empty($id) && (($action != 'add' && $action != 'create') || $cancel)) $backtopage = $backurlforlist;
-    	else $backtopage = dol_buildpath('/justificativedocuments/justificativedocument_card.php', 1).'?id='.($id > 0 ? $id : '__ID__');
+    	else $backtopage = dol_buildpath('/justificativedocuments/justificativetype_card.php', 1).'?id='.($id > 0 ? $id : '__ID__');
     }
-    $triggermodname = 'JUSTIFICATIVEDOCUMENTS_JUSTIFICATIVEDOCUMENT_MODIFY';	// Name of trigger action code to execute when we modify record
+    $triggermodname = 'JUSTIFICATIVEDOCUMENTS_JUSTIFICATIVETYPE_MODIFY';	// Name of trigger action code to execute when we modify record
 
     // Actions cancel, add, update, delete or clone
     include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
@@ -141,11 +143,14 @@ if (empty($reshook))
     include DOL_DOCUMENT_ROOT.'/core/actions_printing.inc.php';
 
     // Action to move up and down lines of object
-    //include DOL_DOCUMENT_ROOT.'/core/actions_lineupdown.inc.php';	// Must be include, not include_once
+    //include DOL_DOCUMENT_ROOT.'/core/actions_lineupdown.inc.php';
+
+    // Action to build doc
+    include DOL_DOCUMENT_ROOT.'/core/actions_builddoc.inc.php';
 
     if ($action == 'set_thirdparty' && $permissiontoadd)
     {
-    	$object->setValueFrom('fk_soc', GETPOST('fk_soc', 'int'), '', '', 'date', '', $user, 'JUSTIFICATIVEDOCUMENT_MODIFY');
+    	$object->setValueFrom('fk_soc', GETPOST('fk_soc', 'int'), '', '', 'date', '', $user, 'JUSTIFICATIVETYPE_MODIFY');
     }
     if ($action == 'classin' && $permissiontoadd)
     {
@@ -153,9 +158,9 @@ if (empty($reshook))
     }
 
     // Actions to send emails
-    $trigger_name='JUSTIFICATIVEDOCUMENT_SENTBYMAIL';
-    $autocopy='MAIN_MAIL_AUTOCOPY_JUSTIFICATIVEDOCUMENT_TO';
-    $trackid='justificativedocument'.$object->id;
+    $trigger_name='JUSTIFICATIVETYPE_SENTBYMAIL';
+    $autocopy='MAIN_MAIL_AUTOCOPY_JUSTIFICATIVETYPE_TO';
+    $trackid='justificativetype'.$object->id;
     include DOL_DOCUMENT_ROOT.'/core/actions_sendmails.inc.php';
 }
 
@@ -171,7 +176,7 @@ if (empty($reshook))
 $form=new Form($db);
 $formfile=new FormFile($db);
 
-llxHeader('', $langs->trans('JustificativeDocument'), '');
+llxHeader('', $langs->trans('JustificativeType'), '');
 
 // Example : Adding jquery code
 print '<script type="text/javascript" language="javascript">
@@ -192,7 +197,7 @@ jQuery(document).ready(function() {
 // Part to create
 if ($action == 'create')
 {
-	print load_fiche_titre($langs->trans("NewObject", $langs->transnoentitiesnoconv("JustificativeDocument")));
+	print load_fiche_titre($langs->trans("NewObject", $langs->transnoentitiesnoconv("JustificativeType")));
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
 	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
@@ -203,61 +208,8 @@ if ($action == 'create')
 
 	print '<table class="border centpercent tableforfieldcreate">'."\n";
 
-	$object->fields = dol_sort_array($object->fields, 'position');
-
-	foreach($object->fields as $key => $val)
-	{
-	    // Discard if extrafield is a hidden field on form
-	    if (abs($val['visible']) != 1) continue;
-
-	    if (array_key_exists('enabled', $val) && isset($val['enabled']) && ! verifCond($val['enabled'])) continue;	// We don't want this field
-
-	    // Show field for type
-	    /*if ($key == 'fk_type')
-	    {
-    	    print '<tr id="field_'.$key.'">';
-    	    print '<td class="titlefieldcreate fieldrequired">';
-    	    print $langs->trans("Type");
-    	    print '</td><td>';
-    	    $array = array('ee'=>'rr');
-    	    print $form->selectarray('fk_type', $array);
-    	    print '</td>';
-    	    print '</tr>';
-	    }
-	    else*/
-	    if ($key == 'fk_user')
-	    {
-	        print '<tr id="field_'.$key.'">';
-	        print '<td class="titlefieldcreate fieldrequired">';
-	        print $langs->trans("User");
-	        print '</td><td>';
-	        //$array = array('ee'=>'rr');
-	        print $form->select_dolusers($user->id, 'fk_user', 0, null, 0, 'hierarchyme');
-	        print '</td>';
-	        print '</tr>';
-	    } else {
-    	    print '<tr id="field_'.$key.'">';
-    	    print '<td';
-    	    print ' class="titlefieldcreate';
-    	    if ($val['notnull'] > 0) print ' fieldrequired';
-    	    if ($val['type'] == 'text' || $val['type'] == 'html') print ' tdtop';
-    	    print '"';
-    	    print '>';
-    	    if (! empty($val['help'])) print $form->textwithpicto($langs->trans($val['label']), $langs->trans($val['help']));
-    	    else print $langs->trans($val['label']);
-    	    print '</td>';
-    	    print '<td>';
-    	    if (in_array($val['type'], array('int', 'integer'))) $value = GETPOST($key, 'int');
-    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOST($key, 'none');
-    	    else $value = GETPOST($key, 'alpha');
-    	    print $object->showInputField($val, $key, $value, '', '', '', 0);
-    	    print '</td>';
-    	    print '</tr>';
-	    }
-	}
-
 	// Common attributes
-	//include DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
+	include DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
 
 	// Other attributes
 	include DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_add.tpl.php';
@@ -280,7 +232,7 @@ if ($action == 'create')
 // Part to edit record
 if (($id || $ref) && $action == 'edit')
 {
-	print load_fiche_titre($langs->trans("JustificativeDocument"));
+	print load_fiche_titre($langs->trans("JustificativeType"));
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
     print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
@@ -292,61 +244,8 @@ if (($id || $ref) && $action == 'edit')
 
 	print '<table class="border centpercent tableforfieldedit">'."\n";
 
-	$object->fields = dol_sort_array($object->fields, 'position');
-
-	foreach($object->fields as $key => $val)
-	{
-	    // Discard if extrafield is a hidden field on form
-	    if (abs($val['visible']) != 1 && abs($val['visible']) != 4) continue;
-
-	    if (array_key_exists('enabled', $val) && isset($val['enabled']) && ! verifCond($val['enabled'])) continue;	// We don't want this field
-
-	    // Show field for type
-	    /*if ($key == 'fk_type')
-	    {
-	        print '<tr id="field_'.$key.'">';
-	        print '<td class="titlefieldcreate fieldrequired">';
-	        print $langs->trans("Type");
-	        print '</td><td>';
-	        $array = array('ee'=>'rr');
-	        print $form->selectarray('fk_type', $array);
-	        print '</td>';
-	        print '</tr>';
-	    }
-	    else */
-	    if ($key == 'fk_user')
-	    {
-	        print '<tr id="field_'.$key.'">';
-	        print '<td class="titlefieldcreate fieldrequired">';
-	        print $langs->trans("User");
-	        print '</td><td>';
-	        //$array = array('ee'=>'rr');
-	        print $form->select_dolusers($object->fk_user, 'fk_user', 0, null, 0, 'hierarchyme');
-	        print '</td>';
-	        print '</tr>';
-	    } else {
-    	    print '<tr><td';
-    	    print ' class="titlefieldcreate';
-    	    if ($val['notnull'] > 0) print ' fieldrequired';
-    	    if ($val['type'] == 'text' || $val['type'] == 'html') print ' tdtop';
-    	    print '">';
-    	    if (! empty($val['help'])) print $form->textwithpicto($langs->trans($val['label']), $langs->trans($val['help']));
-    	    else print $langs->trans($val['label']);
-    	    print '</td>';
-    	    print '<td>';
-    	    if (in_array($val['type'], array('int', 'integer'))) $value = GETPOSTISSET($key)?GETPOST($key, 'int'):$object->$key;
-    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOSTISSET($key)?GETPOST($key, 'none'):$object->$key;
-    	    else $value = GETPOSTISSET($key)?GETPOST($key, 'alpha'):$object->$key;
-    	    //var_dump($val.' '.$key.' '.$value);
-    	    if ($val['noteditable']) print $object->showOutputField($val, $key, $value, '', '', '', 0);
-    	    else print $object->showInputField($val, $key, $value, '', '', '', 0);
-    	    print '</td>';
-    	    print '</tr>';
-	    }
-	}
-
 	// Common attributes
-	//include DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_edit.tpl.php';
+	include DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_edit.tpl.php';
 
 	// Other attributes
 	include DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_edit.tpl.php';
@@ -367,15 +266,15 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 {
     $res = $object->fetch_optionals();
 
-	$head = justificativedocumentPrepareHead($object);
-	dol_fiche_head($head, 'card', $langs->trans("JustificativeDocument"), -1, $object->picto);
+	$head = justificativetypePrepareHead($object);
+	dol_fiche_head($head, 'card', $langs->trans("JustificativeType"), -1, $object->picto);
 
 	$formconfirm = '';
 
 	// Confirmation to delete
 	if ($action == 'delete')
 	{
-	    $formconfirm = $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('DeleteJustificativeDocument'), $langs->trans('ConfirmDeleteObject'), 'confirm_delete', '', 0, 1);
+	    $formconfirm = $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('DeleteJustificativeType'), $langs->trans('ConfirmDeleteObject'), 'confirm_delete', '', 0, 1);
 	}
 	// Confirmation to delete line
 	if ($action == 'deleteline')
@@ -386,7 +285,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	if ($action == 'clone') {
 		// Create an array for form
 		$formquestion = array();
-		$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('ToClone'), $langs->trans('ConfirmCloneJustificativeDocument', $object->ref), 'confirm_clone', $formquestion, 'yes', 1);
+		$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('ToClone'), $langs->trans('ConfirmCloneJustificativeType', $object->ref), 'confirm_clone', $formquestion, 'yes', 1);
 	}
 
 	// Confirmation of action xxxx
@@ -418,21 +317,21 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 	// Object card
 	// ------------------------------------------------------------
-	$linkback = '<a href="' .dol_buildpath('/justificativedocuments/justificativedocument_list.php', 1) . '?restore_lastsearch_values=1' . (! empty($socid) ? '&socid=' . $socid : '') . '">' . $langs->trans("BackToList") . '</a>';
+	$linkback = '<a href="' .dol_buildpath('/justificativedocuments/justificativetype_list.php', 1) . '?restore_lastsearch_values=1' . (! empty($socid) ? '&socid=' . $socid : '') . '">' . $langs->trans("BackToList") . '</a>';
 
 	$morehtmlref='<div class="refidno">';
 	/*
 	// Ref bis
-	$morehtmlref.=$form->editfieldkey("RefBis", 'ref_client', $object->ref_client, $object, $user->rights->justificativedocuments->justificativedocuments->creer, 'string', '', 0, 1);
-	$morehtmlref.=$form->editfieldval("RefBis", 'ref_client', $object->ref_client, $object, $user->rights->justificativedocuments->justificativedocuments->creer, 'string', '', null, null, '', 1);
+	$morehtmlref.=$form->editfieldkey("RefBis", 'ref_client', $object->ref_client, $object, $user->rights->justificativedocuments->justificativetype->creer, 'string', '', 0, 1);
+	$morehtmlref.=$form->editfieldval("RefBis", 'ref_client', $object->ref_client, $object, $user->rights->justificativedocuments->justificativetype->creer, 'string', '', null, null, '', 1);
 	// Thirdparty
-	$morehtmlref.='<br>'.$langs->trans('ThirdParty') . ' : ' . $object->thirdparty->getNomUrl(1);
+	$morehtmlref.='<br>'.$langs->trans('ThirdParty') . ' : ' . (is_object($object->thirdparty) ? $object->thirdparty->getNomUrl(1) : '');
 	// Project
 	if (! empty($conf->projet->enabled))
 	{
 	    $langs->load("projects");
 	    $morehtmlref.='<br>'.$langs->trans('Project') . ' ';
-	    if ($user->rights->justificativedocuments->justificativedocuments->write)
+	    if ($permissiontoadd)
 	    {
 	        if ($action != 'classify')
 	            $morehtmlref.='<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=classify&amp;id=' . $object->id . '">' . img_edit($langs->transnoentitiesnoconv('SetProject')) . '</a> : ';
@@ -508,7 +407,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	}
 
     	print '<div class="div-table-responsive-no-min">';
-    	if (! empty($object->lines) && $object->status == 0 && $permissiontoadd && $action != 'selectlines' && $action != 'editline')
+    	if (! empty($object->lines) || ($object->status == $object::STATUS_DRAFT && $permissiontoadd && $action != 'selectlines' && $action != 'editline'))
     	{
     	    print '<table id="tablelines" class="noborder noshadow" width="100%">';
     	}
@@ -531,7 +430,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	    }
     	}
 
-    	if (! empty($object->lines) && $object->status == 0 && $permissiontoadd && $action != 'selectlines' && $action != 'editline')
+    	if (! empty($object->lines) || ($object->status == $object::STATUS_DRAFT && $permissiontoadd && $action != 'selectlines' && $action != 'editline'))
     	{
     	    print '</table>';
     	}
@@ -555,15 +454,15 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             print '<a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&action=presend&mode=init#formmailbeforetitle">' . $langs->trans('SendMail') . '</a>'."\n";
 
             // Back to draft
-            if (! empty($user->rights->justificativedocuments->justificativedocuments->write) && $object->status == $object::STATUS_VALIDATED)
+            if (! empty($user->rights->justificativedocuments->justificativetype->write) && $object->status == BOM::STATUS_VALIDATED)
             {
             	print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=setdraft">' . $langs->trans("SetToDraft") . '</a>';
             }
 
             // Modify
-            if (! empty($user->rights->justificativedocuments->justificativedocuments->write))
+            if ($permissiontoadd)
     		{
-    			print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=edit">'.$langs->trans("Modify").'</a>'."\n";
+    			print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&action=edit">'.$langs->trans("Modify").'</a>'."\n";
     		}
     		else
     		{
@@ -571,13 +470,13 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		}
 
     		// Clone
-    		if (! empty($user->rights->justificativedocuments->justificativedocuments->write))
+    		if ($permissiontoadd)
     		{
-    			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=clone&amp;object=order">' . $langs->trans("ToClone") . '</a>'."\n";
+    			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&socid=' . $object->socid . '&action=clone&object=justificativetype">' . $langs->trans("ToClone") . '</a>'."\n";
     		}
 
     		/*
-    		if ($user->rights->justificativedocuments->justificativedocuments->write)
+    		if ($permissiontoadd)
     		{
     			if ($object->status == 1)
     		 	{
@@ -591,7 +490,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		*/
 
     		// Delete (need delete permission, or if draft, just need create/modify permission)
-    		if (! empty($user->rights->justificativedocuments->justificativedocuments->delete) || (! empty($object->fields['status']) && $object->status == $object::STATUS_DRAFT && ! empty($user->rights->justificativedocuments->justificativedocuments->write)))
+    		if ($permissiontodelete)
     		{
     			print '<a class="butActionDelete" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=delete">'.$langs->trans('Delete').'</a>'."\n";
     		}
@@ -616,16 +515,16 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 	    // Documents
 	    /*$objref = dol_sanitizeFileName($object->ref);
-	    $relativepath = $comref . '/' . $comref . '.pdf';
+	    $relativepath = $objref . '/' . $objref . '.pdf';
 	    $filedir = $conf->justificativedocuments->dir_output . '/' . $objref;
 	    $urlsource = $_SERVER["PHP_SELF"] . "?id=" . $object->id;
-	    $genallowed = $user->rights->justificativedocuments->justificativedocuments->read;	// If you can read, you can build the PDF to read content
-	    $delallowed = $user->rights->justificativedocuments->justificativedocuments->create;	// If you can create/edit, you can remove a file on card
+	    $genallowed = $user->rights->justificativedocuments->justificativetype->read;	// If you can read, you can build the PDF to read content
+	    $delallowed = $user->rights->justificativedocuments->justificativetype->create;	// If you can create/edit, you can remove a file on card
 	    print $formfile->showdocuments('justificativedocuments', $objref, $filedir, $urlsource, $genallowed, $delallowed, $object->modelpdf, 1, 0, 0, 28, 0, '', '', '', $soc->default_lang);
 		*/
 
 	    // Show links to link elements
-	    $linktoelem = $form->showLinkToObjectBlock($object, null, array('justificativedocument'));
+	    $linktoelem = $form->showLinkToObjectBlock($object, null, array('justificativetype'));
 	    $somethingshown = $form->showLinkedObjectBlock($object, $linktoelem);
 
 
@@ -633,30 +532,30 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 	    $MAXEVENT = 10;
 
-	    $morehtmlright = '<a href="'.dol_buildpath('/justificativedocuments/justificativedocument_agenda.php', 1).'?id='.$object->id.'">';
+	    $morehtmlright = '<a href="'.dol_buildpath('/justificativedocuments/justificativetype_agenda.php', 1).'?id='.$object->id.'">';
 	    $morehtmlright.= $langs->trans("SeeAll");
 	    $morehtmlright.= '</a>';
 
 	    // List of actions on element
 	    include_once DOL_DOCUMENT_ROOT . '/core/class/html.formactions.class.php';
 	    $formactions = new FormActions($db);
-	    $somethingshown = $formactions->showactions($object, 'justificativedocument', $socid, 1, '', $MAXEVENT, '', $morehtmlright);
+	    $somethingshown = $formactions->showactions($object, 'justificativetype', (is_object($object->thirdparty)?$object->thirdparty->id:0), 1, '', $MAXEVENT, '', $morehtmlright);
 
 	    print '</div></div></div>';
 	}
 
 	//Select mail models is same action as presend
 	/*
-	 if (GETPOST('modelselected')) $action = 'presend';
+	if (GETPOST('modelselected')) $action = 'presend';
 
-	 // Presend form
-	 $modelmail='inventory';
-	 $defaulttopic='InformationMessage';
-	 $diroutput = $conf->product->dir_output.'/inventory';
-	 $trackid = 'stockinv'.$object->id;
+	// Presend form
+	$modelmail='justificativetype';
+	$defaulttopic='InformationMessage';
+	$diroutput = $conf->justificativedocuments->dir_output;
+	$trackid = 'justificativetype'.$object->id;
 
-	 include DOL_DOCUMENT_ROOT.'/core/tpl/card_presend.tpl.php';
-	 */
+	include DOL_DOCUMENT_ROOT.'/core/tpl/card_presend.tpl.php';
+	*/
 }
 
 // End of page

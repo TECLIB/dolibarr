@@ -1,6 +1,5 @@
 <?php
 /* Copyright (C) 2017  Laurent Destailleur <eldy@users.sourceforge.net>
- * Copyright (C) ---Put here your own copyright and developer email---
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +16,9 @@
  */
 
 /**
- * \file        class/justificativedocument.class.php
+ * \file        class/justificativetype.class.php
  * \ingroup     justificativedocuments
- * \brief       This file is a CRUD class file for JustificativeDocument (Create/Read/Update/Delete)
+ * \brief       This file is a CRUD class file for JustificativeType (Create/Read/Update/Delete)
  */
 
 // Put here all includes required by your class file
@@ -28,34 +27,34 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/commonobject.class.php';
 //require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 
 /**
- * Class for JustificativeDocument
+ * Class for JustificativeType
  */
-class JustificativeDocument extends CommonObject
+class JustificativeType extends CommonObject
 {
 	/**
 	 * @var string ID to identify managed object
 	 */
-	public $element = 'justificativedocument';
+	public $element = 'justificativetype';
 
 	/**
 	 * @var string Name of table without prefix where object is stored
 	 */
-	public $table_element = 'justificativedocuments_justificativedocument';
+	public $table_element = 'c_justificative_type';
 
 	/**
-	 * @var int  Does justificativedocument support multicompany module ? 0=No test on entity, 1=Test with field entity, 2=Test with link by societe
+	 * @var int  Does justificativetype support multicompany module ? 0=No test on entity, 1=Test with field entity, 2=Test with link by societe
 	 */
 	public $ismultientitymanaged = 0;
 
 	/**
-	 * @var int  Does justificativedocument support extrafields ? 0=No, 1=Yes
+	 * @var int  Does justificativetype support extrafields ? 0=No, 1=Yes
 	 */
 	public $isextrafieldmanaged = 1;
 
 	/**
-	 * @var string String with name of icon for justificativedocument. Must be the part after the 'object_' into object_justificativedocument.png
+	 * @var string String with name of icon for justificativetype. Must be the part after the 'object_' into object_justificativetype.png
 	 */
-	public $picto = 'justificativedocument@justificativedocuments';
+	public $picto = 'generic';
 
 
 	const STATUS_DRAFT = 0;
@@ -68,21 +67,21 @@ class JustificativeDocument extends CommonObject
 	 *         Note: Filter can be a string like "(t.ref:like:'SO-%') or (t.date_creation:<:'20160101') or (t.nature:is:NULL)"
 	 *  'label' the translation key.
 	 *  'enabled' is a condition when the field must be managed.
+	 *  'position' is the sort order of field.
+	 *  'notnull' is set to 1 if not null in database. Set to -1 if we must set data to null if empty ('' or 0).
 	 *  'visible' says if field is visible in list (Examples: 0=Not visible, 1=Visible on list and create/update/view forms, 2=Visible on list only, 3=Visible on create/update/view form only (not list), 4=Visible on list and update/view form only (not create). Using a negative value means field is not shown by default on list but can be selected for viewing)
 	 *  'noteditable' says if field is not editable (1 or 0)
-	 *  'notnull' is set to 1 if not null in database. Set to -1 if we must set data to null if empty ('' or 0).
-	 *  'default' is a default value for creation (can still be replaced by the global setup of default values)
+	 *  'default' is a default value for creation (can still be overwrote by the Setup of Default Values if field is editable in creation form). Note: If default is set to '(PROV)' and field is 'ref', the default value will be set to '(PROVid)' where id is rowid when a new record is created.
 	 *  'index' if we want an index in database.
 	 *  'foreignkey'=>'tablename.field' if the field is a foreign key (it is recommanded to name the field fk_...).
-	 *  'position' is the sort order of field.
 	 *  'searchall' is 1 if we want to search in this field when making a search from the quick search button.
 	 *  'isameasure' must be set to 1 if you want to have a total on list for this field. Field type must be summable like integer or double(24,8).
 	 *  'css' is the CSS style to use on field. For example: 'maxwidth200'
 	 *  'help' is a string visible as a tooltip on field
-	 *  'comment' is not used. You can store here any text of your choice. It is not used by application.
 	 *  'showoncombobox' if value of the field must be visible into the label of the combobox that list record
-	 *  'arraykeyval' to set list of value if type is a list of predefined values. For example: array("0"=>"Draft","1"=>"Active","-1"=>"Cancel")
 	 *  'disabled' is 1 if we want to have the field locked by a 'disabled' attribute. In most cases, this is never set into the definition of $fields into class, but is set dynamically by some part of code.
+	 *  'arraykeyval' to set list of value if type is a list of predefined values. For example: array("0"=>"Draft","1"=>"Active","-1"=>"Cancel")
+	 *  'comment' is not used. You can store here any text of your choice. It is not used by application.
 	 */
 
 	// BEGIN MODULEBUILDER PROPERTIES
@@ -90,39 +89,17 @@ class JustificativeDocument extends CommonObject
 	 * @var array  Array with all fields and their property. Do not use it as a static var. It may be modified by constructor.
 	 */
 	public $fields=array(
-		'rowid' => array('type'=>'integer', 'label'=>'TechnicalID', 'enabled'=>1, 'position'=>1, 'notnull'=>1, 'visible'=>-1, 'index'=>1, 'comment'=>"Id"),
-		'ref' => array('type'=>'varchar(128)', 'label'=>'Ref', 'enabled'=>1, 'position'=>10, 'notnull'=>1, 'visible'=>4, 'noteditable'=>'1', 'default'=>'(PROV)', 'index'=>1, 'searchall'=>1, 'showoncombobox'=>'1', 'comment'=>"Reference of object"),
-	    'fk_type' => array('type'=>'integer:JustificativeType:justificativedocuments/class/justificativetype.class.php:0:active=1', 'label'=>'Type', 'enabled'=>1, 'position'=>20, 'notnull'=>1, 'visible'=>1,),
-	    'date_start' => array('type'=>'date', 'label'=>'DateStart', 'enabled'=>1, 'position'=>30, 'notnull'=>0, 'visible'=>1,),
-	    'date_end' => array('type'=>'date', 'label'=>'DateEnd', 'enabled'=>1, 'position'=>32, 'notnull'=>0, 'visible'=>1,),
-	    'fk_user' => array('type'=>'integer:User:user/class/user.class.php:0:statut=1 AND entity IN (__SHARED_ENTITIES__)', 'label'=>'User', 'enabled'=>1, 'position'=>35, 'notnull'=>1, 'visible'=>1, 'foreignkey'=>'user.rowid',),
-	    //'fk_project' => array('type'=>'integer:Project:projet/class/project.class.php:1', 'label'=>'Project', 'enabled'=>1, 'position'=>52, 'notnull'=>-1, 'visible'=>-1, 'index'=>1),
-		'description' => array('type'=>'text', 'label'=>'Description', 'enabled'=>1, 'position'=>60, 'notnull'=>-1, 'visible'=>3,),
-		'note_public' => array('type'=>'html', 'label'=>'NotePublic', 'enabled'=>1, 'position'=>61, 'notnull'=>-1, 'visible'=>0,),
-		'note_private' => array('type'=>'html', 'label'=>'NotePrivate', 'enabled'=>1, 'position'=>62, 'notnull'=>-1, 'visible'=>0,),
-		'date_creation' => array('type'=>'datetime', 'label'=>'DateCreation', 'enabled'=>1, 'position'=>500, 'notnull'=>1, 'visible'=>-2,),
-		'tms' => array('type'=>'timestamp', 'label'=>'DateModification', 'enabled'=>1, 'position'=>501, 'notnull'=>-1, 'visible'=>-2,),
-		'fk_user_creat' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserAuthor', 'enabled'=>1, 'position'=>510, 'notnull'=>1, 'visible'=>-2, 'foreignkey'=>'user.rowid',),
-		'fk_user_modif' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserModif', 'enabled'=>1, 'position'=>511, 'notnull'=>-1, 'visible'=>-2,),
-		'import_key' => array('type'=>'varchar(14)', 'label'=>'ImportId', 'enabled'=>1, 'position'=>1000, 'notnull'=>-1, 'visible'=>-2,),
-	    'status' => array('type'=>'integer', 'label'=>'Status', 'enabled'=>1, 'position'=>1000, 'notnull'=>1, 'default'=>0, 'visible'=>2, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Brouillon', '1'=>'Valid&eacute;', '9'=>'Annul&eacute;'),),
+	    'rowid' =>array('type'=>'integer', 'label'=>'ID', 'enabled'=>1, 'visible'=>-1, 'notnull'=>1, 'position'=>10),
+	    'code' =>array('type'=>'varchar(32)', 'label'=>'Code', 'enabled'=>1, 'visible'=>-1, 'notnull'=>1, 'position'=>15),
+	    'label' =>array('type'=>'varchar(50)', 'label'=>'Label', 'enabled'=>1, 'visible'=>-1, 'position'=>20, 'showoncombobox'=>1),
+	    'active' =>array('type'=>'tinyint(4)', 'label'=>'Active', 'enabled'=>1, 'visible'=>-1, 'notnull'=>1, 'position'=>25),
+	    'module' =>array('type'=>'varchar(32)', 'label'=>'Module', 'enabled'=>1, 'visible'=>-1, 'position'=>30),
 	);
 	public $rowid;
-	public $ref;
-	public $fk_project;
-	public $description;
-	public $note_public;
-	public $note_private;
-	public $date_creation;
-	public $tms;
-	public $fk_user;
-	public $fk_user_creat;
-	public $fk_user_modif;
-	public $import_key;
-	public $status;
-	public $fk_type;
-	public $date_start;
-	public $date_end;
+	public $code;
+	public $label;
+	public $active;
+	public $module;
 	// END MODULEBUILDER PROPERTIES
 
 
@@ -131,17 +108,17 @@ class JustificativeDocument extends CommonObject
 	/**
 	 * @var int    Name of subtable line
 	 */
-	//public $table_element_line = 'justificativedocuments_justificativedocumentline';
+	//public $table_element_line = 'justificativedocuments_justificativetypeline';
 
 	/**
 	 * @var int    Field with ID of parent key if this field has a parent
 	 */
-	//public $fk_element = 'fk_justificativedocument';
+	//public $fk_element = 'fk_justificativetype';
 
 	/**
 	 * @var int    Name of subtable class that manage subtable lines
 	 */
-	//public $class_element_line = 'JustificativeDocumentline';
+	//public $class_element_line = 'JustificativeTypeline';
 
 	/**
 	 * @var array	List of child tables. To test if we can delete object.
@@ -151,10 +128,10 @@ class JustificativeDocument extends CommonObject
 	/**
 	 * @var array	List of child tables. To know object to delete on cascade.
 	 */
-	//protected $childtablesoncascade=array('justificativedocuments_justificativedocumentdet');
+	//protected $childtablesoncascade=array('justificativedocuments_justificativetypedet');
 
 	/**
-	 * @var JustificativeDocumentLine[]     Array of subtable lines
+	 * @var JustificativeTypeLine[]     Array of subtable lines
 	 */
 	//public $lines = array();
 
@@ -241,8 +218,9 @@ class JustificativeDocument extends CommonObject
 
 
 	    // Clear fields
-	    $object->ref = "copy_of_".$object->ref;
-	    $object->title = $langs->trans("CopyOf")." ".$object->title;
+	    $object->ref = empty($this->fields['ref']['default']) ? "copy_of_".$object->ref: $this->fields['ref']['default'];
+	    $object->label = empty($this->fields['label']['default']) ? $langs->trans("CopyOf")." ".$object->label: $this->fields['label']['default'];
+	    $object->status = self::STATUS_DRAFT;
 	    // ...
 	    // Clear extrafields that are unique
 	    if (is_array($object->array_options) && count($object->array_options) > 0)
@@ -544,11 +522,11 @@ class JustificativeDocument extends CommonObject
 
         $result = '';
 
-        $label = '<u>' . $langs->trans("JustificativeDocument") . '</u>';
+        $label = '<u>' . $langs->trans("JustificativeType") . '</u>';
         $label.= '<br>';
         $label.= '<b>' . $langs->trans('Ref') . ':</b> ' . $this->ref;
 
-        $url = dol_buildpath('/justificativedocuments/justificativedocument_card.php', 1).'?id='.$this->id;
+        $url = dol_buildpath('/justificativedocuments/justificativetype_card.php', 1).'?id='.$this->id;
 
         if ($option != 'nolink')
         {
@@ -563,7 +541,7 @@ class JustificativeDocument extends CommonObject
         {
             if (! empty($conf->global->MAIN_OPTIMIZEFORTEXTBROWSER))
             {
-                $label=$langs->trans("ShowJustificativeDocument");
+                $label=$langs->trans("ShowJustificativeType");
                 $linkclose.=' alt="'.dol_escape_htmltag($label, 1).'"';
             }
             $linkclose.=' title="'.dol_escape_htmltag($label, 1).'"';
@@ -582,7 +560,7 @@ class JustificativeDocument extends CommonObject
 		//if ($withpicto != 2) $result.=(($addlabel && $this->label) ? $sep . dol_trunc($this->label, ($addlabel > 1 ? $addlabel : 0)) : '');
 
 		global $action,$hookmanager;
-		$hookmanager->initHooks(array('justificativedocumentdao'));
+		$hookmanager->initHooks(array('justificativetypedao'));
 		$parameters=array('id'=>$this->id, 'getnomurl'=>$result);
 		$reshook=$hookmanager->executeHooks('getNomUrl', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
 		if ($reshook > 0) $result = $hookmanager->resPrint;
@@ -612,7 +590,7 @@ class JustificativeDocument extends CommonObject
 	 */
 	public function LibStatut($status, $mode = 0)
 	{
-		// phpcs:enable
+	    // phpcs:enable
 	    if (empty($this->labelStatus) || empty($this->labelStatusShort))
 	    {
 	        global $langs;
@@ -704,20 +682,7 @@ class JustificativeDocument extends CommonObject
 	{
 	    $this->lines=array();
 
-	    $objectline = new JustificativeDocumentLine($this->db);
-	    $result = $objectline->fetchAll('ASC', 'position', 0, 0, array('customsql'=>'fk_justificativedocument = '.$this->id));
-
-	    if (is_numeric($result))
-	    {
-	        $this->error = $this->error;
-	        $this->errors = $this->errors;
-	        return $result;
-	    }
-	    else
-	    {
-	        $this->lines = $result;
-	        return $this->lines;
-	    }
+        return $this->lines;
 	}
 
 	/**
@@ -742,8 +707,8 @@ class JustificativeDocument extends CommonObject
 
 			if ($this->modelpdf) {
 				$modele = $this->modelpdf;
-			} elseif (! empty($conf->global->JUSTIFICATIVEDOCUMENT_ADDON_PDF)) {
-				$modele = $conf->global->JUSTIFICATIVEDOCUMENT_ADDON_PDF;
+			} elseif (! empty($conf->global->JUSTIFICATIVETYPE_ADDON_PDF)) {
+				$modele = $conf->global->JUSTIFICATIVETYPE_ADDON_PDF;
 			}
 		}
 
@@ -783,11 +748,3 @@ class JustificativeDocument extends CommonObject
 	}
 }
 
-/**
- * Class JustificativeDocumentLine. You can also remove this and generate a CRUD class for lines objects.
- */
-class JustificativeDocumentLine
-{
-	// To complete with content of an object JustificativeDocumentLine
-	// We should have a field rowid, fk_justificativedocument and position
-}
