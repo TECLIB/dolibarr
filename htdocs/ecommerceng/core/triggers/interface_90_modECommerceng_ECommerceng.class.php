@@ -387,8 +387,8 @@ class InterfaceECommerceng
         				    if (! $result)
         				    {
         				        $error++;
-        				        var_dump($eCommerceSynchro->eCommerceRemoteAccess->error);
-        				        var_dump($eCommerceSynchro->eCommerceRemoteAccess->errors);exit;
+        				        //var_dump($eCommerceSynchro->eCommerceRemoteAccess->error);
+        				        //var_dump($eCommerceSynchro->eCommerceRemoteAccess->errors);exit;
         				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
         				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
         				    }
