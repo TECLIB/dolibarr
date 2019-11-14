@@ -474,7 +474,7 @@ class eCommerceSynchro
                     $resanswer = array();
 
                     // Reformat the array of categories
-                    if ($this->eCommerceSite->type == $this->eCommerceSite::TYPE_MAGENTO)    // Magento
+                    if ($this->eCommerceSite->type == eCommerceSite::TYPE_MAGENTO)    // Magento
                     {
                         eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
                     }
@@ -1267,7 +1267,7 @@ class eCommerceSynchro
                         // We can disable this to have contact/address of thirdparty synchronize only when an order or invoice is synchronized
                         if (! $error)
                         {
-                            if ($this->eCommerceSite->type != $this->eCommerceSite::TYPE_PRESTASHOP)
+                            if ($this->eCommerceSite->type != eCommerceSite::TYPE_PRESTASHOP)
                             {
                                 dol_syslog("Make a remote call to get contacts");   // Slow because done on each thirdparty to sync.
                                 $listofaddressids=$this->eCommerceRemoteAccess->getRemoteAddressIdForSociete($societeArray['remote_id']);   // Ask contacts to magento
