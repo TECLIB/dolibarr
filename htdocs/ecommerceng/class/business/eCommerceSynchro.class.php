@@ -1088,7 +1088,7 @@ class eCommerceSynchro
                     dol_syslog("-- Start thirdparty remote_id=".$societeArray['remote_id']." site=".$this->eCommerceSite->id);
                     $synchExists = $this->eCommerceSociete->fetchByRemoteId($societeArray['remote_id'], $this->eCommerceSite->id);
                     $dBSociete = new Societe($this->db);
-                    var_dump($synchExists);exit;
+                    //var_dump($synchExists);exit;
                     //if societe exists in eCommerceSociete, societe must exists in societe
                     if ($synchExists > 0 && isset($this->eCommerceSociete->fk_societe))
                     {
