@@ -1039,7 +1039,7 @@ class eCommerceRemoteAccessMagento
 						// If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
 						if ($product_type == 'configurable') {
 
-							//$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
+							$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
 
 							$configurableItems[$item['item_id']] = array(
 							'item_id' => $item['item_id'],
@@ -1050,13 +1050,13 @@ class eCommerceRemoteAccessMagento
 							'qty' => $item['qty'],
 							'remise_percent' => round(($item['discount_amount']*100)/$item['price']),
 +                                                       'remise' => $item['discount_amount'],
-+                                                       'tva_tx' => $item['tax_percent']
++                                                       'tva_tx' => $vatrateforitem
 							);
 						} else {
 							// If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
 							if (! array_key_exists($parent_item_id, $configurableItems)) {
 
-								//$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
+								$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
 
 								$tmpitem = array(
 								'item_id' => $item['item_id'],
@@ -1065,7 +1065,7 @@ class eCommerceRemoteAccessMagento
 								'product_type' => $product_type,
 								'price' => $item['price'],
 								'qty' => $item['qty'],
-								'tva_tx' => $item['tax_percent'],
+								'tva_tx' => $vatrateforitem,
 +                                                               'remise_percent' => round(($item['discount_amount']*100)/$item['price'])
 								);
 							} else {
