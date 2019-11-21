@@ -1039,7 +1039,7 @@ class eCommerceRemoteAccessMagento
 						// If item is configurable, localMemCache it, to use its price and tax rate instead of the one of its child
 						if ($product_type == 'configurable') {
 
-							$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
+							//$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
 
 							$configurableItems[$item['item_id']] = array(
 							'item_id' => $item['item_id'],
@@ -1048,13 +1048,15 @@ class eCommerceRemoteAccessMagento
 							'product_type' => $product_type,
 							'price' => $item['price'],
 							'qty' => $item['qty'],
-							'tva_tx' => $vatrateforitem
+							'remise_percent' => round(($item['discount_amount']*100)/$item['price']),
++                                                       'remise' => $item['discount_amount'],
++                                                       'tva_tx' => $item['tax_percent']
 							);
 						} else {
 							// If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
 							if (! array_key_exists($parent_item_id, $configurableItems)) {
 
-								$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
+								//$vatrateforitem = $this->getTaxRate(($item['row_total'] - $item['discount_amount']), $item['tax_amount']);	// On the line with Magento, the tax_amount is the amount of tax for the line after removing the part of discount
 
 								$tmpitem = array(
 								'item_id' => $item['item_id'],
@@ -1063,7 +1065,8 @@ class eCommerceRemoteAccessMagento
 								'product_type' => $product_type,
 								'price' => $item['price'],
 								'qty' => $item['qty'],
-								'tva_tx' => $vatrateforitem
+								'tva_tx' => $item['tax_percent'],
++                                                               'remise_percent' => round(($item['discount_amount']*100)/$item['price'])
 								);
 							} else {
 								$tmpitem = array(
@@ -1073,14 +1076,15 @@ class eCommerceRemoteAccessMagento
 								'product_type' => $product_type,
 								'price' => $configurableItems[$parent_item_id]['price'],
 								'qty' => $item['qty'],
-								'tva_tx' => $configurableItems[$parent_item_id]['tva_tx']
+								'tva_tx' => $configurableItems[$parent_item_id]['tva_tx'],
++                                                               'remise_percent' => $configurableItems[$parent_item_id]['remise_percent']
 								);
 							}
 
 							$items[] = $tmpitem;
 
 							// There is a fixed discount, we must include it into a new line
-							if ($item['discount_amount'])
+							/*if ($item['discount_amount'])
 							{
 								$tmpitemdiscount = array(
 								'item_id' => 'discount_with_vat_'.$tmpitem['tva_tx'].'_for_'.$item['item_id'],
@@ -1092,7 +1096,7 @@ class eCommerceRemoteAccessMagento
 								);
 
 								$items[] = $tmpitemdiscount;
-							}
+							}*/
 						}
 					}
 
