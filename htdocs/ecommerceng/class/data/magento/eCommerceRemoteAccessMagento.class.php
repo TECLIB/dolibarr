@@ -802,7 +802,7 @@ class eCommerceRemoteAccessMagento
 								'product_type' => $item['product_type'],
 								'price' => $configurableItems[$item['parent_item_id']]['price'],
 								'remise' => $configurableItems[$item['parent_item_id']]['remise'],
-                                                                'remise_percent' => round(($configurableItems[$item['parent_item_id']]['remise']*100)/$configurableItems[$item['parent_item_id']]['price']),²
+                                                                'remise_percent' => round(($configurableItems[$item['parent_item_id']]['remise']*100)/$configurableItems[$item['parent_item_id']]['price']),
 								'qty' => $item['qty_ordered'],
 								'tva_tx' => $configurableItems[$item['parent_item_id']]['tva_tx'],
 								'remote_simple_sku' => $configurableItems[$item['parent_item_id']]['remote_simple_sku'],
