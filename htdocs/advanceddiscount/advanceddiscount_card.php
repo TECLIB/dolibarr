@@ -88,19 +88,19 @@ foreach($object->fields as $key => $val)
 if (empty($action) && empty($id) && empty($ref)) $action='view';
 
 // Security check - Protection if external user
-//if ($user->societe_id > 0) access_forbidden();
+//if ($user->societe_id > 0) accessforbidden();
 //if ($user->societe_id > 0) $socid = $user->societe_id;
 //$result = restrictedArea($user, 'advanceddiscount', $id);
 
 // Load object
-include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php';  // Must be include, not include_once  // Must be include, not include_once. Include fetch and fetch_thirdparty but not fetch_optionals
+include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php'; // Must be include, not include_once.
 
+$permissiontoadd = $user->rights->advanceddiscount->write;
+$permissiontodelete = $user->rights->advanceddiscount->delete;
 
 
 /*
  * Actions
- *
- * Put here all code to do according to value of "action" parameter
  */
 
 $parameters=array();
@@ -111,8 +111,6 @@ if (empty($reshook))
 {
 	$error=0;
 
-	$permissiontoadd = $user->rights->advanceddiscount->write;
-	$permissiontodelete = $user->rights->advanceddiscount->delete;
 	if (empty($backtopage)) $backtopage = dol_buildpath('/advanceddiscount/advanceddiscount_card.php',1).'?id='.($id?$id:'__ID__');
 	$backurlforlist = dol_buildpath('/advanceddiscount/advanceddiscount_list.php',1);
 	$triggermodname = 'ADVANCEDDISCOUNT_ADVANCEDDISCOUNT_MODIFY';	// Name of trigger action code to execute when we modify record
@@ -286,7 +284,7 @@ if ($action == 'create')
 
 	dol_fiche_head(array(), '');
 
-	print '<table class="border centpercent">'."\n";
+	print '<table class="border centpercent tableforfieldcreate">'."\n";
 
 	// Common attributes
 	include DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
@@ -320,7 +318,7 @@ if (($id || $ref) && $action == 'edit')
 
 	dol_fiche_head();
 
-	print '<table class="border centpercent">'."\n";
+	print '<table class="border centpercent tableforfieldedit">'."\n";
 
 	// Common attributes
 	include DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_edit.tpl.php';
@@ -342,7 +340,7 @@ if (($id || $ref) && $action == 'edit')
 // Part to show record
 if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'create')))
 {
-    $res = $object->fetch_optionals($object->id);
+    $res = $object->fetch_optionals();
 
 	$head = advanceddiscountPrepareHead($object);
 	dol_fiche_head($head, 'card', $langs->trans("AdvancedDiscount"), -1, 'advanceddiscount@advanceddiscount');
@@ -352,14 +350,14 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	// Confirmation to delete
 	if ($action == 'delete')
 	{
-	    $formconfirm = $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('DeleteAdvancedDiscount'), $langs->trans('ConfirmDeleteAdvancedDiscount'), 'confirm_delete', '', 0, 1);
+	    $formconfirm = $form->formconfirm($_SERVER["PHP_SELF"].'?id='.$object->id, $langs->trans('DeleteAdvancedDiscount'), $langs->trans('ConfirmDeleteAdvancedDiscount'), 'confirm_delete', '', 0, 1);
 	}
 
 	// Clone confirmation
 	if ($action == 'clone') {
 		// Create an array for form
 		$formquestion = array();
-		$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('CloneAdvancedDiscount'), $langs->trans('ConfirmCloneAdvancedDiscount', $object->ref), 'confirm_clone', $formquestion, 'yes', 1);
+		$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"].'?id='.$object->id, $langs->trans('CloneAdvancedDiscount'), $langs->trans('ConfirmCloneAdvancedDiscount', $object->ref), 'confirm_clone', $formquestion, 'yes', 1);
 	}
 
 	// Confirmation of action xxxx
@@ -392,7 +390,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 	// Object card
 	// ------------------------------------------------------------
-	$linkback = '<a href="' .dol_buildpath('/advanceddiscount/advanceddiscount_list.php',1) . '?restore_lastsearch_values=1' . (! empty($socid) ? '&socid=' . $socid : '') . '">' . $langs->trans("BackToList") . '</a>';
+	$linkback = '<a href="' .dol_buildpath('/advanceddiscount/advanceddiscount_list.php', 1).'?restore_lastsearch_values=1' . (! empty($socid) ? '&socid=' . $socid : '') . '">' . $langs->trans("BackToList") . '</a>';
 
 	$morehtmlref='<div class="refidno">';
 	/*
@@ -406,7 +404,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	{
 	    $langs->load("projects");
 	    $morehtmlref.='<br>'.$langs->trans('Project') . ' ';
-	    if ($user->rights->advanceddiscount->creer)
+	    if ($permissiontoadd)
 	    {
 	        if ($action != 'classify')
 	        {
@@ -427,9 +425,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	        if (! empty($object->fk_project)) {
 	            $proj = new Project($db);
 	            $proj->fetch($object->fk_project);
-	            $morehtmlref.='<a href="'.DOL_URL_ROOT.'/projet/card.php?id=' . $object->fk_project . '" title="' . $langs->trans('ShowProject') . '">';
-	            $morehtmlref.=$proj->ref;
-	            $morehtmlref.='</a>';
+	            $morehtmlref.=$proj->getNomUrl();
 	        } else {
 	            $morehtmlref.='';
 	        }
@@ -448,18 +444,19 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	print '<table class="border centpercent">'."\n";
 
 	// Common attributes
-	//$keyforbreak='fieldkeytoswithonsecondcolumn';
+	//$keyforbreak='fieldkeytoswitchonsecondcolumn';
+	//unset($object->fields['fk_project']);				// Hide field already shown in banner
+	//unset($object->fields['fk_soc']);					// Hide field already shown in banner
 	include DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_view.tpl.php';
 
-	// Other attributes
+	// Other attributes. Fields from hook formObjectOptions and Extrafields.
 	include DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_view.tpl.php';
 
 	print '</table>';
 	print '</div>';
 	print '</div>';
-	print '</div>';
 
-	print '<div class="clearboth"></div><br>';
+	print '<div class="clearboth"></div>';
 
 	dol_fiche_end();
 
@@ -492,7 +489,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		}
 
     		/*
-    		if ($user->rights->advanceddiscount->create)
+    		if ($permissiontoadd)
     		{
     			if ($object->status == 1)
     		 	{
@@ -505,13 +502,14 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		}
     		*/
 
-    		if ($user->rights->advanceddiscount->delete)
+    		// Delete (need delete permission, or if draft, just need create/modify permission)
+    		if ($permissiontodelete)
     		{
     			print '<a class="butActionDelete" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=delete">'.$langs->trans('Delete').'</a>'."\n";
     		}
     		else
     		{
-    			print '<a class="butActionRefused" href="#" title="'.dol_escape_htmltag($langs->trans("NotEnoughPermissions")).'">'.$langs->trans('Delete').'</a>'."\n";
+    			print '<a class="butActionRefused classfortooltip" href="#" title="'.dol_escape_htmltag($langs->trans("NotEnoughPermissions")).'">'.$langs->trans('Delete').'</a>'."\n";
     		}
     	}
     	print '</div>'."\n";
@@ -675,6 +673,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 		print '<br><span class="opacitymedium">'.$langs->trans("NoteWhenDiscountApplied").'</span>';
 
+		print '</form>';
+		
 	    print '</div></div></div>';
 	}
 

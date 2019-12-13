@@ -60,7 +60,7 @@ $hookmanager->initHooks(array('advanceddiscountnote'));     // Note that conf->h
 $extrafields->fetch_name_optionals_label($object->table_element);
 
 // Security check - Protection if external user
-//if ($user->societe_id > 0) access_forbidden();
+//if ($user->societe_id > 0) accessforbidden();
 //if ($user->societe_id > 0) $socid = $user->societe_id;
 //$result = restrictedArea($user, 'advanceddiscount', $id);
 

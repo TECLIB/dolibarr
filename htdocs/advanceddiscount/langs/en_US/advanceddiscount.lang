@@ -9,10 +9,6 @@ ModuleAdvancedDiscountDesc = AdvancedDiscount description
 AdvancedDiscountSetup = Advanced Discount setup
 Settings = Settings
 AdvancedDiscountSetupPage = Advanced Discount setup page
-ADVANCEDDISCOUNTS_MYPARAM1 = My param 1
-ADVANCEDDISCOUNTS_MYPARAM1Tooltip = My param 1 tooltip
-ADVANCEDDISCOUNTS_MYPARAM2=My param 2
-ADVANCEDDISCOUNTS_MYPARAM2Tooltip=My param 2 tooltip
 
 
 #
@@ -42,4 +38,4 @@ Rules=Rules
 NoteWhenDiscountApplied=Note that rules are only checked and actions executed when you add a new line into a proposal, order or invoice. If the object is created by cloning or is generated from another object, nothing is done. About percentage discount, they are applied only if there is not already a percentage discount that is higher.  
 ErrorCanAddItemActionIfNoItemRule=We can't add an action on item if there is no rule on items
 ErrorValueCantBeNegative=Value can't be negative
-YouCanCreateDiscountsFromMenuTools=Uou can create your discounts from the menu Tools
+YouCanCreateDiscountsFromMenuTools=You can create your discounts from the menu Tools

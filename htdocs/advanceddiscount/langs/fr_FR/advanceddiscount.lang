@@ -1,45 +1,40 @@
 # Module label 'ModuleAdvancedDiscountName'
-ModuleAdvancedDiscountName = AdvancedDiscount
+ModuleAdvancedDiscountName = Gestion avancées des promotions et remises
 # Module description 'ModuleAdvancedDiscountDesc'
-ModuleAdvancedDiscountDesc = AdvancedDiscount description
+ModuleAdvancedDiscountDesc = Module de gestion avancées des promotions et réductions
 
 #
-# Admin page
+# Page d'administration
 #
-AdvancedDiscountSetup = Advanced Discount setup
-Settings = Settings
-AdvancedDiscountSetupPage = Advanced Discount setup page
-ADVANCEDDISCOUNTS_MYPARAM1 = My param 1
-ADVANCEDDISCOUNTS_MYPARAM1Tooltip = My param 1 tooltip
-ADVANCEDDISCOUNTS_MYPARAM2=My param 2
-ADVANCEDDISCOUNTS_MYPARAM2Tooltip=My param 2 tooltip
-
+AdvancedDiscountSetup = Configuration du module Gestion Avancée des remises/promotions
+Settings = Réglages
+AdvancedDiscountSetupPage = Page de configuration du module Gestion Avancée des remises/promotions
 
 #
-# About page
+# Page À propos
 #
-About = About
-AdvancedDiscountAbout = About Advanced Discount
-AdvancedDiscountAboutPage = Advanced Discount about page
+About = À propos
+AdvancedDiscountAbout = À propos de Gestion Avancée des remises/promotions
+AdvancedDiscountAboutPage = Page à propos de Gestion Avancée des remises/promotions
 
-AdvancedDiscount=Discount/Promotions
-DiscountsOrPromotions=Discounts/promotions
-NewDiscount=New discount/promotion
-RulesAndActions=Rules and Actions
-DeleteAdvancedDiscount=Delete discount/promotion
-ConfirmDeleteAdvancedDiscount=Are you sure you want to delete this discount/promotion ?
-CloneAdvancedDiscount=Clone discount/promotion
-ConfirmCloneAdvancedDiscount=Are you sure you want to clone this discount/promotion ?
-CustomerCountryIs=Customer country is (value is country code)
-CustomerHasTag=Customer has tag/category (value is ref of tag/category)
-ContainsProduct=Object contains product (value is product ref)
-TotalGreaterThanOrEqualTo=Total without tax >= (value is amount)
-ObjectFixedDiscount=Fixed discount (value is amount)
-ObjectPercentDiscount=Percent discount (value is percentage)
-ItemFixedDiscount=Item fixed discount (value is amount)
-ItemPercentDiscount=Item percent discount (value is percentage)
-Rules=Rules
-NoteWhenDiscountApplied=Note that rules are only checked and actions executed when you add a new line into a proposal, order or invoice. If the object is created by cloning or is generated from another object, nothing is done. About percentage discount, they are applied only if there is not already a percentage discount that is higher.  
-ErrorCanAddItemActionIfNoItemRule=We can't add an action on item if there is no rule on items
-ErrorValueCantBeNegative=Value can't be negative
-YouCanCreateDiscountsFromMenuTools=Uou can create your discounts from the menu Tools
+AdvancedDiscount=Réduction/Promotions
+DiscountsOrPromotions=Réductions/promotions
+NewDiscount=Nouvelle réduction/promotion
+RulesAndActions=Règles et Actions
+DeleteAdvancedDiscount=Supprimer réduction/promotion
+ConfirmDeleteAdvancedDiscount=Etes vous sur de vouloir supprimer cette réduction/promotion ?
+CloneAdvancedDiscount=Cloner réduction/promotion
+ConfirmCloneAdvancedDiscount=Etes vous sur de vouloir cloner cette réduction/promotion ?
+CustomerCountryIs=Le pays du client est (La valeur est le code pays)
+CustomerHasTag=Le client a le tag/catégorie (La valeur est la ref du tag/categorie)
+ContainsProduct=L'objet contient le produit (La valeur est la ref du produit)
+TotalGreaterThanOrEqualTo=Total hors taxe >= (La valeur est le montant)
+ObjectFixedDiscount=Remise fixe (La valeur est le montant)
+ObjectPercentDiscount=Remise en pourcentage (La valeur est le pourcentage)
+ItemFixedDiscount=Remise fixe sur la ligne produit (La valeur est le montant)
+ItemPercentDiscount=Remise en pourcentage sur la ligne produit (La valeur est le pourcentage)
+Rules=Règles
+NoteWhenDiscountApplied=Notez que les règles sont vérifiées et les actions appliquées lorsque vous ajoutez une nouvelle ligne dans un devis, commande ou facture. Si l'object est créé par clonage ou est généré depuis un autre object, rien n'est fait (ceci afin de rester fidèle à la source). Pour les remises en pourcentage, elles ne sont appliquées que si il n'y a pas déjà une remise en poucentage appliquée manuellement et supérieure. 
+ErrorCanAddItemActionIfNoItemRule=On ne peut ajouter une action sur un article si aucune règle sur article n'a été définie
+ErrorValueCantBeNegative=La valeure ne peut etre négative
+YouCanCreateDiscountsFromMenuTools=Vous pouvez créer vos promotions ou réductions depuis le menu Outils
