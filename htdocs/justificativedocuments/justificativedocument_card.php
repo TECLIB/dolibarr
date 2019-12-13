@@ -99,7 +99,7 @@ if (empty($action) && empty($id) && empty($ref)) $action='view';
 include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php';  // Must be include, not include_once.
 
 // Security check - Protection if external user
-//if ($user->societe_id > 0) access_forbidden();
+//if ($user->societe_id > 0) accessforbidden();
 //if ($user->societe_id > 0) $socid = $user->societe_id;
 //$isdraft = (($object->statut == JustificativeDocument::STATUS_DRAFT) ? 1 : 0);
 //$result = restrictedArea($user, 'justificativedocuments', $object->id, '', '', 'fk_soc', 'rowid', $isdraft);

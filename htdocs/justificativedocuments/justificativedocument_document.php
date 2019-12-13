@@ -80,7 +80,7 @@ include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php';  // Must be inclu
 if ($id > 0 || ! empty($ref)) $upload_dir = $conf->justificativedocuments->multidir_output[$object->entity?$object->entity:$conf->entity] . "/justificativedocument/" . dol_sanitizeFileName($object->ref);
 
 // Security check - Protection if external user
-//if ($user->societe_id > 0) access_forbidden();
+//if ($user->societe_id > 0) accessforbidden();
 //if ($user->societe_id > 0) $socid = $user->societe_id;
 //$result = restrictedArea($user, 'justificativedocuments', $object->id);
 
