@@ -102,10 +102,12 @@ class JustificativeDocument extends CommonObject
 		'note_private' => array('type'=>'html', 'label'=>'NotePrivate', 'enabled'=>1, 'position'=>62, 'notnull'=>-1, 'visible'=>0,),
 		'date_creation' => array('type'=>'datetime', 'label'=>'DateCreation', 'enabled'=>1, 'position'=>500, 'notnull'=>1, 'visible'=>-2,),
 		'tms' => array('type'=>'timestamp', 'label'=>'DateModification', 'enabled'=>1, 'position'=>501, 'notnull'=>-1, 'visible'=>-2,),
-		'fk_user_creat' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserAuthor', 'enabled'=>1, 'position'=>510, 'notnull'=>1, 'visible'=>-2, 'foreignkey'=>'user.rowid',),
+	    'date_validation' => array('type'=>'datetime',     'label'=>'DateCreation',     'enabled'=>1, 'visible'=>-2, 'position'=>502),
+	    'fk_user_creat' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserAuthor', 'enabled'=>1, 'position'=>510, 'notnull'=>1, 'visible'=>-2, 'foreignkey'=>'user.rowid',),
 		'fk_user_modif' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserModif', 'enabled'=>1, 'position'=>511, 'notnull'=>-1, 'visible'=>-2,),
-		'import_key' => array('type'=>'varchar(14)', 'label'=>'ImportId', 'enabled'=>1, 'position'=>1000, 'notnull'=>-1, 'visible'=>-2,),
-	    'status' => array('type'=>'integer', 'label'=>'Status', 'enabled'=>1, 'position'=>1000, 'notnull'=>1, 'default'=>0, 'visible'=>2, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Brouillon', '1'=>'Valid&eacute;', '9'=>'Annul&eacute;'),),
+		'fk_user_valid' => array('type'=>'integer:User:user/class/user.class.php',      'label'=>'UserValidation',        'enabled'=>1, 'visible'=>-1, 'position'=>512),
+	    'import_key' => array('type'=>'varchar(14)', 'label'=>'ImportId', 'enabled'=>1, 'position'=>1000, 'notnull'=>-1, 'visible'=>-2,),
+	    'status' => array('type'=>'integer', 'label'=>'Status', 'enabled'=>1, 'position'=>1000, 'notnull'=>1, 'default'=>0, 'visible'=>2, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Draft', '1'=>'Validated', '9'=>'Canceled'),),
 	);
 	public $rowid;
 	public $ref;
@@ -452,6 +454,137 @@ class JustificativeDocument extends CommonObject
 
 
 	/**
+	 *	Validate bom
+	 *
+	 *	@param		User	$user     		User making status change
+	 *  @param		int		$notrigger		1=Does not execute triggers, 0= execute triggers
+	 *	@return  	int						<=0 if OK, 0=Nothing done, >0 if KO
+	 */
+	public function validate($user, $notrigger = 0)
+	{
+	    global $conf, $langs;
+
+	    require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
+
+	    $error = 0;
+
+	    // Protection
+	    if ($this->statut == self::STATUS_VALIDATED)
+	    {
+	        dol_syslog(get_class($this)."::validate action abandonned: already validated", LOG_WARNING);
+	        return 0;
+	    }
+
+	    /*if (! ((empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->bom->create))
+	     || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->bom->bom_advance->validate))))
+	     {
+	     $this->error='NotEnoughPermissions';
+	     dol_syslog(get_class($this)."::valid ".$this->error, LOG_ERR);
+	     return -1;
+	     }*/
+
+	    $now = dol_now();
+
+	    $this->db->begin();
+
+	    // Define new ref
+	    if (!$error && (preg_match('/^[\(]?PROV/i', $this->ref) || empty($this->ref))) // empty should not happened, but when it occurs, the test save life
+	    {
+	        //$num = $this->getNextNumRef();
+	        $num = '123';
+	    }
+	    else
+	    {
+	        $num = $this->ref;
+	    }
+	    $this->newref = $num;
+
+	    // Validate
+	    $sql = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
+	    $sql .= " SET ref = '".$this->db->escape($num)."',";
+	    $sql .= " status = ".self::STATUS_VALIDATED.",";
+	    $sql .= " date_validation = '".$this->db->idate($now)."',";
+	    $sql .= " fk_user_valid = ".$user->id;
+	    $sql .= " WHERE rowid = ".$this->id;
+
+	    dol_syslog(get_class($this)."::validate()", LOG_DEBUG);
+	    $resql = $this->db->query($sql);
+	    if (!$resql)
+	    {
+	        dol_print_error($this->db);
+	        $this->error = $this->db->lasterror();
+	        $error++;
+	    }
+
+	    if (!$error && !$notrigger)
+	    {
+	        // Call trigger
+	        $result = $this->call_trigger('JUSTIFICATIVEDOCUMENT_VALIDATE', $user);
+	        if ($result < 0) $error++;
+	        // End call triggers
+	    }
+
+	    if (!$error)
+	    {
+	        $this->oldref = $this->ref;
+
+	        // Rename directory if dir was a temporary ref
+	        if (preg_match('/^[\(]?PROV/i', $this->ref))
+	        {
+	            // Now we rename also files into index
+	            $sql = 'UPDATE '.MAIN_DB_PREFIX."ecm_files set filename = CONCAT('".$this->db->escape($this->newref)."', SUBSTR(filename, ".(strlen($this->ref) + 1).")), filepath = 'justificativedocuments/".$this->db->escape($this->newref)."'";
+	            $sql .= " WHERE filename LIKE '".$this->db->escape($this->ref)."%' AND filepath = 'justificativedocuments/".$this->db->escape($this->ref)."' and entity = ".$conf->entity;
+	            $resql = $this->db->query($sql);
+	            if (!$resql) { $error++; $this->error = $this->db->lasterror(); }
+
+	            // We rename directory ($this->ref = old ref, $num = new ref) in order not to lose the attachments
+	            $oldref = dol_sanitizeFileName($this->ref);
+	            $newref = dol_sanitizeFileName($num);
+	            $dirsource = $conf->justificativedocuments->dir_output.'/'.$oldref;
+	            $dirdest = $conf->justificativedocuments->dir_output.'/'.$newref;
+	            if (!$error && file_exists($dirsource))
+	            {
+	                dol_syslog(get_class($this)."::validate() rename dir ".$dirsource." into ".$dirdest);
+
+	                if (@rename($dirsource, $dirdest))
+	                {
+	                    dol_syslog("Rename ok");
+	                    // Rename docs starting with $oldref with $newref
+	                    $listoffiles = dol_dir_list($conf->justificativedocuments->dir_output.'/'.$newref, 'files', 1, '^'.preg_quote($oldref, '/'));
+	                    foreach ($listoffiles as $fileentry)
+	                    {
+	                        $dirsource = $fileentry['name'];
+	                        $dirdest = preg_replace('/^'.preg_quote($oldref, '/').'/', $newref, $dirsource);
+	                        $dirsource = $fileentry['path'].'/'.$dirsource;
+	                        $dirdest = $fileentry['path'].'/'.$dirdest;
+	                        @rename($dirsource, $dirdest);
+	                    }
+	                }
+	            }
+	        }
+	    }
+
+	    // Set new ref and current status
+	    if (!$error)
+	    {
+	        $this->ref = $num;
+	        $this->status = self::STATUS_VALIDATED;
+	    }
+
+	    if (!$error)
+	    {
+	        $this->db->commit();
+	        return 1;
+	    }
+	    else
+	    {
+	        $this->db->rollback();
+	        return -1;
+	    }
+	}
+
+
+	/**
 	 *	Set draft status
 	 *
 	 *	@param	User	$user			Object user that modify
@@ -618,10 +751,10 @@ class JustificativeDocument extends CommonObject
 	        global $langs;
 	        //$langs->load("mymodule");
 	        $this->labelStatus[self::STATUS_DRAFT] = $langs->trans('Draft');
-	        $this->labelStatus[self::STATUS_VALIDATED] = $langs->trans('Enabled');
+	        $this->labelStatus[self::STATUS_VALIDATED] = $langs->trans('Submited');
 	        $this->labelStatus[self::STATUS_CANCELED] = $langs->trans('Disabled');
 	        $this->labelStatusShort[self::STATUS_DRAFT] = $langs->trans('Draft');
-	        $this->labelStatusShort[self::STATUS_VALIDATED] = $langs->trans('Enabled');
+	        $this->labelStatusShort[self::STATUS_VALIDATED] = $langs->trans('Submited');
 	        $this->labelStatusShort[self::STATUS_CANCELED] = $langs->trans('Disabled');
 	    }
 
@@ -749,7 +882,8 @@ class JustificativeDocument extends CommonObject
 
 		$modelpath = "core/modules/justificativedocuments/doc/";
 
-		return $this->commonGenerateDocument($modelpath, $modele, $outputlangs, $hidedetails, $hidedesc, $hideref, $moreparams);
+		//return $this->commonGenerateDocument($modelpath, $modele, $outputlangs, $hidedetails, $hidedesc, $hideref, $moreparams);
+		return 1;
 	}
 
 	/**

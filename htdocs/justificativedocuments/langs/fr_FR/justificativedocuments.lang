@@ -36,13 +36,5 @@ About = À propos
 JustificativeDocumentsAbout = À propos de JustificativeDocuments
 JustificativeDocumentsAboutPage = Page à propos de JustificativeDocuments
 
-#
-# Page d'exemple
-#
-MyPageName = Nom de ma page
 
-#
-# Box d'exemple
-#
-MyWidget = Mon widget
-MyWidgetDescription = Description de mon widget
+EnterHereOnlyJustificativeDocument=Utilisez cette fonction pour créer et publier des pièces justificatives administratives qui n'ont pas leur place comme documents justificatifs de notes de frais.

@@ -18,40 +18,26 @@
 #
 
 # Module label 'ModuleJustificativeDocumentsName'
-ModuleJustificativeDocumentsName = Justificative Documents
+ModuleJustificativeDocumentsName = Supporting Documents
 # Module description 'ModuleJustificativeDocumentsDesc'
-ModuleJustificativeDocumentsDesc = Allow each user to submit justificative documents
-JustificativeDocument=Justivicative document
-JustificativeDocuments=Justificative documents
-TypeOfJustificative=Type of justificative documents
+ModuleJustificativeDocumentsDesc = Allow each user to submit supporting or supporting documents
+JustificativeDocument=Supporting document
+JustificativeDocuments=Supporting documents
+TypeOfJustificative=Type of supporting documents
 
 #
 # Admin page
 #
-JustificativeDocumentsSetup = JustificativeDocuments setup
+JustificativeDocumentsSetup = Supporting Documents setup
 Settings = Settings
-JustificativeDocumentsSetupPage = JustificativeDocuments setup page
+JustificativeDocumentsSetupPage = Supporting Documents setup page
 AboutInfoTecLib=This module is developped and distributed by Laurent Destailleur for TecLib, <a href="http://www.teclib.com">www.teclib.com</a> (A Dolibarr Preferred Partner company).
-JUSTIFICATIVEDOCUMENTS_MYPARAM1 = My param 1
-JUSTIFICATIVEDOCUMENTS_MYPARAM1Tooltip = My param 1 tooltip
-JUSTIFICATIVEDOCUMENTS_MYPARAM2=My param 2
-JUSTIFICATIVEDOCUMENTS_MYPARAM2Tooltip=My param 2 tooltip
-
 
 #
 # About page
 #
 About = About
-JustificativeDocumentsAbout = About JustificativeDocuments
-JustificativeDocumentsAboutPage = JustificativeDocuments about page
+JustificativeDocumentsAbout = About Supporting Documents
+JustificativeDocumentsAboutPage = Supporting Documents about page
 
-#
-# Sample page
-#
-MyPageName = My page name
-
-#
-# Sample widget
-#
-MyWidget = My widget
-MyWidgetDescription = My widget description
+EnterHereOnlyJustificativeDocument=Use this function to create and publish administrative supporting documents which have no place as supporting documents for expense reports.

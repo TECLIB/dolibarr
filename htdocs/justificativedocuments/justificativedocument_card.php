@@ -131,7 +131,7 @@ if (empty($reshook))
     }
     $triggermodname = 'JUSTIFICATIVEDOCUMENTS_JUSTIFICATIVEDOCUMENT_MODIFY';	// Name of trigger action code to execute when we modify record
 
-    // Actions cancel, add, update, delete or clone
+    // Actions cancel, add, update, confirm_validate, delete or clone
     include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
 
     // Actions when linking object each other
@@ -164,8 +164,6 @@ if (empty($reshook))
 
 /*
  * View
- *
- * Put here all code to build page
  */
 
 $form=new Form($db);
@@ -193,6 +191,8 @@ jQuery(document).ready(function() {
 if ($action == 'create')
 {
 	print load_fiche_titre($langs->trans("NewObject", $langs->transnoentitiesnoconv("JustificativeDocument")));
+
+	print '<span class="opacitymedium">'.$langs->trans("EnterHereOnlyJustificativeDocument").'</span><br><br>';
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
 	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
@@ -552,16 +552,19 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	if (empty($reshook))
     	{
     	    // Send
-            print '<a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&action=presend&mode=init#formmailbeforetitle">' . $langs->trans('SendMail') . '</a>'."\n";
+            //print '<a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&action=presend&mode=init#formmailbeforetitle">' . $langs->trans('SendMail') . '</a>'."\n";
 
-            // Back to draft
-            if (! empty($user->rights->justificativedocuments->justificativedocuments->write) && $object->status == $object::STATUS_VALIDATED)
-            {
-            	print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=setdraft">' . $langs->trans("SetToDraft") . '</a>';
-            }
+    	    // Back to draft
+    	    if ($object->status == $object::STATUS_VALIDATED)
+    	    {
+    	        if ($permissiontoadd)
+    	        {
+    	            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_setdraft&confirm=yes">'.$langs->trans("SetToDraft").'</a>';
+    	        }
+    	    }
 
             // Modify
-            if (! empty($user->rights->justificativedocuments->justificativedocuments->write))
+    	    if ($permissiontoadd)
     		{
     			print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=edit">'.$langs->trans("Modify").'</a>'."\n";
     		}
@@ -570,14 +573,34 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     			print '<a class="butActionRefused classfortooltip" href="#" title="'.dol_escape_htmltag($langs->trans("NotEnoughPermissions")).'">'.$langs->trans('Modify').'</a>'."\n";
     		}
 
+    		// Validate
+    		if ($object->status == $object::STATUS_DRAFT)
+    		{
+    		    if ($permissiontoadd)
+    		    {
+    		        $upload_dir = $conf->justificativedocuments->dir_output . "/justificativedocument/" . dol_sanitizeFileName($object->ref);
+    		        $nbFiles = count(dol_dir_list($upload_dir, 'files', 0, '', '(\.meta|_preview.*\.png)$'));
+    		        $nbLinks=Link::count($db, $object->element, $object->id);
+
+    		        if (($nbFiles + $nbLinks) > 0)
+    		        {
+    		            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_validate&confirm=yes">'.$langs->trans("Validate").'</a>';
+    		        }
+    		        else
+    		        {
+    		            print '<a class="butActionRefused" href="" title="'.$langs->trans("AddAtLeastOneJoindedFile").'">'.$langs->trans("Validate").'</a>';
+    		        }
+    		    }
+    		}
+
     		// Clone
-    		if (! empty($user->rights->justificativedocuments->justificativedocuments->write))
+    		if ($permissiontoadd)
     		{
     			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=clone&amp;object=order">' . $langs->trans("ToClone") . '</a>'."\n";
     		}
 
     		/*
-    		if ($user->rights->justificativedocuments->justificativedocuments->write)
+    		if ($permissiontoadd)
     		{
     			if ($object->status == 1)
     		 	{
