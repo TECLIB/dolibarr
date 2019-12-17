@@ -242,17 +242,22 @@ class modJustificativeDocuments extends DolibarrModules
         // Add here entries to declare new permissions
         /* BEGIN MODULEBUILDER PERMISSIONS */
         $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
-        $this->rights[$r][1] = 'Read objects of JustificativeDocuments';	// Permission label
+        $this->rights[$r][1] = 'Read supporting documents (yours and your subordinates)';	// Permission label
         $this->rights[$r][4] = 'justificativedocuments';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $this->rights[$r][5] = 'read';				    // In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $r++;
         $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
-        $this->rights[$r][1] = 'Create/Update objects of JustificativeDocuments';	// Permission label
+        $this->rights[$r][1] = 'Create/Update supporting documents';	// Permission label
         $this->rights[$r][4] = 'justificativedocuments';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $this->rights[$r][5] = 'write';				    // In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $r++;
         $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
-        $this->rights[$r][1] = 'Delete objects of JustificativeDocuments';	// Permission label
+        $this->rights[$r][1] = 'Create/Update supporting documents (everybody)';	// Permission label
+        $this->rights[$r][4] = 'justificativedocuments';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
+        $this->rights[$r][5] = 'write_all';				    // In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
+        $r++;
+        $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
+        $this->rights[$r][1] = 'Delete supporting documents';	// Permission label
         $this->rights[$r][4] = 'justificativedocuments';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $this->rights[$r][5] = 'delete';				    // In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $r++;

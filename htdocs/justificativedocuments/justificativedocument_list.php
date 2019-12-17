@@ -241,7 +241,9 @@ foreach($search as $key => $val)
 	if ($search[$key] != '') $sql.=natural_search($key, $search[$key], (($key == 'status')?2:$mode_search));
 }
 if ($search_all) $sql.= natural_search(array_keys($fieldstosearchall), $search_all);
-$sql .= " AND t.fk_user IN (".join(',', $childids).")";
+if (empty($user->rights->justificativedocuments->justificativedocuments->write_all)) {
+    $sql .= " AND t.fk_user IN (".join(',', $childids).")";
+}
 //$sql.= dolSqlDateFilter("t.field", $search_xxxday, $search_xxxmonth, $search_xxxyear);
 // Add where from extra fields
 include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_search_sql.tpl.php';
