@@ -518,13 +518,13 @@ class JustificativeType extends CommonObject
     {
         global $conf, $langs, $hookmanager;
 
-        if (! empty($conf->dol_no_mouse_hover)) $notooltip=1;   // Force disable tooltips
+        /*if (! empty($conf->dol_no_mouse_hover)) $notooltip=1;   // Force disable tooltips
 
         $result = '';
 
         $label = '<u>' . $langs->trans("JustificativeType") . '</u>';
-        $label.= '<br>';
-        $label.= '<b>' . $langs->trans('Ref') . ':</b> ' . $this->ref;
+        $label.= '<br><b>' . $langs->trans('Ref') . ':</b> ' . $this->ref;
+        $label.= '<br><b>' . $langs->trans('Label') . ':</b> ' . $this->label;
 
         $url = dol_buildpath('/justificativedocuments/justificativetype_card.php', 1).'?id='.$this->id;
 
@@ -555,7 +555,7 @@ class JustificativeType extends CommonObject
 
 		$result .= $linkstart;
 		if ($withpicto) $result.=img_object(($notooltip?'':$label), ($this->picto?$this->picto:'generic'), ($notooltip?(($withpicto != 2) ? 'class="paddingright"' : ''):'class="'.(($withpicto != 2) ? 'paddingright ' : '').'classfortooltip"'), 0, 0, $notooltip?0:1);
-		if ($withpicto != 2) $result.= $this->ref;
+		if ($withpicto != 2) $result.= $this->label;
 		$result .= $linkend;
 		//if ($withpicto != 2) $result.=(($addlabel && $this->label) ? $sep . dol_trunc($this->label, ($addlabel > 1 ? $addlabel : 0)) : '');
 
@@ -565,6 +565,9 @@ class JustificativeType extends CommonObject
 		$reshook=$hookmanager->executeHooks('getNomUrl', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
 		if ($reshook > 0) $result = $hookmanager->resPrint;
 		else $result .= $hookmanager->resPrint;
+        */
+
+        $result = $this->label;
 
 		return $result;
     }
