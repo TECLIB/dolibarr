@@ -588,7 +588,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		        }
     		        else
     		        {
-    		            print '<a class="butActionRefused" href="" title="'.$langs->trans("AddAtLeastOneJoindedFile").'">'.$langs->trans("Validate").'</a>';
+    		            print '<a class="butActionRefused" href="" title="'.$langs->trans("AddAtLeastOneLinkedFile").'">'.$langs->trans("Validate").'</a>';
     		        }
     		    }
     		}
@@ -596,7 +596,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		// Clone
     		if ($permissiontoadd)
     		{
-    			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=clone&amp;object=order">' . $langs->trans("ToClone") . '</a>'."\n";
+    			//print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=clone&amp;object=order">' . $langs->trans("ToClone") . '</a>'."\n";
     		}
 
     		/*

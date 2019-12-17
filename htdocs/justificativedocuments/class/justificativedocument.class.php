@@ -475,8 +475,8 @@ class JustificativeDocument extends CommonObject
 	        return 0;
 	    }
 
-	    /*if (! ((empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->bom->create))
-	     || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->bom->bom_advance->validate))))
+	    /*if (! ((empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocument->create))
+	     || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificatevidedocument->justificateivedocument_advance->validate))))
 	     {
 	     $this->error='NotEnoughPermissions';
 	     dol_syslog(get_class($this)."::valid ".$this->error, LOG_ERR);
@@ -606,7 +606,7 @@ class JustificativeDocument extends CommonObject
 		 return -1;
 		 }*/
 
-		return $this->setStatusCommon($user, self::STATUS_DRAFT, $notrigger, 'BOM_UNVALIDATE');
+		return $this->setStatusCommon($user, self::STATUS_DRAFT, $notrigger, 'JUSTIFICATIVEDOCUMENT_UNVALIDATE');
 	}
 
 	/**
@@ -631,7 +631,7 @@ class JustificativeDocument extends CommonObject
 		 return -1;
 		 }*/
 
-		return $this->setStatusCommon($user, self::STATUS_CANCELED, $notrigger, 'BOM_CLOSE');
+		return $this->setStatusCommon($user, self::STATUS_CANCELED, $notrigger, 'JUSTIFICATIVEDOCUMENT_CLOSE');
 	}
 
 	/**
@@ -656,7 +656,7 @@ class JustificativeDocument extends CommonObject
 		 return -1;
 		 }*/
 
-		return $this->setStatusCommon($user, self::STATUS_VALIDATED, $notrigger, 'BOM_REOPEN');
+		return $this->setStatusCommon($user, self::STATUS_VALIDATED, $notrigger, 'JUSTIFICATIVEDOCUMENT_REOPEN');
 	}
 
     /**

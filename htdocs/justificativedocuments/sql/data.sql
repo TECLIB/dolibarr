@@ -26,3 +26,13 @@
 -- delete from llx_c_justificative_type;
 INSERT INTO llx_c_justificative_type (code,label,active) VALUES ('TRAINSUBSCRIPTION',   'Train subscrption-',   1);
 INSERT INTO llx_c_justificative_type (code,label,active) VALUES ('HIGHWAYSUBSCRIPTION', 'Highway subscription', 1);
+
+
+-- new types of automatic events to record in agenda
+-- 'code' must be a value matching 'MYOBJECT_ACTION'
+-- 'elementtype' must be value 'mymodule' ('myobject@mymodule' may be possible but should not be required)
+insert into llx_c_action_trigger (code,label,description,elementtype,rang) values ('JUSTIFICATIVEDOCUMENT_VALIDATE','Supporting document validated','Executed when a Supporting document is validated', 'justificativedocuments', 1000);
+insert into llx_c_action_trigger (code,label,description,elementtype,rang) values ('JUSTIFICATIVEDOCUMENT_UNVALIDATE','Supporting document unvalidated','Executed when a Supporting document is unvalidated', 'justificativedocuments', 1001);
+insert into llx_c_action_trigger (code,label,description,elementtype,rang) values ('JUSTIFICATIVEDOCUMENT_DELETE','Supporting document deleted','Executed when a Supporting document deleted', 'justificativedocuments', 1004);
+
+
