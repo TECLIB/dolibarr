@@ -3,7 +3,9 @@
 Repository of all Teclib modules (https://www.teclib.com) for Dolibarr ERP CRM (https://www.dolibarr.org)
 
 
-![TecLib Logo](logo_teclib.png?raw=true "Logo TecLib"){imgmd}
+![TecLib Logo](logo_teclib.png?raw=true "Logo TecLib")
+
+![Dolibarr Logo](dolibarr_logo.png?raw=true "Logo Dolibarr")
 
 
 
