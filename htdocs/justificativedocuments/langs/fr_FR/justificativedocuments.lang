@@ -18,23 +18,23 @@
 #
 
 # Module label 'ModuleJustificativeDocumentsName'
-ModuleJustificativeDocumentsName = JustificativeDocuments
+ModuleJustificativeDocumentsName = Pièces justificatives
 # Module description 'ModuleJustificativeDocumentsDesc'
-ModuleJustificativeDocumentsDesc = Description de JustificativeDocuments
+ModuleJustificativeDocumentsDesc = Permet à chaque utilisateur de soumettre des pièces justificatives
 
 #
 # Page d'administration
 #
-JustificativeDocumentsSetup = Configuration du module JustificativeDocuments
+JustificativeDocumentsSetup = Configuration du module Pièces justificatives
 Settings = Réglages
-JustificativeDocumentsSetupPage = Page de configuration du module JustificativeDocuments
+JustificativeDocumentsSetupPage = Page de configuration du module Pièces justificatives
 
 #
 # Page À propos
 #
 About = À propos
-JustificativeDocumentsAbout = À propos de JustificativeDocuments
-JustificativeDocumentsAboutPage = Page à propos de JustificativeDocuments
+JustificativeDocumentsAbout = À propos de Pièces justificatives
+JustificativeDocumentsAboutPage = Page à propos de Pièces justificatives
 
 
 EnterHereOnlyJustificativeDocument=Utilisez cette fonction pour créer et publier des pièces justificatives administratives qui n'ont pas leur place comme documents justificatifs de notes de frais.
