@@ -21,6 +21,9 @@
 ModuleJustificativeDocumentsName = Pièces justificatives
 # Module description 'ModuleJustificativeDocumentsDesc'
 ModuleJustificativeDocumentsDesc = Permet à chaque utilisateur de soumettre des pièces justificatives
+JustificativeDocument=Pièce justificative
+JustificativeDocuments=Pièces justificatives
+TypeOfJustificative=Type de pièces justificatives
 
 #
 # Page d'administration
