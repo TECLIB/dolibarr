@@ -771,6 +771,8 @@ class eCommerceRemoteAccessMagento
 							'description' => $item['name'],
 							'product_type' => $item['product_type'],
 							'price' => $item['price'],
+							'remise' => $item['discount_amount'],
+                                                        'remise_percent' => round(($item['discount_amount']*100)/$item['price']),
 							'qty' => $item['qty_ordered'],
 							'tva_tx' => $item['tax_percent'],
 							'remote_simple_sku' => $item['simple_sku'],
@@ -785,6 +787,8 @@ class eCommerceRemoteAccessMagento
 								'description' => $item['name'],
 								'product_type' => $item['product_type'],
 								'price' => $item['price'],
+								'remise' => $item['discount_amount'],
+                                                                'remise_percent' => round(($item['discount_amount']*100)/$item['price']),
 								'qty' => $item['qty_ordered'],
 								'tva_tx' => $item['tax_percent'],
 								'remote_simple_sku' => $item['simple_sku'],
@@ -797,6 +801,8 @@ class eCommerceRemoteAccessMagento
 								'description' => $item['name'],
 								'product_type' => $item['product_type'],
 								'price' => $configurableItems[$item['parent_item_id']]['price'],
+								'remise' => $configurableItems[$item['parent_item_id']]['remise'],
+                                                                'remise_percent' => round(($configurableItems[$item['parent_item_id']]['remise']*100)/$configurableItems[$item['parent_item_id']]['price']),
 								'qty' => $item['qty_ordered'],
 								'tva_tx' => $configurableItems[$item['parent_item_id']]['tva_tx'],
 								'remote_simple_sku' => $configurableItems[$item['parent_item_id']]['remote_simple_sku'],
@@ -1042,7 +1048,9 @@ class eCommerceRemoteAccessMagento
 							'product_type' => $product_type,
 							'price' => $item['price'],
 							'qty' => $item['qty'],
-							'tva_tx' => $vatrateforitem
+							'remise_percent' => round(($item['discount_amount']*100)/$item['price']),
++                                                       'remise' => $item['discount_amount'],
++                                                       'tva_tx' => $vatrateforitem
 							);
 						} else {
 							// If item has a parent item id defined in $configurableItems, it's a child simple item so we get it's price and tax values instead of 0
@@ -1057,7 +1065,8 @@ class eCommerceRemoteAccessMagento
 								'product_type' => $product_type,
 								'price' => $item['price'],
 								'qty' => $item['qty'],
-								'tva_tx' => $vatrateforitem
+								'tva_tx' => $vatrateforitem,
++                                                               'remise_percent' => round(($item['discount_amount']*100)/$item['price'])
 								);
 							} else {
 								$tmpitem = array(
@@ -1067,14 +1076,15 @@ class eCommerceRemoteAccessMagento
 								'product_type' => $product_type,
 								'price' => $configurableItems[$parent_item_id]['price'],
 								'qty' => $item['qty'],
-								'tva_tx' => $configurableItems[$parent_item_id]['tva_tx']
+								'tva_tx' => $configurableItems[$parent_item_id]['tva_tx'],
++                                                               'remise_percent' => $configurableItems[$parent_item_id]['remise_percent']
 								);
 							}
 
 							$items[] = $tmpitem;
 
 							// There is a fixed discount, we must include it into a new line
-							if ($item['discount_amount'])
+							/*if ($item['discount_amount'])
 							{
 								$tmpitemdiscount = array(
 								'item_id' => 'discount_with_vat_'.$tmpitem['tva_tx'].'_for_'.$item['item_id'],
@@ -1086,7 +1096,7 @@ class eCommerceRemoteAccessMagento
 								);
 
 								$items[] = $tmpitemdiscount;
-							}
+							}*/
 						}
 					}
 
