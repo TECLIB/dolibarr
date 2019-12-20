@@ -14,10 +14,15 @@ All TecLib modules are released under the terms of the GNU General Public Licens
 See the [COPYING](https://github.com/Dolibarr/dolibarr/blob/develop/COPYING) file for a full copy of the license.
 
 
-
 ## CONTRIBUTE
 
 Feel free to contribute to any modules by sending Pull Request on GitHub (https://github.com/TECLIB/dolibarr)
+
+
+## ABOUT TECLIB
+
+TecLib is an Open Source company that provide the service NovaFirstcloud.com (https://www.novafirstcloud.com), one of the most famous hosting service for 
+Dolibarr ERP CRM software.
 
 
 
