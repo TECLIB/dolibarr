@@ -59,7 +59,7 @@ print_fiche_titre($langs->trans("JustificativeDocumentsSetup"),$linkback,'setup'
 print '<br>';
 
 $h=0;
-$head[$h][0] = 'autoattachfile.php';
+$head[$h][0] = 'setup.php';
 $head[$h][1] = $langs->trans("Setup");
 $head[$h][2] = 'tabsetup';
 $h++;
