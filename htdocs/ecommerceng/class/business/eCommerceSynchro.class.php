@@ -2227,7 +2227,7 @@ class eCommerceSynchro
 
                                             $result = $dBCommande->addline($item['description'], $item['price'], $item['qty'], $item['tva_tx'], 0, 0,
                                                 $this->eCommerceProduct->fk_product, //fk_product
-                                                0, //remise_percent
+                                                $item['remise_percent'], //remise_percent
                                                 0, //info_bits
                                                 0, //fk_remise_except
                                                 'HT', //price_base_type
