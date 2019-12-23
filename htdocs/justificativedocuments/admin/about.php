@@ -37,6 +37,7 @@ if (! $res && file_exists("../../../main.inc.php")) $res=@include("../../../main
 if (! $res) die("Include of main fails");
 
 require_once(DOL_DOCUMENT_ROOT."/core/lib/admin.lib.php");
+require_once '../lib/justificativedocuments.lib.php';
 
 
 if (!$user->admin) accessforbidden();
@@ -55,21 +56,10 @@ $help_url='';
 llxHeader('','',$help_url);
 
 $linkback='<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
-print_fiche_titre($langs->trans("JustificativeDocumentsSetup"),$linkback,'setup');
-print '<br>';
+print_fiche_titre($langs->trans("JustificativeDocumentsSetup"), $linkback, 'setup');
 
-$h=0;
-$head[$h][0] = 'setup.php';
-$head[$h][1] = $langs->trans("Setup");
-$head[$h][2] = 'tabsetup';
-$h++;
-
-$head[$h][0] = $_SERVER["PHP_SELF"];
-$head[$h][1] = $langs->trans("About");
-$head[$h][2] = 'tababout';
-$h++;
-
-dol_fiche_head($head, 'tababout', '');
+$head = justificativedocumentsAdminPrepareHead();
+dol_fiche_head($head, 'about', '');
 
 print $langs->trans("AboutInfoTecLib").'<br>';
 print '<br>';
