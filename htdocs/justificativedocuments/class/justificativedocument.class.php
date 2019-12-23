@@ -60,6 +60,7 @@ class JustificativeDocument extends CommonObject
 
 	const STATUS_DRAFT = 0;
 	const STATUS_VALIDATED = 1;
+	const STATUS_APPROVED = 2;
 	const STATUS_CANCELED = 9;
 
 
@@ -107,7 +108,7 @@ class JustificativeDocument extends CommonObject
 		'fk_user_modif' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserModif', 'enabled'=>1, 'position'=>511, 'notnull'=>-1, 'visible'=>-2,),
 		'fk_user_valid' => array('type'=>'integer:User:user/class/user.class.php',      'label'=>'UserValidation',        'enabled'=>1, 'visible'=>-1, 'position'=>512),
 	    'import_key' => array('type'=>'varchar(14)', 'label'=>'ImportId', 'enabled'=>1, 'position'=>1000, 'notnull'=>-1, 'visible'=>-2,),
-	    'status' => array('type'=>'integer', 'label'=>'Status', 'enabled'=>1, 'position'=>1000, 'notnull'=>1, 'default'=>0, 'visible'=>2, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Draft', '1'=>'Validated', '9'=>'Canceled'),),
+	    'status' => array('type'=>'integer', 'label'=>'Status', 'enabled'=>1, 'position'=>1000, 'notnull'=>1, 'default'=>0, 'visible'=>2, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Draft', '1'=>'Validated', '2'=>'Approved', '9'=>'Canceled'),),
 	);
 	public $rowid;
 	public $ref;
@@ -751,15 +752,18 @@ class JustificativeDocument extends CommonObject
 	        global $langs;
 	        //$langs->load("mymodule");
 	        $this->labelStatus[self::STATUS_DRAFT] = $langs->trans('Draft');
-	        $this->labelStatus[self::STATUS_VALIDATED] = $langs->trans('Submited');
+	        $this->labelStatus[self::STATUS_VALIDATED] = $langs->trans('Validated').' ('.$langs->trans("WaitingApproval").')';
+	        $this->labelStatus[self::STATUS_APPROVED] = $langs->trans('Approved');
 	        $this->labelStatus[self::STATUS_CANCELED] = $langs->trans('Disabled');
 	        $this->labelStatusShort[self::STATUS_DRAFT] = $langs->trans('Draft');
-	        $this->labelStatusShort[self::STATUS_VALIDATED] = $langs->trans('Submited');
+	        $this->labelStatusShort[self::STATUS_VALIDATED] = $langs->trans('Validated');
+	        $this->labelStatusShort[self::STATUS_APPROVED] = $langs->trans('Approved');
 	        $this->labelStatusShort[self::STATUS_CANCELED] = $langs->trans('Disabled');
 	    }
 
 	    $statusType = 'status'.$status;
-	    if ($status == self::STATUS_VALIDATED) $statusType = 'status4';
+	    if ($status == self::STATUS_VALIDATED) $statusType = 'status1';
+	    if ($status == self::STATUS_APPROVED) $statusType = 'status4';
 
 	    return dolGetStatus($this->labelStatus[$status], $this->labelStatusShort[$status], '', $statusType, $mode);
 	}
