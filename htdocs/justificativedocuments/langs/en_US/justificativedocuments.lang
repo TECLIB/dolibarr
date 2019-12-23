@@ -46,3 +46,5 @@ ConfirmCloneJustificativeDocument=Are you sure you want to clone this supporting
 JUSTIFICATIVEDOCUMENT_VALIDATEInDolibarr=Supporting document %s validated
 JUSTIFICATIVEDOCUMENT_UNVALIDATEInDolibarr=Supporting document %s unvalidated
 JUSTIFICATIVEDOCUMENT_DELETEInDolibarr=Supporting document %s deleted
+
+AddAtLeastOneLinkedFile=You must first add at least one attached file.
