@@ -750,9 +750,9 @@ class JustificativeDocument extends CommonObject
 	    if (empty($this->labelStatus) || empty($this->labelStatusShort))
 	    {
 	        global $langs;
-	        //$langs->load("mymodule");
+	        $langs->load("trips");
 	        $this->labelStatus[self::STATUS_DRAFT] = $langs->trans('Draft');
-	        $this->labelStatus[self::STATUS_VALIDATED] = $langs->trans('Validated').' ('.$langs->trans("WaitingApproval").')';
+	        $this->labelStatus[self::STATUS_VALIDATED] = $langs->trans('ValidatedWaitingApproval');
 	        $this->labelStatus[self::STATUS_APPROVED] = $langs->trans('Approved');
 	        $this->labelStatus[self::STATUS_CANCELED] = $langs->trans('Disabled');
 	        $this->labelStatusShort[self::STATUS_DRAFT] = $langs->trans('Draft');
