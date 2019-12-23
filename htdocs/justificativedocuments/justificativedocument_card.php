@@ -232,7 +232,9 @@ if ($action == 'create')
 	        print $langs->trans("User");
 	        print '</td><td>';
 	        //$array = array('ee'=>'rr');
-	        print $form->select_dolusers($user->id, 'fk_user', 0, null, 0, 'hierarchyme');
+	        $include = 'hierarchyme';
+	        if (! empty($user->rights->justificativedocuments->justificativedocuments->write_all)) $include = '';
+	        print $form->select_dolusers($user->id, 'fk_user', 0, null, 0, $include);
 	        print '</td>';
 	        print '</tr>';
 	    } else {
@@ -321,7 +323,9 @@ if (($id || $ref) && $action == 'edit')
 	        print $langs->trans("User");
 	        print '</td><td>';
 	        //$array = array('ee'=>'rr');
-	        print $form->select_dolusers($object->fk_user, 'fk_user', 0, null, 0, 'hierarchyme');
+	        $include = 'hierarchyme';
+	        if (! empty($user->rights->justificativedocuments->justificativedocuments->write_all)) $include = '';
+	        print $form->select_dolusers($object->fk_user, 'fk_user', 0, null, 0, $include);
 	        print '</td>';
 	        print '</tr>';
 	    } else {
