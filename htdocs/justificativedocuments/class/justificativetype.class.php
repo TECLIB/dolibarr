@@ -451,7 +451,7 @@ class JustificativeType extends CommonObject
 		 return -1;
 		 }*/
 
-		return $this->setStatusCommon($user, self::STATUS_DRAFT, $notrigger, 'BOM_UNVALIDATE');
+		return $this->setStatusCommon($user, self::STATUS_DRAFT, $notrigger, 'JUSTIFICATIVEDOCUMENTTYPE_UNVALIDATE');
 	}
 
 	/**
@@ -476,7 +476,7 @@ class JustificativeType extends CommonObject
 		 return -1;
 		 }*/
 
-		return $this->setStatusCommon($user, self::STATUS_CANCELED, $notrigger, 'BOM_CLOSE');
+		return $this->setStatusCommon($user, self::STATUS_CANCELED, $notrigger, 'JUSTIFICATIVEDOCUMENTTYPE_CANCEL');
 	}
 
 	/**
@@ -501,7 +501,7 @@ class JustificativeType extends CommonObject
 		 return -1;
 		 }*/
 
-		return $this->setStatusCommon($user, self::STATUS_VALIDATED, $notrigger, 'BOM_REOPEN');
+		return $this->setStatusCommon($user, self::STATUS_VALIDATED, $notrigger, 'JUSTIFICATIVEDOCUMENTTYPE_REOPEN');
 	}
 
     /**

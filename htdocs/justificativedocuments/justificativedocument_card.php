@@ -108,7 +108,7 @@ $permissionnote = $user->rights->justificativedocuments->justificativedocuments-
 $permissiondellink = $user->rights->justificativedocuments->justificativedocuments->write;	// Used by the include of actions_dellink.inc.php
 $permissiontoadd = $user->rights->justificativedocuments->justificativedocuments->write; 	// Used by the include of actions_addupdatedelete.inc.php// Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
 $permissiontodelete = $user->rights->justificativedocuments->justificativedocuments->delete || ($permissiontoadd && $object->status == 0);
-
+$permissiontoapprove = $user->rights->justificativedocuments->justificativedocuments->approve;
 
 
 /*
@@ -150,6 +150,35 @@ if (empty($reshook))
     if ($action == 'classin' && $permissiontoadd)
     {
     	$object->setProject(GETPOST('projectid', 'int'));
+    }
+
+    // Action approve object
+    if ($action == 'confirm_approve' && $confirm == 'yes' && $permissiontoadd)
+    {
+        $result = $object->approve($user);
+        if ($result >= 0)
+        {
+            // Define output language
+            if (empty($conf->global->MAIN_DISABLE_PDF_AUTOUPDATE))
+            {
+                $outputlangs = $langs;
+                $newlang = '';
+                if ($conf->global->MAIN_MULTILANGS && empty($newlang) && GETPOST('lang_id', 'aZ09')) $newlang = GETPOST('lang_id', 'aZ09');
+                if ($conf->global->MAIN_MULTILANGS && empty($newlang))	$newlang = $object->thirdparty->default_lang;
+                if (!empty($newlang)) {
+                    $outputlangs = new Translate("", $conf);
+                    $outputlangs->setDefaultLang($newlang);
+                }
+                $model = $object->modelpdf;
+                $ret = $object->fetch($id); // Reload to get new records
+
+                $object->generateDocument($model, $outputlangs, 0, 0, 0);
+            }
+        }
+        else
+        {
+            setEventMessages($object->error, $object->errors, 'errors');
+        }
     }
 
     // Actions to send emails
@@ -566,16 +595,26 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_setdraft&confirm=yes">'.$langs->trans("SetToDraft").'</a>';
     	        }
     	    }
+    	    if ($object->status == $object::STATUS_APPROVED)
+    	    {
+   	            if ($permissiontoapprove)
+    	        {
+    	            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_setdraft&confirm=yes">'.$langs->trans("SetToDraft").'</a>';
+    	        }
+    	    }
 
             // Modify
-    	    if ($permissiontoadd)
-    		{
-    			print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=edit">'.$langs->trans("Modify").'</a>'."\n";
-    		}
-    		else
-    		{
-    			print '<a class="butActionRefused classfortooltip" href="#" title="'.dol_escape_htmltag($langs->trans("NotEnoughPermissions")).'">'.$langs->trans('Modify').'</a>'."\n";
-    		}
+    	    if ($object->status == $object::STATUS_DRAFT)
+    	    {
+    	        if ($permissiontoadd)
+        		{
+        			print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=edit">'.$langs->trans("Modify").'</a>'."\n";
+        		}
+        		else
+        		{
+        			print '<a class="butActionRefused classfortooltip" href="#" title="'.dol_escape_htmltag($langs->trans("NotEnoughPermissions")).'">'.$langs->trans('Modify').'</a>'."\n";
+        		}
+    	    }
 
     		// Validate
     		if ($object->status == $object::STATUS_DRAFT)
@@ -594,6 +633,28 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		        {
     		            print '<a class="butActionRefused" href="" title="'.$langs->trans("AddAtLeastOneLinkedFile").'">'.$langs->trans("Validate").'</a>';
     		        }
+    		    }
+    		}
+
+    		// Approve
+    		if ($object->status == $object::STATUS_VALIDATED)
+    		{
+    		    if ($permissiontoapprove)
+    		    {
+    		        $upload_dir = $conf->justificativedocuments->dir_output . "/justificativedocument/" . dol_sanitizeFileName($object->ref);
+    		        $nbFiles = count(dol_dir_list($upload_dir, 'files', 0, '', '(\.meta|_preview.*\.png)$'));
+    		        $nbLinks=Link::count($db, $object->element, $object->id);
+
+    		        if (($nbFiles + $nbLinks) > 0)
+    		        {
+    		            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_approve&confirm=yes">'.$langs->trans("Approve").'</a>';
+    		        }
+    		        else
+    		        {
+    		            print '<a class="butActionRefused" href="" title="'.$langs->trans("AddAtLeastOneLinkedFile").'">'.$langs->trans("Approve").'</a>';
+    		        }
+    		    } else {
+    		        print '<a class="butActionRefused classfortooltip" href="#" title="'.dol_escape_htmltag($langs->trans("NotEnoughPermissions")).'">'.$langs->trans('Approve').'</a>'."\n";
     		    }
     		}
 

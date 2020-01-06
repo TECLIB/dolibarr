@@ -261,6 +261,11 @@ class modJustificativeDocuments extends DolibarrModules
         $this->rights[$r][4] = 'justificativedocuments';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $this->rights[$r][5] = 'delete';				    // In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $r++;
+        $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
+        $this->rights[$r][1] = 'Approve documents';	// Permission label
+        $this->rights[$r][4] = 'justificativedocuments';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
+        $this->rights[$r][5] = 'approve';				    // In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
+        $r++;
         /* END MODULEBUILDER PERMISSIONS */
 
         // Main menu entries to add

@@ -42,9 +42,8 @@ JustificativeDocumentsAboutPage = Supporting Documents about page
 
 EnterHereOnlyJustificativeDocument=Use this function to create and publish administrative supporting documents which have no place as supporting documents for expense reports.
 ConfirmCloneJustificativeDocument=Are you sure you want to clone this supporting document?
-
 JUSTIFICATIVEDOCUMENT_VALIDATEInDolibarr=Supporting document %s validated
 JUSTIFICATIVEDOCUMENT_UNVALIDATEInDolibarr=Supporting document %s unvalidated
+JUSTIFICATIVEDOCUMENT_APPROVEInDolibarr=Supporting document %s approved
 JUSTIFICATIVEDOCUMENT_DELETEInDolibarr=Supporting document %s deleted
-
 AddAtLeastOneLinkedFile=You must first add at least one attached file.

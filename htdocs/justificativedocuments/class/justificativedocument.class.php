@@ -610,6 +610,33 @@ class JustificativeDocument extends CommonObject
 		return $this->setStatusCommon($user, self::STATUS_DRAFT, $notrigger, 'JUSTIFICATIVEDOCUMENT_UNVALIDATE');
 	}
 
+
+	/**
+	 *	Approve
+	 *
+	 *	@param	User	$user			Object user that modify
+	 *  @param	int		$notrigger		1=Does not execute triggers, 0=Execute triggers
+	 *	@return	int						<0 if KO, >0 if OK
+	 */
+	public function approve($user, $notrigger = 0)
+	{
+	    // Protection
+	    if ($this->status != self::STATUS_VALIDATED)
+	    {
+	        return 0;
+	    }
+
+	    /*if (! ((empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocuments->write))
+	     || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocuments->justificativedocuments_advance->validate))))
+	     {
+	     $this->error='Permission denied';
+	     return -1;
+	     }*/
+
+	    return $this->setStatusCommon($user, self::STATUS_APPROVED, $notrigger, 'JUSTIFICATIVEDOCUMENT_APPROVE');
+	}
+
+
 	/**
 	 *	Set cancel status
 	 *
@@ -763,7 +790,7 @@ class JustificativeDocument extends CommonObject
 
 	    $statusType = 'status'.$status;
 	    if ($status == self::STATUS_VALIDATED) $statusType = 'status1';
-	    if ($status == self::STATUS_APPROVED) $statusType = 'status4';
+	    if ($status == self::STATUS_APPROVED) $statusType = 'status6';
 
 	    return dolGetStatus($this->labelStatus[$status], $this->labelStatusShort[$status], '', $statusType, $mode);
 	}
