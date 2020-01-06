@@ -53,11 +53,11 @@ if (! $user->admin) accessforbidden();
 $action = GETPOST('action', 'alpha');
 $backtopage = GETPOST('backtopage', 'alpha');
 
-$arrayofparameters=array(
+/*$arrayofparameters=array(
 	'JUSTIFICATIVEDOCUMENTS_MYPARAM1'=>array('css'=>'minwidth200','enabled'=>1),
 	'JUSTIFICATIVEDOCUMENTS_MYPARAM2'=>array('css'=>'minwidth500','enabled'=>1)
 );
-
+*/
 
 
 /*
@@ -70,12 +70,15 @@ $arrayofparameters=array(
 
 include DOL_DOCUMENT_ROOT.'/core/actions_setmoduleoptions.inc.php';
 
+$value = GETPOST('value', 'alphanohtml');
+$error = 0;
+
 if ($action == 'updateMask')
 {
-    $maskconstbom = GETPOST('maskconstJustificativeDocument', 'alpha');
-    $maskbom = GETPOST('maskJustificativeDocument', 'alpha');
+    $maskconstjd = GETPOST('maskconstJustificativeDocument', 'alpha');
+    $maskjd = GETPOST('maskJustificativeDocument', 'alpha');
 
-    if ($maskconstbom) $res = dolibarr_set_const($db, $maskconstbom, $maskbom, 'chaine', 0, '', $conf->entity);
+    if ($maskconstjd) $res = dolibarr_set_const($db, $maskconstjd, $maskjd, 'chaine', 0, '', $conf->entity);
 
     if (!$res > 0) $error++;
 
@@ -93,15 +96,15 @@ elseif ($action == 'specimen')
 {
     $modele = GETPOST('module', 'alpha');
 
-    $bom = new JustificativeDocument($db);
-    $bom->initAsSpecimen();
+    $justificativedocument = new JustificativeDocument($db);
+    $justificativedocument->initAsSpecimen();
 
     // Search template files
     $file = ''; $classname = ''; $filefound = 0;
     $dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
     foreach ($dirmodels as $reldir)
     {
-        $file = dol_buildpath($reldir."core/modules/justificativedocument/doc/pdf_".$modele.".modules.php", 0);
+        $file = dol_buildpath($reldir."core/modules/justificativedocuments/doc/pdf_".$modele.".modules.php", 0);
         if (file_exists($file))
         {
             $filefound = 1;
@@ -116,7 +119,7 @@ elseif ($action == 'specimen')
 
         $module = new $classname($db);
 
-        if ($module->write_file($bom, $langs) > 0)
+        if ($module->write_file($justificativedocument, $langs) > 0)
         {
             header("Location: ".DOL_URL_ROOT."/document.php?modulepart=justificativedocument&file=SPECIMEN.pdf");
             return;
@@ -222,11 +225,11 @@ $dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
 llxHeader("", $langs->trans("JustificativeDocumentSetup"));
 
 $linkback = '<a href="'.DOL_URL_ROOT.'/admin/modules.php?restore_lastsearch_values=1">'.$langs->trans("BackToModuleList").'</a>';
-print load_fiche_titre($langs->trans("JustificativeDocumentSetup"), $linkback, 'title_setup');
+print load_fiche_titre($langs->trans("JustificativeDocumentsSetup"), $linkback, 'title_setup');
 
 $head = justificativedocumentsAdminPrepareHead();
 
-dol_fiche_head($head, 'settings', $langs->trans("JustificativeDocumentSetup"), -1, 'bom');
+dol_fiche_head($head, 'settings', '', -1, 'justificativedocument');
 
 /*
  * justificativedocuments Numbering model
@@ -247,7 +250,7 @@ clearstatcache();
 
 foreach ($dirmodels as $reldir)
 {
-    $dir = dol_buildpath($reldir."core/modules/bom/");
+    $dir = dol_buildpath($reldir."core/modules/justificativedocuments/");
 
     if (is_dir($dir))
     {
@@ -256,7 +259,7 @@ foreach ($dirmodels as $reldir)
         {
             while (($file = readdir($handle)) !== false)
             {
-                if (substr($file, 0, 8) == 'mod_justificativedocument_' && substr($file, dol_strlen($file) - 3, 3) == 'php')
+                if (strpos($file, 'mod_justificativedocument_') === 0 && substr($file, dol_strlen($file) - 3, 3) == 'php')
                 {
                     $file = substr($file, 0, dol_strlen($file) - 4);
 
@@ -283,7 +286,7 @@ foreach ($dirmodels as $reldir)
                         print '</td>'."\n";
 
                         print '<td class="center">';
-                        if ($conf->global->JUSTIFICATIVEDOCUMENTS_ADDON == $file)
+                        if ($conf->global->JUSTIFICATIVEDOCUMENT_ADDON == $file)
                         {
                             print img_picto($langs->trans("Activated"), 'switch_on');
                         }
@@ -295,14 +298,14 @@ foreach ($dirmodels as $reldir)
                         }
                         print '</td>';
 
-                        $bom = new JustificativeDocument($db);
-                        $bom->initAsSpecimen();
+                        $justificativedocument = new JustificativeDocument($db);
+                        $justificativedocument->initAsSpecimen();
 
                         // Info
                         $htmltooltip = '';
                         $htmltooltip .= ''.$langs->trans("Version").': <b>'.$module->getVersion().'</b><br>';
-                        $bom->type = 0;
-                        $nextval = $module->getNextValue($mysoc, $bom);
+                        $justificativedocument->type = 0;
+                        $nextval = $module->getNextValue($mysoc, $justificativedocument);
                         if ("$nextval" != $langs->trans("NotAvailable")) {  // Keep " on nextval
                             $htmltooltip .= ''.$langs->trans("NextValue").': ';
                             if ($nextval) {
@@ -376,7 +379,7 @@ foreach ($dirmodels as $reldir)
 {
     foreach (array('', '/doc') as $valdir)
     {
-        $dir = dol_buildpath($reldir."core/modules/bom".$valdir);
+        $dir = dol_buildpath($reldir."core/modules/$justificativedocuments".$valdir);
 
         if (is_dir($dir))
         {
@@ -434,7 +437,7 @@ foreach ($dirmodels as $reldir)
 
                                 // Default
                                 print '<td class="center">';
-                                if ($conf->global->JUSTIFICATIVEDOCUMENTS_ADDON_PDF == $name)
+                                if ($conf->global->JUSTIFICATIVEDOCUMENT_ADDON_PDF == $name)
                                 {
                                     print img_picto($langs->trans("Default"), 'on');
                                 }

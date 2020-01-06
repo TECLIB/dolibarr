@@ -16,7 +16,8 @@
 
 CREATE TABLE llx_justificativedocuments_justificativedocument(
 	-- BEGIN MODULEBUILDER FIELDS
-	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL, 
+	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
+	entity integer DEFAULT 1 NOT NULL,
 	ref varchar(128) DEFAULT '(PROV)' NOT NULL, 
 	fk_project integer, 
 	description text, 

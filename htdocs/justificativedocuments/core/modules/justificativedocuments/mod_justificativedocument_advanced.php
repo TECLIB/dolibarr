@@ -26,7 +26,7 @@
  * \brief      File containing class for numbering model of BOMs advanced
  */
 
-require_once DOL_DOCUMENT_ROOT .'/core/modules/justificativedocument/modules_justificativedocument.php';
+dol_include_once('/justificativedocuments/core/modules/justificativedocuments/modules_justificativedocument.php');
 
 
 /**
@@ -137,7 +137,7 @@ class mod_justificativedocument_advanced extends ModeleNumRefjustificativedocume
 			return 0;
 		}
 
-		$date = ($object->date_justificativedocument ? $object->date_justificativedocument : $object->date);
+		$date = $object->date_creation;
 
 		$numFinal=get_next_value($db, $mask, 'justificativedocument_justificativedocument', 'ref', '', null, $date);
 

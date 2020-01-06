@@ -22,7 +22,7 @@
  *  \ingroup    justificativedocument
  *  \brief      File of class to manage BOMs numbering rules standard
  */
-require_once DOL_DOCUMENT_ROOT .'/core/modules/justificativedocument/modules_justificativedocument.php';
+dol_include_once('/justificativedocuments/core/modules/justificativedocuments/modules_justificativedocument.php');
 
 /**
  *	Class to manage customer order numbering rules standard
@@ -85,7 +85,7 @@ class mod_justificativedocument_standard extends ModeleNumRefjustificativedocume
 
 		$posindice=8;
 		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$posindice.") AS SIGNED)) as max";
-		$sql.= " FROM ".MAIN_DB_PREFIX."justificativedocument";
+		$sql.= " FROM ".MAIN_DB_PREFIX."justificativedocuments_justificativedocument";
 		$sql.= " WHERE ref LIKE '".$db->escape($this->prefix)."____-%'";
 		$sql.= " AND entity = ".$conf->entity;
 
@@ -119,7 +119,7 @@ class mod_justificativedocument_standard extends ModeleNumRefjustificativedocume
 		// D'abord on recupere la valeur max
 		$posindice=9;
 		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$posindice.") AS SIGNED)) as max";
-		$sql.= " FROM ".MAIN_DB_PREFIX."justificativedocument_justificativedocument";
+		$sql.= " FROM ".MAIN_DB_PREFIX."justificativedocuments_justificativedocument";
 		$sql.= " WHERE ref LIKE '".$db->escape($this->prefix)."____-%'";
 		$sql.= " AND entity = ".$conf->entity;
 

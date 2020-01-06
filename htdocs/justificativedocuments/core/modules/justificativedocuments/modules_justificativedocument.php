@@ -67,7 +67,7 @@ abstract class ModelePDFJustificateDocument extends CommonDocGenerator
 /**
  *  Parent class to manage numbering
  */
-abstract class ModeleNumRefJustificativeDocuments
+abstract class ModeleNumRefjustificativedocuments
 {
 	/**
 	 * @var string Error code (or message)

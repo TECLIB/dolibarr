@@ -491,8 +491,7 @@ class JustificativeDocument extends CommonObject
 	    // Define new ref
 	    if (!$error && (preg_match('/^[\(]?PROV/i', $this->ref) || empty($this->ref))) // empty should not happened, but when it occurs, the test save life
 	    {
-	        //$num = $this->getNextNumRef();
-	        $num = '123';
+	        $num = $this->getNextNumRef();
 	    }
 	    else
 	    {
@@ -915,6 +914,61 @@ class JustificativeDocument extends CommonObject
 
 		//return $this->commonGenerateDocument($modelpath, $modele, $outputlangs, $hidedetails, $hidedesc, $hideref, $moreparams);
 		return 1;
+	}
+
+	/**
+	 *  Returns the reference to the following non used Order depending on the active numbering module
+	 *  defined into JUSTIFICATIVEDOCUMENT_ADDON
+	 *
+	 *  @return string      		Order free reference
+	 */
+	public function getNextNumRef()
+	{
+	    global $langs, $conf;
+	    $langs->load("justificativedocuments@justificativedocuments");
+
+	    if (!empty($conf->global->JUSTIFICATIVEDOCUMENT_ADDON))
+	    {
+	        $mybool = false;
+
+	        $file = $conf->global->JUSTIFICATIVEDOCUMENT_ADDON.".php";
+	        $classname = $conf->global->JUSTIFICATIVEDOCUMENT_ADDON;
+
+	        // Include file with class
+	        $dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
+	        foreach ($dirmodels as $reldir)
+	        {
+	            $dir = dol_buildpath($reldir."core/modules/justificativedocuments/");
+
+	            // Load file with numbering class (if found)
+	            $mybool |= @include_once $dir.$file;
+	        }
+
+	        if ($mybool === false)
+	        {
+	            dol_print_error('', "Failed to include file ".$file);
+	            return '';
+	        }
+
+	        $obj = new $classname();
+	        $numref = $obj->getNextValue($soc, $this);
+
+	        if ($numref != "")
+	        {
+	            return $numref;
+	        }
+	        else
+	        {
+	            $this->error = $obj->error;
+	            //dol_print_error($this->db,get_class($this)."::getNextNumRef ".$obj->error);
+	            return "";
+	        }
+	    }
+	    else
+	    {
+	        print $langs->trans("Error")." ".$langs->trans("Error_JUSTIFICATIVEDOCUMENT_ADDON_NotDefined");
+	        return "";
+	    }
 	}
 
 	/**
