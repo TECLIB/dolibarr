@@ -366,21 +366,28 @@ class modJustificativeDocuments extends DolibarrModules
         // Exports profiles provided by this module
         $r=1;
         /* BEGIN MODULEBUILDER EXPORT JUSTIFICATIVEDOCUMENT */
-        /*
         $langs->load("justificativedocuments@justificativedocuments");
         $this->export_code[$r]=$this->rights_class.'_'.$r;
-        $this->export_label[$r]='JustificativeDocumentLines';	// Translation key (used only if key ExportDataset_xxx_z not found)
+        $this->export_label[$r]='JustificativeDocuments';	// Translation key (used only if key ExportDataset_xxx_z not found)
         $this->export_icon[$r]='justificativedocument@justificativedocuments';
-        $keyforclass = 'JustificativeDocument'; $keyforclassfile='/mymobule/class/justificativedocument.class.php'; $keyforelement='justificativedocument';
+        // Define $this->export_fields_array, $this->export_TypeFields_array and $this->export_entities_array
+        $keyforclass = 'JustificativeDocument'; $keyforclassfile='/justificativedocuments/class/justificativedocument.class.php'; $keyforelement='justificativedocument@justificativedocuments';
         include DOL_DOCUMENT_ROOT.'/core/commonfieldsinexport.inc.php';
-        $keyforselect='justificativedocument'; $keyforaliasextra='extra'; $keyforelement='justificativedocument';
+        $this->export_fields_array[$r]['jt.code']='CodeOfType'; $this->export_TypeFields_array[$r]['jt.code']='Text';
+        $this->export_fields_array[$r]['jt.label']='LabelOfType'; $this->export_TypeFields_array[$r]['jt.label']='Text';
+        $this->export_fields_array[$r]['u.firstname']='Firstname'; $this->export_TypeFields_array[$r]['u.firstname']='Text';
+        $this->export_fields_array[$r]['u.lastname']='Lastname'; $this->export_TypeFields_array[$r]['u.lastname']='Text';
+        unset($this->export_fields_array[$r]['t.import_id']);
+        $keyforselect='justificativedocument'; $keyforaliasextra='extra'; $keyforelement='justificativedocument@justificativedocuments';
         include DOL_DOCUMENT_ROOT.'/core/extrafieldsinexport.inc.php';
         //$this->export_dependencies_array[$r]=array('mysubobject'=>'ts.rowid', 't.myfield'=>array('t.myfield2','t.myfield3')); // To force to activate one or several fields if we select some fields that need same (like to select a unique key if we ask a field of a child to avoid the DISTINCT to discard them, or for computed field than need several other fields)
-        $this->export_sql_start[$r]='SELECT DISTINCT ';
-        $this->export_sql_end[$r]  =' FROM '.MAIN_DB_PREFIX.'justificativedocument as t';
+        $this->export_sql_start[$r] = 'SELECT DISTINCT ';
+        $this->export_sql_end[$r] = ' FROM '.MAIN_DB_PREFIX.'justificativedocuments_justificativedocument as t';
+        $this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'c_justificative_type as jt ON jt.rowid = t.fk_type';
+        $this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'user as u ON u.rowid = t.fk_user';
         $this->export_sql_end[$r] .=' WHERE 1 = 1';
         $this->export_sql_end[$r] .=' AND t.entity IN ('.getEntity('justificativedocument').')';
-        $r++; */
+        $r++;
         /* END MODULEBUILDER EXPORT JUSTIFICATIVEDOCUMENT */
 
         // Imports profiles provided by this module

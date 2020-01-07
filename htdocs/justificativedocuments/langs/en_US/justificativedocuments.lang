@@ -47,3 +47,8 @@ JUSTIFICATIVEDOCUMENT_UNVALIDATEInDolibarr=Supporting document %s unvalidated
 JUSTIFICATIVEDOCUMENT_APPROVEInDolibarr=Supporting document %s approved
 JUSTIFICATIVEDOCUMENT_DELETEInDolibarr=Supporting document %s deleted
 AddAtLeastOneLinkedFile=You must first add at least one attached file.
+
+CodeOfType=Code of type of supporting document
+LabelOfType=Label of type of supporting document
+
+justificativedocument@justificativedocuments=Supporting documents
