@@ -33,9 +33,9 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/commonobject.class.php';
 class JustificativeDocument extends CommonObject
 {
 	/**
-	 * @var string ID to identify managed object
+	 * @var string ID to identify managed object (field 'elementtype' into llx_actioncomm)
 	 */
-	public $element = 'justificativedocument';
+	public $element = 'justificativedocuments_justificativedocument';
 
 	/**
 	 * @var string Name of table without prefix where object is stored
@@ -101,7 +101,6 @@ class JustificativeDocument extends CommonObject
 	    'date_end' => array('type'=>'date', 'label'=>'DateEnd', 'enabled'=>1, 'position'=>32, 'notnull'=>0, 'visible'=>1,),
 	    'fk_user' => array('type'=>'integer:User:user/class/user.class.php:0:statut=1 AND entity IN (__SHARED_ENTITIES__)', 'label'=>'User', 'enabled'=>1, 'position'=>35, 'notnull'=>1, 'visible'=>1, 'foreignkey'=>'user.rowid',),
 	    //'fk_project' => array('type'=>'integer:Project:projet/class/project.class.php:1', 'label'=>'Project', 'enabled'=>1, 'position'=>52, 'notnull'=>-1, 'visible'=>-1, 'index'=>1),
-		'description' => array('type'=>'text', 'label'=>'Description', 'enabled'=>1, 'position'=>60, 'notnull'=>-1, 'visible'=>3,),
 		'note_public' => array('type'=>'html', 'label'=>'NotePublic', 'enabled'=>1, 'position'=>61, 'notnull'=>-1, 'visible'=>0,),
 		'note_private' => array('type'=>'html', 'label'=>'NotePrivate', 'enabled'=>1, 'position'=>62, 'notnull'=>-1, 'visible'=>0,),
 		'date_creation' => array('type'=>'datetime', 'label'=>'DateCreation', 'enabled'=>1, 'position'=>500, 'notnull'=>1, 'visible'=>-2,),
@@ -110,6 +109,7 @@ class JustificativeDocument extends CommonObject
 	    'fk_user_creat' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserAuthor', 'enabled'=>1, 'position'=>510, 'notnull'=>1, 'visible'=>-2, 'foreignkey'=>'user.rowid',),
 		'fk_user_modif' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserModif', 'enabled'=>1, 'position'=>511, 'notnull'=>-1, 'visible'=>-2,),
 		'fk_user_valid' => array('type'=>'integer:User:user/class/user.class.php',      'label'=>'UserValidation',        'enabled'=>1, 'visible'=>-1, 'position'=>512),
+	    'description' => array('type'=>'text', 'label'=>'Description', 'enabled'=>1, 'position'=>1000, 'notnull'=>-1, 'visible'=>3,),
 	    'import_key' => array('type'=>'varchar(14)', 'label'=>'ImportId', 'enabled'=>1, 'position'=>1000, 'notnull'=>-1, 'visible'=>-2,),
 	    'status' => array('type'=>'integer', 'label'=>'Status', 'enabled'=>1, 'position'=>1000, 'notnull'=>1, 'default'=>0, 'visible'=>2, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Draft', '1'=>'Validated', '2'=>'Approved', '9'=>'Canceled'),),
 	);

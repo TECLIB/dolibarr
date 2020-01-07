@@ -248,11 +248,11 @@ if ($object->id > 0)
 		//print load_fiche_titre($langs->trans("ActionsOnJustificativeDocument"), '', '');
 
         // List of all actions
-		$filters=array();
-        $filters['search_agenda_label']=$search_agenda_label;
+		$filters = array();
+        $filters['search_agenda_label'] = $search_agenda_label;
 
         // TODO Replace this with same code than into list.php
-        //show_actions_done($conf, $langs, $db, $object, null, 0, $actioncode, '', $filters, $sortfield, $sortorder);
+        show_actions_done($conf, $langs, $db, $object, null, 0, $actioncode, '', $filters, $sortfield, $sortorder);
     }
 }
 
