@@ -42,8 +42,8 @@ JustificativeDocumentsAboutPage = Page à propos de Pièces justificatives
 
 EnterHereOnlyJustificativeDocument=Utilisez cette fonction pour créer et publier des pièces justificatives administratives qui n'ont pas leur place comme documents justificatifs de notes de frais.
 ConfirmCloneJustificativeDocument=Etes vous sur de vouloir cloner cette pièce justificative?
-JUSTIFICATIVEDOCUMENT_VALIDATEInDolibarr=Pièce justificative % validée
-JUSTIFICATIVEDOCUMENT_UNVALIDATEInDolibarr=Pièce justificative % repassée en brouillon
-JUSTIFICATIVEDOCUMENT_APPROVEInDolibarr=Pièce justificative % approuvée
-JUSTIFICATIVEDOCUMENT_DELETEInDolibarr=Pièce justificative % effacée
+JUSTIFICATIVEDOCUMENT_VALIDATEInDolibarr=Pièce justificative %s validée
+JUSTIFICATIVEDOCUMENT_UNVALIDATEInDolibarr=Pièce justificative %s repassée en brouillon
+JUSTIFICATIVEDOCUMENT_APPROVEInDolibarr=Pièce justificative %s approuvée
+JUSTIFICATIVEDOCUMENT_DELETEInDolibarr=Pièce justificative %s effacée
 AddAtLeastOneLinkedFile=Vous devez ajouter au moins 1 fichier justificatif comme pièce jointe.

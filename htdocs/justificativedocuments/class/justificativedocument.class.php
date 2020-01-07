@@ -44,8 +44,10 @@ class JustificativeDocument extends CommonObject
 
 	/**
 	 * @var int  Does justificativedocument support multicompany module ? 0=No test on entity, 1=Test with field entity, 2=Test with link by societe
+	 *
+	 * Note: To allow sharing on an extrernal object, you must set MULTICOMPANY_EXTERNAL_MODULES_SHARING=myobject
 	 */
-	public $ismultientitymanaged = 0;
+	public $ismultientitymanaged = 1;
 
 	/**
 	 * @var int  Does justificativedocument support extrafields ? 0=No, 1=Yes
@@ -92,7 +94,7 @@ class JustificativeDocument extends CommonObject
 	 */
 	public $fields=array(
 		'rowid' => array('type'=>'integer', 'label'=>'TechnicalID', 'enabled'=>1, 'position'=>1, 'notnull'=>1, 'visible'=>-1, 'index'=>1, 'comment'=>"Id"),
-	    'entity' => array('type'=>'integer', 'label'=>'Entity', 'enabled'=>1, 'visible'=>0, 'notnull'=> 1, 'default'=>1, 'index'=>1, 'position'=>5),
+	    //'entity' => array('type'=>'integer', 'label'=>'Entity', 'enabled'=>1, 'visible'=>0, 'notnull'=> 1, 'default'=>1, 'index'=>1, 'position'=>5),
 	    'ref' => array('type'=>'varchar(128)', 'label'=>'Ref', 'enabled'=>1, 'position'=>10, 'notnull'=>1, 'visible'=>4, 'noteditable'=>'1', 'default'=>'(PROV)', 'index'=>1, 'searchall'=>1, 'showoncombobox'=>'1', 'comment'=>"Reference of object"),
 	    'fk_type' => array('type'=>'integer:JustificativeType:justificativedocuments/class/justificativetype.class.php:0:active=1', 'label'=>'Type', 'enabled'=>1, 'position'=>20, 'notnull'=>1, 'visible'=>1,),
 	    'date_start' => array('type'=>'date', 'label'=>'DateStart', 'enabled'=>1, 'position'=>30, 'notnull'=>0, 'visible'=>1,),
@@ -922,12 +924,16 @@ class JustificativeDocument extends CommonObject
 	 *  Returns the reference to the following non used Order depending on the active numbering module
 	 *  defined into JUSTIFICATIVEDOCUMENT_ADDON
 	 *
-	 *  @return string      		Order free reference
+	 *  @return string      		Object free reference
 	 */
 	public function getNextNumRef()
 	{
 	    global $langs, $conf;
 	    $langs->load("justificativedocuments@justificativedocuments");
+
+	    if (empty($conf->global->JUSTIFICATIVEDOCUMENT_ADDON)) {
+	        $conf->global->JUSTIFICATIVEDOCUMENT_ADDON = 'mod_justificativedocument_standard';
+	    }
 
 	    if (!empty($conf->global->JUSTIFICATIVEDOCUMENT_ADDON))
 	    {
