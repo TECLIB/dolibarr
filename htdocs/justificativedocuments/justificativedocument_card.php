@@ -606,7 +606,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	    }
 
             // Modify
-    	    if ($object->status == $object::STATUS_DRAFT)
+    	    if ($object->status == $object::STATUS_DRAFT || $user->rights->justificativedocuments->justificativedocuments->approve)    // User with permission to approve must be able to edit/fix and set reimbursed amount.
     	    {
     	        if ($permissiontoadd)
         		{
