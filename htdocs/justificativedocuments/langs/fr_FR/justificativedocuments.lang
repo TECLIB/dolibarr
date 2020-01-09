@@ -47,3 +47,11 @@ JUSTIFICATIVEDOCUMENT_UNVALIDATEInDolibarr=Pièce justificative %s repassée en 
 JUSTIFICATIVEDOCUMENT_APPROVEInDolibarr=Pièce justificative %s approuvée
 JUSTIFICATIVEDOCUMENT_DELETEInDolibarr=Pièce justificative %s effacée
 AddAtLeastOneLinkedFile=Vous devez ajouter au moins 1 fichier justificatif comme pièce jointe.
+
+
+CodeOfType=Code du type de pièces
+LabelOfType=Libellé du type de pièces
+
+justificativedocument@justificativedocuments=Pièces justificatives
+DeleteJustificativeDocument=Effacer la pièce justificative
+PercentReimbursed=Part remboursé (%)
