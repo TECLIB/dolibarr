@@ -1,4 +1,4 @@
-# CHANGELOG JUSTIFICATIVEDOCUMENTS FOR <a href="https://www.dolibarr.org">DOLIBARR ERP CRM</a>
+# CHANGELOG SUPPORTING DOCUMENTS FOR <a href="https://www.dolibarr.org">DOLIBARR ERP CRM</a>
 
 ## 1.0
 Initial version

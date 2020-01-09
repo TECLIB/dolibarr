@@ -1,7 +1,7 @@
-# JUSTIFICATIVEDOCUMENTS FOR <a href="https://www.dolibarr.org">DOLIBARR ERP CRM</a>
+# SUPPORTING DOCUMENTS FOR <a href="https://www.dolibarr.org">DOLIBARR ERP CRM</a>
 
 ## Features
-Allow each user to submit justificative documents
+Allow each user to submit supporting documents
 
 <!--
 ![Screenshot justificativedocuments](img/screenshot_justificativedocuments.png?raw=true "JustificativeDocuments"){imgmd}
