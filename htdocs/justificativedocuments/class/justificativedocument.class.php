@@ -99,6 +99,7 @@ class JustificativeDocument extends CommonObject
 	    'fk_type' => array('type'=>'integer:JustificativeType:justificativedocuments/class/justificativetype.class.php:0:active=1', 'label'=>'Type', 'enabled'=>1, 'position'=>20, 'notnull'=>1, 'visible'=>1,),
 	    'date_start' => array('type'=>'date', 'label'=>'DateStart', 'enabled'=>1, 'position'=>30, 'notnull'=>0, 'visible'=>1,),
 	    'date_end' => array('type'=>'date', 'label'=>'DateEnd', 'enabled'=>1, 'position'=>32, 'notnull'=>0, 'visible'=>1,),
+	    'amount' => array('type'=>'double(24,8)', 'label'=>'Amount', 'enabled'=>1, 'visible'=>1, 'position'=>35),
 	    'fk_user' => array('type'=>'integer:User:user/class/user.class.php:0:statut=1 AND entity IN (__SHARED_ENTITIES__)', 'label'=>'User', 'enabled'=>1, 'position'=>35, 'notnull'=>1, 'visible'=>1, 'foreignkey'=>'user.rowid',),
 	    //'fk_project' => array('type'=>'integer:Project:projet/class/project.class.php:1', 'label'=>'Project', 'enabled'=>1, 'position'=>52, 'notnull'=>-1, 'visible'=>-1, 'index'=>1),
 		'note_public' => array('type'=>'html', 'label'=>'NotePublic', 'enabled'=>1, 'position'=>61, 'notnull'=>-1, 'visible'=>0,),

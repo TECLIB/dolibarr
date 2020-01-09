@@ -32,7 +32,8 @@ CREATE TABLE llx_justificativedocuments_justificativedocument(
     fk_user_valid integer, 
 	import_key varchar(14), 
 	status integer NOT NULL, 
-	fk_type integer NOT NULL, 
+	fk_type integer NOT NULL,
+	amount double(24,8), 
 	date_start date, 
 	date_end date
 	-- END MODULEBUILDER FIELDS
