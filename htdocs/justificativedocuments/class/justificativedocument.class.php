@@ -45,7 +45,7 @@ class JustificativeDocument extends CommonObject
 	/**
 	 * @var int  Does justificativedocument support multicompany module ? 0=No test on entity, 1=Test with field entity, 2=Test with link by societe
 	 *
-	 * Note: To allow sharing on an extrernal object, you must set MULTICOMPANY_EXTERNAL_MODULES_SHARING=myobject
+	 * Note: To allow sharing on an external object, you must set MULTICOMPANY_EXTERNAL_MODULES_SHARING=myobject
 	 */
 	public $ismultientitymanaged = 1;
 
@@ -94,7 +94,7 @@ class JustificativeDocument extends CommonObject
 	 */
 	public $fields=array(
 		'rowid' => array('type'=>'integer', 'label'=>'TechnicalID', 'enabled'=>1, 'position'=>1, 'notnull'=>1, 'visible'=>-1, 'index'=>1, 'comment'=>"Id"),
-	    //'entity' => array('type'=>'integer', 'label'=>'Entity', 'enabled'=>1, 'visible'=>0, 'notnull'=> 1, 'default'=>1, 'index'=>1, 'position'=>5),
+	    'entity' => array('type'=>'integer', 'label'=>'Entity', 'enabled'=>1, 'visible'=>0, 'notnull'=>1, 'default'=>1, 'index'=>1, 'position'=>5),
 	    'ref' => array('type'=>'varchar(128)', 'label'=>'Ref', 'enabled'=>1, 'position'=>10, 'notnull'=>1, 'visible'=>4, 'noteditable'=>'1', 'default'=>'(PROV)', 'index'=>1, 'searchall'=>1, 'showoncombobox'=>'1', 'comment'=>"Reference of object"),
 	    'fk_type' => array('type'=>'integer:JustificativeType:justificativedocuments/class/justificativetype.class.php:0:active=1', 'label'=>'Type', 'enabled'=>1, 'position'=>20, 'notnull'=>1, 'visible'=>1,),
 	    'date_start' => array('type'=>'date', 'label'=>'DateStart', 'enabled'=>1, 'position'=>30, 'notnull'=>0, 'visible'=>1,),

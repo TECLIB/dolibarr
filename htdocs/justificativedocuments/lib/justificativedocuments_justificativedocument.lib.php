@@ -55,7 +55,11 @@ function justificativedocumentPrepareHead($object)
 
 	require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 	require_once DOL_DOCUMENT_ROOT.'/core/class/link.class.php';
-	$upload_dir = $conf->justificativedocuments->dir_output . "/justificativedocument/" . dol_sanitizeFileName($object->ref);
+
+	$upload_dir = $conf->justificativedocuments->dir_output."/justificativedocument/".dol_sanitizeFileName($object->ref);
+	// Force saving documents on main company 1
+	$upload_dir = preg_replace('/\/[0-9]+\/justificativedocuments/', '/justificativedocuments', $conf->justificativedocuments->dir_output)."/justificativedocument/".dol_sanitizeFileName($object->ref);
+
 	$nbFiles = count(dol_dir_list($upload_dir, 'files', 0, '', '(\.meta|_preview.*\.png)$'));
 	$nbLinks=Link::count($db, $object->element, $object->id);
 	$head[$h][0] = dol_buildpath("/justificativedocuments/justificativedocument_document.php", 1).'?id='.$object->id;
