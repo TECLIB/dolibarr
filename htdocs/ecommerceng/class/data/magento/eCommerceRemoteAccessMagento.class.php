@@ -822,7 +822,7 @@ class eCommerceRemoteAccessMagento
 						'lastname' => $commandeSocpeople['lastname'],
 						'firstname' => $commandeSocpeople['firstname'],
 						'town' => $commandeSocpeople['city'],
-						// 'fk_pays' => $commandeSocpeople['country_id'],
+					    'country_code' => $commandeSocpeople['country_id'],   // country_id in magento is a code (FR, IT, ...)
 						'fax' => $commandeSocpeople['fax'],
 						'zip' => $commandeSocpeople['postcode'],
 						// add wrap
@@ -844,7 +844,7 @@ class eCommerceRemoteAccessMagento
 						'lastname' => $livraisonSocpeople['lastname'],
 						'firstname' => $livraisonSocpeople['firstname'],
 						'town' => $livraisonSocpeople['city'],
-						// 'fk_pays' => $commandeSocpeople['country_id'],
+						'country_code' => $commandeSocpeople['country_id'],   // country_id in magento is a code (FR, IT, ...)
 						'fax' => $livraisonSocpeople['fax'],
 						'zip' => $livraisonSocpeople['postcode'],
 						// add wrap
@@ -1104,42 +1104,44 @@ class eCommerceRemoteAccessMagento
 					$shippingAddress = $commande["shipping_address"];
 					$billingAddress = $commande["billing_address"];
 					$socpeopleLivraison = array(
-					'remote_id' => $shippingAddress['address_id'],
-					'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
-					'last_update' => $shippingAddress['updated_at'],
-					'name' => $shippingAddress['lastname'],
-					'firstname' => $shippingAddress['firstname'],
-					'ville' => $shippingAddress['city'],
-					// 'fk_pays' => $commandeSocpeople['country_id'],
-					'fax' => $shippingAddress['fax'],
-					'cp' => $shippingAddress['postcode'],
-					// add wrap
-					'address' => (trim($shippingAddress['company']) != '' ? trim($shippingAddress['company']) . '
-                                                                            ' : '') . $shippingAddress['street'],
-					'phone' => $shippingAddress['telephone']
+    					'remote_id' => $shippingAddress['address_id'],
+    					'type' => eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
+    					'last_update' => $shippingAddress['updated_at'],
+    					'name' => $shippingAddress['lastname'],
+    					'firstname' => $shippingAddress['firstname'],
+    					'ville' => $shippingAddress['city'],
+    					'town' => $shippingAddress['city'],
+					    'country_code' => $shippingAddress['country_id'],       // country_id in magento is a code (FR, IT, ...)
+    					'fax' => $shippingAddress['fax'],
+    					'cp' => $shippingAddress['postcode'],
+    					'zip' => $shippingAddress['postcode'],
+    					// add wrap
+    					'address' => (trim($shippingAddress['company']) != '' ? trim($shippingAddress['company']) . "\n" : '') . $shippingAddress['street'],
+    					'phone' => $shippingAddress['telephone']
 					);
 					// set invoice address
 					$socpeopleFacture = array(
-					'remote_id' => $billingAddress['address_id'],
-					'type' => eCommerceSocpeople::CONTACT_TYPE_INVOICE,
-					'last_update' => $billingAddress['updated_at'],
-					'name' => $billingAddress['lastname'],
-					'firstname' => $billingAddress['firstname'],
-					'ville' => $billingAddress['city'],
-					// 'fk_pays' => $commandeSocpeople['country_id'],
-					'fax' => $billingAddress['fax'],
-					'cp' => $billingAddress['postcode'],
-					// add wrap
-					'address' => (trim($billingAddress['company']) != '' ? trim($billingAddress['company']) . '
-                                                                            ' : '') . $billingAddress['street'],
-					'phone' => $billingAddress['telephone']
+    					'remote_id' => $billingAddress['address_id'],
+    					'type' => eCommerceSocpeople::CONTACT_TYPE_INVOICE,
+    					'last_update' => $billingAddress['updated_at'],
+    					'name' => $billingAddress['lastname'],
+    					'firstname' => $billingAddress['firstname'],
+    					'ville' => $billingAddress['city'],
+					    'town' => $billingAddress['town'],
+					    'country_code' => $billingAddress['country_id'],      // country_id in magento is a code (FR, IT, ...)
+    					'fax' => $billingAddress['fax'],
+    					'cp' => $billingAddress['postcode'],
+    					'zip' => $billingAddress['postcode'],
+    					// add wrap
+    					'address' => (trim($billingAddress['company']) != '' ? trim($billingAddress['company']) . "\n" : '') . $billingAddress['street'],
+    					'phone' => $billingAddress['telephone']
 					);
 					// set delivery as service
 					$delivery = array(
-					'description' => $commande['shipping_description'],
-					'price' => $facture['shipping_amount'],
-					'qty' => 1, // 0 to not show
-					'tva_tx' => $this->getTaxRate($facture['shipping_amount'], $facture['shipping_tax_amount'])
+    					'description' => $commande['shipping_description'],
+    					'price' => $facture['shipping_amount'],
+    					'qty' => 1, // 0 to not show
+    					'tva_tx' => $this->getTaxRate($facture['shipping_amount'], $facture['shipping_tax_amount'])
 					);
 
 					$eCommerceTempSoc = new eCommerceSociete($this->db);
@@ -1379,7 +1381,7 @@ class eCommerceRemoteAccessMagento
      * Return content of one category
      *
      * @param   int             $category_id        Remote category id
-     * @return  boolean|unknown                     Return
+     * @return  boolean|mixed                       Return
      */
     public function getCategoryData($category_id)
     {
@@ -1481,9 +1483,9 @@ class eCommerceRemoteAccessMagento
     /**
      * Update the remote stock of product
      *
-     * @param   int         $remote_id      Id of product on remote ecommerce
-     * @param   Movement    $object         Movement object, enhanced with property qty_after be the trigger STOCK_MOVEMENT.
-     * @return  boolean                     True or false
+     * @param   int             $remote_id      Id of product on remote ecommerce
+     * @param   MouvementStock  $object         Movement object, enhanced with property qty_after be the trigger STOCK_MOVEMENT.
+     * @return  boolean                         True or false
      */
     public function updateRemoteStockProduct($remote_id, $object)
     {
