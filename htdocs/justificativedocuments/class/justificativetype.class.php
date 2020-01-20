@@ -446,7 +446,7 @@ class JustificativeType extends CommonObject
 		}
 
 		/*if (! ((empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocuments->write))
-		 || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocuments->justificativedocuments_advance->validate))))
+		 || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocuments->justificativedocument_advance->validate))))
 		 {
 		 $this->error='Permission denied';
 		 return -1;
@@ -471,7 +471,7 @@ class JustificativeType extends CommonObject
 		}
 
 		/*if (! ((empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocuments->write))
-		 || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocuments->justificativedocuments_advance->validate))))
+		 || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocuments->justificativedocument_advance->validate))))
 		 {
 		 $this->error='Permission denied';
 		 return -1;
@@ -496,7 +496,7 @@ class JustificativeType extends CommonObject
 		}
 
 		/*if (! ((empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocuments->write))
-		 || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocuments->justificativedocuments_advance->validate))))
+		 || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->justificativedocuments->justificativedocument_advance->validate))))
 		 {
 		 $this->error='Permission denied';
 		 return -1;

@@ -104,11 +104,11 @@ include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php';  // Must be inclu
 //$isdraft = (($object->statut == JustificativeDocument::STATUS_DRAFT) ? 1 : 0);
 //$result = restrictedArea($user, 'justificativedocuments', $object->id, '', '', 'fk_soc', 'rowid', $isdraft);
 
-$permissionnote = $user->rights->justificativedocuments->justificativedocuments->write;		// Used by the include of actions_setnotes.inc.php
-$permissiondellink = $user->rights->justificativedocuments->justificativedocuments->write;	// Used by the include of actions_dellink.inc.php
-$permissiontoadd = $user->rights->justificativedocuments->justificativedocuments->write; 	// Used by the include of actions_addupdatedelete.inc.php// Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
-$permissiontodelete = $user->rights->justificativedocuments->justificativedocuments->delete || ($permissiontoadd && $object->status == 0);
-$permissiontoapprove = $user->rights->justificativedocuments->justificativedocuments->approve;
+$permissionnote = $user->rights->justificativedocuments->justificativedocument->write;		// Used by the include of actions_setnotes.inc.php
+$permissiondellink = $user->rights->justificativedocuments->justificativedocument->write;	// Used by the include of actions_dellink.inc.php
+$permissiontoadd = $user->rights->justificativedocuments->justificativedocument->write; 	// Used by the include of actions_addupdatedelete.inc.php// Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
+$permissiontodelete = $user->rights->justificativedocuments->justificativedocument->delete || ($permissiontoadd && $object->status == 0);
+$permissiontoapprove = $user->rights->justificativedocuments->justificativedocument->approve;
 
 
 /*
@@ -264,7 +264,7 @@ if ($action == 'create')
 	        print '</td><td>';
 	        //$array = array('ee'=>'rr');
 	        $include = 'hierarchyme';
-	        if (! empty($user->rights->justificativedocuments->justificativedocuments->write_all)) $include = '';
+	        if (! empty($user->rights->justificativedocuments->justificativedocument->write_all)) $include = '';
 	        print $form->select_dolusers($user->id, 'fk_user', 0, null, 0, $include);
 	        print '</td>';
 	        print '</tr>';
@@ -355,7 +355,7 @@ if (($id || $ref) && $action == 'edit')
 	        print '</td><td>';
 	        //$array = array('ee'=>'rr');
 	        $include = 'hierarchyme';
-	        if (! empty($user->rights->justificativedocuments->justificativedocuments->write_all)) $include = '';
+	        if (! empty($user->rights->justificativedocuments->justificativedocument->write_all)) $include = '';
 	        print $form->select_dolusers($object->fk_user, 'fk_user', 0, null, 0, $include);
 	        print '</td>';
 	        print '</tr>';
@@ -458,8 +458,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	$morehtmlref='<div class="refidno">';
 	/*
 	// Ref bis
-	$morehtmlref.=$form->editfieldkey("RefBis", 'ref_client', $object->ref_client, $object, $user->rights->justificativedocuments->justificativedocuments->creer, 'string', '', 0, 1);
-	$morehtmlref.=$form->editfieldval("RefBis", 'ref_client', $object->ref_client, $object, $user->rights->justificativedocuments->justificativedocuments->creer, 'string', '', null, null, '', 1);
+	$morehtmlref.=$form->editfieldkey("RefBis", 'ref_client', $object->ref_client, $object, $user->rights->justificativedocuments->justificativedocument->creer, 'string', '', 0, 1);
+	$morehtmlref.=$form->editfieldval("RefBis", 'ref_client', $object->ref_client, $object, $user->rights->justificativedocuments->justificativedocument->creer, 'string', '', null, null, '', 1);
 	// Thirdparty
 	$morehtmlref.='<br>'.$langs->trans('ThirdParty') . ' : ' . $object->thirdparty->getNomUrl(1);
 	// Project
@@ -467,7 +467,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	{
 	    $langs->load("projects");
 	    $morehtmlref.='<br>'.$langs->trans('Project') . ' ';
-	    if ($user->rights->justificativedocuments->justificativedocuments->write)
+	    if ($user->rights->justificativedocuments->justificativedocument->write)
 	    {
 	        if ($action != 'classify')
 	            $morehtmlref.='<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=classify&amp;id=' . $object->id . '">' . img_edit($langs->transnoentitiesnoconv('SetProject')) . '</a> : ';
@@ -606,7 +606,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	    }
 
             // Modify
-    	    if ($object->status == $object::STATUS_DRAFT || $user->rights->justificativedocuments->justificativedocuments->approve)    // User with permission to approve must be able to edit/fix and set reimbursed amount.
+    	    if ($object->status == $object::STATUS_DRAFT || $user->rights->justificativedocuments->justificativedocument->approve)    // User with permission to approve must be able to edit/fix and set reimbursed amount.
     	    {
     	        if ($permissiontoadd)
         		{
@@ -687,7 +687,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		*/
 
     		// Delete (need delete permission, or if draft, just need create/modify permission)
-    		if (! empty($user->rights->justificativedocuments->justificativedocuments->delete) || (! empty($object->fields['status']) && $object->status == $object::STATUS_DRAFT && ! empty($user->rights->justificativedocuments->justificativedocuments->write)))
+    		if (! empty($user->rights->justificativedocuments->justificativedocument->delete) || (! empty($object->fields['status']) && $object->status == $object::STATUS_DRAFT && ! empty($user->rights->justificativedocuments->justificativedocument->write)))
     		{
     			print '<a class="butActionDelete" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=delete">'.$langs->trans('Delete').'</a>'."\n";
     		}
@@ -715,8 +715,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	    $relativepath = $comref . '/' . $comref . '.pdf';
 	    $filedir = $conf->justificativedocuments->dir_output . '/' . $objref;
 	    $urlsource = $_SERVER["PHP_SELF"] . "?id=" . $object->id;
-	    $genallowed = $user->rights->justificativedocuments->justificativedocuments->read;	// If you can read, you can build the PDF to read content
-	    $delallowed = $user->rights->justificativedocuments->justificativedocuments->create;	// If you can create/edit, you can remove a file on card
+	    $genallowed = $user->rights->justificativedocuments->justificativedocument->read;	// If you can read, you can build the PDF to read content
+	    $delallowed = $user->rights->justificativedocuments->justificativedocument->create;	// If you can create/edit, you can remove a file on card
 	    print $formfile->showdocuments('justificativedocuments', $objref, $filedir, $urlsource, $genallowed, $delallowed, $object->modelpdf, 1, 0, 0, 28, 0, '', '', '', $soc->default_lang);
 		*/
 

@@ -161,9 +161,9 @@ if (is_array($extrafields->attributes[$object->table_element]['label']) && count
 $object->fields = dol_sort_array($object->fields, 'position');
 $arrayfields = dol_sort_array($arrayfields, 'position');
 
-$permissiontoread = $user->rights->justificativedocuments->justificativedocuments->read;
-$permissiontoadd = $user->rights->justificativedocuments->justificativedocuments->write;
-$permissiontodelete = $user->rights->justificativedocuments->justificativedocuments->delete;
+$permissiontoread = $user->rights->justificativedocuments->justificativedocument->read;
+$permissiontoadd = $user->rights->justificativedocuments->justificativedocument->write;
+$permissiontodelete = $user->rights->justificativedocuments->justificativedocument->delete;
 
 
 /*
@@ -251,7 +251,7 @@ foreach($search as $key => $val)
 	if ($search[$key] != '') $sql.=natural_search($key, $search[$key], (($key == 'status')?2:$mode_search));
 }
 if ($search_all) $sql.= natural_search(array_keys($fieldstosearchall), $search_all);
-if (empty($user->rights->justificativedocuments->justificativedocuments->write_all)) {
+if (empty($user->rights->justificativedocuments->justificativedocument->write_all)) {
     $sql .= " AND t.fk_user IN (".join(',', $childids).")";
 }
 //$sql.= dolSqlDateFilter("t.field", $search_xxxday, $search_xxxmonth, $search_xxxyear);

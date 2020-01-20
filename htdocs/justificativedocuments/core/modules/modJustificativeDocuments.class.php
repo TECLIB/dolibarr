@@ -243,27 +243,27 @@ class modJustificativeDocuments extends DolibarrModules
         /* BEGIN MODULEBUILDER PERMISSIONS */
         $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
         $this->rights[$r][1] = 'Read supporting documents (yours and your subordinates)';	// Permission label
-        $this->rights[$r][4] = 'justificativedocuments';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
+        $this->rights[$r][4] = 'justificativedocument';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $this->rights[$r][5] = 'read';				    // In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $r++;
         $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
         $this->rights[$r][1] = 'Create/Update supporting documents';	// Permission label
-        $this->rights[$r][4] = 'justificativedocuments';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
+        $this->rights[$r][4] = 'justificativedocument';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $this->rights[$r][5] = 'write';				    // In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $r++;
         $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
         $this->rights[$r][1] = 'Create/Update supporting documents (everybody)';	// Permission label
-        $this->rights[$r][4] = 'justificativedocuments';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
+        $this->rights[$r][4] = 'justificativedocument';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $this->rights[$r][5] = 'write_all';				    // In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $r++;
         $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
         $this->rights[$r][1] = 'Delete supporting documents';	// Permission label
-        $this->rights[$r][4] = 'justificativedocuments';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
+        $this->rights[$r][4] = 'justificativedocument';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $this->rights[$r][5] = 'delete';				    // In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $r++;
         $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
         $this->rights[$r][1] = 'Approve documents';	// Permission label
-        $this->rights[$r][4] = 'justificativedocuments';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
+        $this->rights[$r][4] = 'justificativedocument';				// In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $this->rights[$r][5] = 'approve';				    // In php code, permission will be checked by test if ($user->rights->justificativedocuments->level1->level2)
         $r++;
         /* END MODULEBUILDER PERMISSIONS */
@@ -300,7 +300,7 @@ class modJustificativeDocuments extends DolibarrModules
             'langs'=>'justificativedocuments@justificativedocuments',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
             'position'=>1000+$r,
             'enabled'=>'$conf->justificativedocuments->enabled',  // Define condition to show or hide menu entry. Use '$conf->justificativedocuments->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
-            'perms'=>'$user->rights->justificativedocuments->justificativedocuments->read',			                // Use 'perms'=>'$user->rights->justificativedocuments->level1->level2' if you want your menu with a permission rules
+            'perms'=>'$user->rights->justificativedocuments->justificativedocument->read',			                // Use 'perms'=>'$user->rights->justificativedocuments->level1->level2' if you want your menu with a permission rules
             'target'=>'',
             'user'=>2,				                // 0=Menu for internal users, 1=external users, 2=both
         );
@@ -314,7 +314,7 @@ class modJustificativeDocuments extends DolibarrModules
             'langs'=>'justificativedocuments@justificativedocuments',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
             'position'=>1000+$r,
             'enabled'=>'$conf->justificativedocuments->enabled',  // Define condition to show or hide menu entry. Use '$conf->justificativedocuments->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
-            'perms'=>'$user->rights->justificativedocuments->justificativedocuments->read',			                // Use 'perms'=>'$user->rights->justificativedocuments->level1->level2' if you want your menu with a permission rules
+            'perms'=>'$user->rights->justificativedocuments->justificativedocument->read',			                // Use 'perms'=>'$user->rights->justificativedocuments->level1->level2' if you want your menu with a permission rules
             'target'=>'',
             'user'=>2,				                // 0=Menu for internal users, 1=external users, 2=both
         );
@@ -335,7 +335,7 @@ class modJustificativeDocuments extends DolibarrModules
             // Define condition to show or hide menu entry. Use '$conf->justificativedocuments->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
             'enabled'=>'$conf->justificativedocuments->enabled',
             // Use 'perms'=>'$user->rights->justificativedocuments->level1->level2' if you want your menu with a permission rules
-            'perms'=>'$user->rights->justificativedocuments->justificativedocuments->read',
+            'perms'=>'$user->rights->justificativedocuments->justificativedocument->read',
             'target'=>'',
             // 0=Menu for internal users, 1=external users, 2=both
             'user'=>2,
@@ -355,7 +355,7 @@ class modJustificativeDocuments extends DolibarrModules
             // Define condition to show or hide menu entry. Use '$conf->justificativedocuments->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
             'enabled'=>'$conf->justificativedocuments->enabled',
             // Use 'perms'=>'$user->rights->justificativedocuments->level1->level2' if you want your menu with a permission rules
-            'perms'=>'$user->rights->justificativedocuments->justificativedocuments->write',
+            'perms'=>'$user->rights->justificativedocuments->justificativedocument->write',
             'target'=>'',
             // 0=Menu for internal users, 1=external users, 2=both
             'user'=>2
