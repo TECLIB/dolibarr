@@ -229,6 +229,22 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 									if ($found) $ispromotionqualified++;
 								}
 							}
+							elseif ($rules['type'] == 'productis')
+							{
+							    $tmpprod=new Product($this->db);
+							    $tmpprod->fetch($line->fk_product);
+							    if (strtolower($rules['value']) == strtolower($tmpprod->ref)) {
+							        $ispromotionqualified++;
+							    }
+							}
+							elseif ($rules['type'] == 'productisnot')
+							{
+							    $tmpprod=new Product($this->db);
+							    $tmpprod->fetch($line->fk_product);
+							    if (strtolower($rules['value']) != strtolower($tmpprod->ref)) {
+							        $ispromotionqualified++;
+							    }
+							}
 							elseif ($rules['type'] == 'containsproduct')
 							{
 								$parentobject->fetch_lines();
@@ -242,7 +258,7 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 									{
 										$tmpprod->ref='';
 										$tmpprod->fetch($line->fk_product);
-										if ($line->fk_product == $rules['value'] || $tmpprod->ref == $rules['value'])
+										if ($line->fk_product == $rules['value'] || strtolower($tmpprod->ref) == strtolower($rules['value']))
 										{
 											$foundatleastonelinewithproduct++;
 											$idoflinesforitem[] = $line->id;
@@ -271,7 +287,7 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 		        		//var_dump(count($advanceddiscount->arrayofrules));
 		        		if ($ispromotionqualified == count($advanceddiscount->arrayofrules))
 		        		{
-		        			$arrayofpromotionqualified[$obj->rowid] = $advanceddiscount;
+		        		    $arrayofpromotionqualified[$obj->rowid] = $advanceddiscount;   // $obj->rowid is id of promotion = $advanceddiscount->id
 		        		}
 
 		        		$defaultvatrate = get_default_tva($mysoc, $parentobject->thirdparty);
@@ -365,6 +381,8 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 		        				}*/
 		        				elseif ($actiondiscount['type'] == 'itempercentagediscount')
 		        				{
+		        				    // Percent will be added on line with id = $idoflinesforitem only
+
 		        					if (empty($idoflinesforitem))
 		        					{
 		        						dol_print_error($this->db, 'Error no item line found to use for the advanceddiscount');

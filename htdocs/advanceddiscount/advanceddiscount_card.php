@@ -556,7 +556,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	    print '<div class="div-table-responsive-no-min">';
 	    print '<table class="noborder allwidth">';
 	    print '<tr class="liste_titre">';
-	    print '<td>'.$langs->trans("Type").'</td><td>'.$langs->trans("Value").'</td><td></td>';
+	    print '<td>';
+	    print $form->textwithpicto($langs->trans("Type"), $langs->trans("ConditionAreCumulative"));
+	    print '</td><td>'.$langs->trans("Value").'</td><td></td>';
 	    print '</tr>';
 
     	print '<tr class="liste_titre">';
@@ -564,7 +566,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	$arrayforselectrule=array(
     		'customercountry'=>'CustomerCountryIs',
     		'customercategory'=>'CustomerHasTag',
-    		'containsproduct'=>'ContainsProduct',
+    	    //'productis'=>'ProductIs',
+    	    //'productisnot'=>'ProductIsNot',
+    	    'containsproduct'=>'ContainsProduct',
     		'totalgreaterorequal'=>'TotalGreaterThanOrEqualTo'
     	);
     	if (! empty($conf->commande->enabled))
@@ -674,7 +678,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		print '<br><span class="opacitymedium">'.$langs->trans("NoteWhenDiscountApplied").'</span>';
 
 		print '</form>';
-		
+
 	    print '</div></div></div>';
 	}
 

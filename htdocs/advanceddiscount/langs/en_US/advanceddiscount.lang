@@ -28,10 +28,12 @@ CloneAdvancedDiscount=Clone discount/promotion
 ConfirmCloneAdvancedDiscount=Are you sure you want to clone this discount/promotion ?
 CustomerCountryIs=Customer country is (value is country code)
 CustomerHasTag=Customer has tag/category (value is ref of tag/category)
+ProductIs=Product of line is (value is product ref)
+ProductIsNot=Product of line is not (value is product ref)
 ContainsProduct=Object contains product (value is product ref)
-TotalGreaterThanOrEqualTo=Total without tax >= (value is amount)
+TotalGreaterThanOrEqualTo=Total of all lines without tax >= (value is amount)
 ObjectFixedDiscount=Fixed discount (value is amount)
-ObjectPercentDiscount=Percent discount (value is percentage)
+ObjectPercentDiscount=Percent discount on all lines (value is percentage)
 ItemFixedDiscount=Item fixed discount (value is amount)
 ItemPercentDiscount=Item percent discount (value is percentage)
 Rules=Rules
