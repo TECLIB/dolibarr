@@ -94,6 +94,7 @@ ECommerceSynchSocieteErrorCreateUpdateSociete=Failed to synchronize thirdparty
 ECommerceSyncheCommerceSocpeopleCreateError=An error occured while saving contact.
 ECommerceSyncheCommerceProductCreateError=Error creating the link between Dolibarr product and eCommerce product
 ECommerceSyncheCommerceCommandeCreateError=Error creating the link between Dolibarr order and eCommerce order
+ECommerceSyncheCommerceCommandeUpdateError=Error updating the link between Dolibarr order and eCommerce order
 ECommerceSyncheCommerceCategoryUpdateError=Error while updating a category.
 ECommerceSyncheCommerceCategoryCreateError=Error while creating a category.
 

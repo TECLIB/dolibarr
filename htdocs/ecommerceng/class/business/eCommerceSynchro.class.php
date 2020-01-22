@@ -1055,6 +1055,7 @@ class eCommerceSynchro
 
         try {
             $nbgoodsunchronize = 0;
+            $nbrecorderror = 0;
             $societes=array();
 
             dol_syslog("***** eCommerceSynchro synchSociete");
@@ -1517,6 +1518,7 @@ class eCommerceSynchro
         $error=0;
 
         try {
+            $nbrecorderror = 0;
             $nbgoodsunchronize = 0;
             $products = array();
 
@@ -2061,7 +2063,7 @@ class eCommerceSynchro
                                 {
                                     $error++;
                                     $this->errors[]=$this->langs->trans('ECommerceSynchCommandeUpdateError').' '.$dBCommande->error;
-                                    $this->errors = array_merge($this->errors, $dbCommande->errors);
+                                    $this->errors = array_merge($this->errors, $dBCommande->errors);
                                 }
                             }
 
@@ -2109,14 +2111,14 @@ class eCommerceSynchro
                                     {
                                         if ($dBCommande->statut != Commande::STATUS_VALIDATED)
                                         {
-                                            $dBCommande->setStatut(Commande::STATUS_VALIDATED, $dbCommande->id, $dbCommande->table_element);
+                                            $dBCommande->setStatut(Commande::STATUS_VALIDATED);
                                         }
                                     }
                                     if ($commandeArray['status'] == 2)      // Should be Commande::STATUS_SHIPMENTONPROCESS but not defined in dolibarr 3.9
                                     {
                                         if ($dBCommande->statut != 2)
                                         {
-                                            $dBCommande->setStatut(2, $dbCommande->id, $dbCommande->table_element);
+                                            $dBCommande->setStatut(2);
                                         }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CANCELED)
@@ -2175,7 +2177,7 @@ class eCommerceSynchro
                                     dol_syslog("synchCommande result=".$result." ".$dBCommande->error, LOG_ERR);
                                     $error++;
                                     $this->errors[]=$this->langs->trans('ECommerceSynchCommandeCreateError').' '.$dBCommande->error;
-                                    $this->errors = array_merge($this->errors, $dbCommande->errors);
+                                    $this->errors = array_merge($this->errors, $dBCommande->errors);
                                 }
 
                                 // Add lines
@@ -2193,8 +2195,8 @@ class eCommerceSynchro
                                             $fk_product = $this->eCommerceProduct->fk_product;
                                             if (($result = $dBCommande->defineBuyPrice($item['price'], 0, $fk_product)) < 0)
                                             {
-                                                $this->error = $this->langs->trans('ECommerceSyncheCommerceCommandeUpdateError').' '.$dBCommande->error;
-                                                $this->errors = array_merge($this->errors, $dbCommande->errors);
+                                                $this->error = $this->langs->trans('ECommerceSynchCommandeCreateError').' '.$dBCommande->error;
+                                                $this->errors = array_merge($this->errors, $dBCommande->errors);
                                                 $error++;
                                                 break;	// break on items
                                             }
@@ -2246,8 +2248,9 @@ class eCommerceSynchro
                                             dol_syslog("result=".$result);
                                             if ($result <= 0)
                                             {
-                                                $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceCommandeUpdateError').' '.$dBCommande->error;
-                                                $this->errors = array_merge($this->errors, $dbCommande->errors);
+                                                dol_syslog("synchCommande dBCommande->addline result=".$result." ".$dBCommande->error, LOG_ERR);
+                                                $this->errors[] = $this->langs->trans('ECommerceSynchCommandeCreateError').':<br>'.$dBCommande->error;
+                                                $this->errors = array_merge($this->errors, $dBCommande->errors);
                                                 $error++;
                                                 break;  // break on items
                                             }
@@ -2283,8 +2286,8 @@ class eCommerceSynchro
                                         );
                                     if ($result <= 0)
                                     {
-                                        $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceCommandeUpdateError').' '.$dBCommande->error;
-                                        $this->errors = array_merge($this->errors, $dbCommande->errors);
+                                        $this->errors[] = $this->langs->trans('ECommerceSynchCommandeCreateError').':<br>'.$dBCommande->error;
+                                        $this->errors = array_merge($this->errors, $dBCommande->errors);
                                         $error++;
                                     }
                                 }
@@ -2496,6 +2499,9 @@ class eCommerceSynchro
         $error = 0;
 
         try {
+            $nbgoodsunchronize = 0;
+            $nbrecorderror = 0;
+
             $factures = array();
 
             dol_syslog("***** eCommerceSynchro synchFacture");
@@ -2802,8 +2808,8 @@ class eCommerceSynchro
                                         if (($result = $dBFacture->defineBuyPrice($item['price'], 0, $fk_product)) < 0)
                                         {
                                             $error++;
-                                            $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceFactureUpdateError').' '.$dbFacture->error;
-                                            $this->errors = array_merge($this->errors, $dbFacture->errors);
+                                            $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceFactureUpdateError').' '.$dBFacture->error;
+                                            $this->errors = array_merge($this->errors, $dBFacture->errors);
                                             break;	// break items
                                         }
                                         else
@@ -2995,7 +3001,7 @@ class eCommerceSynchro
                                         	$result=$payment->addPaymentToBank($this->user,'payment',$label,$accountid,$chqsendername,$chqbankname);
                                         	if ($result < 0)
                                         	{
-                                        		setEventMessages($paiement->error, $paiement->errors, 'errors');
+                                        	    setEventMessages($payment->error, $payment->errors, 'errors');
                                         		$error++;
                                         	}
                                         }
