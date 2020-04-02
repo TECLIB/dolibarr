@@ -87,19 +87,6 @@ class eCommerceSociete // extends CommonObject
         {
             $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX."ecommerce_societe");
             if (! ($this->id > 0)) dol_syslog("last_insert_id did not return an int", LOG_ERR);
-
-			if (! $notrigger)
-			{
-	            // Uncomment this and change MYOBJECT to your own tag if you
-	            // want this action call a trigger.
-
-	            //// Call triggers
-	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
-	            //$interface=new Interfaces($this->db);
-	            //$result=$interface->run_triggers('MYOBJECT_CREATE',$this,$user,$langs,$conf);
-	            //if ($result < 0) { $error++; $this->errors=$interface->errors; }
-	            //// End call triggers
-			}
         }
 
         // Commit or rollback
@@ -203,22 +190,6 @@ class eCommerceSociete // extends CommonObject
         $resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
 
-		if (! $error)
-		{
-			if (! $notrigger)
-			{
-	            // Uncomment this and change MYOBJECT to your own tag if you
-	            // want this action call a trigger.
-
-	            //// Call triggers
-	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
-	            //$interface=new Interfaces($this->db);
-	            //$result=$interface->run_triggers('MYOBJECT_MODIFY',$this,$user,$langs,$conf);
-	            //if ($result < 0) { $error++; $this->errors=$interface->errors; }
-	            //// End call triggers
-	    	}
-		}
-
         // Commit or rollback
 		if ($error)
 		{
@@ -269,22 +240,6 @@ class eCommerceSociete // extends CommonObject
 		{
     		$resql2 = $this->db->query($sql2);
     		if (! $resql2) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
-		}
-
-		if (! $error)
-		{
-			if (! $notrigger)
-			{
-				// Uncomment this and change MYOBJECT to your own tag if you
-		        // want this action call a trigger.
-
-		        //// Call triggers
-		        //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
-		        //$interface=new Interfaces($this->db);
-		        //$result=$interface->run_triggers('MYOBJECT_DELETE',$this,$user,$langs,$conf);
-		        //if ($result < 0) { $error++; $this->errors=$interface->errors; }
-		        //// End call triggers
-			}
 		}
 
         // Commit or rollback
