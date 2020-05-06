@@ -58,9 +58,9 @@ class modAutoCreateTasks extends DolibarrModules
 		// Module label (no space allowed), used if translation string 'ModuleAutoCreateTasksName' not found (AutoCreateTasks is name of module).
 		$this->name = preg_replace('/^mod/i', '', get_class($this));
 		// Module description, used if translation string 'ModuleAutoCreateTasksDesc' not found (AutoCreateTasks is name of module).
-		$this->description = "AutoCreateTasksDescription";
+		$this->description = "Create some tasls automatically from a list of predefined tasks labels. Creation is done on project validation.";
 		// Used only if file README.md and README-LL.md not found.
-		$this->descriptionlong = "AutoCreateTasks description (Long)";
+		$this->descriptionlong = "Create some tasls automatically from a list of predefined tasks labels. Creation is done on project validation.";
 		$this->editor_name = 'TecLib';
 		$this->editor_url = 'https://www.teclib.com';
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
