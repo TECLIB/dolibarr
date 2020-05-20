@@ -2963,7 +2963,7 @@ class eCommerceSynchro
                                         	$error++;
                                         }
 
-                                        if (! empty($factureArray['remote_invoice']['grand_total']))
+                                        if (price2num($factureArray['remote_invoice']['grand_total']) != 0)
                                         {
                                         	// If amount of invoice to pay of not null
 	                                        if (! $error)
