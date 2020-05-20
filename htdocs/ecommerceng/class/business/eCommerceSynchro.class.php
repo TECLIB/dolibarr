@@ -2963,55 +2963,59 @@ class eCommerceSynchro
                                         	$error++;
                                         }
 
-                                        if (! $error)
+                                        if (! empty($factureArray['remote_invoice']['grand_total']))
                                         {
-	                                        $chqbankname = $factureArray['remote_order']["payment"]['echeck_bank_name'];
-	                                        $chqsendername = $factureArray['remote_order']["payment"]['echeck_account_name'];
-	                                        if (empty($chqsendername)) $chqsendername = $factureArray['remote_order']["payment"]['cc_owner'];
-	                                        $paymentnote = 'Payment recorded when creating invoice from remote payment';
-	                                        if (! empty($factureArray['remote_order']["payment"]['cc_type'])) $paymentnote .= ' - CC type '.$factureArray['remote_order']["payment"]['cc_type'];
-	                                        if (! empty($factureArray['remote_order']["payment"]['cc_last4'])) $paymentnote .= ' - CC last4 '.$factureArray['remote_order']["payment"]['cc_last4'];
-
-	                                        $payment = new Paiement($this->db);
-
-	                                        $payment->datepaye = $dBFacture->date;
-	                                        $payment->paiementid = $paymenttypeid;
-	                                        $payment->num_paiement = $factureArray['remote_order']["payment"]['echeck_routing_number'];
-
-											//$factureArray['remote_order']["payment"] is one record with sum of different payments/invoices.
-											//$factureArray['remote_invoice']["payment"] is one record the payment of invoices (Magento seems to do one payment for one invoice, but have several invoices if several payments).
-											$payment->amounts=array($dBFacture->id => $factureArray['remote_invoice']['grand_total']);
-
-	                                        $payment->note=$paymentnote;
-
-	                                        $resultpayment = $payment->create($this->user, 1);
-
-	                                        if ($resultpayment < 0)
+                                        	// If amount of invoice to pay of not null
+	                                        if (! $error)
 	                                        {
-	                                            $error++;
-	                                            $this->errors[] = "Failed to create payment on invoice ".$dBFacture->ref.' resultpayment='.$resultpayment;
-	                                            $this->errors = array_merge($this->errors, $payment->errors);
+		                                        $chqbankname = $factureArray['remote_order']["payment"]['echeck_bank_name'];
+		                                        $chqsendername = $factureArray['remote_order']["payment"]['echeck_account_name'];
+		                                        if (empty($chqsendername)) $chqsendername = $factureArray['remote_order']["payment"]['cc_owner'];
+		                                        $paymentnote = 'Payment recorded when creating invoice from remote payment';
+		                                        if (! empty($factureArray['remote_order']["payment"]['cc_type'])) $paymentnote .= ' - CC type '.$factureArray['remote_order']["payment"]['cc_type'];
+		                                        if (! empty($factureArray['remote_order']["payment"]['cc_last4'])) $paymentnote .= ' - CC last4 '.$factureArray['remote_order']["payment"]['cc_last4'];
+
+		                                        $payment = new Paiement($this->db);
+
+		                                        $payment->datepaye = $dBFacture->date;
+		                                        $payment->paiementid = $paymenttypeid;
+		                                        $payment->num_paiement = $factureArray['remote_order']["payment"]['echeck_routing_number'];
+
+												//$factureArray['remote_order']["payment"] is one record with sum of different payments/invoices.
+												//$factureArray['remote_invoice']["payment"] is one record the payment of invoices (Magento seems to do one payment for one invoice, but have several invoices if several payments).
+												$payment->amounts=array($dBFacture->id => $factureArray['remote_invoice']['grand_total']);
+
+		                                        $payment->note=$paymentnote;
+
+		                                        // Because amount of payment is same than amount of invoice, this will also close the invoice automatically
+		                                        $resultpayment = $payment->create($this->user, 1);
+
+		                                        if ($resultpayment < 0)
+		                                        {
+		                                            $error++;
+		                                            $this->errors[] = "Failed to create payment on invoice ".$dBFacture->ref.' resultpayment='.$resultpayment;
+		                                            $this->errors = array_merge($this->errors, $payment->errors);
+		                                        }
 	                                        }
-                                        }
 
-                                        if (! $error)
-                                        {
-                                        	$label='(CustomerInvoicePayment)';
-                                        	if ($dBFacture->type == Facture::TYPE_CREDIT_NOTE) $label='(CustomerInvoicePaymentBack)';  // Refund of a credit note
-                                        	$result=$payment->addPaymentToBank($this->user,'payment',$label,$accountid,$chqsendername,$chqbankname);
-                                        	if ($result < 0)
-                                        	{
-                                        	    setEventMessages($payment->error, $payment->errors, 'errors');
-                                        		$error++;
-                                        	}
+	                                        if (! $error)
+	                                        {
+	                                        	$label='(CustomerInvoicePayment)';
+	                                        	if ($dBFacture->type == Facture::TYPE_CREDIT_NOTE) $label='(CustomerInvoicePaymentBack)';  // Refund of a credit note
+	                                        	$result=$payment->addPaymentToBank($this->user,'payment',$label,$accountid,$chqsendername,$chqbankname);
+	                                        	if ($result < 0)
+	                                        	{
+	                                        	    setEventMessages($payment->error, $payment->errors, 'errors');
+	                                        		$error++;
+	                                        	}
+	                                        }
+                                        } else {
+                                        	// If amount of invoice to pay is null
+											if (! $error)
+											{
+        	                                	$dBFacture->set_paid($this->user, '', '');
+											}
                                         }
-
-                                        //exit;
-										/* done into payment->create
-										if (! $error)
-										{
-                                        	$dBFacture->set_paid($this->user, '', '');
-										}*/
                                     }
                                 }
 
