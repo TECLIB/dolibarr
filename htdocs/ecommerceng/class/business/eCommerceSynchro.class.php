@@ -2824,7 +2824,7 @@ class eCommerceSynchro
                                             0,
                                             0,
                                             $this->eCommerceProduct->fk_product,
-                                            0,
+                                        	$item['remise_percent'], //remise_percent
                                             '', //date_start
                                             '', //date_end
                                             0, //ventil
