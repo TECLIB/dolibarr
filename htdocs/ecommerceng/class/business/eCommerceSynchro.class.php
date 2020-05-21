@@ -1719,7 +1719,7 @@ class eCommerceSynchro
                             // If eCommerce setup has changed and now prices are switch TI/TE (Tax Include / Tax Excluded)
                             if ($dBProduct->price_base_type != $this->eCommerceSite->magento_price_type && empty($conf->global->ECOMMERCENG_DISABLE_MAGENTO_PRICE_TYPE))
                             {
-                                dol_syslog("Setup price for eCommerce are switched from TE toTI or TI to TE, we update price of product");
+                                dol_syslog("Setup price for eCommerce are switched from TE to TI or TI to TE, we update price of product");
                                 if (empty($conf->global->PRODUIT_MULTIPRICES)) {
                                     $dBProduct->updatePrice($dBProduct->price, $this->eCommerceSite->magento_price_type, $this->user);
                                 } else {
@@ -1728,9 +1728,15 @@ class eCommerceSynchro
                                 }
                             }
                         }
+                        else
+                        {
+                        	$error++;
+                        	$this->error=$this->langs->trans('ECommerceSynchProductUpdateError').' '.$dBProduct->error;
+                        	$this->errors = array_merge($this->errors, $dBProduct->errors);
+                        }
 
                         // We must set the initial stock
-                        if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
+                        if (! $error && $this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
                         {
                             dol_syslog("Stock for product updated is ".$productArray['stock_qty']," in ecommerce, but ".$dBProduct->stock_reel." in Dolibarr, we must update it");
                             if (empty($this->eCommerceSite->fk_warehouse))
@@ -1764,6 +1770,7 @@ class eCommerceSynchro
                         $dBProduct->ref = dol_string_nospecial(trim($productArray['ref']));
                         $dBProduct->canvas = $productArray['canvas'];
                         $dBProduct->note = 'Initialy created from '.$this->eCommerceSite->name;
+                        $dBProduct->note_private = 'Initialy created from '.$this->eCommerceSite->name;
 
                         $result = $dBProduct->create($this->user);
                         if ($result >= 0)// rajouter constante TTC/HT
@@ -2159,7 +2166,8 @@ class eCommerceSynchro
                                 $dBCommande->statut=Commande::STATUS_DRAFT;             // STATUS_DRAFT by default at creation
                                 $dBCommande->ref_client = $commandeArray['ref_client'];
                                 $dBCommande->ref_ext = $this->eCommerceSite->name.'-'.$commandeArray['ref_client'];
-                                $dBCommande->date_commande = strtotime($commandeArray['date_commande'])+$dateoffset;
+                                $dBCommande->date_commande = strtotime($commandeArray['date_commande'])+$dateoffset;		// deprecated. For backward compatibility
+                                $dBCommande->date = strtotime($commandeArray['date_commande'])+$dateoffset;
                                 $dBCommande->date_livraison = strtotime($commandeArray['date_livraison'])+$dateoffset;
                                 $dBCommande->socid = $this->eCommerceSociete->fk_societe;
                                 $input_method_id = dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');  // Order mode. Not visible with some Dolibarr versions
