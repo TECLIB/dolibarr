@@ -2302,6 +2302,9 @@ class eCommerceSynchro
                             // Now update status
                             if (! $error)
                             {
+                            	// Reload the lines after having created the order because we need them later, fox exemple to decrease stock.
+                           		$dBCommande->fetch_lines();
+
                                 //if ($dBCommande->statut != $commandeArray['status'])      // Always when creating
                                 //{
                                     dol_syslog("synchCommande Status of order must be now set: we update order id=".$dBCommande->id." ref_client=".$dBCommande->ref_client." from status ".$dBCommande->statut." to status ".$commandeArray['status']);
