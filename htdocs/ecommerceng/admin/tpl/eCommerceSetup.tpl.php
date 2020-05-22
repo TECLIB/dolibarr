@@ -308,7 +308,11 @@ if ($conf->stock->enabled)
 								print $formproduct->selectWarehouses($ecommerceFkWarehouse, 'ecommerce_fk_warehouse', 0, 1);
 							?>
 					</td>
-					<td><?php print $langs->trans('ECommerceStockProductDescription', $langs->transnoentitiesnoconv('ECommerceStockSyncDirection')) ?></td>
+					<td><?php
+					print $langs->trans('ECommerceStockProductDescription', $langs->transnoentitiesnoconv('ECommerceStockSyncDirection'));
+					print '<br>';
+					print $langs->trans('ECommerceStockProductDescription2', $langs->transnoentitiesnoconv('ECommerceStockSyncDirection'));
+					?></td>
 				</tr>
 <?php
 }
