@@ -2,7 +2,7 @@
 
 ## Features
 
-Create some tasls automatically from a list of predefined tasks labels.
+Create some tasks automatically from a list of predefined tasks labels.
 Creation is done on project validation.
 
 <!--

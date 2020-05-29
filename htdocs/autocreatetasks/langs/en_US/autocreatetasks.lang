@@ -18,36 +18,23 @@
 #
 
 # Module label 'ModuleAutoCreateTasksName'
-ModuleAutoCreateTasksName = AutoCreateTasks
+ModuleAutoCreateTasksName = Auto-Create Tasks
 # Module description 'ModuleAutoCreateTasksDesc'
-ModuleAutoCreateTasksDesc = AutoCreateTasks description
+ModuleAutoCreateTasksDesc = Create some tasks automatically after validating a project
 
 #
 # Admin page
 #
-AutoCreateTasksSetup = AutoCreateTasks setup
+AutoCreateTasksSetup = Auto-Create Tasks setup
 Settings = Settings
-AutoCreateTasksSetupPage = AutoCreateTasks setup page
-AUTOCREATETASKS_MYPARAM1 = My param 1
-AUTOCREATETASKS_MYPARAM1Tooltip = My param 1 tooltip
-AUTOCREATETASKS_MYPARAM2=My param 2
-AUTOCREATETASKS_MYPARAM2Tooltip=My param 2 tooltip
-
+AutoCreateTasksSetupPage = Auto-Create Tasks setup page
+AUTOCREATE_TASK_LABELS=List of labels of tasks to create
+AUTOCREATE_TASK_LABELSTooltip=Use a comma to separate different labels.<br>Example: Project management, Deployment, Support
 
 #
 # About page
 #
 About = About
-AutoCreateTasksAbout = About AutoCreateTasks
-AutoCreateTasksAboutPage = AutoCreateTasks about page
+AutoCreateTasksAbout = About Auto-Create Tasks
+AutoCreateTasksAboutPage = Auto-Create Tasks about page
 
-#
-# Sample page
-#
-MyPageName = My page name
-
-#
-# Sample widget
-#
-MyWidget = My widget
-MyWidgetDescription = My widget description

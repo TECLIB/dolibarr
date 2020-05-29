@@ -281,27 +281,28 @@ class InterfaceAutoCreateTasksTriggers extends DolibarrTriggers
 			//case 'PROJECT_CREATE':
 			case 'PROJECT_VALIDATE':
                 $i++;
-    
+
     	        include_once(DOL_DOCUMENT_ROOT."/projet/class/task.class.php");
 
         		$dateomonth = date('m');
 		        $dateoday    = date('d');
         		$dateoyear    = date('Y');
-		
-                $projid = 0;
-    			$tasks_label = array();
+
+        		$projid = $object->id;
+
+        		$tasks_label = array();
     			if (! empty($conf->global->AUTOCREATE_TASK_LABELS) && ! is_numeric($conf->global->AUTOCREATE_TASK_LABELS))
                 {
-                    // Example $conf->global->TIMETRACKING_LIST_OF_AUTO_TASKS =
+                	// Example $conf->global->AUTOCREATE_TASK_LABELS =
                     // Développement/Intégration/Recette,Assitance/Support/TMA,Gestion projet
                     $tasks_label=explode(',', $conf->global->AUTOCREATE_TASK_LABELS);
-                    $projid = $object->fk_project;
                 }
+                $tasks_label = array_map('trim', $tasks_label);
 
 				foreach($tasks_label as $task_label)
 				{
 				    $defaultref='';
-				    
+
 				    $obj = empty($conf->global->PROJECT_TASK_ADDON)?'mod_task_simple':$conf->global->PROJECT_TASK_ADDON;
 				    if (! empty($conf->global->PROJECT_TASK_ADDON) && is_readable(DOL_DOCUMENT_ROOT ."/core/modules/project/task/".$conf->global->PROJECT_TASK_ADDON.".php"))
 				    {
@@ -323,8 +324,9 @@ class InterfaceAutoCreateTasksTriggers extends DolibarrTriggers
 					$task->date_end = '';
 					$task->progress = 0;
 
-					$sql = "SELECT count(rowid) as nb from ".MAIN_DB_PREFIX."projet_task where fk_projet = ".$projid." AND label ='".$task_label."'";
+					$sql = "SELECT count(rowid) as nb from ".MAIN_DB_PREFIX."projet_task where fk_projet = ".$projid." AND label = '".$this->db->escape($task_label)."'";
 					$tmpresql = $this->db->query($sql);
+
 					if ($tmpresql)
 					{
 					   $obj = $this->db->fetch_object($tmpresql);
@@ -339,14 +341,17 @@ class InterfaceAutoCreateTasksTriggers extends DolibarrTriggers
 					   {
 					       dol_syslog("Task with this label already exists for this project");
 					   }
+					} else {
+						$this->errors[] = $this->db->lasterror();
+						return -1;
 					}
 
 					$i++;
-				}                
+				}
 
                 break;
 
-			    
+
 			//case 'PROJECT_DELETE':
 
 			// Project tasks

@@ -54,8 +54,7 @@ $action = GETPOST('action', 'alpha');
 $backtopage = GETPOST('backtopage', 'alpha');
 
 $arrayofparameters = array(
-	'AUTOCREATETASKS_MYPARAM1'=>array('css'=>'minwidth200', 'enabled'=>1),
-	'AUTOCREATETASKS_MYPARAM2'=>array('css'=>'minwidth500', 'enabled'=>1)
+	'AUTOCREATE_TASK_LABELS'=>array('css'=>'minwidth500', 'enabled'=>1, 'help'=>'Développement/Intégration/Recette,Assitance/Support/TMA,Gestion projet'),
 );
 
 
@@ -88,7 +87,7 @@ $head = autocreatetasksAdminPrepareHead();
 dol_fiche_head($head, 'settings', '', -1, "autocreatetasks@autocreatetasks");
 
 // Setup page goes here
-echo '<span class="opacitymedium">'.$langs->trans("AutoCreateTasksSetupPage").'</span><br><br>';
+//echo '<span class="opacitymedium">'.$langs->trans("AutoCreateTasksSetupPage").'</span><br><br>';
 
 
 if ($action == 'edit')
