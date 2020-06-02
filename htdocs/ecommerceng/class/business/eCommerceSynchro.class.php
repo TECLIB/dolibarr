@@ -2133,7 +2133,7 @@ class eCommerceSynchro
                                         {
                                             $idWareHouse = 0;
                                             if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') $idWareHouse=$this->eCommerceSite->fk_warehouse;
-                                            $dBCommande->cancel(0, $idWareHouse);
+                                            $dBCommande->cancel($idWareHouse);
                                         }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CLOSED)
