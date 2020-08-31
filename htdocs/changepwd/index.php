@@ -104,7 +104,7 @@ echo '<div class="titre" style="font-size:16px;margin:10px 0px 0px 10px;">Change
 	     		<td colspan="2" style="text-align: center;" >
 	     			<br /><br />
 	     			<input name="submitted" type="submit" value="Valider" class="button" />
-	     			<button onclick="$('frm').action='index.php';$('frm').submit();">Annuler</button>
+	     			<button class="button" onclick="$('frm').action='index.php';$('frm').submit();">Annuler</button>
 	     		</td>
 	     	</tr>
 
