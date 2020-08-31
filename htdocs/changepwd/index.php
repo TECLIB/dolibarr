@@ -90,7 +90,7 @@ echo '<div class="titre" style="font-size:16px;margin:10px 0px 0px 10px;">Change
 	     	</tr>
 	     <tr>
 	     		<th>Mot de passe actuel :</th>
-	     		<td><input name="oldPassword" size="20px" type="password" /></td>
+	     		<td><input name="oldPassword" size="20px" type="password" value="<?php echo GETPOSTISSET('oldPassword') ? GETPOST('oldPassword') : ''; ?>" /></td>
 	     	</tr>
 	     <tr>
 	     		<th>Nouveau mot de passe :</th>
@@ -103,7 +103,7 @@ echo '<div class="titre" style="font-size:16px;margin:10px 0px 0px 10px;">Change
 	     <tr>
 	     		<td colspan="2" style="text-align: center;" >
 	     			<br /><br />
-	     			<input name="submitted" type="submit" value="Valider"/>
+	     			<input name="submitted" type="submit" value="Valider" class="button" />
 	     			<button onclick="$('frm').action='index.php';$('frm').submit();">Annuler</button>
 	     		</td>
 	     	</tr>
