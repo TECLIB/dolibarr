@@ -318,7 +318,7 @@ class AdvancedDiscountApi extends DolibarrApi
     	unset($object->isextrafieldmanaged);
     	unset($object->fk_account);
     	unset($object->note_private);
-    	unset($object->modelpdf);
+    	unset($object->model_pdf);
     	unset($object->shipping_method_id);
     	unset($object->fk_delivery_address);
     	unset($object->total_ht);
