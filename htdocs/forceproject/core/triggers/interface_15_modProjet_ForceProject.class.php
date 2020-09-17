@@ -25,11 +25,13 @@
  *  			on actions and notifications.
  */
 
+include_once(DOL_DOCUMENT_ROOT.'/core/triggers/dolibarrtriggers.class.php');
+
 
 /**
  *  Class of triggered functions for forceproject module
  */
-class InterfaceForceProject
+class InterfaceForceProject extends DolibarrTriggers
 {
     var $db;
     var $error;
@@ -110,7 +112,7 @@ class InterfaceForceProject
      *      @param  Conf	  $conf       Object conf
      *      @return int         		  <0 if KO, 0 if no action are done, >0 if OK
      */
-    function runTrigger($action,$object,$user,$langs,$conf)
+    function runTrigger($action, $object, User $user, Translate $langs, Conf $conf)
     {
 		$ok=0;
 
