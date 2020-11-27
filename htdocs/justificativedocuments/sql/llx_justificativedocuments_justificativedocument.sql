@@ -34,6 +34,7 @@ CREATE TABLE llx_justificativedocuments_justificativedocument(
 	status integer NOT NULL, 
 	fk_type integer NOT NULL,
 	amount double(24,8), 
+	percent_reimbursed double(24,8),
 	date_start date, 
 	date_end date
 	-- END MODULEBUILDER FIELDS

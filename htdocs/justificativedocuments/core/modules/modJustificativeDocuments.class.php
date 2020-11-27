@@ -385,6 +385,7 @@ class modJustificativeDocuments extends DolibarrModules
         $this->export_sql_end[$r] = ' FROM '.MAIN_DB_PREFIX.'justificativedocuments_justificativedocument as t';
         $this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'c_justificative_type as jt ON jt.rowid = t.fk_type';
         $this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'user as u ON u.rowid = t.fk_user';
+        $this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'justificativedocuments_justificativedocument_extrafields as extra ON t.rowid = extra.fk_object';
         $this->export_sql_end[$r] .=' WHERE 1 = 1';
         $this->export_sql_end[$r] .=' AND t.entity IN ('.getEntity('justificativedocument').')';
         $r++;
