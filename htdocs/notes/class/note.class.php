@@ -65,13 +65,15 @@ class Note extends Common_DB_Note
 	{
 		global $db;
 
-		  $query = "SELECT COUNT(*) as nb FROM ".$this->getTable()." WHERE item_type = '".$item."' AND item_id = ".$id;
+		if ($id > 0) {
+			$query = "SELECT COUNT(*) as nb FROM ".$this->getTable()." WHERE item_type = '".$item."' AND item_id = ".$id;
 
-	      if ($resql = $db->query($query))
-	      {
-	         $obj = $db->fetch_object($resql);
-	         if ($obj) return $obj->nb;
-	      }
-	      return 0;
+			if ($resql = $db->query($query)) {
+				$obj = $db->fetch_object($resql);
+				if ($obj) return $obj->nb;
+			}
+		}
+
+		return 0;
 	}
 }
