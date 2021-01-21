@@ -111,19 +111,24 @@ if (empty($reshook))
 {
 	$error=0;
 
-	if (empty($backtopage)) $backtopage = dol_buildpath('/advanceddiscount/advanceddiscount_card.php',1).'?id='.($id?$id:'__ID__');
 	$backurlforlist = dol_buildpath('/advanceddiscount/advanceddiscount_list.php',1);
+
+	if (empty($backtopage) || ($cancel && empty($id))) {
+		if (empty($backtopage) || ($cancel && strpos($backtopage, '__ID__'))) {
+			if (empty($id) && (($action != 'add' && $action != 'create') || $cancel)) $backtopage = $backurlforlist;
+			else $backtopage = dol_buildpath('/advanceddiscount/advanceddiscount_list.php', 1).'?id='.($id > 0 ? $id : '__ID__');
+		}
+	}
+
 	$triggermodname = 'ADVANCEDDISCOUNT_ADVANCEDDISCOUNT_MODIFY';	// Name of trigger action code to execute when we modify record
 
-	// Actions cancel, add, update or delete
-	//include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';	// v7 is not working
-	include_once './core/actions_addupdatedelete.inc.php';
+	// Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
+	include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
 
 	// Actions when printing a doc from card
 	include DOL_DOCUMENT_ROOT.'/core/actions_printing.inc.php';
 
-	// Actions to send emails
-	$trigger_name='ADVANCEDDISCOUNT_SENTBYMAIL';
+	$trigger_name = 'ADVANCEDDISCOUNT_SENTBYMAIL';
 	$autocopy='MAIN_MAIL_AUTOCOPY_ADVANCEDDISCOUNT_TO';
 	$trackid='advanceddiscount'.$object->id;
 	include DOL_DOCUMENT_ROOT.'/core/actions_sendmails.inc.php';
@@ -278,7 +283,7 @@ if ($action == 'create')
 	print load_fiche_titre($langs->trans("NewObject", $langs->transnoentitiesnoconv("AdvancedDiscount")));
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="add">';
 	print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 
@@ -311,7 +316,7 @@ if (($id || $ref) && $action == 'edit')
 	print load_fiche_titre($langs->trans("AdvancedDiscount"));
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-    print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="update">';
 	print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 	print '<input type="hidden" name="id" value="'.$object->id.'">';
@@ -413,7 +418,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	                //$morehtmlref.=$form->form_project($_SERVER['PHP_SELF'] . '?id=' . $object->id, $object->socid, $object->fk_project, 'projectid', 0, 0, 1, 1);
 	                $morehtmlref.='<form method="post" action="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'">';
 	                $morehtmlref.='<input type="hidden" name="action" value="classin">';
-	                $morehtmlref.='<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	                $morehtmlref.='<input type="hidden" name="token" value="'.newToken().'">';
 	                $morehtmlref.=$formproject->select_projects($object->socid, $object->fk_project, 'projectid', $maxlength, 0, 1, 0, 1, 0, 0, '', 1);
 	                $morehtmlref.='<input type="submit" class="button valignmiddle" value="'.$langs->trans("Modify").'">';
 	                $morehtmlref.='</form>';
@@ -546,7 +551,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 	    print '<!-- rules -->'."\n";
 	    print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-	    print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	    print '<input type="hidden" name="token" value="'.newToken().'">';
 	    print '<input type="hidden" name="action" value="addrule">';
 	    print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 	    print '<input type="hidden" name="id" value="'.$object->id.'">';
@@ -623,7 +628,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 	    print '<!-- actions -->'."\n";
 	    print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-	    print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	    print '<input type="hidden" name="token" value="'.newToken().'">';
 	    print '<input type="hidden" name="action" value="addaction">';
 	    print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 	    print '<input type="hidden" name="id" value="'.$object->id.'">';
