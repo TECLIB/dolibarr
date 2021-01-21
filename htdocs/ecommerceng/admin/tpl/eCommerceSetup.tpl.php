@@ -60,7 +60,7 @@ if (count($sites))
 	?>
 
 	<form name="site_form_detail" id="site_form_detail" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
-			<input type="hidden" name="token" value="<?php print $_SESSION['newtoken'] ?>">
+			<input type="hidden" name="token" value="<?php print newToken(); ?>">
 			<input id="site_form_detail_action" type="hidden" name="site_form_detail_action" value="save">
 			<input type="hidden" name="ecommerce_id" value="<?php print $ecommerceId ?>">
 			<input type="hidden" name="ecommerce_last_update" value="<?php print $ecommerceLastUpdate ?>">

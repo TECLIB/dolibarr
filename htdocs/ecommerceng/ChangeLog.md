@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 5.0
+
+- Compatibility v11+
+
 ## 4.0
 
 - Add option ECOMMERCENG_BANK_ID_FOR_PAYMENT so payments are now recorded.
