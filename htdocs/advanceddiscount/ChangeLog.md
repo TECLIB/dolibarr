@@ -1,10 +1,14 @@
 # CHANGELOG ADVANCEDDISCOUNTS FOR <a href="https://www.dolibarr.org">DOLIBARR ERP CRM</a>
 
+## 1.1
+
+- Compatibility v11+
+
 ## 1.0.1
 
-Fix error 500 when using categories
+- Fix error 500 when using categories
 
 ## 1.0
 
-Initial version
+- Initial version
 
