@@ -80,7 +80,7 @@ if ($action == 'updateMask')
 
     if ($maskconstjd) $res = dolibarr_set_const($db, $maskconstjd, $maskjd, 'chaine', 0, '', $conf->entity);
 
-    if (!$res > 0) $error++;
+    if (!($res > 0)) $error++;
 
     if (!$error)
     {
@@ -183,7 +183,7 @@ elseif ($action == 'set_JUSTIFICATIVEDOCUMENT_DRAFT_WATERMARK')
     $draft = GETPOST("JUSTIFICATIVEDOCUMENT_DRAFT_WATERMARK");
     $res = dolibarr_set_const($db, "JUSTIFICATIVEDOCUMENT_DRAFT_WATERMARK", trim($draft), 'chaine', 0, '', $conf->entity);
 
-    if (!$res > 0) $error++;
+    if (!($res > 0)) $error++;
 
     if (!$error)
     {
@@ -201,7 +201,7 @@ elseif ($action == 'set_JUSTIFICATIVEDOCUMENT_FREE_TEXT')
 
     $res = dolibarr_set_const($db, "JUSTIFICATIVEDOCUMENT_FREE_TEXT", $freetext, 'chaine', 0, '', $conf->entity);
 
-    if (!$res > 0) $error++;
+    if (!($res > 0)) $error++;
 
     if (!$error)
     {
