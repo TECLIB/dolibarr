@@ -229,9 +229,13 @@ class InterfaceForceProject extends DolibarrTriggers
 				}
 			}
         }
+
+        // $conf->global->FORCEPROJECT_PROPAL_CLOSE_REFUSED_REASON_REQUIRED =
+        // 1 => Reason is mandatory and probability is autoset on closing.
+        // 2 => Probability is autoset on closing (but no mandatory field)
         if ($action == 'PROPAL_CLOSE_REFUSED' && (! empty($conf->global->FORCEPROJECT_PROPAL_CLOSE_REFUSED_REASON_REQUIRED)))
         {
-        	if (empty($object->array_options['options_reasonnotsigned']))
+        	if (empty($object->array_options['options_reasonnotsigned']) && $conf->global->FORCEPROJECT_PROPAL_CLOSE_REFUSED_REASON_REQUIRED == 1)
         	{
         		$langs->load("forceproject@forceproject");
         		$this->errors[]=$langs->trans("PleaseEnterAReasonBefore");
