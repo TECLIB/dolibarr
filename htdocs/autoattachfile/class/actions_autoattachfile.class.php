@@ -83,6 +83,11 @@ class ActionsAutoattachfile
     			$nbFiles += $this->_addFiles($object, $listofpaths, $listofnames, $listofmimes, $conf->autoattachfile->dir_output.'/invoices');
     		}
 
+    		if ($object->param['models'] == 'fichinter_send')
+    		{
+    			$nbFiles += $this->_addFiles($object, $listofpaths, $listofnames, $listofmimes, $conf->autoattachfile->dir_output.'/interventions');
+    		}
+
     		if ($object->param['models'] == 'supplier_proposal_send')
     		{
     			$nbFiles += $this->_addFiles($object, $listofpaths, $listofnames, $listofmimes, $conf->autoattachfile->dir_output.'/supplier_proposals');
