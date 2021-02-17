@@ -57,8 +57,9 @@ $modules = array();
 if ($conf->propal->enabled) $modules['proposals']='Proposals';
 if ($conf->commande->enabled) $modules['orders']='Orders';
 if ($conf->facture->enabled) $modules['invoices']='Invoices';
-//if ($conf->fournisseur->enabled) $modules['supplier_orders']='SuppliersOrders';
-//if ($conf->fournisseur->enabled) $modules['supplier_invoices']='SuppliersInvoices';
+if ($conf->supplier_proposal->enabled) $modules['supplier_proposals']='SuppliersProposals';
+if ($conf->fournisseur->enabled) $modules['supplier_orders']='SuppliersOrders';
+if ($conf->fournisseur->enabled) $modules['supplier_invoices']='SuppliersInvoices';
 
 
 /*
@@ -222,15 +223,16 @@ $langs->load("propal"); $langs->load("orders"); $langs->load("bills");
 foreach ($modules as $module => $moduletranskey)
 {
 	$outputdir=$conf->autoattachfile->dir_output.'/'.$module;
-	print '* '.$langs->trans("AutoAttachFileTakeFileFrom2",$langs->transnoentitiesnoconv($moduletranskey),$outputdir).'<br><br>';
+	print '* '.$langs->trans("AutoAttachFileTakeFileFrom2",$langs->transnoentitiesnoconv($moduletranskey),$outputdir).'<br>';
 }
 print '<br><br>';
 
 if (! empty($conf->global->MAIN_USE_JQUERY_MULTISELECT))
 {
 	$form=new Form($db);
-	$var=true;
-	print '<table class="noborder" width="100%">';
+
+	print '<div class="div-table-responsive-no-min">';
+	print '<table class="noborder centpercent">';
 	print '<tr class="liste_titre">';
 	print '<td>'.$langs->trans("Parameters").'</td>'."\n";
 	print '<td align="center" width="20">&nbsp;</td>';
@@ -242,8 +244,7 @@ if (! empty($conf->global->MAIN_USE_JQUERY_MULTISELECT))
 	 */
 
 	// Use multiple concatenation
-	$var=!$var;
-	print '<tr '.$bc[$var].'>';
+	print '<tr class="oddeven">';
 	print '<td>'.$langs->trans("EnableMultipleConcatenation").'</td>';
 	print '<td align="center" width="20">&nbsp;</td>';
 
@@ -266,6 +267,7 @@ if (! empty($conf->global->MAIN_USE_JQUERY_MULTISELECT))
 	print '</td></tr>';
 
 	print '</table>';
+	print '</div>';
 
 	print '<br><br>';
 }

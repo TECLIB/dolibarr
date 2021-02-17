@@ -83,6 +83,22 @@ class ActionsAutoattachfile
     			$nbFiles += $this->_addFiles($object, $listofpaths, $listofnames, $listofmimes, $conf->autoattachfile->dir_output.'/invoices');
     		}
 
+    		if ($object->param['models'] == 'supplier_proposal_send')
+    		{
+    			$nbFiles += $this->_addFiles($object, $listofpaths, $listofnames, $listofmimes, $conf->autoattachfile->dir_output.'/supplier_proposals');
+    		}
+
+    		if ($object->param['models'] == 'order_supplier_send')
+    		{
+    			$nbFiles += $this->_addFiles($object, $listofpaths, $listofnames, $listofmimes, $conf->autoattachfile->dir_output.'/supplier_orders');
+    		}
+
+    		if ($object->param['models'] == 'invoice_supplier_send')
+    		{
+    			$nbFiles += $this->_addFiles($object, $listofpaths, $listofnames, $listofmimes, $conf->autoattachfile->dir_output.'/supplier_invoices');
+    		}
+
+
     		// Now we saved back content of files to have into attachment
     		$_SESSION["listofpaths".$keytoavoidconflict]=join(';',$listofpaths);
     		$_SESSION["listofnames".$keytoavoidconflict]=join(';',$listofnames);
