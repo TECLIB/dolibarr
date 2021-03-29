@@ -138,7 +138,7 @@ class eCommerceSocpeople // extends CommonObject
 		$sql.= " t.type,";
 		$sql.= " t.last_update";
 		$sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_socpeople as t";
-        $sql.= " WHERE t.rowid = ".$id;
+        $sql.= " WHERE t.rowid = ".((int) $id);
 
     	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
@@ -198,7 +198,7 @@ class eCommerceSocpeople // extends CommonObject
 		$sql.= " type=".(isset($this->type)?intval($this->type):1).",";
 		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
 
-        $sql.= " WHERE rowid=".$this->id;
+        $sql.= " WHERE rowid=".((int) $this->id);
 
 		$this->db->begin();
 
@@ -237,7 +237,7 @@ class eCommerceSocpeople // extends CommonObject
 		$error=0;
 
 		$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_socpeople";
-		$sql.= " WHERE rowid=".$this->id;
+		$sql.= " WHERE rowid=".((int) $this->id);
 
 		$this->db->begin();
 

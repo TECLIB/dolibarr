@@ -124,7 +124,7 @@ class eCommerceSociete // extends CommonObject
 		$sql.= " t.remote_id,";
 		$sql.= " t.last_update";
 		$sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_societe as t";
-        $sql.= " WHERE t.rowid = ".$id;
+        $sql.= " WHERE t.rowid = ".((int) $id);
 
     	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
@@ -182,7 +182,7 @@ class eCommerceSociete // extends CommonObject
 		$sql.= " remote_id=".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
 		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
 
-        $sql.= " WHERE rowid=".$this->id;
+        $sql.= " WHERE rowid=".((int) $this->id);
 
 		$this->db->begin();
 
@@ -225,7 +225,7 @@ class eCommerceSociete // extends CommonObject
 		dol_syslog("Delete into ecommerce_societe sitename=".$sitename);
 
 		$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_societe";
-		$sql.= " WHERE rowid=".$this->id;
+		$sql.= " WHERE rowid=".((int) $this->id);
 
 		$sql2 = "UPDATE ".MAIN_DB_PREFIX."societe";
 		$sql2.= " SET name_alias = NULL where name_alias = '".$sitename.' id '.$this->remote_id."'";      // Magento id xxx

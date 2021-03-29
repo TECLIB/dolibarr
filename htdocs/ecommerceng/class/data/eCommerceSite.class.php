@@ -230,7 +230,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.magento_use_special_price,";
 		$sql.= " t.magento_price_type";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_site as t";
-        $sql.= " WHERE t.rowid = ".$id;
+        $sql.= " WHERE t.rowid = ".((int) $id);
 
     	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
@@ -323,7 +323,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " timeout=".(isset($this->timeout)? "'".intval($this->timeout)."'" : '300').",";
 		$sql.= " magento_use_special_price=".(isset($this->magento_use_special_price)? "'".intval($this->magento_use_special_price)."'" : '0').",";
         $sql.= " magento_price_type=".(isset($this->magento_price_type)? "'".$this->magento_price_type."'" : 'HT')."";
-        $sql.= " WHERE rowid=".$this->id;
+        $sql.= " WHERE rowid=".((int) $this->id);
 
 		$this->db->begin();
 
@@ -363,7 +363,7 @@ class eCommerceSite // extends CommonObject
 		$error=0;
 
 		$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_site";
-		$sql.= " WHERE rowid=".$this->id;
+		$sql.= " WHERE rowid=".((int) $this->id);
 
 		$this->db->begin();
 
