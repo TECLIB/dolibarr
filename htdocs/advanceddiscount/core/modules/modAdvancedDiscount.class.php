@@ -205,7 +205,7 @@ class modAdvancedDiscount extends DolibarrModules
 		// Permissions
 		$this->rights = array();		// Permission array used by this module
 
-		$r=0;
+		$r=1;
 		$this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
 		$this->rights[$r][1] = 'Read discounts';	// Permission label
 		$this->rights[$r][3] = 0; 					// Permission by default for new user (0/1)
