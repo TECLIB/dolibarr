@@ -93,44 +93,47 @@ class JustificativeDocument extends CommonObject
 	 * @var array  Array with all fields and their property. Do not use it as a static var. It may be modified by constructor.
 	 */
 	public $fields=array(
-		'rowid' => array('type'=>'integer', 'label'=>'TechnicalID', 'enabled'=>1, 'position'=>1, 'notnull'=>1, 'visible'=>-1, 'index'=>1, 'comment'=>"Id"),
-	    'entity' => array('type'=>'integer', 'label'=>'Entity', 'enabled'=>1, 'visible'=>0, 'notnull'=>1, 'default'=>1, 'index'=>1, 'position'=>5),
-	    'ref' => array('type'=>'varchar(128)', 'label'=>'Ref', 'enabled'=>1, 'position'=>10, 'notnull'=>1, 'visible'=>4, 'noteditable'=>'1', 'default'=>'(PROV)', 'index'=>1, 'searchall'=>1, 'showoncombobox'=>'1', 'comment'=>"Reference of object"),
-	    'fk_type' => array('type'=>'integer:JustificativeType:justificativedocuments/class/justificativetype.class.php:0:active=1', 'label'=>'Type', 'enabled'=>1, 'position'=>20, 'notnull'=>1, 'visible'=>1,),
-	    'date_start' => array('type'=>'date', 'label'=>'DateStart', 'enabled'=>1, 'position'=>30, 'notnull'=>0, 'visible'=>1,),
-	    'date_end' => array('type'=>'date', 'label'=>'DateEnd', 'enabled'=>1, 'position'=>32, 'notnull'=>0, 'visible'=>1,),
-	    'amount' => array('type'=>'price', 'label'=>'Amount', 'enabled'=>1, 'visible'=>1, 'isameasure'=>1, 'position'=>35),
-	    'percent_reimbursed' => array('type'=>'double(24,8)', 'label'=>'PercentReimbursed', 'enabled'=>1, 'visible'=>5, 'noteditable'=>1, 'position'=>35),
-	    'fk_user' => array('type'=>'integer:User:user/class/user.class.php:0:statut=1 AND entity IN (__SHARED_ENTITIES__)', 'label'=>'User', 'enabled'=>1, 'position'=>35, 'notnull'=>1, 'visible'=>1, 'foreignkey'=>'user.rowid',),
-	    //'fk_project' => array('type'=>'integer:Project:projet/class/project.class.php:1', 'label'=>'Project', 'enabled'=>1, 'position'=>52, 'notnull'=>-1, 'visible'=>-1, 'index'=>1),
-		'note_public' => array('type'=>'html', 'label'=>'NotePublic', 'enabled'=>1, 'position'=>61, 'notnull'=>-1, 'visible'=>0,),
-		'note_private' => array('type'=>'html', 'label'=>'NotePrivate', 'enabled'=>1, 'position'=>62, 'notnull'=>-1, 'visible'=>0,),
-		'date_creation' => array('type'=>'datetime', 'label'=>'DateCreation', 'enabled'=>1, 'position'=>500, 'notnull'=>1, 'visible'=>-2,),
-		'tms' => array('type'=>'timestamp', 'label'=>'DateModification', 'enabled'=>1, 'position'=>501, 'notnull'=>-1, 'visible'=>-2,),
-	    'date_validation' => array('type'=>'datetime',     'label'=>'DateValidation',     'enabled'=>1, 'visible'=>-2, 'position'=>502),
-	    'fk_user_creat' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserAuthor', 'enabled'=>1, 'position'=>510, 'notnull'=>1, 'visible'=>-2, 'foreignkey'=>'user.rowid',),
-		'fk_user_modif' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserModif', 'enabled'=>1, 'position'=>511, 'notnull'=>-1, 'visible'=>-2,),
-		'fk_user_valid' => array('type'=>'integer:User:user/class/user.class.php',      'label'=>'UserValidation',        'enabled'=>1, 'visible'=>-2, 'position'=>512),
-	    'description' => array('type'=>'text', 'label'=>'Description', 'enabled'=>1, 'position'=>1000, 'notnull'=>-1, 'visible'=>3,),
-	    'import_key' => array('type'=>'varchar(14)', 'label'=>'ImportId', 'enabled'=>1, 'position'=>1000, 'notnull'=>-1, 'visible'=>-2,),
-	    'status' => array('type'=>'integer', 'label'=>'Status', 'enabled'=>1, 'position'=>1000, 'notnull'=>1, 'default'=>0, 'visible'=>2, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Draft', '1'=>'Validated', '2'=>'Approved', '9'=>'Canceled'),),
+		'rowid' => array('type'=>'integer', 'label'=>'TechnicalID', 'enabled'=>'1', 'position'=>1, 'notnull'=>1, 'visible'=>0, 'index'=>1, 'comment'=>"Id"),
+		'entity' => array('type'=>'integer', 'label'=>'Entity', 'enabled'=>'1', 'position'=>5, 'notnull'=>1, 'visible'=>0, 'default'=>'1', 'index'=>1,),
+		'ref' => array('type'=>'varchar(128)', 'label'=>'Ref', 'enabled'=>'1', 'position'=>10, 'notnull'=>1, 'visible'=>4, 'noteditable'=>'1', 'default'=>'(PROV)', 'index'=>1, 'searchall'=>1, 'showoncombobox'=>'1', 'comment'=>"Reference of object"),
+		'fk_type' => array('type'=>'integer:JustificativeType:justificativedocuments/class/justificativetype.class.php:0:active=1', 'label'=>'Type', 'enabled'=>'1', 'position'=>20, 'notnull'=>1, 'visible'=>1,),
+		'date_start' => array('type'=>'date', 'label'=>'DateStart', 'enabled'=>'1', 'position'=>30, 'notnull'=>0, 'visible'=>1,),
+		'date_end' => array('type'=>'date', 'label'=>'DateEnd', 'enabled'=>'1', 'position'=>32, 'notnull'=>0, 'visible'=>1,),
+		'amount' => array('type'=>'price', 'label'=>'Amount', 'enabled'=>'1', 'position'=>35, 'notnull'=>0, 'visible'=>1, 'isameasure'=>'1',),
+		'percent_reimbursed' => array('type'=>'double(24,8)', 'label'=>'PercentReimbursed', 'enabled'=>'1', 'position'=>35, 'notnull'=>0, 'visible'=>1,),
+		'fk_user' => array('type'=>'integer:User:user/class/user.class.php:0:statut=1 AND entity IN (__SHARED_ENTITIES__)', 'label'=>'User', 'enabled'=>'1', 'position'=>35, 'notnull'=>1, 'visible'=>1, 'foreignkey'=>'user.rowid',),
+		'note_public' => array('type'=>'html', 'label'=>'NotePublic', 'enabled'=>'1', 'position'=>61, 'notnull'=>-1, 'visible'=>0,),
+		'note_private' => array('type'=>'html', 'label'=>'NotePrivate', 'enabled'=>'1', 'position'=>62, 'notnull'=>-1, 'visible'=>0,),
+		'date_creation' => array('type'=>'datetime', 'label'=>'DateCreation', 'enabled'=>'1', 'position'=>500, 'notnull'=>1, 'visible'=>-2,),
+		'tms' => array('type'=>'timestamp', 'label'=>'DateModification', 'enabled'=>'1', 'position'=>501, 'notnull'=>-1, 'visible'=>-2,),
+		'date_validation' => array('type'=>'datetime', 'label'=>'DateValidation', 'enabled'=>'1', 'position'=>502, 'notnull'=>0, 'visible'=>-2,),
+		'fk_user_creat' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserAuthor', 'enabled'=>'1', 'position'=>510, 'notnull'=>1, 'visible'=>-2, 'foreignkey'=>'user.rowid',),
+		'fk_user_modif' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserModif', 'enabled'=>'1', 'position'=>511, 'notnull'=>-1, 'visible'=>-2,),
+		'fk_user_valid' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserValidation', 'enabled'=>'1', 'position'=>512, 'notnull'=>0, 'visible'=>-2,),
+		'description' => array('type'=>'text', 'label'=>'Description', 'enabled'=>'1', 'position'=>1000, 'notnull'=>-1, 'visible'=>3,),
+		'import_key' => array('type'=>'varchar(14)', 'label'=>'ImportId', 'enabled'=>'1', 'position'=>1000, 'notnull'=>-1, 'visible'=>-2,),
+		'status' => array('type'=>'integer', 'label'=>'Status', 'enabled'=>'1', 'position'=>1000, 'notnull'=>1, 'visible'=>2, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Brouillon', '1'=>'Valid&eacute;', '2'=>'Approuv&eacute;', '9'=>'Annul&eacute;'),),
 	);
 	public $rowid;
+	public $entity;
 	public $ref;
-	public $fk_project;
-	public $description;
+	public $fk_type;
+	public $date_start;
+	public $date_end;
+	public $amount;
+	public $percent_reimbursed;
+	public $fk_user;
 	public $note_public;
 	public $note_private;
 	public $date_creation;
 	public $tms;
-	public $fk_user;
+	public $date_validation;
 	public $fk_user_creat;
 	public $fk_user_modif;
+	public $fk_user_valid;
+	public $description;
 	public $import_key;
 	public $status;
-	public $fk_type;
-	public $date_start;
-	public $date_end;
 	// END MODULEBUILDER PROPERTIES
 
 

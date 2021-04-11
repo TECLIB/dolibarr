@@ -16,26 +16,25 @@
 
 CREATE TABLE llx_justificativedocuments_justificativedocument(
 	-- BEGIN MODULEBUILDER FIELDS
-	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
-	entity integer DEFAULT 1 NOT NULL,
+	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL, 
+	entity integer DEFAULT 1 NOT NULL, 
 	ref varchar(128) DEFAULT '(PROV)' NOT NULL, 
-	fk_project integer, 
-	description text, 
+	fk_type integer NOT NULL, 
+	date_start date, 
+	date_end date, 
+	amount double, 
+	percent_reimbursed double(24,8), 
+	fk_user integer NOT NULL, 
 	note_public text, 
 	note_private text, 
 	date_creation datetime NOT NULL, 
-    date_validation datetime NULL, 
 	tms timestamp, 
-	fk_user integer NOT NULL, 
+	date_validation datetime, 
 	fk_user_creat integer NOT NULL, 
 	fk_user_modif integer, 
-    fk_user_valid integer, 
+	fk_user_valid integer, 
+	description text, 
 	import_key varchar(14), 
-	status integer NOT NULL, 
-	fk_type integer NOT NULL,
-	amount double(24,8), 
-	percent_reimbursed double(24,8),
-	date_start date, 
-	date_end date
+	status integer NOT NULL
 	-- END MODULEBUILDER FIELDS
 ) ENGINE=innodb;
