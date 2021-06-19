@@ -92,7 +92,6 @@ class JustificativeType extends CommonObject
 	    'rowid' =>array('type'=>'integer', 'label'=>'ID', 'enabled'=>1, 'visible'=>-1, 'notnull'=>1, 'position'=>10),
 	    'code' =>array('type'=>'varchar(32)', 'label'=>'Code', 'enabled'=>1, 'visible'=>-1, 'notnull'=>1, 'position'=>15),
 	    'label' =>array('type'=>'varchar(50)', 'label'=>'Label', 'enabled'=>1, 'visible'=>-1, 'position'=>20, 'showoncombobox'=>1),
-	    //'reimbursed' =>array('type'=>'varchar(64)', 'Reimbursed'=>'Label', 'enabled'=>1, 'visible'=>-1, 'position'=>20, 'showoncombobox'=>1),
 	    'active' =>array('type'=>'tinyint(4)', 'label'=>'Active', 'enabled'=>1, 'visible'=>-1, 'notnull'=>1, 'position'=>25),
 	    'module' =>array('type'=>'varchar(32)', 'label'=>'Module', 'enabled'=>1, 'visible'=>-1, 'position'=>30),
 	);
