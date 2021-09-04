@@ -93,7 +93,7 @@ class eCommerceSocpeople // extends CommonObject
 
 		$this->db->begin();
 
-	   	dol_syslog(get_class($this)."::create sql=".$sql, LOG_DEBUG);
+	   	dol_syslog(get_class($this)."::create", LOG_DEBUG);
         $resql=$this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
 
@@ -140,7 +140,7 @@ class eCommerceSocpeople // extends CommonObject
 		$sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_socpeople as t";
         $sql.= " WHERE t.rowid = ".((int) $id);
 
-    	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::fetch", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -202,7 +202,7 @@ class eCommerceSocpeople // extends CommonObject
 
 		$this->db->begin();
 
-		dol_syslog(get_class($this)."::update sql=".$sql, LOG_DEBUG);
+		dol_syslog(get_class($this)."::update", LOG_DEBUG);
         $resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
 
@@ -290,7 +290,7 @@ class eCommerceSocpeople // extends CommonObject
         $sql.= " WHERE t.fk_site = ".$siteId;
         $sql.= " AND t.type = ".$typeId;
         $sql.= " AND t.remote_id = '".$remoteId."'";
-    	dol_syslog(get_class($this)."::fetchByRemoteId sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::fetchByRemoteId", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -342,7 +342,7 @@ class eCommerceSocpeople // extends CommonObject
         $sql.= " WHERE t.fk_site = ".$siteId;
         $sql.= " AND t.type = 1";       // TODO what about other types ?
         $sql.= " AND t.fk_socpeople = ".$fkSocpeople;
-        dol_syslog(get_class($this)."::fetchByFkSocpeople sql=".$sql, LOG_DEBUG);
+        dol_syslog(get_class($this)."::fetchByFkSocpeople", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -379,7 +379,7 @@ class eCommerceSocpeople // extends CommonObject
    		global $langs;
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."ecommerce_socpeople";
         $sql.= " WHERE fk_site = ".$siteId;
-    	dol_syslog(get_class($this)."::getAllECommerceSocpeopleIds sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::getAllECommerceSocpeopleIds", LOG_DEBUG);
         $resql=$this->db->query($sql);
 
         if ($resql)

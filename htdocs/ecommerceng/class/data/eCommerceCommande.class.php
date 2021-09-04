@@ -84,7 +84,7 @@ class eCommerceCommande
 
 		$this->db->begin();
 
-	   	dol_syslog(get_class($this)."::create sql=".$sql, LOG_DEBUG);
+	   	dol_syslog(get_class($this)."::create", LOG_DEBUG);
         $resql=$this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
 
@@ -130,7 +130,7 @@ class eCommerceCommande
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_commande as t";
         $sql.= " WHERE t.rowid = ".((int) $id);
 
-    	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::fetch", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -190,7 +190,7 @@ class eCommerceCommande
 
 		$this->db->begin();
 
-		dol_syslog(get_class($this)."::update sql=".$sql, LOG_DEBUG);
+		dol_syslog(get_class($this)."::update", LOG_DEBUG);
         $resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
 
@@ -262,7 +262,7 @@ class eCommerceCommande
 		global $langs;
         $sql = "SELECT MAX(t.last_update) as lastdate FROM ".MAIN_DB_PREFIX."ecommerce_commande as t";
         $sql.= " WHERE t.fk_site = ".$siteId;
-    	dol_syslog(get_class($this)."::getLastUpdate sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::getLastUpdate", LOG_DEBUG);
 
     	$lastdate = null;
 
@@ -303,7 +303,7 @@ class eCommerceCommande
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_commande as t";
         $sql.= " WHERE t.fk_site = ".$siteId;
         $sql.= " AND t.remote_id = ".$remoteId;
-    	dol_syslog(get_class($this)."::fetchByRemoteId sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::fetchByRemoteId", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -348,7 +348,7 @@ class eCommerceCommande
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_commande as t";
         $sql.= " WHERE t.fk_commande = ".$commandeId;
         $sql.= " AND t.fk_site = ".$siteId;
-    	dol_syslog(get_class($this)."::fetchByCommandeId sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::fetchByCommandeId", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -384,7 +384,7 @@ class eCommerceCommande
    		global $langs;
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."ecommerce_commande";
         $sql.= " WHERE fk_site = ".$siteId;
-    	dol_syslog(get_class($this)."::getAllECommerceCommandeIds sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::getAllECommerceCommandeIds", LOG_DEBUG);
         $resql=$this->db->query($sql);
 
         if ($resql)

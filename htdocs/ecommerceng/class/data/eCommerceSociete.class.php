@@ -79,7 +79,7 @@ class eCommerceSociete // extends CommonObject
 
 		$this->db->begin();
 
-	   	dol_syslog(get_class($this)."::create sql=".$sql, LOG_DEBUG);
+	   	dol_syslog(get_class($this)."::create", LOG_DEBUG);
         $resql=$this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
 
@@ -126,7 +126,7 @@ class eCommerceSociete // extends CommonObject
 		$sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_societe as t";
         $sql.= " WHERE t.rowid = ".((int) $id);
 
-    	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::fetch", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -186,7 +186,7 @@ class eCommerceSociete // extends CommonObject
 
 		$this->db->begin();
 
-		dol_syslog(get_class($this)."::update sql=".$sql, LOG_DEBUG);
+		dol_syslog(get_class($this)."::update", LOG_DEBUG);
         $resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
 
@@ -272,7 +272,7 @@ class eCommerceSociete // extends CommonObject
 
         $sql = "SELECT MAX(t.last_update) as lastdate FROM ".MAIN_DB_PREFIX."ecommerce_societe as t";
         $sql.= " WHERE t.fk_site = ".$site;
-    	dol_syslog(get_class($this)."::getLastUpdate sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::getLastUpdate", LOG_DEBUG);
 
     	$lastdate = null;
 
@@ -314,7 +314,7 @@ class eCommerceSociete // extends CommonObject
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_societe as t";
         $sql.= " WHERE t.fk_site = ".$siteId;
         $sql.= " AND t.remote_id = ".$remoteId;
-    	dol_syslog(get_class($this)."::fetchByRemoteId sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::fetchByRemoteId", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -358,7 +358,7 @@ class eCommerceSociete // extends CommonObject
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_societe as t";
         $sql.= " WHERE t.fk_site = ".$siteId;
         $sql.= " AND t.fk_societe = ".$fkSociete;
-    	dol_syslog(get_class($this)."::fetchByFkSociete sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::fetchByFkSociete", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -395,7 +395,7 @@ class eCommerceSociete // extends CommonObject
    		global $langs;
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."ecommerce_societe";
         $sql.= " WHERE fk_site = ".$siteId;
-    	dol_syslog(get_class($this)."::getAllECommerceSocieteIds sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::getAllECommerceSocieteIds", LOG_DEBUG);
         $resql=$this->db->query($sql);
 
         if ($resql)

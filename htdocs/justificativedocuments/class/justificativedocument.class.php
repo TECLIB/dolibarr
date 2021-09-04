@@ -518,7 +518,7 @@ class JustificativeDocument extends CommonObject
 	    $sql .= " status = ".self::STATUS_VALIDATED.",";
 	    $sql .= " date_validation = '".$this->db->idate($now)."',";
 	    $sql .= " fk_user_valid = ".$user->id;
-	    $sql .= " WHERE rowid = ".$this->id;
+	    $sql .= " WHERE rowid = ".((int) $this->id);
 
 	    dol_syslog(get_class($this)."::validate()", LOG_DEBUG);
 	    $resql = $this->db->query($sql);
