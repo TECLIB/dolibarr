@@ -413,7 +413,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	    {
 	        if ($action != 'classify')
 	        {
-	            $morehtmlref.='<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=classify&amp;id=' . $object->id . '">' . img_edit($langs->transnoentitiesnoconv('SetProject')) . '</a> : ';
+	            $morehtmlref.='<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=classify&token='.newToken().'&id=' . $object->id . '">' . img_edit($langs->transnoentitiesnoconv('SetProject')) . '</a> : ';
 	            if ($action == 'classify') {
 	                //$morehtmlref.=$form->form_project($_SERVER['PHP_SELF'] . '?id=' . $object->id, $object->socid, $object->fk_project, 'projectid', 0, 0, 1, 1);
 	                $morehtmlref.='<form method="post" action="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'">';
@@ -510,7 +510,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		// Delete (need delete permission, or if draft, just need create/modify permission)
     		if ($permissiontodelete)
     		{
-    			print '<a class="butActionDelete" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=delete">'.$langs->trans('Delete').'</a>'."\n";
+    			print '<a class="butActionDelete" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&action=delete&token='.newToken().'">'.$langs->trans('Delete').'</a>'."\n";
     		}
     		else
     		{
@@ -546,7 +546,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	    //$somethingshown = $form->showLinkedObjectBlock($object, $linktoelem);
 
 
-	    //$buttontoadd = '<a href="'.$_SERVER["PHP_SELF"].'?action=addrule&id='.$id.'">'.$langs->trans("Add").'</a>';
+	    //$buttontoadd = '<a href="'.$_SERVER["PHP_SELF"].'?action=addrule&token='.newToken().'&id='.$id.'">'.$langs->trans("Add").'</a>';
 	    $buttontoadd = '';
 
 	    print '<!-- rules -->'."\n";
@@ -600,7 +600,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			print $objrule['value'];
 			print '</td>';
 			print '<td class="right">';
-			print '<a href="'.$_SERVER["PHP_SELF"].'?action=deleterule&ruleid='.$objrule['id'].'&id='.$object->id.'">'.img_delete().'</a>';
+			print '<a href="'.$_SERVER["PHP_SELF"].'?action=deleterule&token='.newToken().'&ruleid='.$objrule['id'].'&id='.$object->id.'">'.img_delete().'</a>';
 			print '</td>';
 			print '</tr>';
 		}
@@ -623,7 +623,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	    //$somethingshown = $formactions->showactions($object, 'advanceddiscount', $socid, 1, '', $MAXEVENT, '', $morehtmlright);
 		*/
 
-	    //$buttontoadd = '<a href="'.$_SERVER["PHP_SELF"].'?action=addaction&id='.$id.'">'.$langs->trans("Add").'</a>';
+	    //$buttontoadd = '<a href="'.$_SERVER["PHP_SELF"].'?action=addaction&token='.newToken().'&id='.$id.'">'.$langs->trans("Add").'</a>';
 	    $buttontoadd = '';
 
 	    print '<!-- actions -->'."\n";
@@ -673,7 +673,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	    	print $objaction['value'];
 	    	print '</td>';
 	    	print '<td class="right">';
-	    	print '<a href="'.$_SERVER["PHP_SELF"].'?action=deleteaction&actionid='.$objaction['id'].'&id='.$object->id.'">'.img_delete().'</a>';
+	    	print '<a href="'.$_SERVER["PHP_SELF"].'?action=deleteaction&token='.newToken().'&actionid='.$objaction['id'].'&id='.$object->id.'">'.img_delete().'</a>';
 	    	print '</td>';
 	    	print '</tr>';
 	    }
