@@ -1,5 +1,9 @@
 # CHANGELOG ADVANCEDDISCOUNTS FOR <a href="https://www.dolibarr.org">DOLIBARR ERP CRM</a>
 
+## 1.2
+
+- Fix error not default value for tms
+
 ## 1.1
 
 - Compatibility v11+

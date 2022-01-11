@@ -24,7 +24,7 @@ CREATE TABLE llx_advanceddiscount_advanceddiscount(
 	date_start date NULL, 
 	date_end date NULL, 
 	date_creation datetime NOT NULL, 
-	tms timestamp NOT NULL, 
+	tms timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	fk_user_creat integer NOT NULL, 
 	fk_user_modif integer, 
 	import_key varchar(14)

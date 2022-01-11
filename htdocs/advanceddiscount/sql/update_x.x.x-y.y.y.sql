@@ -12,3 +12,6 @@
 --
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see http://www.gnu.org/licenses/.
+
+
+ALTER TABLE llx_advanceddiscount_advanceddiscount MODIFY tms timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
