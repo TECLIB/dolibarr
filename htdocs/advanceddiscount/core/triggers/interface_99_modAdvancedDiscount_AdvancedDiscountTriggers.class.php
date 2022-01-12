@@ -339,7 +339,15 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 									// Loop on each line to apply the % discount
 		        					foreach($parentobject->lines as $line)
 		        					{
-		        						if ($line->special_code != $special_code && $line->remise_percent < $actiondiscount['value'])
+		        						$applydiscount = false;
+		        						if ($line->remise_percent < $actiondiscount['value']) {
+		        							$applydiscount = true;
+		        						}
+		        						if (!empty($conf->global->ADVANCED_DISCOUNT_USE_ADVANCED_DISCOUNT_EVEN_IF_LOWER)) {
+		        							$applydiscount = true;
+		        						}
+
+		        						if ($line->special_code != $special_code && $applydiscount)
 	        							{
 	        								//$line->remise_percent = $actiondiscount['value'];
 	        								if ($action == 'LINEPROPAL_INSERT')
@@ -394,7 +402,15 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 		        					{
 		        						if (in_array($line->id, $idoflinesforitem))
 		        						{
-		        							if ($line->special_code != $special_code && $line->remise_percent < $actiondiscount['value'])
+		        							$applydiscount = false;
+		        							if ($line->remise_percent < $actiondiscount['value']) {
+		        								$applydiscount = true;
+		        							}
+		        							if (!empty($conf->global->ADVANCED_DISCOUNT_USE_ADVANCED_DISCOUNT_EVEN_IF_LOWER)) {
+		        								$applydiscount = true;
+		        							}
+
+		        							if ($line->special_code != $special_code && $applydiscount)
 		        							{
 		        								//var_dump('Fix line '.$line->id);
 		        								//$line->remise_percent = $actiondiscount['value'];
