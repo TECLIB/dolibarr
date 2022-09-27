@@ -86,6 +86,8 @@ $upload_dir = preg_replace('/\/[0-9]+\/justificativedocuments/', '/justificative
 //if ($user->societe_id > 0) $socid = $user->societe_id;
 //$result = restrictedArea($user, 'justificativedocuments', $object->id);
 
+$permissiontoadd = $user->rights->justificativedocuments->justificativedocument->write; 	// Used by the include of actions_addupdatedelete.inc.php// Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
+
 
 
 /*
