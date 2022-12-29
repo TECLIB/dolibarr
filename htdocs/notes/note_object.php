@@ -60,21 +60,37 @@ $id = GETPOST('id');
 
 
 $item_type = GETPOST('mode');
-if ($item_type == 'invoice') $item_type = 'facture';
-elseif ($item_type == 'order') $item_type = 'commande';
-elseif ($item_type == 'propal') $item_type = 'propal';
-elseif ($item_type == 'projet') $item_type = 'projet';
+$item_features = '';
+$item_table = '';
+if ($item_type == 'invoice') {
+    $item_type = 'facture';
+    $item_features = 'facture';
+} elseif ($item_type == 'order') {
+    $item_type = 'commande';
+    $item_features = 'commande';
+} elseif ($item_type == 'propal') {
+    $item_type = 'propal';
+    $item_features = 'propal';
+} elseif ($item_type == 'projet') {
+    $item_features = 'projet';
+    $item_type = 'projet';
+} elseif ($item_type == 'fichinter') {
+    $item_features = 'ficheinter';
+    $item_table = 'fichinter';
+    $langs->load('interventions');
+}
 
-$result=restrictedArea($user,$item_type,$id,'');
+$result=restrictedArea($user,$item_features,$id,$item_table);
 
-
+$usercancreate = $user->rights->notes->creer;
+$usercandelete = $user->rights->notes->supprimer;
 
 
 /*
  * Actions
  */
 
-if($action=="del_note")
+if($action=="del_note" && $usercandelete)
 {
 	$notes = new Note();
 	$notes->getFromDB($_GET['note_id']);
@@ -86,7 +102,7 @@ if($action=="del_note")
    	}
 }
 
-if($action=="edit_note_go")
+if($action=="edit_note_go" && $usercancreate)
 {
 	$notes = new Note();
 	$notes->getFromDB($_POST['rowid']);
@@ -103,7 +119,7 @@ if($action=="edit_note_go")
    }
 }
 
-if($action=="add_note")
+if($action=="add_note" && $usercancreate)
 {
 	$notes = new Note();
 	$notes->fields['user_id'] = $user->id;
@@ -168,13 +184,24 @@ if ($id > 0)
 		$title = $langs->trans("Project");
 		$picto='project';
     }
+    if ($item_type == 'fichinter')
+    {
+        require_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
+        require_once(DOL_DOCUMENT_ROOT.'/core/lib/fichinter.lib.php');
+        $object = new Fichinter($db);
+        $object->fetch($id);
+        $head = fichinter_prepare_head($object);
+        $title = $langs->trans('Intervention');
+        $picto = 'intervention';
+    }
 
 	dol_fiche_head($head, 'noteteclib', $title, 0, $picto);
 
 	$notes = new Note();
 	$existing_notes = $notes->find("item_type = '".$item_type."' AND item_id = '".$id."'", "datetime DESC");
+    $nbNotes = count($existing_notes);
 
-	//print '<script src="'.dol_buildpath('/notes/lib/uniform/jquery.uniform.js',1).'" type="text/javascript" charset="utf-8"></script>';
+	print '<script src="'.dol_buildpath('/notes/lib/uniform/jquery.uniform.js',1).'" type="text/javascript" charset="utf-8"></script>';
 
 	print '<script src="'.dol_buildpath('/notes/lib/jquery.easyconfirm.js',1).'" type="text/javascript" charset="utf-8"></script>';
 
@@ -192,8 +219,8 @@ jQuery(function() {
 	$( "#dialog" ).dialog({
 		autoOpen: false,
 		show: "blind",
-		width: 680,
-		height: 460,
+		width: 800,
+		height: 480,
 		modal: true
 	});
 
@@ -208,29 +235,58 @@ jQuery(function() {
 		button: ['{$langs->trans("Cancel")}',' {$langs->trans("Confirm")}'],
 		closeText: 'fermer'
 	}});
-
 });
 JS;
+
+// expand none or all content in accordion
+$expandAll = getDolGlobalInt('NOTES_EXPAND_ALL');
+$expandAllLabelList = array(
+    0 => $langs->trans('UndoExpandAll'),
+    1 => $langs->trans('ExpandAll'),
+);
+if ($nbNotes > 0) {
+$JS .= <<<JS
+jQuery(function() {
+    var expandAll = {$expandAll};
+    function accordionExpandContent(expand) {
+        if (expand) {
+            jQuery(".ui-accordion-content").show();
+            jQuery("#btn-expand").html("{$expandAllLabelList[0]}");
+        } else {
+            jQuery(".ui-accordion-content").hide();
+            jQuery("#btn-expand").html("{$expandAllLabelList[1]}");
+        }
+    }
+    accordionExpandContent(expandAll);
+    jQuery("#btn-expand").click(function() {
+        expandAll = !expandAll;
+        accordionExpandContent(expandAll);
+    });
+});
+JS;
+}
 
 	echo "<script type='text/javascript'>";
 	echo $JS;
 	echo "</script>";
 
 	// area to add a note
-	print '<div id="dialog" title="'.dol_escape_htmltag($langs->trans("AddNote")).'">';
-	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
-	print '<input type="hidden" name="id" value="'.$id.'" />';
-	print '<input type="hidden" name="action" value="add_note" />';
-	print '<input type="hidden" name="mode" value="'.$item_type.'" />';
-	print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" style="width:98%;" /></p>';
-	print '<p>';
-	//$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',180,'dolibarr_notes');
-	//print $doleditor->Create();
-	print '<textarea name="note_value" rows="20" cols="100" style="width:98%;max-height: 280px;"></textarea>';
-	print '</p>';
-	print '<p><input type="submit" value="'.$langs->trans("Save").'" class="button" /></p>';
-	print '</form>';
-	print '</div>'."\n";
+    if ($usercancreate) {
+        print '<div id="dialog" title="' . dol_escape_htmltag($langs->trans("AddNote")) . '">';
+        print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '">';
+        print '<input type="hidden" name="id" value="' . $id . '" />';
+        print '<input type="hidden" name="action" value="add_note" />';
+        print '<input type="hidden" name="mode" value="' . $item_type . '" />';
+        print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" style="width:98%;" /></p>';
+        //print '<p>';
+        //$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',180,'dolibarr_notes');
+        //print $doleditor->Create();
+        print '<textarea id="noteteclib" name="note_value" rows="20" cols="100" style="width:98%;max-height: 280px;"></textarea>';
+        //print '</p>';
+        print '<div class="center"><input type="submit" value="' . $langs->trans("Save") . '" class="button" /></div>';
+        print '</form>';
+        print '</div>' . "\n";
+    }
 
 	if($action=="edit_note")
 	{
@@ -257,23 +313,27 @@ JS;
 		//print '<textarea name="note_value" rows="20" cols="100">'. $notes->fields['note_value'] . '</textarea>';
 		print '</p>';
 
-		print '<p><input type="submit" value="'.$langs->trans("Save").'" class="button" /></p>';
+        print '<p><div class="center"><input type="submit" value="'.$langs->trans("Save").'" class="button" /></div></p>';
 		print '</form>';
 		print '</div>';
 	}
 
 	if($action!="edit_note")
 	{
-		print '<button id="opener" style="margin-bottom:5px;">'.$langs->trans("AddNote").'</button>';
+        if ($usercancreate) {
+            print '<button id="opener" style="margin-bottom:5px;">' . $langs->trans("AddNote") . '</button>';
+        }
 
+        if ($nbNotes > 0) {
+            print '<div style="width: 100%;"><div class="right"><a href="#" id="btn-expand">' . ($expandAll == 0 ? $expandAllLabelList[1] : $expandAllLabelList[0]) . '</a></div></div>';
+        }
 		print '<div id="accordion" class="ui-accordion ui-widget ui-helper-reset">';
 
-		if(count($existing_notes) > 0)
+		if($nbNotes > 0)
 		{
 			foreach($existing_notes as $note_infos)
 			{
-
-				$user = new User($db);
+                $user = new User($db);
 				$user->fetch($note_infos['user_id']);
 				$auteur = $user->getFullName($langs);
 
@@ -285,11 +345,16 @@ JS;
 				print '</h3>';
 
 				print '<div class="ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content-active">';
-
-				print '<p style="border:1px dashed grey;padding-top:1px;padding-bottom:1px;	width:50px;text-align:center;margin-top:-10px;">';
-				Note::showEdit($id,$note_infos['rowid'],'id',$item_type);
-				Note::showDelete($id,$note_infos['rowid'],'id',$item_type);
-				print '</p>';
+                if ($usercancreate || $usercandelete) {
+                    print '<p style="border:1px dashed grey;padding-top:1px;padding-bottom:1px;	width:50px;text-align:center;margin-top:-10px;">';
+                    if ($usercancreate) {
+                        Note::showEdit($id, $note_infos['rowid'], 'id', $item_type);
+                    }
+                    if ($usercandelete) {
+                        Note::showDelete($id, $note_infos['rowid'], 'id', $item_type);
+                    }
+                    print '</p>';
+                }
 
 				print dol_htmlentitiesbr($note_infos['note_value']);
 				print '</div>';

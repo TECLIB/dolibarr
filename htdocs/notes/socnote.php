@@ -61,13 +61,15 @@ if ($socid > 0)
     $societe->fetch($socid);
 }
 
+$usercancreate = $user->rights->notes->creer;
+$usercandelete = $user->rights->notes->supprimer;
 
 
 /*
  * Actions
  */
 
-if ($action=="del_note" && ! GETPOST('cancel'))
+if ($action=="del_note" && ! GETPOST('cancel') && $usercandelete)
 {
 	$notes = new Note();
 	$notes->getFromDB($_GET['note_id']);
@@ -78,7 +80,7 @@ if ($action=="del_note" && ! GETPOST('cancel'))
 	}
 }
 
-if($action=="edit_note_go" && ! GETPOST('cancel')) {
+if($action=="edit_note_go" && ! GETPOST('cancel') && $usercancreate) {
 	$notes = new Note();
 	$notes->getFromDB($_POST['rowid']);
 
@@ -93,7 +95,7 @@ if($action=="edit_note_go" && ! GETPOST('cancel')) {
 	}
 }
 
-if ($action=="add_note")
+if ($action=="add_note" && $usercancreate)
 {
 	$notes = new Note();
 	$notes->fields['user_id'] = $user->id;
@@ -129,12 +131,13 @@ if ($socid > 0)
 
 	$notes = new Note();
 	$existing_notes = $notes->find("item_type = '".$item_type."' AND item_id = '".$socid."'", "datetime DESC");
+    $nbNotes = count($existing_notes);
 
 	//print '<script src="'.dol_buildpath('/notes/lib/uniform/jquery.uniform.js',1).'" type="text/javascript" charset="utf-8"></script>';
 
 	print '<script src="'.dol_buildpath('/notes/lib/jquery.easyconfirm.js',1).'" type="text/javascript" charset="utf-8"></script>';
 
-	$JS = <<<JS
+$JS = <<<JS
 jQuery(function() {
 	$.fx.speeds._default = 100;
 
@@ -149,8 +152,8 @@ jQuery(function() {
 	$( "#dialog" ).dialog({
 		autoOpen: false,
 		show: "blind",
-		width: 740,
-		height: 450,
+		width: 800,
+		height: 480,
 		modal: true
 	});
 
@@ -169,23 +172,53 @@ jQuery(function() {
 });
 JS;
 
+// expand none or all content in accordion
+$expandAll = getDolGlobalInt('NOTES_EXPAND_ALL');
+$expandAllLabelList = array(
+    0 => $langs->trans('UndoExpandAll'),
+    1 => $langs->trans('ExpandAll'),
+);
+if ($nbNotes > 0) {
+$JS .= <<<JS
+    jQuery(function() {
+        var expandAll = {$expandAll};
+        function accordionExpandContent(expand) {
+            if (expand) {
+                jQuery(".ui-accordion-content").show();
+                jQuery("#btn-expand").html("{$expandAllLabelList[0]}");
+            } else {
+                jQuery(".ui-accordion-content").hide();
+                jQuery("#btn-expand").html("{$expandAllLabelList[1]}");
+            }
+        }
+        accordionExpandContent(expandAll);
+        jQuery("#btn-expand").click(function() {
+            expandAll = !expandAll;
+            accordionExpandContent(expandAll);
+        });
+    });
+JS;
+}
+
 	echo "<script type='text/javascript'>";
 	echo $JS;
 	echo "</script>";
 
-	print '<div id="dialog" title="'.dol_escape_htmltag($langs->trans("AddNote")).'">';
-	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
-	print '<input type="hidden" name="socid" value="'.$socid.'" />';
-	print '<input type="hidden" name="action" value="add_note" />';
-	print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" /></p>';
-	//print '<p>';
-	//$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',240,'dolibarr_notes');     WYSIWYG does not work into a dialog.
-	//print $doleditor->Create();
-	print '<textarea id="noteteclib" name="note_value" rows="20" style="width: 98%"></textarea>';
-	//print '</p>';
-	print '<div class="center"><input type="submit" value="'.$langs->trans("Save").'" class="button" /></div>';
-	print '</form>';
-	print '</div>'."\n";
+    if ($usercancreate) {
+        print '<div id="dialog" title="' . dol_escape_htmltag($langs->trans("AddNote")) . '">';
+        print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '">';
+        print '<input type="hidden" name="socid" value="' . $socid . '" />';
+        print '<input type="hidden" name="action" value="add_note" />';
+        print '<p>' . $langs->trans("Title") . ' : <input type="text" name="note_title" size="90" /></p>';
+        //print '<p>';
+        //$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',240,'dolibarr_notes');     WYSIWYG does not work into a dialog.
+        //print $doleditor->Create();
+        print '<textarea id="noteteclib" name="note_value" rows="20" style="width: 98%"></textarea>';
+        //print '</p>';
+        print '<div class="center"><input type="submit" value="' . $langs->trans("Save") . '" class="button" /></div>';
+        print '</form>';
+        print '</div>' . "\n";
+    }
 
 	if($action=="edit_note") {
 		$notes = new Note();
@@ -203,8 +236,7 @@ JS;
 
 		print '<input type="hidden" name="action" value="edit_note_go" />';
 
-		print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90"
-		value="' . $notes->fields['note_title'] . '" /></p>';
+		print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" value="' . $notes->fields['note_title'] . '" /></p>';
 
 		$doleditor=new DolEditor('note_value',$notes->fields['note_value'],'',180,'dolibarr_notes');
 		print $doleditor->Create();
@@ -215,19 +247,22 @@ JS;
 	}
 
 	if($action!="edit_note") {
-		print '<button id="opener" style="margin-bottom:5px;">'.$langs->trans("AddNote").'</button>';
+        if ($usercancreate) {
+            print '<button id="opener" style="margin-bottom:5px;">' . $langs->trans("AddNote") . '</button>';
+        }
 
+        if ($nbNotes > 0) {
+            print '<div style="width: 100%;"><div class="right"><a href="#" id="btn-expand">' . ($expandAll == 0 ? $expandAllLabelList[1] : $expandAllLabelList[0]) . '</a></div></div>';
+        }
 		print '<div id="accordion" class="ui-accordion ui-widget ui-helper-reset">';
 
-		if (count($existing_notes) > 0)
+		if ($nbNotes > 0)
 		{
 			foreach($existing_notes as $note_infos)
 			{
-
-				$user = new User($db);
+                $user = new User($db);
 				$user->fetch($note_infos['user_id']);
 				$auteur = $user->getFullName($langs);
-
 
 			 	print'<h3 class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-top">';
 			 	print '<a href="#">';
@@ -237,10 +272,16 @@ JS;
 			 	print '</h3>';
 
 			 	print '<div class="ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content-active">';
-			 	print '<p style="float: right; width:50px; text-align:center;margin-bottom:0px; margin-top: 0px;">';
-			 	Note::showEdit($socid,$note_infos['rowid']);       // Show button EditNote
-			 	Note::showDelete($socid,$note_infos['rowid']);     // Show button DeleteNote
-			 	print '</p>';
+                if ($usercancreate || $usercandelete) {
+                    print '<p style="float: right; width:50px; text-align:center;margin-bottom:0px; margin-top: 0px;">';
+                    if ($usercancreate) {
+                        Note::showEdit($socid, $note_infos['rowid']);       // Show button EditNote
+                    }
+                    if ($usercandelete) {
+                        Note::showDelete($socid, $note_infos['rowid']);     // Show button DeleteNote
+                    }
+                    print '</p>';
+                }
 			 	print dol_htmlentitiesbr($note_infos['note_value']);
 			 	print '</div>';
 			}
