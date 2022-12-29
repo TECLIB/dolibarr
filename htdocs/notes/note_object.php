@@ -201,7 +201,7 @@ if ($id > 0)
 	$existing_notes = $notes->find("item_type = '".$item_type."' AND item_id = '".$id."'", "datetime DESC");
     $nbNotes = count($existing_notes);
 
-	print '<script src="'.dol_buildpath('/notes/lib/uniform/jquery.uniform.js',1).'" type="text/javascript" charset="utf-8"></script>';
+	//print '<script src="'.dol_buildpath('/notes/lib/uniform/jquery.uniform.js',1).'" type="text/javascript" charset="utf-8"></script>';
 
 	print '<script src="'.dol_buildpath('/notes/lib/jquery.easyconfirm.js',1).'" type="text/javascript" charset="utf-8"></script>';
 
