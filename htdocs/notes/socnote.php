@@ -177,11 +177,11 @@ JS;
 	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
 	print '<input type="hidden" name="socid" value="'.$socid.'" />';
 	print '<input type="hidden" name="action" value="add_note" />';
-	print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" /></p>';
+	print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" width="quatrevingtpercent" /></p>';
 	//print '<p>';
 	//$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',240,'dolibarr_notes');     WYSIWYG does not work into a dialog.
 	//print $doleditor->Create();
-	print '<textarea id="noteteclib" name="note_value" rows="20" style="width: 98%"></textarea>';
+	print '<textarea id="noteteclib" name="note_value" rows="16" style="width: 98%"></textarea>';
 	//print '</p>';
 	print '<div class="center"><input type="submit" value="'.$langs->trans("Save").'" class="button" /></div>';
 	print '</form>';
