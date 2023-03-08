@@ -48,11 +48,6 @@ $action = GETPOST('action','aZ09');
 $langs->load("companies");
 $langs->load("notes@notes");
 
-// Security check
-$socid = GETPOST("socid");
-if ($user->societe_id) $socid=$user->societe_id;
-$result = restrictedArea($user, 'societe', $socid, 'societe');
-
 $item_type = 'societe';
 
 $societe = new Societe($db);
@@ -61,6 +56,12 @@ if ($socid > 0)
     $societe->fetch($socid);
 }
 
+// Security check
+$socid = GETPOST("socid");
+if ($user->socid > 0) {
+	$socid = $user->socid;
+}
+$result = restrictedArea($user, 'societe', $socid, 'societe');
 
 
 /*
@@ -175,7 +176,8 @@ JS;
 
 	print '<div id="dialog" title="'.dol_escape_htmltag($langs->trans("AddNote")).'">';
 	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
-	print '<input type="hidden" name="socid" value="'.$socid.'" />';
+	print '<input type="hidden" name="token" value="'.newToken().'" />';
+	print '<input type="hidden" name="socid" value="'.((int) $socid).'" />';
 	print '<input type="hidden" name="action" value="add_note" />';
 	print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" width="quatrevingtpercent" /></p>';
 	//print '<p>';
@@ -189,13 +191,14 @@ JS;
 
 	if($action=="edit_note") {
 		$notes = new Note();
-		$notes->getFromDB($_GET['note_id']);
+		$notes->getFromDB(((int) $_GET['note_id']));
 
 		print '<div>';
 		print '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
-		print '<input type="hidden" name="socid" value="'.$socid.'" />';
+		print '<input type="hidden" name="token" value="'.newToken().'" />';
+		print '<input type="hidden" name="socid" value="'.((int) $socid).'" />';
 
-		print '<input type="hidden" name="rowid" value="'.$_GET['note_id'].'" />';
+		print '<input type="hidden" name="rowid" value="'.((int) $_GET['note_id']).'" />';
 		print '<input type="hidden" name="user_id" value="'.$notes->fields['user_id'].'" />';
 		print '<input type="hidden" name="datetime" value="'.$notes->fields['datetime'].'" />';
 		print '<input type="hidden" name="item_type" value="'.$notes->fields['item_type'].'" />';
