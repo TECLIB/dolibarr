@@ -35,7 +35,7 @@ class Note extends Common_DB_Note
 	{
 		global $langs;
 
-		print '<a class="teclibnoteeditbutton" href="'.$_SERVER['PHP_SELF'].'?action=edit_note&note_id='.$note_id.'&'.$type.'='.$id.'&mode='.$mode.'">
+		print '<a class="teclibnoteeditbutton" href="'.$_SERVER['PHP_SELF'].'?action=edit_note&token='.newToken().'&note_id='.$note_id.'&'.$type.'='.$id.'&mode='.$mode.'">
 					<img src="'.dol_buildpath('/notes/img/note_edit.png',1).'"
 					alt="'.$langs->trans("EditNote").'" title="'.$langs->trans("EditNote").'" />
 		</a>';
@@ -48,7 +48,7 @@ class Note extends Common_DB_Note
 	{
 		global $langs;
 
-		print '<a class="teclibnotedeletebutton" id="supprimernote" href="'.$_SERVER['PHP_SELF'].'?action=del_note&note_id='.$note_id.'&'.$type.'='.$id.'&mode='.$mode.'">
+		print '<a class="teclibnotedeletebutton" id="supprimernote" href="'.$_SERVER['PHP_SELF'].'?action=del_note&token='.newToken().'&note_id='.$note_id.'&'.$type.'='.$id.'&mode='.$mode.'">
 					<img src="'.dol_buildpath('/notes/img/note_delete.png',1).'"
 					alt="'.$langs->trans("DeleteNote").'" title="'.$langs->trans("DeleteNote").'" />
 		</a>';

@@ -54,9 +54,11 @@ $langs->load("orders");
 $langs->load("notes@notes");
 
 // Security check
-$socid = GETPOST("socid");
-if ($user->societe_id) $socid = $user->societe_id;
-$id = GETPOST('id');
+$socid = GETPOST("socid", 'int');
+if ($user->socid > 0) {
+	$socid = $user->socid;
+}
+$id = GETPOST('id', 'int');
 
 
 $item_type = GETPOST('mode');
@@ -65,8 +67,7 @@ elseif ($item_type == 'order') $item_type = 'commande';
 elseif ($item_type == 'propal') $item_type = 'propal';
 elseif ($item_type == 'projet') $item_type = 'projet';
 
-$result=restrictedArea($user,$item_type,$id,'');
-
+$result = restrictedArea($user, $item_type, $id, '');
 
 
 
@@ -74,10 +75,10 @@ $result=restrictedArea($user,$item_type,$id,'');
  * Actions
  */
 
-if($action=="del_note")
+if ($action=="del_note")
 {
 	$notes = new Note();
-	$notes->getFromDB($_GET['note_id']);
+	$notes->getFromDB((int) $_GET['note_id']);
 
 	if ($notes->deleteFromDB())
 	{
@@ -89,7 +90,7 @@ if($action=="del_note")
 if($action=="edit_note_go")
 {
 	$notes = new Note();
-	$notes->getFromDB($_POST['rowid']);
+	$notes->getFromDB((int) $_POST['rowid']);
 
    $input = array();
    foreach($notes->fields as $key => $value) {
@@ -129,7 +130,6 @@ llxHeader();
 
 if ($id > 0)
 {
-
     if ($conf->notification->enabled) $langs->load("mails");
 
     if ($item_type == 'facture')

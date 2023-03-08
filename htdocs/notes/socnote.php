@@ -45,22 +45,22 @@ dol_include_once("/notes/class/note.class.php");
 
 $action = GETPOST('action','aZ09');
 
-$langs->load("companies");
-$langs->load("notes@notes");
+$langs->loadLangs(array("companies", "notes@notes"));
 
 $item_type = 'societe';
 
 $societe = new Societe($db);
-if ($socid > 0)
-{
-    $societe->fetch($socid);
-}
 
 // Security check
-$socid = GETPOST("socid");
+$socid = GETPOST("socid", "int");
 if ($user->socid > 0) {
 	$socid = $user->socid;
 }
+
+if ($socid > 0) {
+	$societe->fetch($socid);
+}
+
 $result = restrictedArea($user, 'societe', $socid, 'societe');
 
 
