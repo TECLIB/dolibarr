@@ -20,7 +20,7 @@
  */
 
 /**
- *   \file       htdocs/notes/note_order.php
+ *   \file       htdocs/notes/note_object.php
  *   \brief      Tab for notes on third party
  *   \ingroup    actions
  */
@@ -221,12 +221,13 @@ JS;
 	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
 	print '<input type="hidden" name="id" value="'.$id.'" />';
 	print '<input type="hidden" name="action" value="add_note" />';
+	print '<input type="hidden" name="token" value="'.newToken().'" />';
 	print '<input type="hidden" name="mode" value="'.$item_type.'" />';
 	print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" style="width:98%;" /></p>';
 	print '<p>';
 	//$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',180,'dolibarr_notes');
 	//print $doleditor->Create();
-	print '<textarea name="note_value" rows="20" cols="100" style="width:98%;max-height: 280px;"></textarea>';
+	print '<textarea name="note_value" rows="15" cols="100" style="width:98%;max-height: 280px;"></textarea>';
 	print '</p>';
 	print '<p><input type="submit" value="'.$langs->trans("Save").'" class="button" /></p>';
 	print '</form>';
