@@ -80,11 +80,25 @@ class mod_project_teclib extends ModeleNumRefProjects
 
 			$oldmask='{cccc}-{00}';
 			//$customercode=$objsoc->code_client;
-			$numFinalOld=get_next_value($db,$oldmask,'projet','ref'," AND fk_soc = ".$objsoc->id,$objsoc,'', 'next', $filteronentity);
+			$numFinalOld = get_next_value($db, $oldmask, 'projet', 'ref', " AND (fk_soc = ".$objsoc->id." OR ref LIKE '".$objsoc->code_client."-__')", $objsoc, '', 'next', $filteronentity);
 
 			$mask='{cccc}-{000}';
 			//$customercode=$objsoc->code_client;
-			$numFinalNew=get_next_value($db,$mask,'projet','ref'," AND fk_soc = ".$objsoc->id,$objsoc,'', 'next', $filteronentity);
+			$numFinalNew = get_next_value($db, $mask, 'projet', 'ref', " AND (fk_soc = ".$objsoc->id." OR ref LIKE '".$objsoc->code_client."-___')", $objsoc, '', 'next', $filteronentity);
+
+			// Check num is not used
+			/*
+			$sql = "SELECT ref FROM '.MAIN_DB_PREFIX.'projet WHERE ref = '".$this->db->escape($numFinalNew)."'";
+			$nbrecord = 0;
+			$resql = $this->db->query($sql);
+			if ($resql) {
+				$nbrecord = $this->db->num_rows($resql);
+			}
+			if ($nbrecord > 0) {
+				// Pb: the project ref is already used, surely by another fk_soc that had named one of his project with the same customer code.
+				$numFinalNew = get_next_value($db, $mask, 'projet', 'ref', " AND ref LIKE  = '".$objsoc->code_client."-%", $objsoc, '', 'next', $filteronentity);
+			}
+			*/
 		}
 
 		//$numFinalNew="0210-100";
