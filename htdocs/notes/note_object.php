@@ -20,7 +20,7 @@
  */
 
 /**
- *   \file       htdocs/notes/note_order.php
+ *   \file       htdocs/notes/note_object.php
  *   \brief      Tab for notes on third party
  *   \ingroup    actions
  */
@@ -54,9 +54,11 @@ $langs->load("orders");
 $langs->load("notes@notes");
 
 // Security check
-$socid = GETPOST("socid");
-if ($user->societe_id) $socid = $user->societe_id;
-$id = GETPOST('id');
+$socid = GETPOST("socid", 'int');
+if ($user->socid > 0) {
+	$socid = $user->socid;
+}
+$id = GETPOST('id', 'int');
 
 
 $item_type = GETPOST('mode');
@@ -80,7 +82,7 @@ if ($item_type == 'invoice') {
     $langs->load('interventions');
 }
 
-$result=restrictedArea($user,$item_features,$id,$item_table);
+$result=restrictedArea($user, $item_features, $id, $item_table);
 
 $usercancreate = $user->rights->notes->creer;
 $usercandelete = $user->rights->notes->supprimer;
@@ -90,10 +92,10 @@ $usercandelete = $user->rights->notes->supprimer;
  * Actions
  */
 
-if($action=="del_note" && $usercandelete)
+if ($action=="del_note" && $usercandelete)
 {
 	$notes = new Note();
-	$notes->getFromDB($_GET['note_id']);
+	$notes->getFromDB((int) $_GET['note_id']);
 
 	if ($notes->deleteFromDB())
 	{
@@ -105,7 +107,7 @@ if($action=="del_note" && $usercandelete)
 if($action=="edit_note_go" && $usercancreate)
 {
 	$notes = new Note();
-	$notes->getFromDB($_POST['rowid']);
+	$notes->getFromDB((int) $_POST['rowid']);
 
    $input = array();
    foreach($notes->fields as $key => $value) {
@@ -145,7 +147,6 @@ llxHeader();
 
 if ($id > 0)
 {
-
     if ($conf->notification->enabled) $langs->load("mails");
 
     if ($item_type == 'facture')
@@ -271,25 +272,23 @@ JS;
 	echo "</script>";
 
 	// area to add a note
-    if ($usercancreate) {
+  if ($usercancreate) {
         print '<div id="dialog" title="' . dol_escape_htmltag($langs->trans("AddNote")) . '">';
         print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '">';
         print '<input type="hidden" name="id" value="' . $id . '" />';
         print '<input type="hidden" name="action" value="add_note" />';
+       	print '<input type="hidden" name="token" value="'.newToken().'" />';
         print '<input type="hidden" name="mode" value="' . $item_type . '" />';
         print '<p>'.$langs->trans("Title").' : <input type="text" name="note_title" size="90" style="width:98%;" /></p>';
-        //print '<p>';
         //$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',180,'dolibarr_notes');
         //print $doleditor->Create();
         print '<textarea id="noteteclib" name="note_value" rows="20" cols="100" style="width:98%;max-height: 280px;"></textarea>';
-        //print '</p>';
         print '<div class="center"><input type="submit" value="' . $langs->trans("Save") . '" class="button" /></div>';
         print '</form>';
         print '</div>' . "\n";
-    }
+  }
 
-	if($action=="edit_note")
-	{
+	if($action=="edit_note") {
 		$notes = new Note();
 		$notes->getFromDB($_GET['note_id']);
 

@@ -45,21 +45,23 @@ dol_include_once("/notes/class/note.class.php");
 
 $action = GETPOST('action','aZ09');
 
-$langs->load("companies");
-$langs->load("notes@notes");
-
-// Security check
-$socid = GETPOST("socid");
-if ($user->societe_id) $socid=$user->societe_id;
-$result = restrictedArea($user, 'societe', $socid, 'societe');
+$langs->loadLangs(array("companies", "notes@notes"));
 
 $item_type = 'societe';
 
 $societe = new Societe($db);
-if ($socid > 0)
-{
-    $societe->fetch($socid);
+
+// Security check
+$socid = GETPOST("socid", "int");
+if ($user->socid > 0) {
+	$socid = $user->socid;
 }
+
+if ($socid > 0) {
+	$societe->fetch($socid);
+}
+
+$result = restrictedArea($user, 'societe', $socid, 'societe');
 
 $usercancreate = $user->rights->notes->creer;
 $usercandelete = $user->rights->notes->supprimer;
@@ -204,12 +206,13 @@ JS;
 	echo $JS;
 	echo "</script>";
 
-    if ($usercancreate) {
+  if ($usercancreate) {
         print '<div id="dialog" title="' . dol_escape_htmltag($langs->trans("AddNote")) . '">';
         print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '">';
-        print '<input type="hidden" name="socid" value="' . $socid . '" />';
+        print '<input type="hidden" name="token" value="'.newToken().'" />';
+	      print '<input type="hidden" name="socid" value="' . $socid . '" />';
         print '<input type="hidden" name="action" value="add_note" />';
-        print '<p>' . $langs->trans("Title") . ' : <input type="text" name="note_title" size="90" /></p>';
+        print '<p>' . $langs->trans("Title") . ' : <input type="text" name="note_title" size="quatrevingtpercent" /></p>';
         //print '<p>';
         //$doleditor=new DolEditor('note_value_add',$notes->fields['note_value_add'],'',240,'dolibarr_notes');     WYSIWYG does not work into a dialog.
         //print $doleditor->Create();
@@ -218,17 +221,18 @@ JS;
         print '<div class="center"><input type="submit" value="' . $langs->trans("Save") . '" class="button" /></div>';
         print '</form>';
         print '</div>' . "\n";
-    }
+  }
 
-	if($action=="edit_note") {
+	if ($action=="edit_note") {
 		$notes = new Note();
-		$notes->getFromDB($_GET['note_id']);
+		$notes->getFromDB(((int) $_GET['note_id']));
 
 		print '<div>';
 		print '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
-		print '<input type="hidden" name="socid" value="'.$socid.'" />';
+		print '<input type="hidden" name="token" value="'.newToken().'" />';
+		print '<input type="hidden" name="socid" value="'.((int) $socid).'" />';
 
-		print '<input type="hidden" name="rowid" value="'.$_GET['note_id'].'" />';
+		print '<input type="hidden" name="rowid" value="'.((int) $_GET['note_id']).'" />';
 		print '<input type="hidden" name="user_id" value="'.$notes->fields['user_id'].'" />';
 		print '<input type="hidden" name="datetime" value="'.$notes->fields['datetime'].'" />';
 		print '<input type="hidden" name="item_type" value="'.$notes->fields['item_type'].'" />';
