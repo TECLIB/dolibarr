@@ -115,11 +115,16 @@ class modNotes extends DolibarrModules
 			$this->tabs[]='propal:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=propal&id=__ID__';	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
 			$this->tabs[]='propal:-note:NU:1';
 		}
-                if (empty($conf->global->TECLIB_NOTES_NOT_ON_PROJET))
-                {
-                        $this->tabs[]='project:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=projet&id=__ID__';        // With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
-                        $this->tabs[]='project:-notes:NU:1';
-                }
+		if (empty($conf->global->TECLIB_NOTES_NOT_ON_PROJET))
+		{
+				$this->tabs[]='project:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=projet&id=__ID__';        // With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
+				$this->tabs[]='project:-notes:NU:1';
+		}
+		if (empty($conf->global->TECLIB_NOTES_NOT_ON_FICHINTER))
+		{
+			$this->tabs[]='intervention:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=fichinter&id=__ID__';	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
+			$this->tabs[]='intervention:-note:NU:1';
+		}
 
 		// where entity can be
 		// 'thirdparty'       to add a tab in third party view
@@ -152,7 +157,19 @@ class modNotes extends DolibarrModules
 
 		// Permissions
 		$this->rights = array();		// Permission array used by this module
-		$r=1;
+		$r = 1;
+		$this->rights[$r][0] = $this->numero.$r; // id de la permission
+		$this->rights[$r][1] = 'Créer/Modifier les notes'; // libelle de la permission
+		$this->rights[$r][2] = 'c'; // type de la permission (deprecie a ce jour)
+		$this->rights[$r][3] = 0; // La permission est-elle une permission par defaut
+		$this->rights[$r][4] = 'creer';
+
+		$r++;
+		$this->rights[$r][0] = $this->numero.$r; // id de la permission
+		$this->rights[$r][1] = 'Supprimer les notes'; // libelle de la permission
+		$this->rights[$r][2] = 'd'; // type de la permission (deprecie a ce jour)
+		$this->rights[$r][3] = 0; // La permission est-elle une permission par defaut
+		$this->rights[$r][4] = 'supprimer';
 
 		// Main menu entries
 		$this->menus = array();			// List of menus to add
