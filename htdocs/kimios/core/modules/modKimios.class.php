@@ -43,7 +43,6 @@ class modKimios extends DolibarrModules {
         $this->editor_url = 'http://www.teclib.com';
 		$this->version = '1.0';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
-		$this->special = 0;
 		$this->picto='technic';
 		$this->dirs = array("/kimios");
 		$this->module_parts = array(
