@@ -172,7 +172,7 @@ class modNotes extends DolibarrModules
 		$this->rights[$r][4] = 'supprimer';
 
 		// Main menu entries
-		$this->menus = array();			// List of menus to add
+		$this->menu = array();			// List of menus to add
 		$r=0;
 
 
