@@ -1,8 +1,12 @@
 # CHANGELOG ADVANCEDDISCOUNTS FOR <a href="https://www.dolibarr.org">DOLIBARR ERP CRM</a>
 
+## 1.3
+
+- NEW Support selection of discount on product category
+
 ## 1.2
 
-- Fix error not default value for tms
+- Fix error no default value for tms
 
 ## 1.1
 

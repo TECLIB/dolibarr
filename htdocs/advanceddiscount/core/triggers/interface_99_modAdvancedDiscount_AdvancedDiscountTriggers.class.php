@@ -255,7 +255,10 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 								if ($result > 0)
 								{
 									$found = $category->containsObject('product', $line->fk_product);
-									if ($found) $ispromotionqualified++;
+									if ($found) {
+										$ispromotionqualified++;
+										$idoflinesforitem[] = $line->id;
+									}
 								}
 							}
 							elseif ($rules['type'] == 'containsproduct')
