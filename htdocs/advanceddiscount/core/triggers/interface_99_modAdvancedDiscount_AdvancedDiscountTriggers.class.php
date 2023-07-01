@@ -245,6 +245,19 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 							        $ispromotionqualified++;
 							    }
 							}
+							elseif ($rules['type'] == 'productcategory')
+							{
+								//$tmpprod=new Product($this->db);
+								//$tmpprod->fetch($line->fk_product);
+								$category=new Categorie($this->db);
+								if (is_numeric($rules['value'])) $result = $category->fetch($rules['value'], '', 'product');
+								else $result = $category->fetch(0, $rules['value'], 'product');
+								if ($result > 0)
+								{
+									$found = $category->containsObject('product', $line->fk_product);
+									if ($found) $ispromotionqualified++;
+								}
+							}
 							elseif ($rules['type'] == 'containsproduct')
 							{
 								$parentobject->fetch_lines();

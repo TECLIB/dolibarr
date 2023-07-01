@@ -566,6 +566,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	    //'productis'=>'ProductIs',
     	    //'productisnot'=>'ProductIsNot',
     	    'containsproduct'=>'ContainsProduct',
+    		'productcategory'=>'ProductHasTag',
     		'totalgreaterorequal'=>'TotalGreaterThanOrEqualTo'
     	);
     	if (! empty($conf->commande->enabled))
