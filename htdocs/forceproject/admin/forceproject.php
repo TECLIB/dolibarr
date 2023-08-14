@@ -124,8 +124,7 @@ $h++;
 
 dol_fiche_head($head, 'tabsetup', '', -1);
 
-print_titre($langs->trans("Options"));
-print '<table class="noborder" width="100%">';
+print '<table class="noborder centpercent">';
 print '<tr class="liste_titre">';
 print '<td>'.$langs->trans("Parameter").'</td>';
 print "<td>&nbsp;</td>\n";
