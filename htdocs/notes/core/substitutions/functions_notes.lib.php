@@ -45,41 +45,43 @@ function notes_completesubstitutionarray(&$substitutionarray,$langs,$object)
 
     $substitutionarray['NotesNbTeclib']=$langs->trans("Notes");
 
-    if ($object->element == 'societe')
-    {
-    	$note=new Note($db);
-    	$nbofnotes = $note->countNb($object->element, $object->id);
-	    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
-    }
-    if ($object->element == 'facture')
-    {
-    	$note=new Note($db);
-    	$nbofnotes = $note->countNb($object->element, $object->id);
-	    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
-    }
-    if ($object->element == 'propal')
-    {
-    	$note=new Note($db);
-    	$nbofnotes = $note->countNb($object->element, $object->id);
-	    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
-    }
-    if ($object->element == 'order')
-    {
-    	$note=new Note($db);
-    	$nbofnotes = $note->countNb($object->element, $object->id);
-	    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
-    }
-    if ($object->element == 'project')
-    {
-        $note=new Note($db);
-        $nbofnotes = $note->countNb($object->element, $object->id);
-            if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
-    }
-    if ($object->element == 'fichinter')
-    {
-        $note=new Note($db);
-        $nbofnotes = $note->countNb($object->element, $object->id);
-        if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
+    if (!empty($object->element)) {
+	    if ($object->element == 'societe')
+	    {
+	    	$note=new Note($db);
+	    	$nbofnotes = $note->countNb($object->element, $object->id);
+		    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
+	    }
+	    if ($object->element == 'facture')
+	    {
+	    	$note=new Note($db);
+	    	$nbofnotes = $note->countNb($object->element, $object->id);
+		    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
+	    }
+	    if ($object->element == 'propal')
+	    {
+	    	$note=new Note($db);
+	    	$nbofnotes = $note->countNb($object->element, $object->id);
+		    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
+	    }
+	    if ($object->element == 'order')
+	    {
+	    	$note=new Note($db);
+	    	$nbofnotes = $note->countNb($object->element, $object->id);
+		    if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
+	    }
+	    if ($object->element == 'project')
+	    {
+	        $note=new Note($db);
+	        $nbofnotes = $note->countNb($object->element, $object->id);
+	            if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
+	    }
+	    if ($object->element == 'fichinter')
+	    {
+	        $note=new Note($db);
+	        $nbofnotes = $note->countNb($object->element, $object->id);
+	        if ($nbofnotes > 0) $substitutionarray['NotesNbTeclib']=$langs->trans("Notes").' <span class="badge">'.$nbofnotes.'</span>';
+	    }
     }
 }
 
