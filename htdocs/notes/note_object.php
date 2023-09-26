@@ -58,7 +58,7 @@ $socid = GETPOST("socid", 'int');
 if ($user->socid > 0) {
 	$socid = $user->socid;
 }
-$id = GETPOST('id', 'int');
+$id = GETPOSTINT('id');
 
 
 $item_type = GETPOST('mode');
@@ -84,9 +84,9 @@ if ($item_type == 'invoice') {
 
 $result=restrictedArea($user, $item_features, $id, $item_table);
 
-$usercancreate = $user->rights->notes->creer;
-$usercandelete = $user->rights->notes->supprimer;
-
+$usercancreate = $user->hasRight('notes', 'creer');
+$usercandelete = $user->hasRight('notes', 'supprimer');
+var_dump($usercancreate);
 
 /*
  * Actions
@@ -95,7 +95,7 @@ $usercandelete = $user->rights->notes->supprimer;
 if ($action=="del_note" && $usercandelete)
 {
 	$notes = new Note();
-	$notes->getFromDB((int) $_GET['note_id']);
+	$notes->getFromDB($id);
 
 	if ($notes->deleteFromDB())
 	{
@@ -107,18 +107,18 @@ if ($action=="del_note" && $usercandelete)
 if($action=="edit_note_go" && $usercancreate)
 {
 	$notes = new Note();
-	$notes->getFromDB((int) $_POST['rowid']);
+	$notes->getFromDB(GETPOSTINT('rowid'));
 
-   $input = array();
-   foreach($notes->fields as $key => $value) {
-      $input[$key] = $_POST[$key];
-   }
+	$input = array();
+	foreach($notes->fields as $key => $value) {
+		$input[$key] = $_POST[$key];
+	}
 
-   if ($notes->update($input))
-   {
-   		header('Location: '.$_SERVER["PHP_SELF"].'?id='.$id.'&mode='.$item_type);
+	if ($notes->update($input))
+	{
+		header('Location: '.$_SERVER["PHP_SELF"].'?id='.$id.'&mode='.$item_type);
 		exit;
-   }
+	}
 }
 
 if($action=="add_note" && $usercancreate)
