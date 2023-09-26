@@ -86,7 +86,7 @@ $result=restrictedArea($user, $item_features, $id, $item_table);
 
 $usercancreate = $user->hasRight('notes', 'creer');
 $usercandelete = $user->hasRight('notes', 'supprimer');
-var_dump($usercancreate);
+
 
 /*
  * Actions
