@@ -133,7 +133,7 @@ if (empty($reshook))
 	$trackid='advanceddiscount'.$object->id;
 	include DOL_DOCUMENT_ROOT.'/core/actions_sendmails.inc.php';
 
-	if ($action == 'addrule' && ! empty($user->rights->advanceddiscount->write))
+	if ($action == 'addrule' && $user->hasRight('advanceddiscount', 'write'))
 	{
 		if (! GETPOST('type_rule','alpha') || GETPOST('type_rule','alpha') == '-1')
 		{
@@ -164,7 +164,7 @@ if (empty($reshook))
 		}
 	}
 
-	if ($action == 'addaction' && ! empty($user->rights->advanceddiscount->write))
+	if ($action == 'addaction' && $user->hasRight('advanceddiscount', 'write'))
 	{
 		if (! GETPOST('type_action','alpha') || GETPOST('type_action','alpha') == '-1')
 		{
@@ -217,7 +217,7 @@ if (empty($reshook))
 	}
 
 
-	if ($action == 'deleterule' && ! empty($user->rights->advanceddiscount->write))
+	if ($action == 'deleterule' && $user->hasRight('advanceddiscount', 'write'))
 	{
 		$sqldelete = 'DELETE FROM '.MAIN_DB_PREFIX.'advanceddiscount_rules WHERE rowid = '.GETPOST('ruleid','int');
 		$resql = $db->query($sqldelete);
@@ -232,7 +232,7 @@ if (empty($reshook))
 		}
 	}
 
-	if ($action == 'deleteaction' && ! empty($user->rights->advanceddiscount->write))
+	if ($action == 'deleteaction' && $user->hasRight('advanceddiscount', 'write'))
 	{
 		$sqldelete = 'DELETE FROM '.MAIN_DB_PREFIX.'advanceddiscount_actions WHERE rowid = '.GETPOST('actionid','int');
 		$resql = $db->query($sqldelete);
@@ -478,7 +478,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	    // Send
             //print '<a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&action=presend&mode=init#formmailbeforetitle">' . $langs->trans('SendMail') . '</a>'."\n";
 
-    		if ($user->rights->advanceddiscount->write)
+    		if ($user->hasRight('advanceddiscount', 'write'))
     		{
     			print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=edit">'.$langs->trans("Modify").'</a>'."\n";
     		}
@@ -579,7 +579,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	print '<input type="text" class="maxwidth100" name="value_rule" value="'.GETPOST('value_rule','alpha').'">';
     	print '</td>';
     	print '<td>';
-    	print '<input type="submit" class="button" name="addrule"'.(empty($user->rights->advanceddiscount->write)?' disabled':'').' value="'.$langs->trans("Add").'">';
+    	print '<input type="submit" class="button" name="addrule"'.(!$user->hasRight('advanceddiscount', 'write')?' disabled':'').' value="'.$langs->trans("Add").'">';
     	print '</td>';
     	print '</tr>';
 
@@ -652,7 +652,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	print '<input type="text" class="maxwidth100" name="value_action" value="'.GETPOST('value_action','alpha').'">';
     	print '</td>';
     	print '<td>';
-    	print '<input type="submit" class="button" name="addaction"'.(empty($user->rights->advanceddiscount->write)?' disabled':'').' value="'.$langs->trans("Add").'">';
+    	print '<input type="submit" class="button" name="addaction"'.(!$user->hasRight('advanceddiscount', 'write')?' disabled':'').' value="'.$langs->trans("Add").'">';
     	print '</td>';
     	print '</tr>';
 

@@ -264,7 +264,7 @@ if ($action == 'create')
 	        print '</td><td>';
 	        //$array = array('ee'=>'rr');
 	        $include = 'hierarchyme';
-	        if (! empty($user->rights->justificativedocuments->justificativedocument->write_all)) $include = '';
+	        if ($user->hasRight('justificativedocuments', 'justificativedocument', 'write_all')) $include = '';
 	        print $form->select_dolusers($user->id, 'fk_user', 0, null, 0, $include);
 	        print '</td>';
 	        print '</tr>';
@@ -355,7 +355,7 @@ if (($id || $ref) && $action == 'edit')
 	        print '</td><td>';
 	        //$array = array('ee'=>'rr');
 	        $include = 'hierarchyme';
-	        if (! empty($user->rights->justificativedocuments->justificativedocument->write_all)) $include = '';
+	        if ($user->hasRight('justificativedocuments', 'justificativedocument', 'write_all')) $include = '';
 	        print $form->select_dolusers($object->fk_user, 'fk_user', 0, null, 0, $include);
 	        print '</td>';
 	        print '</tr>';
@@ -606,7 +606,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	    }
 
             // Modify
-    	    if ($object->status == $object::STATUS_DRAFT || $user->rights->justificativedocuments->justificativedocument->approve)    // User with permission to approve must be able to edit/fix and set reimbursed amount.
+    	    if ($object->status == $object::STATUS_DRAFT || $user->hasRight('justificativedocuments', 'justificativedocument', 'approve'))    // User with permission to approve must be able to edit/fix and set reimbursed amount.
     	    {
     	        if ($permissiontoadd)
         		{

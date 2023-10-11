@@ -79,7 +79,7 @@ class mod_justificativedocument_advanced extends ModeleNumRefjustificativedocume
 
 		// Parametrage du prefix
 		$texte.= '<tr><td>'.$langs->trans("Mask").':</td>';
-		$texte.= '<td class="right">'.$form->textwithpicto('<input type="text" class="flat" size="24" name="maskBom" value="'.$conf->global->BOM_ADVANCED_MASK.'">', $tooltip, 1, 1).'</td>';
+		$texte.= '<td class="right">'.$form->textwithpicto('<input type="text" class="flat" size="24" name="maskBom" value="' . getDolGlobalString('BOM_ADVANCED_MASK').'">', $tooltip, 1, 1).'</td>';
 
 		$texte.= '<td class="left" rowspan="2">&nbsp; <input type="submit" class="button" value="'.$langs->trans("Modify").'" name="Button"></td>';
 

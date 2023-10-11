@@ -185,7 +185,7 @@ class JustificativeDocument extends CommonObject
 		if (empty($conf->global->MAIN_SHOW_TECHNICAL_ID) && isset($this->fields['rowid'])) $this->fields['rowid']['visible']=0;
 		if (empty($conf->multicompany->enabled) && isset($this->fields['entity'])) $this->fields['entity']['enabled']=0;
 
-		if (! empty($user->rights->justificativedocuments->justificativedocument->approve)) {
+		if ($user->hasRight('justificativedocuments', 'justificativedocument', 'approve')) {
 		    $this->fields['percent_reimbursed']['visible'] = 1;
 		    $this->fields['percent_reimbursed']['noteditable'] = 0;
 		}
@@ -949,7 +949,7 @@ class JustificativeDocument extends CommonObject
 	    {
 	        $mybool = false;
 
-	        $file = $conf->global->JUSTIFICATIVEDOCUMENT_ADDON.".php";
+	        $file = getDolGlobalString('JUSTIFICATIVEDOCUMENT_ADDON') . ".php";
 	        $classname = $conf->global->JUSTIFICATIVEDOCUMENT_ADDON;
 
 	        // Include file with class

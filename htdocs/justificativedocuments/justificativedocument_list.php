@@ -251,7 +251,7 @@ foreach($search as $key => $val)
 	if ($search[$key] != '') $sql.=natural_search($key, $search[$key], (($key == 'status')?2:$mode_search));
 }
 if ($search_all) $sql.= natural_search(array_keys($fieldstosearchall), $search_all);
-if (empty($user->rights->justificativedocuments->justificativedocument->write_all)) {
+if (!$user->hasRight('justificativedocuments', 'justificativedocument', 'write_all')) {
     $sql .= " AND t.fk_user IN (".join(',', $childids).")";
 }
 //$sql.= dolSqlDateFilter("t.field", $search_xxxday, $search_xxxmonth, $search_xxxyear);
