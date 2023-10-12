@@ -383,7 +383,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	}
 
 	if (! $formconfirm) {
-	    $parameters = array('lineid' => $lineid);
+	    $parameters = array();
 	    $reshook = $hookmanager->executeHooks('formConfirm', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 	    if (empty($reshook)) $formconfirm.=$hookmanager->resPrint;
 	    elseif ($reshook > 0) $formconfirm=$hookmanager->resPrint;
@@ -489,7 +489,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
     		// Clone
     		if ($permissiontoadd) {
-    			print dolGetButtonAction($langs->trans("ToClone"), '', 'default', $_SERVER['PHP_SELF'].'?id='.$object->id.'&socid='.$object->socid.'&action=clone&object=advanced_discount', 'clone', $permissiontoadd);
+    			print dolGetButtonAction($langs->trans("ToClone"), '', 'default', $_SERVER['PHP_SELF'].'?id='.$object->id.'&action=clone&object=advanced_discount', 'clone', $permissiontoadd);
     		}
 
     		/*
