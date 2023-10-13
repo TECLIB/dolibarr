@@ -112,8 +112,8 @@ class modAdvancedDiscount extends DolibarrModules
 		$this->requiredby = array();	// List of module ids to disable if this one is disabled
 		$this->conflictwith = array();	// List of module class names as string this module is in conflict with
 		$this->langfiles = array("advanceddiscount@advanceddiscount");
-		$this->phpmin = array(5,3);					// Minimum version of PHP required by module
-		$this->need_dolibarr_version = array(11,0,-3);	// Minimum version of Dolibarr required by module
+		$this->phpmin = array(7,1);					// Minimum version of PHP required by module
+		$this->need_dolibarr_version = array(16,0,-3);	// Minimum version of Dolibarr required by module
 		$this->warnings_activation = array();                     // Warning to show when we activate module. array('always'='text') or array('FR'='textfr','ES'='textes'...)
 		$this->warnings_activation_ext = array();                 // Warning to show when we activate an external module. array('always'='text') or array('FR'='textfr','ES'='textes'...)
 		//$this->automatic_activation = array('FR'=>'AdvancedDiscountWasAutomaticallyActivatedBecauseOfYourCountryChoice');
