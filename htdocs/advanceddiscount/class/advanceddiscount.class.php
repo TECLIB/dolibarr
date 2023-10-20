@@ -53,6 +53,13 @@ class AdvancedDiscount extends CommonObject
 	 */
 	public $picto = 'advanceddiscount@advanceddiscount';
 
+	/**
+	 * @var array    List of child tables. To know object to delete on cascade.
+	 *               If name matches '@ClassNAme:FilePathClass;ParentFkFieldName' it will
+	 *               call method deleteByParentField(parentId, ParentFkFieldName) to fetch and delete child object
+	 */
+	//protected $childtablesoncascade = array('advanceddiscount_actions');
+
 
 	/**
 	 *  'type' if the field format.
@@ -314,6 +321,18 @@ class AdvancedDiscount extends CommonObject
 	 */
 	public function delete(User $user, $notrigger = false)
 	{
+		$sql = "DELETE FROM ".MAIN_DB_PREFIX."advanceddiscount_actions WHERE fk_advanceddiscount = ".((int) $this->id);
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			dol_print_error($this->db);
+		}
+
+		$sql = "DELETE FROM ".MAIN_DB_PREFIX."advanceddiscount_rules WHERE fk_advanceddiscount = ".((int) $this->id);
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			dol_print_error($this->db);
+		}
+
 		return $this->deleteCommon($user, $notrigger);
 	}
 

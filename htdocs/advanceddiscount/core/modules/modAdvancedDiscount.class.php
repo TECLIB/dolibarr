@@ -254,6 +254,7 @@ class modAdvancedDiscount extends DolibarrModules
 		$this->menu[$r++]=array(	'fk_menu'=>'fk_mainmenu=tools',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
 								'type'=>'left',			                // This is a Left menu entry
 								'titre'=>'DiscountsOrPromotions',
+								'prefix' => img_picto('', $this->picto, 'class="pictofixedwidth valignmiddle paddingright"'),
 								'mainmenu'=>'tools',
 								'leftmenu'=>'advanceddiscount',
 								'url'=>'/advanceddiscount/advanceddiscount_list.php',
@@ -266,6 +267,7 @@ class modAdvancedDiscount extends DolibarrModules
 		$this->menu[$r++]=array(	'fk_menu'=>'fk_mainmenu=tools,fk_leftmenu=advanceddiscount',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
 								'type'=>'left',			                // This is a Left menu entry
 								'titre'=>'List',
+								'prefix' => img_picto('', $this->picto, 'class="pictofixedwidth valignmiddle paddingright"'),
 								'mainmenu'=>'tools',
 								'leftmenu'=>'advanceddiscount_list',
 								'url'=>'/advanceddiscount/advanceddiscount_list.php',
