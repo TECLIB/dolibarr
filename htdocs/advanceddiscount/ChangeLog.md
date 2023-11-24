@@ -1,5 +1,9 @@
 # CHANGELOG ADVANCEDDISCOUNTS FOR <a href="https://www.dolibarr.org">DOLIBARR ERP CRM</a>
 
+## 1.3.1
+
+- Fix Support selection of discount on product category
+
 ## 1.3
 
 - NEW Support selection of discount on product category

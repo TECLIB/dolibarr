@@ -181,7 +181,7 @@ if (empty($reshook))
 			$rulenotfound=1;
 			foreach($object->arrayofrules as $rule)
 			{
-				if (in_array($rule['type'], array('containsproduct')))
+				if (in_array($rule['type'], array('containsproduct', 'productcategory')))
 				{
 					$rulenotfound=0;
 					break;
