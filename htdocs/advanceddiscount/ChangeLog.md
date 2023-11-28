@@ -1,8 +1,9 @@
-# CHANGELOG ADVANCEDDISCOUNTS FOR <a href="https://www.dolibarr.org">DOLIBARR ERP CRM</a>
+# CHANGELOG ADVANCED DISCOUNTS MODULE FOR <a href="https://www.dolibarr.org">DOLIBARR ERP CRM</a>
 
 ## 1.3.1
 
-- Fix Support selection of discount on product category
+- FIX Support selection of discount on product category
+- FIX Management of several discounts on the same object.
 
 ## 1.3
 
@@ -10,7 +11,7 @@
 
 ## 1.2
 
-- Fix error no default value for tms
+- FIX error no default value for tms
 
 ## 1.1
 
@@ -18,7 +19,7 @@
 
 ## 1.0.1
 
-- Fix error 500 when using categories
+- FIX error 500 when using categories
 
 ## 1.0
 
