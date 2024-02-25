@@ -76,7 +76,7 @@ class AdvancedDiscountApi extends DolibarrApi
      */
     function get($id)
     {
-		if(! DolibarrApiAccess::$user->rights->advanceddiscount->read) {
+		if (!DolibarrApiAccess::$user->hasRight('advanceddiscount', 'read')) {
 			throw new RestException(401);
 		}
 
@@ -119,13 +119,13 @@ class AdvancedDiscountApi extends DolibarrApi
         $restictonsocid = 0;	// Set to 1 if there is a field socid in table of object
 
         // If the internal user must only see his customers, force searching by him
-        if ($restictonsocid && ! DolibarrApiAccess::$user->rights->societe->client->voir && !$socid) $search_sale = DolibarrApiAccess::$user->id;
+        if ($restictonsocid && ! DolibarrApiAccess::$user->hasRight('societe', 'client', 'voir') && !$socid) $search_sale = DolibarrApiAccess::$user->id;
 
         $sql = "SELECT t.rowid";
-        if ($restictonsocid && (!DolibarrApiAccess::$user->rights->societe->client->voir && !$socid) || $search_sale > 0) $sql .= ", sc.fk_soc, sc.fk_user"; // We need these fields in order to filter by sale (including the case where the user can only see his prospects)
+        if ($restictonsocid && (!DolibarrApiAccess::$user->hasRight('societe', 'client', 'voir') && !$socid) || $search_sale > 0) $sql .= ", sc.fk_soc, sc.fk_user"; // We need these fields in order to filter by sale (including the case where the user can only see his prospects)
         $sql.= " FROM ".MAIN_DB_PREFIX."advanceddiscount_advanceddiscount as t";
 
-        if ($restictonsocid && (!DolibarrApiAccess::$user->rights->societe->client->voir && !$socid) || $search_sale > 0) $sql.= ", ".MAIN_DB_PREFIX."societe_commerciaux as sc"; // We need this table joined to the select in order to filter by sale
+        if ($restictonsocid && (!DolibarrApiAccess::$user->hasRight('societe', 'client', 'voir') && !$socid) || $search_sale > 0) $sql.= ", ".MAIN_DB_PREFIX."societe_commerciaux as sc"; // We need this table joined to the select in order to filter by sale
         $sql.= " WHERE 1 = 1";
 
 		// Example of use $mode
@@ -134,8 +134,8 @@ class AdvancedDiscountApi extends DolibarrApi
         $tmpobject = new AdvancedDiscount($db);
         if ($tmpobject->ismultientitymanaged) $sql.= ' AND t.entity IN ('.getEntity('advanceddiscount').')';
 
-        if ($restictonsocid && (!DolibarrApiAccess::$user->rights->societe->client->voir && !$socid) || $search_sale > 0) $sql.= " AND t.fk_soc = sc.fk_soc";
-        if ($restictonsocid && $socid) $sql.= " AND t.fk_soc = ".$socid;
+        if ($restictonsocid && (!DolibarrApiAccess::$user->hasRight('societe', 'client', 'voir') && !$socid) || $search_sale > 0) $sql.= " AND t.fk_soc = sc.fk_soc";
+        if ($restictonsocid && $socid) $sql.= " AND t.fk_soc = ".((int) $socid);
         if ($restictonsocid && $search_sale > 0) $sql.= " AND t.rowid = sc.fk_soc";		// Join for the needed table to filter by sale
         // Insert sale filter
         if ($restictonsocid && $search_sale > 0)
@@ -196,7 +196,7 @@ class AdvancedDiscountApi extends DolibarrApi
      */
     function post($request_data = NULL)
     {
-        if(! DolibarrApiAccess::$user->rights->advanceddiscount->create) {
+        if(! DolibarrApiAccess::$user->hasRight('advanceddiscount', 'create')) {
 			throw new RestException(401);
 		}
         // Check mandatory fields
@@ -222,7 +222,7 @@ class AdvancedDiscountApi extends DolibarrApi
      */
     function put($id, $request_data = NULL)
     {
-        if(! DolibarrApiAccess::$user->rights->advanceddiscount->create) {
+        if(! DolibarrApiAccess::$user->hasRight('advanceddiscount', 'create')) {
 			throw new RestException(401);
 		}
 
@@ -255,7 +255,7 @@ class AdvancedDiscountApi extends DolibarrApi
      */
     function delete($id)
     {
-        if (! DolibarrApiAccess::$user->rights->advanceddiscount->delete) {
+        if (! DolibarrApiAccess::$user->hasRight('advanceddiscount', 'delete')) {
 			throw new RestException(401);
 		}
         $result = $this->advanceddiscount->fetch($id);
