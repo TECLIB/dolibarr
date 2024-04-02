@@ -22,7 +22,7 @@
 if (empty($conf) || ! is_object($conf))
 {
 	print "Error, template page can't be called as URL";
-	exit;
+	exit(1);
 }
 
 include_once DOL_DOCUMENT_ROOT.'/product/class/html.formproduct.class.php';

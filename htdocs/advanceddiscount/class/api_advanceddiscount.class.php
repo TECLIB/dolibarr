@@ -86,7 +86,7 @@ class AdvancedDiscountApi extends DolibarrApi
         }
 
 		if( ! DolibarrApi::_checkAccessToResource('advanceddiscount',$this->advanceddiscount->id)) {
-			throw new RestException(401, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
+			throw new RestException(403, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
 		}
 
 		return $this->_cleanObjectDatas($this->advanceddiscount);
@@ -232,7 +232,7 @@ class AdvancedDiscountApi extends DolibarrApi
         }
 
 		if( ! DolibarrApi::_checkAccessToResource('advanceddiscount',$this->advanceddiscount->id)) {
-			throw new RestException(401, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
+			throw new RestException(403, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
 		}
 
         foreach($request_data as $field => $value) {
@@ -264,7 +264,7 @@ class AdvancedDiscountApi extends DolibarrApi
         }
 
 		if (! DolibarrApi::_checkAccessToResource('advanceddiscount',$this->advanceddiscount->id)) {
-			throw new RestException(401, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
+			throw new RestException(403, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
 		}
 
 		if (! $this->advanceddiscount->delete(DolibarrApiAccess::$user, 0))
