@@ -38,10 +38,12 @@ class mod_project_teclib extends ModeleNumRefProjects
 
 
     /**
-     *  \brief      Renvoi la description du modele de numerotation
-     *  \return     string      Texte descripif
-     */
-	function info()
+	 *  Return description of numbering module
+	 *
+	 *	@param	Translate	$langs      Lang object to use for output
+	 *  @return string      			Descriptive text
+	 */
+	public function info($langs)
     {
     	global $langs;
 
