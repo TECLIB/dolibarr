@@ -53,8 +53,6 @@ $confirm=GETPOST('confirm', 'alpha');
 $actionsave=GETPOST('save', 'alpha');
 
 $modules = array();
-//if ($conf->fournisseur->enabled) $modules['supplier_orders']='SuppliersOrders';
-//if ($conf->fournisseur->enabled) $modules['supplier_invoices']='SuppliersInvoices';
 
 
 /*

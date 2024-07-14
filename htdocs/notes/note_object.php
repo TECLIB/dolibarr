@@ -147,7 +147,9 @@ llxHeader();
 
 if ($id > 0)
 {
-    if ($conf->notification->enabled) $langs->load("mails");
+	if (isModEnabled('notification')) {
+		$langs->load("mails");
+	}
 
     if ($item_type == 'facture')
     {

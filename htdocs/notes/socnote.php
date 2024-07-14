@@ -119,13 +119,16 @@ if ($action=="add_note" && $usercancreate)
  */
 
 $title=$langs->trans("ThirdParty");
-if (! empty($conf->global->MAIN_HTML_TITLE) && preg_match('/thirdpartynameonly/',$conf->global->MAIN_HTML_TITLE) && $societe->name) $title=$societe->name;
+if (getDolGlobalString('MAIN_HTML_TITLE') && preg_match('/thirdpartynameonly/', getDolGlobalString('MAIN_HTML_TITLE')) && $societe->name) {
+	$title=$societe->name;
+}
 
 llxHeader('', $title);
 
-if ($socid > 0)
-{
-	if ($conf->notification->enabled) $langs->load("mails");
+if ($socid > 0) {
+	if (isModEnabled('notification')) {
+		$langs->load("mails");
+	}
 
 	$head = societe_prepare_head($societe);
 
