@@ -281,7 +281,7 @@ if ($action == 'create')
     	    print '</td>';
     	    print '<td>';
     	    if (in_array($val['type'], array('int', 'integer'))) $value = GETPOST($key, 'int');
-    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOST($key, 'none');
+    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOST($key, 'restricthtml');
     	    else $value = GETPOST($key, 'alpha');
     	    print $object->showInputField($val, $key, $value, '', '', '', 0);
     	    print '</td>';
@@ -370,7 +370,7 @@ if (($id || $ref) && $action == 'edit')
     	    print '</td>';
     	    print '<td>';
     	    if (in_array($val['type'], array('int', 'integer'))) $value = GETPOSTISSET($key)?GETPOST($key, 'int'):$object->$key;
-    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOSTISSET($key)?GETPOST($key, 'none'):$object->$key;
+    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOSTISSET($key)?GETPOST($key, 'restricthtml'):$object->$key;
     	    else $value = GETPOSTISSET($key)?GETPOST($key, 'alpha'):$object->$key;
     	    //var_dump($val.' '.$key.' '.$value);
     	    if ($val['noteditable']) print $object->showOutputField($val, $key, $value, '', '', '', 0);
