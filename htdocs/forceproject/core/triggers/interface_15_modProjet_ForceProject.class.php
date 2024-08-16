@@ -579,7 +579,7 @@ class InterfaceForceProject extends DolibarrTriggers
                 $thirdparty->fetch($object->socid);
 
                 $defaultref='';
-                $modele = empty($conf->global->PROJECT_ADDON)?'mod_project_simple':$conf->global->PROJECT_ADDON;
+                $modele = getDolGlobalString('PROJECT_ADDON', 'mod_project_simple');
 
                 // Search template files
                 $file=''; $classname=''; $filefound=0;
