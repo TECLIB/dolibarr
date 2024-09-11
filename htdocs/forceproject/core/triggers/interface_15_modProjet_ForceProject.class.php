@@ -142,11 +142,11 @@ class InterfaceForceProject extends DolibarrTriggers
 	            	$obj=$this->db->fetch_object($resql);
 	            	$newref=$obj->ref;
 	            	$newref=preg_replace('/projectref/',$projectref,$newref);
-	            	$newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
+	            	$newref=preg_replace('/\{PROJECTREF\-[0-9]+\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
 	            	$newref=preg_replace('/%%+/',$projectref,$newref);
 
 	            	// If this is the first time we set the counter and we want the counter to start to 1 for each project
-	            	// The tag {PROJECTREF\-[1-9]\} must be present into ref numbering mask to have this working.
+	            	// The tag {PROJECTREF\-[0-9]+\} must be present into ref numbering mask to have this working.
 	            	if (preg_match('/\(PROV/', $object->ref))
 	            	{
 	            		if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT)) {
@@ -156,7 +156,7 @@ class InterfaceForceProject extends DolibarrTriggers
 
 			            	$savmask=$conf->global->PROPALE_SAPHIR_MASK;
 			            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/projectref/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);	// For proposal, counter is started to 1 for each project
-			            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);
+			            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/\{PROJECTREF\-[0-9]+\}/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);
 			            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/%%+/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);
 			            	//var_dump($conf->global->PROPALE_SAPHIR_MASK);
 			            	$newref=$object->getNextNumRef($object->thirdparty);
@@ -288,11 +288,11 @@ class InterfaceForceProject extends DolibarrTriggers
 	            	$obj=$this->db->fetch_object($resql);
 	            	$newref=$obj->ref;
 	            	$newref=preg_replace('/projectref/',$projectref,$newref);
-	            	$newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
+	            	$newref=preg_replace('/\{PROJECTREF\-[0-9]+\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
 	            	$newref=preg_replace('/%%+/',$projectref,$newref);
 
 	            	// If this is the first time we set the counter and we want the counter to start to 1 for each project
-	            	// The tag {PROJECTREF\-[1-9]\} must be present into ref numbering mask to have this working.
+	            	// The tag {PROJECTREF\-[0-9]+\} must be present into ref numbering mask to have this working.
 	            	if (preg_match('/\(PROV/', $object->ref))
 	            	{
 	            		if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT)) {
@@ -302,7 +302,7 @@ class InterfaceForceProject extends DolibarrTriggers
 
 			            	$savmask=$conf->global->COMMANDE_SAPHIR_MASK;
 			            	$conf->global->COMMANDE_SAPHIR_MASK=preg_replace('/projectref/',$projectref,$conf->global->COMMANDE_SAPHIR_MASK);
-			            	$conf->global->COMMANDE_SAPHIR_MASK=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->COMMANDE_SAPHIR_MASK);
+			            	$conf->global->COMMANDE_SAPHIR_MASK=preg_replace('/\{PROJECTREF\-[0-9]+\}/',$projectref,$conf->global->COMMANDE_SAPHIR_MASK);
 			            	$conf->global->COMMANDE_SAPHIR_MASK=preg_replace('/%%+/',$projectref,$conf->global->COMMANDE_SAPHIR_MASK);
 			            	$newref=$object->getNextNumRef($object->thirdparty);
 			            	//$newref=$projectref.substr($newref,7);
@@ -398,7 +398,7 @@ class InterfaceForceProject extends DolibarrTriggers
                     $obj=$this->db->fetch_object($resql);
                     $newref=$obj->ref;
                     $newref=preg_replace('/projectref/',$projectref,$newref);
-                    $newref=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
+                    $newref=preg_replace('/\{PROJECTREF\-[0-9]+\}/',$projectref,$newref);  // When mask is  ...{PROJECTREF-9}... for example
                     $newref=preg_replace('/%%+/',$projectref,$newref);
 
                     // If this is the first time we set the counter and we want the counter to start to 1 for each project
@@ -414,7 +414,7 @@ class InterfaceForceProject extends DolibarrTriggers
 
 	                        	$savmask=$conf->global->FACTURE_MERCURE_MASK_REPLACEMENT;
 	                            $conf->global->FACTURE_MERCURE_MASK_REPLACEMENT=preg_replace('/projectref/',$projectref,$conf->global->FACTURE_MERCURE_MASK_REPLACEMENT);
-	                            $conf->global->FACTURE_MERCURE_MASK_REPLACEMENT=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_REPLACEMENT);
+	                            $conf->global->FACTURE_MERCURE_MASK_REPLACEMENT=preg_replace('/\{PROJECTREF\-[0-9]+\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_REPLACEMENT);
 	                            $conf->global->FACTURE_MERCURE_MASK_REPLACEMENT=preg_replace('/%%+/',$projectref,$conf->global->FACTURE_MERCURE_MASK_REPLACEMENT);
 	                            $newref=$object->getNextNumRef($object->thirdparty);
 	                            //$newref=$projectref.substr($newref,7);
@@ -429,7 +429,7 @@ class InterfaceForceProject extends DolibarrTriggers
 
 	                            $savmask=$conf->global->FACTURE_MERCURE_MASK_CREDIT;
 	                            $conf->global->FACTURE_MERCURE_MASK_CREDIT=preg_replace('/projectref/',$projectref,$conf->global->FACTURE_MERCURE_MASK_CREDIT);
-	                            $conf->global->FACTURE_MERCURE_MASK_CREDIT=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_CREDIT);
+	                            $conf->global->FACTURE_MERCURE_MASK_CREDIT=preg_replace('/\{PROJECTREF\-[0-9]+\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_CREDIT);
 	                            $conf->global->FACTURE_MERCURE_MASK_CREDIT=preg_replace('/%%+/',$projectref,$conf->global->FACTURE_MERCURE_MASK_CREDIT);
 	                            $newref=$object->getNextNumRef($object->thirdparty);
 	                            //$newref=$projectref.substr($newref,7);
@@ -444,7 +444,7 @@ class InterfaceForceProject extends DolibarrTriggers
 
 	                            $savmask=$conf->global->FACTURE_MERCURE_MASK_DEPOSIT;
 	                            $conf->global->FACTURE_MERCURE_MASK_DEPOSIT=preg_replace('/projectref/',$projectref,$conf->global->FACTURE_MERCURE_MASK_DEPOSIT);
-	                            $conf->global->FACTURE_MERCURE_MASK_DEPOSIT=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_DEPOSIT);
+	                            $conf->global->FACTURE_MERCURE_MASK_DEPOSIT=preg_replace('/\{PROJECTREF\-[0-9]+\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_DEPOSIT);
 	                            $conf->global->FACTURE_MERCURE_MASK_DEPOSIT=preg_replace('/%%+/',$projectref,$conf->global->FACTURE_MERCURE_MASK_DEPOSIT);
 	                            $newref=$object->getNextNumRef($object->thirdparty);
 	                            //$newref=$projectref.substr($newref,7);
@@ -459,7 +459,7 @@ class InterfaceForceProject extends DolibarrTriggers
 
 	                            $savmask=$conf->global->FACTURE_MERCURE_MASK_INVOICE;
 	                            $conf->global->FACTURE_MERCURE_MASK_INVOICE=preg_replace('/projectref/',$projectref,$conf->global->FACTURE_MERCURE_MASK_INVOICE);
-	                            $conf->global->FACTURE_MERCURE_MASK_INVOICE=preg_replace('/\{PROJECTREF\-[1-9]\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_INVOICE);
+	                            $conf->global->FACTURE_MERCURE_MASK_INVOICE=preg_replace('/\{PROJECTREF\-[0-9]+\}/',$projectref,$conf->global->FACTURE_MERCURE_MASK_INVOICE);
 	                            $conf->global->FACTURE_MERCURE_MASK_INVOICE=preg_replace('/%%+/',$projectref,$conf->global->FACTURE_MERCURE_MASK_INVOICE);
 	                            $newref=$object->getNextNumRef($object->thirdparty);
 	                            //$newref=$projectref.substr($newref,7);
