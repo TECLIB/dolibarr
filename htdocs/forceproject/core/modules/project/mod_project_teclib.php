@@ -53,8 +53,9 @@ class mod_project_teclib extends ModeleNumRefProjects
     }
 
     /**
-     *  \brief      Renvoi un exemple de numerotation
-     *  \return     string      Example
+     *  Return an example of ref
+     *
+     *  @param	string      Example
      */
     function getExample()
     {
