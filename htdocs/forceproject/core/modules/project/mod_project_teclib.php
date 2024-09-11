@@ -58,7 +58,7 @@ class mod_project_teclib extends ModeleNumRefProjects
      */
     function getExample()
     {
-		return "CCCC-001";
+		return "CCCCCC-001";
     }
 
    /**
@@ -80,11 +80,11 @@ class mod_project_teclib extends ModeleNumRefProjects
 
 			$filteronentity = false;
 
-			$oldmask='{cccc}-{00}';
+			$oldmask='{cccccc}-{00}';
 			//$customercode=$objsoc->code_client;
 			$numFinalOld = get_next_value($db, $oldmask, 'projet', 'ref', " AND (fk_soc = ".$objsoc->id." OR ref LIKE '".$objsoc->code_client."-__')", $objsoc, '', 'next', $filteronentity);
 
-			$mask='{cccc}-{000}';
+			$mask='{cccccc}-{000}';
 			//$customercode=$objsoc->code_client;
 			$numFinalNew = get_next_value($db, $mask, 'projet', 'ref', " AND (fk_soc = ".$objsoc->id." OR ref LIKE '".$objsoc->code_client."-___')", $objsoc, '', 'next', $filteronentity);
 
