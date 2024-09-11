@@ -402,7 +402,7 @@ class InterfaceForceProject extends DolibarrTriggers
                     $newref=preg_replace('/%%+/',$projectref,$newref);
 
                     // If this is the first time we set the counter and we want the counter to start to 1 for each project
-                    // The tag {PROJECTREF\-[1-9]\} must be present into ref numbering mask to have this working.
+                    // The tag {PROJECTREF\-[0-9]+\} must be present into ref numbering mask to have this working.
                     if (preg_match('/\(PROV/', $object->ref))
                     {
                     	if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT)) {
