@@ -55,7 +55,7 @@ $ref = GETPOST('ref', 'alpha');
 
 // Get parameters
 $sortfield = GETPOST("sortfield", 'alpha');
-$sortorder = GETPOST("sortorder", 'alpha');
+$sortorder = GETPOST('sortorder', 'aZ09comma');
 $page = GETPOSTISSET('pageplusone') ? (GETPOST('pageplusone') - 1) : GETPOST("page", 'int');
 if (empty($page) || $page == -1) { $page = 0; }     // If $page is not defined, or '' or -1
 $offset = $conf->liste_limit * $page;
@@ -85,6 +85,8 @@ $upload_dir = preg_replace('/\/[0-9]+\/justificativedocuments/', '/justificative
 //if ($user->societe_id > 0) accessforbidden();
 //if ($user->societe_id > 0) $socid = $user->societe_id;
 //$result = restrictedArea($user, 'justificativedocuments', $object->id);
+
+$permissiontoadd = $user->rights->justificativedocuments->justificativedocument->write; 	// Used by the include of actions_addupdatedelete.inc.php// Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
 
 
 

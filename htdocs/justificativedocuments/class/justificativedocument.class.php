@@ -84,7 +84,7 @@ class JustificativeDocument extends CommonObject
 	 *  'help' is a string visible as a tooltip on field
 	 *  'comment' is not used. You can store here any text of your choice. It is not used by application.
 	 *  'showoncombobox' if value of the field must be visible into the label of the combobox that list record
-	 *  'arraykeyval' to set list of value if type is a list of predefined values. For example: array("0"=>"Draft","1"=>"Active","-1"=>"Cancel")
+	 *  'arrayofkeyval' to set list of value if type is a list of predefined values. For example: array("0"=>"Draft","1"=>"Active","-1"=>"Cancel")
 	 *  'disabled' is 1 if we want to have the field locked by a 'disabled' attribute. In most cases, this is never set into the definition of $fields into class, but is set dynamically by some part of code.
 	 */
 
@@ -93,44 +93,47 @@ class JustificativeDocument extends CommonObject
 	 * @var array  Array with all fields and their property. Do not use it as a static var. It may be modified by constructor.
 	 */
 	public $fields=array(
-		'rowid' => array('type'=>'integer', 'label'=>'TechnicalID', 'enabled'=>1, 'position'=>1, 'notnull'=>1, 'visible'=>-1, 'index'=>1, 'comment'=>"Id"),
-	    'entity' => array('type'=>'integer', 'label'=>'Entity', 'enabled'=>1, 'visible'=>0, 'notnull'=>1, 'default'=>1, 'index'=>1, 'position'=>5),
-	    'ref' => array('type'=>'varchar(128)', 'label'=>'Ref', 'enabled'=>1, 'position'=>10, 'notnull'=>1, 'visible'=>4, 'noteditable'=>'1', 'default'=>'(PROV)', 'index'=>1, 'searchall'=>1, 'showoncombobox'=>'1', 'comment'=>"Reference of object"),
-	    'fk_type' => array('type'=>'integer:JustificativeType:justificativedocuments/class/justificativetype.class.php:0:active=1', 'label'=>'Type', 'enabled'=>1, 'position'=>20, 'notnull'=>1, 'visible'=>1,),
-	    'date_start' => array('type'=>'date', 'label'=>'DateStart', 'enabled'=>1, 'position'=>30, 'notnull'=>0, 'visible'=>1,),
-	    'date_end' => array('type'=>'date', 'label'=>'DateEnd', 'enabled'=>1, 'position'=>32, 'notnull'=>0, 'visible'=>1,),
-	    'amount' => array('type'=>'price', 'label'=>'Amount', 'enabled'=>1, 'visible'=>1, 'isameasure'=>1, 'position'=>35),
-	    'percent_reimbursed' => array('type'=>'double(24,8)', 'label'=>'PercentReimbursed', 'enabled'=>1, 'visible'=>5, 'noteditable'=>1, 'position'=>35),
-	    'fk_user' => array('type'=>'integer:User:user/class/user.class.php:0:statut=1 AND entity IN (__SHARED_ENTITIES__)', 'label'=>'User', 'enabled'=>1, 'position'=>35, 'notnull'=>1, 'visible'=>1, 'foreignkey'=>'user.rowid',),
-	    //'fk_project' => array('type'=>'integer:Project:projet/class/project.class.php:1', 'label'=>'Project', 'enabled'=>1, 'position'=>52, 'notnull'=>-1, 'visible'=>-1, 'index'=>1),
-		'note_public' => array('type'=>'html', 'label'=>'NotePublic', 'enabled'=>1, 'position'=>61, 'notnull'=>-1, 'visible'=>0,),
-		'note_private' => array('type'=>'html', 'label'=>'NotePrivate', 'enabled'=>1, 'position'=>62, 'notnull'=>-1, 'visible'=>0,),
-		'date_creation' => array('type'=>'datetime', 'label'=>'DateCreation', 'enabled'=>1, 'position'=>500, 'notnull'=>1, 'visible'=>-2,),
-		'tms' => array('type'=>'timestamp', 'label'=>'DateModification', 'enabled'=>1, 'position'=>501, 'notnull'=>-1, 'visible'=>-2,),
-	    'date_validation' => array('type'=>'datetime',     'label'=>'DateValidation',     'enabled'=>1, 'visible'=>-2, 'position'=>502),
-	    'fk_user_creat' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserAuthor', 'enabled'=>1, 'position'=>510, 'notnull'=>1, 'visible'=>-2, 'foreignkey'=>'user.rowid',),
-		'fk_user_modif' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserModif', 'enabled'=>1, 'position'=>511, 'notnull'=>-1, 'visible'=>-2,),
-		'fk_user_valid' => array('type'=>'integer:User:user/class/user.class.php',      'label'=>'UserValidation',        'enabled'=>1, 'visible'=>-2, 'position'=>512),
-	    'description' => array('type'=>'text', 'label'=>'Description', 'enabled'=>1, 'position'=>1000, 'notnull'=>-1, 'visible'=>3,),
-	    'import_key' => array('type'=>'varchar(14)', 'label'=>'ImportId', 'enabled'=>1, 'position'=>1000, 'notnull'=>-1, 'visible'=>-2,),
-	    'status' => array('type'=>'integer', 'label'=>'Status', 'enabled'=>1, 'position'=>1000, 'notnull'=>1, 'default'=>0, 'visible'=>2, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Draft', '1'=>'Validated', '2'=>'Approved', '9'=>'Canceled'),),
+		'rowid' => array('type'=>'integer', 'label'=>'TechnicalID', 'enabled'=>'1', 'position'=>1, 'notnull'=>1, 'visible'=>0, 'index'=>1, 'comment'=>"Id"),
+		'entity' => array('type'=>'integer', 'label'=>'Entity', 'enabled'=>'1', 'position'=>5, 'notnull'=>1, 'visible'=>0, 'default'=>'1', 'index'=>1,),
+		'ref' => array('type'=>'varchar(128)', 'label'=>'Ref', 'enabled'=>'1', 'position'=>10, 'notnull'=>1, 'visible'=>4, 'noteditable'=>'1', 'default'=>'(PROV)', 'index'=>1, 'searchall'=>1, 'showoncombobox'=>'1', 'comment'=>"Reference of object"),
+		'fk_type' => array('type'=>'integer:JustificativeType:justificativedocuments/class/justificativetype.class.php:0:(active:=:1)', 'label'=>'Type', 'enabled'=>'1', 'position'=>20, 'notnull'=>1, 'visible'=>1,),
+		'date_start' => array('type'=>'date', 'label'=>'DateStart', 'enabled'=>'1', 'position'=>30, 'notnull'=>0, 'visible'=>1,),
+		'date_end' => array('type'=>'date', 'label'=>'DateEnd', 'enabled'=>'1', 'position'=>32, 'notnull'=>0, 'visible'=>1,),
+		'amount' => array('type'=>'price', 'label'=>'Amount', 'enabled'=>'1', 'position'=>35, 'notnull'=>0, 'visible'=>1, 'isameasure'=>'1',),
+		'percent_reimbursed' => array('type'=>'double(24,8)', 'label'=>'PercentReimbursed', 'enabled'=>'1', 'position'=>35, 'notnull'=>0, 'visible'=>1,),
+		'fk_user' => array('type'=>'integer:User:user/class/user.class.php:0:((statut:=:1) AND (entity:IN:__SHARED_ENTITIES__))', 'label'=>'User', 'enabled'=>'1', 'position'=>35, 'notnull'=>1, 'visible'=>1, 'foreignkey'=>'user.rowid',),
+		'note_public' => array('type'=>'html', 'label'=>'NotePublic', 'enabled'=>'1', 'position'=>61, 'notnull'=>-1, 'visible'=>0,),
+		'note_private' => array('type'=>'html', 'label'=>'NotePrivate', 'enabled'=>'1', 'position'=>62, 'notnull'=>-1, 'visible'=>0,),
+		'date_creation' => array('type'=>'datetime', 'label'=>'DateCreation', 'enabled'=>'1', 'position'=>500, 'notnull'=>1, 'visible'=>-2,),
+		'tms' => array('type'=>'timestamp', 'label'=>'DateModification', 'enabled'=>'1', 'position'=>501, 'notnull'=>-1, 'visible'=>-2,),
+		'date_validation' => array('type'=>'datetime', 'label'=>'DateValidation', 'enabled'=>'1', 'position'=>502, 'notnull'=>0, 'visible'=>-2,),
+		'fk_user_creat' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserAuthor', 'enabled'=>'1', 'position'=>510, 'notnull'=>1, 'visible'=>-2, 'foreignkey'=>'user.rowid',),
+		'fk_user_modif' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserModif', 'enabled'=>'1', 'position'=>511, 'notnull'=>-1, 'visible'=>-2,),
+		'fk_user_valid' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserValidation', 'enabled'=>'1', 'position'=>512, 'notnull'=>0, 'visible'=>-2,),
+		'description' => array('type'=>'text', 'label'=>'Description', 'enabled'=>'1', 'position'=>1000, 'notnull'=>-1, 'visible'=>3,),
+		'import_key' => array('type'=>'varchar(14)', 'label'=>'ImportId', 'enabled'=>'1', 'position'=>1000, 'notnull'=>-1, 'visible'=>-2,),
+		'status' => array('type'=>'integer', 'label'=>'Status', 'enabled'=>'1', 'position'=>1000, 'notnull'=>1, 'visible'=>2, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Brouillon', '1'=>'Valid&eacute;', '2'=>'Approuv&eacute;', '9'=>'Annul&eacute;'),),
 	);
 	public $rowid;
+	public $entity;
 	public $ref;
-	public $fk_project;
-	public $description;
+	public $fk_type;
+	public $date_start;
+	public $date_end;
+	public $amount;
+	public $percent_reimbursed;
+	public $fk_user;
 	public $note_public;
 	public $note_private;
 	public $date_creation;
 	public $tms;
-	public $fk_user;
+	public $date_validation;
 	public $fk_user_creat;
 	public $fk_user_modif;
+	public $fk_user_valid;
+	public $description;
 	public $import_key;
 	public $status;
-	public $fk_type;
-	public $date_start;
-	public $date_end;
 	// END MODULEBUILDER PROPERTIES
 
 
@@ -182,7 +185,7 @@ class JustificativeDocument extends CommonObject
 		if (empty($conf->global->MAIN_SHOW_TECHNICAL_ID) && isset($this->fields['rowid'])) $this->fields['rowid']['visible']=0;
 		if (empty($conf->multicompany->enabled) && isset($this->fields['entity'])) $this->fields['entity']['enabled']=0;
 
-		if ($user->rights->justificativedocuments->justificativedocument->approve) {
+		if ($user->hasRight('justificativedocuments', 'justificativedocument', 'approve')) {
 		    $this->fields['percent_reimbursed']['visible'] = 1;
 		    $this->fields['percent_reimbursed']['noteditable'] = 0;
 		}
@@ -199,7 +202,7 @@ class JustificativeDocument extends CommonObject
 		// Translate some data of arrayofkeyval
 		foreach($this->fields as $key => $val)
 		{
-			if (is_array($val['arrayofkeyval']))
+			if (!empty($val['arrayofkeyval']) && is_array($val['arrayofkeyval']))
 			{
 				foreach($val['arrayofkeyval'] as $key2 => $val2)
 				{
@@ -347,14 +350,12 @@ class JustificativeDocument extends CommonObject
 	 * @param  string      $sortfield    Sort field
 	 * @param  int         $limit        limit
 	 * @param  int         $offset       Offset
-	 * @param  array       $filter       Filter array. Example array('field'=>'valueforlike', 'customurl'=>...)
+	 * @param  string      $filter       Filter USF.
 	 * @param  string      $filtermode   Filter mode (AND or OR)
 	 * @return array|int                 int <0 if KO, array of pages if OK
 	 */
-	public function fetchAll($sortorder = '', $sortfield = '', $limit = 0, $offset = 0, array $filter = array(), $filtermode = 'AND')
+	public function fetchAll($sortorder = '', $sortfield = '', $limit = 0, $offset = 0, $filter = '', $filtermode = 'AND')
 	{
-		global $conf;
-
 		dol_syslog(__METHOD__, LOG_DEBUG);
 
 		$records=array();
@@ -368,14 +369,11 @@ class JustificativeDocument extends CommonObject
 		$sqlwhere = array();
 		if (count($filter) > 0) {
 			foreach ($filter as $key => $value) {
-				if ($key=='t.rowid') {
-					$sqlwhere[] = $key . '='. $value;
+				if ($key == 't.rowid') {
+					$sqlwhere[] = $key . ' = '. (int) $value;
 				}
 				elseif (strpos($key, 'date') !== false) {
 					$sqlwhere[] = $key.' = \''.$this->db->idate($value).'\'';
-				}
-				elseif ($key=='customsql') {
-					$sqlwhere[] = $value;
 				}
 				else {
 					$sqlwhere[] = $key . ' LIKE \'%' . $this->db->escape($value) . '%\'';
@@ -515,7 +513,7 @@ class JustificativeDocument extends CommonObject
 	    $sql .= " status = ".self::STATUS_VALIDATED.",";
 	    $sql .= " date_validation = '".$this->db->idate($now)."',";
 	    $sql .= " fk_user_valid = ".$user->id;
-	    $sql .= " WHERE rowid = ".$this->id;
+	    $sql .= " WHERE rowid = ".((int) $this->id);
 
 	    dol_syslog(get_class($this)."::validate()", LOG_DEBUG);
 	    $resql = $this->db->query($sql);
@@ -725,7 +723,7 @@ class JustificativeDocument extends CommonObject
         {
             // Add param to save lastsearch_values or not
             $add_save_lastsearch_values=($save_lastsearch_value == 1 ? 1 : 0);
-            if ($save_lastsearch_value == -1 && preg_match('/list\.php/', $_SERVER["PHP_SELF"])) $add_save_lastsearch_values=1;
+            if ($save_lastsearch_value == -1 && isset($_SERVER["PHP_SELF"]) && preg_match('/list\.php/', $_SERVER["PHP_SELF"])) $add_save_lastsearch_values=1;
             if ($add_save_lastsearch_values) $url.='&save_lastsearch_values=1';
         }
 
@@ -816,38 +814,21 @@ class JustificativeDocument extends CommonObject
 		$sql = 'SELECT rowid, date_creation as datec, tms as datem,';
 		$sql.= ' fk_user_creat, fk_user_modif';
 		$sql.= ' FROM '.MAIN_DB_PREFIX.$this->table_element.' as t';
-		$sql.= ' WHERE t.rowid = '.$id;
+		$sql.= ' WHERE t.rowid = '.((int) $id);
 		$result=$this->db->query($sql);
 		if ($result)
 		{
 			if ($this->db->num_rows($result))
 			{
 				$obj = $this->db->fetch_object($result);
+
 				$this->id = $obj->rowid;
-				if ($obj->fk_user_author)
-				{
-					$cuser = new User($this->db);
-					$cuser->fetch($obj->fk_user_author);
-					$this->user_creation   = $cuser;
-				}
 
-				if ($obj->fk_user_valid)
-				{
-					$vuser = new User($this->db);
-					$vuser->fetch($obj->fk_user_valid);
-					$this->user_validation = $vuser;
-				}
-
-				if ($obj->fk_user_cloture)
-				{
-					$cluser = new User($this->db);
-					$cluser->fetch($obj->fk_user_cloture);
-					$this->user_cloture   = $cluser;
-				}
+				$this->user_creation_id = $obj->fk_user_author;
+				$this->user_modification_id   = $obj->fk_user_modif;
 
 				$this->date_creation     = $this->db->jdate($obj->datec);
 				$this->date_modification = $this->db->jdate($obj->datem);
-				$this->date_validation   = $this->db->jdate($obj->datev);
 			}
 
 			$this->db->free($result);
@@ -914,8 +895,8 @@ class JustificativeDocument extends CommonObject
 		if (! dol_strlen($modele)) {
 			$modele = 'standard';
 
-			if ($this->modelpdf) {
-				$modele = $this->modelpdf;
+			if ($this->model_pdf) {
+				$modele = $this->model_pdf;
 			} elseif (! empty($conf->global->JUSTIFICATIVEDOCUMENT_ADDON_PDF)) {
 				$modele = $conf->global->JUSTIFICATIVEDOCUMENT_ADDON_PDF;
 			}
@@ -946,7 +927,7 @@ class JustificativeDocument extends CommonObject
 	    {
 	        $mybool = false;
 
-	        $file = $conf->global->JUSTIFICATIVEDOCUMENT_ADDON.".php";
+	        $file = getDolGlobalString('JUSTIFICATIVEDOCUMENT_ADDON') . ".php";
 	        $classname = $conf->global->JUSTIFICATIVEDOCUMENT_ADDON;
 
 	        // Include file with class
@@ -992,7 +973,6 @@ class JustificativeDocument extends CommonObject
 	 *
 	 * @return	int			0 if OK, <>0 if KO (this function is used also by cron so only 0 is OK)
 	 */
-	//public function doScheduledJob($param1, $param2, ...)
 	public function doScheduledJob()
 	{
 		global $conf, $langs;

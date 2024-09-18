@@ -493,7 +493,7 @@ class InterfaceECommerceng
                     $remote_parent_id=$obj->remote_parent_id;
                     $remote_id=$obj->remote_id;
                     // Update all record that are under the one deleted to have a parent that is over the one deleted
-                    $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_category SET last_update = NULL, remote_parent_id = ".$remote_parent_id." WHERE remote_parent_id = ".$remote_id;
+                    $sql = "UPDATE ".MAIN_DB_PREFIX."ecommerce_category SET last_update = NULL, remote_parent_id = ".$remote_parent_id." WHERE remote_parent_id = ".((int) $remote_id);
                     $resql=$this->db->query($sql);
                     if (! $resql)
                     {

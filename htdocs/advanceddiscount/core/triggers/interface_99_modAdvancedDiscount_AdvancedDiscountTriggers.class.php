@@ -190,8 +190,13 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 		        $parentobject->update_price(0, 'none', 1);
 		        //var_dump($parentobject->total_ht);
 
-		        // Get all valid promotion
-				$sql = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'advanceddiscount_advanceddiscount';
+		        $defaultvatrate = get_default_tva($mysoc, $parentobject->thirdparty);
+		        $defaultlocaltaxrate1 = get_default_localtax($mysoc, $parentobject->thirdparty, 1);
+		        $defaultlocaltaxrate2 = get_default_localtax($mysoc, $parentobject->thirdparty, 2);
+
+
+		        // Get all valid promotions
+				$sql = 'SELECT rowid, ref FROM '.MAIN_DB_PREFIX.'advanceddiscount_advanceddiscount';
 				$sql.= " WHERE (date_start <= '".$this->db->idate($now)."' OR date_start IS NULL) AND (date_end >= '".$this->db->idate($now)."' OR date_end IS NULL)";
 		        $resql=$this->db->query($sql);
 		        if ($resql)
@@ -203,9 +208,9 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 		        	$num_rows = $this->db->num_rows($resql);
 		        	$i=0;
 
-		        	while ($i < $num_rows)
-		        	{
-		        		$obj=$this->db->fetch_object($resql);
+		        	// Loop on each discount
+		        	while ($i < $num_rows) {
+		        		$obj = $this->db->fetch_object($resql);
 
 		        		$advanceddiscount = new AdvancedDiscount($this->db);
 		        		$advanceddiscount->fetch($obj->rowid);
@@ -245,6 +250,22 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 							        $ispromotionqualified++;
 							    }
 							}
+							elseif ($rules['type'] == 'productcategory')
+							{
+								//$tmpprod=new Product($this->db);
+								//$tmpprod->fetch($line->fk_product);
+								$category=new Categorie($this->db);
+								if (is_numeric($rules['value'])) $result = $category->fetch($rules['value'], '', 'product');
+								else $result = $category->fetch(0, $rules['value'], 'product');
+								if ($result > 0)
+								{
+									$found = $category->containsObject('product', $line->fk_product);
+									if ($found) {
+										$ispromotionqualified++;
+										$idoflinesforitem[] = $line->id;
+									}
+								}
+							}
 							elseif ($rules['type'] == 'containsproduct')
 							{
 								$parentobject->fetch_lines();
@@ -282,154 +303,168 @@ class InterfaceAdvancedDiscountTriggers extends DolibarrTriggers
 		        		//var_dump($idoflinesforitem);
 		        		//var_dump($ispromotionqualified."/".count($advanceddiscount->arrayofrules));
 
-		        		dol_syslog("For promotion id ".$obj->rowid." we found ".$ispromotionqualified."/".count($advanceddiscount->arrayofrules)." conditions ok - idoflinesforitem=".join(',',$idoflinesforitem));
 		        		//var_dump($ispromotionqualified);
 		        		//var_dump(count($advanceddiscount->arrayofrules));
-		        		if ($ispromotionqualified == count($advanceddiscount->arrayofrules))
-		        		{
-		        		    $arrayofpromotionqualified[$obj->rowid] = $advanceddiscount;   // $obj->rowid is id of promotion = $advanceddiscount->id
+		        		if ($ispromotionqualified == count($advanceddiscount->arrayofrules)) {
+		        			dol_syslog("-- For promotion id=".$obj->rowid.", ref=".$obj->ref.", we found ".$ispromotionqualified."/".count($advanceddiscount->arrayofrules)." conditions ok => Qualified - idoflinesforitem=".join(',',$idoflinesforitem));
+
+		        			$arrayofpromotionqualified[$obj->rowid] = array('discount' => $advanceddiscount, 'idoflinesforitem' => $idoflinesforitem);   // $obj->rowid is id of promotion = $advanceddiscount->id
+		        		} else {
+		        			dol_syslog("-- For promotion id=".$obj->rowid.", ref=".$obj->ref.", we found ".$ispromotionqualified."/".count($advanceddiscount->arrayofrules)." conditions ok => Not Qualified");
 		        		}
 
-		        		$defaultvatrate = get_default_tva($mysoc, $parentobject->thirdparty);
-		        		$defaultlocaltaxrate1 = get_default_localtax($mysoc, $parentobject->thirdparty, 1);
-		        		$defaultlocaltaxrate2 = get_default_localtax($mysoc, $parentobject->thirdparty, 2);
+		        		$i++;
+		        	}	// end of loop on advanceddiscount_advanceddiscount
 
-		        		foreach($arrayofpromotionqualified as $id => $advanceddiscount)
-		        		{
-		        			$labelforpromotion = 'ADVANCEDDISCOUNT-'.$id;
-		        			$labelforpromotiontext = '#'.$advanceddiscount->ref;
 
-		        			//var_dump($advanceddiscount);exit;
+		        	// Now we apply all actions on each qualified discount
+		        	foreach($arrayofpromotionqualified as $id => $advanceddiscountdata)
+		        	{
+		        		$advanceddiscount = $advanceddiscountdata['discount'];
+		        		$idoflinesforitem = $advanceddiscountdata['idoflinesforitem'];
 
-		        			// Sort so we do action objectpercentagediscount before objectfixeddiscount
-		        			$advanceddiscount->arrayofactions = dol_sort_array($advanceddiscount->arrayofactions, 'type', 'desc');
+		        		$labelforpromotion = 'ADVANCEDDISCOUNT-'.$id;
+		        		$labelforpromotiontext = '#'.$advanceddiscount->ref;
 
-		        			$j = 0;
-		        			foreach($advanceddiscount->arrayofactions as $actiondiscount)
-		        			{
-		        				//var_dump($actiondiscount['type']);
-		        				$j++;
-		        				dol_syslog("Apply action #".$j.", id ".$actiondiscount['id'].", type ".$actiondiscount['type']." for promotion id ".$id."-".$advanceddiscount->ref." on objet id=".$parentobject->id." ".$parentobject->ref, LOG_DEBUG, 1);
+		        		//var_dump($advanceddiscount);exit;
 
-		        				if ($actiondiscount['type'] == 'objectfixeddiscount')
+		        		// Sort so we do action objectpercentagediscount before objectfixeddiscount
+		        		$advanceddiscount->arrayofactions = dol_sort_array($advanceddiscount->arrayofactions, 'type', 'desc');
+
+		        		$j = 0;
+		        		foreach($advanceddiscount->arrayofactions as $actiondiscount) {
+		        			//var_dump($actiondiscount['type']);
+		        			$j++;
+		        			dol_syslog("-- Apply action #".$j.", id=".$actiondiscount['id'].", type=".$actiondiscount['type']." for promotion id=".$id.", ref=".$advanceddiscount->ref." on object id=".$parentobject->id.", ref=".$parentobject->ref, LOG_DEBUG, 1);
+
+		        			if ($actiondiscount['type'] == 'objectfixeddiscount') {
+		        				//var_dump(count($parentobject->lines));
+		        				//var_dump($parentobject->total_ht);
+
+		        				$amounttouse = $actiondiscount['value'];
+		        				if (abs($amounttouse) > $parentobject->total_ht) $amounttouse = $parentobject->total_ht;
+		        				$amounttouse = -1 * $amounttouse;
+
+		        				$descriptionforpromotion = $langs->trans('Promotion').': '.$langs->trans("Code").' #'.$advanceddiscount->ref.' - '.$advanceddiscount->label;
+		        				if ($action == 'LINEPROPAL_INSERT')
 		        				{
-		        					//var_dump(count($parentobject->lines));
-		        					//var_dump($parentobject->total_ht);
-
-		        					$amounttouse = $actiondiscount['value'];
-		        					if (abs($amounttouse) > $parentobject->total_ht) $amounttouse = $parentobject->total_ht;
-		        					$amounttouse = -1 * $amounttouse;
-
-		        					$descriptionforpromotion = $langs->trans('Promotion').': '.$langs->trans("Code").' #'.$advanceddiscount->ref.' - '.$advanceddiscount->label;
-		        					if ($action == 'LINEPROPAL_INSERT')
-		        					{
-		        						$idoffixeddiscount = $parentobject->addline($descriptionforpromotion, $amounttouse, 1, $defaultvatrate, $defaultlocaltaxrate1, $defaultlocaltaxrate2, 0, 0, 'HT', 0, 0, 1, -1, $special_code, 0, 0, 0, '');
-		        					}
-		        					if ($action == 'LINEORDER_INSERT')
-		        					{
-		        						$idoffixeddiscount = $parentobject->addline($descriptionforpromotion, $amounttouse, 1, $defaultvatrate, $defaultlocaltaxrate1, $defaultlocaltaxrate2, 0, 0, 0, 0, 'HT', 0, '', '', 1, -1, $special_code, 0, 0, 0, '');
-		        					}
-		        					if ($action == 'LINEBILL_INSERT')
-		        					{
-		        						$idoffixeddiscount = $parentobject->addline($descriptionforpromotion, $amounttouse, 1, $defaultvatrate, $defaultlocaltaxrate1, $defaultlocaltaxrate2, 0, 0, '', '', 0, 0, 0, 'HT', 0, 1, -1, $special_code, '', 0, 0, 0, 0, '');
-		        					}
+		        					$idoffixeddiscount = $parentobject->addline($descriptionforpromotion, $amounttouse, 1, $defaultvatrate, $defaultlocaltaxrate1, $defaultlocaltaxrate2, 0, 0, 'HT', 0, 0, 1, -1, $special_code, 0, 0, 0, '');
 		        				}
-		        				elseif ($actiondiscount['type'] == 'objectpercentagediscount')
+		        				if ($action == 'LINEORDER_INSERT')
 		        				{
-									// Loop on each line to apply the % discount
-		        					foreach($parentobject->lines as $line)
-		        					{
-		        						if ($line->special_code != $special_code && $line->remise_percent < $actiondiscount['value'])
-	        							{
-	        								//$line->remise_percent = $actiondiscount['value'];
-	        								if ($action == 'LINEPROPAL_INSERT')
-	        								{
-	        									//$line->update(1);
-	        									$parentobject->updateline($line->id, $line->subprice, $line->qty, $actiondiscount['value'], $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, $line->desc, 'HT', $line->info_bits, $line->special_code, $line->fk_parent_line, 0, 0, $line->pa_ht, $line->label, $line->type, $line->date_start, $line->date_end, 0, $line->fk_unit, $line->multicurrency_subprice, 1);
-	        								}
-	        								if ($action == 'LINEORDER_INSERT')
-	        								{
-	        									//$line->update($user, 1);
-	        									$parentobject->updateline($line->id, $line->desc, $line->subprice, $line->qty, $actiondiscount['value'], $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, 'HT', $line->info_bits, $line->date_start, $line->date_end, $line->type, $line->fk_parent_line, 0, null, $line->pa_ht, $line->label, $line->special_code, 0, $line->fk_unit, $line->multicurrency_subprice, 1);
-	        								}
-	        								if ($action == 'LINEBILL_INSERT')
-	        								{
-	        									//$line->update(1);
-												$parentobject->updateline($line->id, $line->desc, $line->subprice, $line->qty, $actiondiscount['value'], $line->date_start, $line->date_end, $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, 'HT', $line->info_bits, $line->type, $line->fk_parent_line, 0, null, $line->pa_ht, $line->label, $line->special_code, 0, 100, $line->fk_unit, $line->multicurrency_subprice, 1);
-	        								}
-	        							}
-		        					}
+		        					$idoffixeddiscount = $parentobject->addline($descriptionforpromotion, $amounttouse, 1, $defaultvatrate, $defaultlocaltaxrate1, $defaultlocaltaxrate2, 0, 0, 0, 0, 'HT', 0, '', '', 1, -1, $special_code, 0, 0, 0, '');
 		        				}
-		        				/*elseif ($actiondiscount['type'] == 'itemfixeddiscount')
+		        				if ($action == 'LINEBILL_INSERT')
 		        				{
-		        					if (empty($idoflineforitem))
-		        					{
-		        						dol_print_error($this->db, 'Error no item line found to use for the advanceddiscount');
-		        						return 0;
+		        					$idoffixeddiscount = $parentobject->addline($descriptionforpromotion, $amounttouse, 1, $defaultvatrate, $defaultlocaltaxrate1, $defaultlocaltaxrate2, 0, 0, '', '', 0, 0, 0, 'HT', 0, 1, -1, $special_code, '', 0, 0, 0, 0, '');
+		        				}
+		        			} elseif ($actiondiscount['type'] == 'objectpercentagediscount') {
+		        				// Loop on each line to apply the % discount
+		        				foreach($parentobject->lines as $line) {
+		        					$applydiscount = false;
+		        					if ($line->remise_percent < $actiondiscount['value']) {
+		        						$applydiscount = true;
+		        					}
+		        					if (!empty($conf->global->ADVANCED_DISCOUNT_USE_ADVANCED_DISCOUNT_EVEN_IF_LOWER)) {
+		        						$applydiscount = true;
 		        					}
 
-		        					// Loop on each line to apply the % discount
-		        					foreach($parentobject->lines as $line)
-		        					{
-		        						if ($line->id == $idoflineforitem)
+		        					if ($line->special_code != $special_code && $applydiscount) {
+		        						//$line->remise_percent = $actiondiscount['value'];
+		        						if ($action == 'LINEPROPAL_INSERT')
 		        						{
-		        							//$idoflineforproduct
-		        							$line->;
-		        							$line->update(0);
+		        							//$line->update(1);
+		        							$parentobject->updateline($line->id, $line->subprice, $line->qty, $actiondiscount['value'], $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, $line->desc, 'HT', $line->info_bits, $line->special_code, $line->fk_parent_line, 0, 0, $line->pa_ht, $line->label, $line->type, $line->date_start, $line->date_end, 0, $line->fk_unit, $line->multicurrency_subprice, 1);
+		        						}
+		        						if ($action == 'LINEORDER_INSERT')
+		        						{
+		        							//$line->update($user, 1);
+		        							$parentobject->updateline($line->id, $line->desc, $line->subprice, $line->qty, $actiondiscount['value'], $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, 'HT', $line->info_bits, $line->date_start, $line->date_end, $line->type, $line->fk_parent_line, 0, null, $line->pa_ht, $line->label, $line->special_code, 0, $line->fk_unit, $line->multicurrency_subprice, 1);
+		        						}
+		        						if ($action == 'LINEBILL_INSERT')
+		        						{
+		        							//$line->update(1);
+		        							$parentobject->updateline($line->id, $line->desc, $line->subprice, $line->qty, $actiondiscount['value'], $line->date_start, $line->date_end, $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, 'HT', $line->info_bits, $line->type, $line->fk_parent_line, 0, null, $line->pa_ht, $line->label, $line->special_code, 0, 100, $line->fk_unit, $line->multicurrency_subprice, 1);
 		        						}
 		        					}
-		        				}*/
-		        				elseif ($actiondiscount['type'] == 'itempercentagediscount')
+		        				}
+		        			}
+		        			/*elseif ($actiondiscount['type'] == 'itemfixeddiscount')
+		        			 {
+		        			 if (empty($idoflineforitem))
+		        			 {
+		        			 dol_print_error($this->db, 'Error no item line found to use for the advanceddiscount');
+		        			 return 0;
+		        			 }
+
+		        			 // Loop on each line to apply the % discount
+		        			 foreach($parentobject->lines as $line)
+		        			 {
+		        			 if ($line->id == $idoflineforitem)
+		        			 {
+		        			 //$idoflineforproduct
+		        			 $line->;
+		        			 $line->update(0);
+		        			 }
+		        			 }
+		        			 }*/
+		        			elseif ($actiondiscount['type'] == 'itempercentagediscount')
+		        			{
+		        				// Percent will be added on line with id = $idoflinesforitem only
+
+		        				if (empty($idoflinesforitem))
 		        				{
-		        				    // Percent will be added on line with id = $idoflinesforitem only
+		        					dol_print_error($this->db, 'Error no item line found to use for the advanceddiscount');
+		        					return 0;
+		        				}
 
-		        					if (empty($idoflinesforitem))
+		        				// Loop on each line to apply the % discount
+		        				foreach($parentobject->lines as $line)
+		        				{
+		        					if (in_array($line->id, $idoflinesforitem))
 		        					{
-		        						dol_print_error($this->db, 'Error no item line found to use for the advanceddiscount');
-		        						return 0;
-		        					}
+		        						$applydiscount = false;
+		        						if ($line->remise_percent < $actiondiscount['value']) {
+		        							$applydiscount = true;
+		        						}
+		        						if (!empty($conf->global->ADVANCED_DISCOUNT_USE_ADVANCED_DISCOUNT_EVEN_IF_LOWER)) {
+		        							$applydiscount = true;
+		        						}
 
-		        					// Loop on each line to apply the % discount
-		        					foreach($parentobject->lines as $line)
-		        					{
-		        						if (in_array($line->id, $idoflinesforitem))
+		        						if ($line->special_code != $special_code && $applydiscount)
 		        						{
-		        							if ($line->special_code != $special_code && $line->remise_percent < $actiondiscount['value'])
+		        							//var_dump('Fix line '.$line->id);
+		        							//$line->remise_percent = $actiondiscount['value'];
+		        							if ($action == 'LINEPROPAL_INSERT')
 		        							{
-		        								//var_dump('Fix line '.$line->id);
-		        								//$line->remise_percent = $actiondiscount['value'];
-		        								if ($action == 'LINEPROPAL_INSERT')
-		        								{
-		        									//$line->update(1);
-		        									$parentobject->updateline($line->id, $line->subprice, $line->qty, $actiondiscount['value'], $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, $line->desc, 'HT', $line->info_bits, $line->special_code, $line->fk_parent_line, 0, 0, $line->pa_ht, $line->label, $line->type, $line->date_start, $line->date_end, 0, $line->fk_unit, $line->multicurrency_subprice, 1);
-		        								}
-		        								if ($action == 'LINEORDER_INSERT')
-		        								{
-		        									//$line->update($user, 1);
-		        									$parentobject->updateline($line->id, $line->desc, $line->subprice, $line->qty, $actiondiscount['value'], $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, 'HT', $line->info_bits, $line->date_start, $line->date_end, $line->type, $line->fk_parent_line, 0, null, $line->pa_ht, $line->label, $line->special_code, 0, $line->fk_unit, $line->multicurrency_subprice, 1);
-		        								}
-		        								if ($action == 'LINEBILL_INSERT')
-		        								{
-		        									//$line->update(1);
-		        									$parentobject->updateline($line->id, $line->desc, $line->subprice, $line->qty, $actiondiscount['value'], $line->date_start, $line->date_end, $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, 'HT', $line->info_bits, $line->type, $line->fk_parent_line, 0, null, $line->pa_ht, $line->label, $line->special_code, 0, 100, $line->fk_unit, $line->multicurrency_subprice, 1);
-		        								}
+		        								//$line->update(1);
+		        								$parentobject->updateline($line->id, $line->subprice, $line->qty, $actiondiscount['value'], $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, $line->desc, 'HT', $line->info_bits, $line->special_code, $line->fk_parent_line, 0, 0, $line->pa_ht, $line->label, $line->type, $line->date_start, $line->date_end, 0, $line->fk_unit, $line->multicurrency_subprice, 1);
+		        							}
+		        							if ($action == 'LINEORDER_INSERT')
+		        							{
+		        								//$line->update($user, 1);
+		        								$parentobject->updateline($line->id, $line->desc, $line->subprice, $line->qty, $actiondiscount['value'], $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, 'HT', $line->info_bits, $line->date_start, $line->date_end, $line->type, $line->fk_parent_line, 0, null, $line->pa_ht, $line->label, $line->special_code, 0, $line->fk_unit, $line->multicurrency_subprice, 1);
+		        							}
+		        							if ($action == 'LINEBILL_INSERT')
+		        							{
+		        								//$line->update(1);
+		        								$parentobject->updateline($line->id, $line->desc, $line->subprice, $line->qty, $actiondiscount['value'], $line->date_start, $line->date_end, $line->tva_tx, $line->localtax1_tx, $line->localtax2_tx, 'HT', $line->info_bits, $line->type, $line->fk_parent_line, 0, null, $line->pa_ht, $line->label, $line->special_code, 0, 100, $line->fk_unit, $line->multicurrency_subprice, 1);
 		        							}
 		        						}
 		        					}
 		        				}
-
-		        				// We redo fetch_lines after each action to be sure to have array of lines up to date
-		        				$parentobject->fetch_lines();
-
-		        				//var_dump($parentobject->total_ht);
-		        				dol_syslog("Apply action #".$j." end", LOG_DEBUG, -1);
 		        			}
-		        		}
 
-		        		$i++;
+		        			// We redo fetch_lines after each action to be sure to have array of lines up to date
+		        			$parentobject->fetch_lines();
+
+		        			//var_dump($parentobject->total_ht);
+		        			dol_syslog("-- Apply action #".$j." end", LOG_DEBUG, -1);
+		        		}
 		        	}
+		        } else {
+		        	dol_print_error($this->db);
 		        }
-		        else dol_print_error($this->db);
 
 		        break;
 		    }

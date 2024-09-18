@@ -50,7 +50,7 @@ $langs->loadLangs(array("admin", "justificativedocuments@justificativedocuments"
 if (! $user->admin) accessforbidden();
 
 // Parameters
-$action = GETPOST('action', 'alpha');
+$action = GETPOST('action', 'aZ09');
 $backtopage = GETPOST('backtopage', 'alpha');
 
 /*$arrayofparameters=array(
@@ -80,7 +80,7 @@ if ($action == 'updateMask')
 
     if ($maskconstjd) $res = dolibarr_set_const($db, $maskconstjd, $maskjd, 'chaine', 0, '', $conf->entity);
 
-    if (!$res > 0) $error++;
+    if (!($res > 0)) $error++;
 
     if (!$error)
     {
@@ -183,7 +183,7 @@ elseif ($action == 'set_JUSTIFICATIVEDOCUMENT_DRAFT_WATERMARK')
     $draft = GETPOST("JUSTIFICATIVEDOCUMENT_DRAFT_WATERMARK");
     $res = dolibarr_set_const($db, "JUSTIFICATIVEDOCUMENT_DRAFT_WATERMARK", trim($draft), 'chaine', 0, '', $conf->entity);
 
-    if (!$res > 0) $error++;
+    if (!($res > 0)) $error++;
 
     if (!$error)
     {
@@ -197,11 +197,11 @@ elseif ($action == 'set_JUSTIFICATIVEDOCUMENT_DRAFT_WATERMARK')
 
 elseif ($action == 'set_JUSTIFICATIVEDOCUMENT_FREE_TEXT')
 {
-    $freetext = GETPOST("JUSTIFICATIVEDOCUMENT_FREE_TEXT", 'none'); // No alpha here, we want exact string
+    $freetext = GETPOST("JUSTIFICATIVEDOCUMENT_FREE_TEXT", 'restricthtml'); // No alpha here, we want exact string
 
     $res = dolibarr_set_const($db, "JUSTIFICATIVEDOCUMENT_FREE_TEXT", $freetext, 'chaine', 0, '', $conf->entity);
 
-    if (!$res > 0) $error++;
+    if (!($res > 0)) $error++;
 
     if (!$error)
     {
@@ -280,8 +280,10 @@ foreach ($dirmodels as $reldir)
                         // Show example of numbering model
                         print '<td class="nowrap">';
                         $tmp = $module->getExample();
-                        if (preg_match('/^Error/', $tmp)) print '<div class="error">'.$langs->trans($tmp).'</div>';
-                        elseif ($tmp == 'NotConfigured') print $langs->trans($tmp);
+                        if (preg_match('/^Error/', $tmp)) {
+                        	$langs->load("errors");
+                        	print '<div class="error">'.$langs->trans($tmp).'</div>';
+                        } elseif ($tmp == 'NotConfigured') print $langs->trans($tmp);
                         else print $tmp;
                         print '</td>'."\n";
 
@@ -292,7 +294,7 @@ foreach ($dirmodels as $reldir)
                         }
                         else
                         {
-                            print '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?action=setmod&amp;value='.$file.'">';
+                            print '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?action=setmod&token='.newToken().'&value='.urlencode($file).'">';
                             print img_picto($langs->trans("Disabled"), 'switch_off');
                             print '</a>';
                         }
@@ -423,7 +425,7 @@ foreach ($dirmodels as $reldir)
                                 if (in_array($name, $def))
                                 {
                                     print '<td class="center">'."\n";
-                                    print '<a href="'.$_SERVER["PHP_SELF"].'?action=del&value='.$name.'">';
+                                    print '<a href="'.$_SERVER["PHP_SELF"].'?action=del&token='.newToken().'&value='.$name.'">';
                                     print img_picto($langs->trans("Enabled"), 'switch_on');
                                     print '</a>';
                                     print '</td>';
@@ -443,7 +445,7 @@ foreach ($dirmodels as $reldir)
                                 }
                                 else
                                 {
-                                    print '<a href="'.$_SERVER["PHP_SELF"].'?action=setdoc&value='.$name.'&amp;scan_dir='.$module->scandir.'&amp;label='.urlencode($module->name).'" alt="'.$langs->trans("Default").'">'.img_picto($langs->trans("Disabled"), 'off').'</a>';
+                                    print '<a href="'.$_SERVER["PHP_SELF"].'?action=setdoc&token='.newToken().'&token='.newToken().'&value='.$name.'&amp;scan_dir='.$module->scandir.'&amp;label='.urlencode($module->name).'" alt="'.$langs->trans("Default").'">'.img_picto($langs->trans("Disabled"), 'off').'</a>';
                                 }
                                 print '</td>';
 
@@ -467,7 +469,7 @@ foreach ($dirmodels as $reldir)
                                 print '<td class="center">';
                                 if ($module->type == 'pdf')
                                 {
-                                    print '<a href="'.$_SERVER["PHP_SELF"].'?action=specimen&module='.$name.'">'.img_object($langs->trans("Preview"), 'bill').'</a>';
+                                    print '<a href="'.$_SERVER["PHP_SELF"].'?action=specimen&token='.newToken().'&module='.$name.'">'.img_object($langs->trans("Preview"), 'bill').'</a>';
                                 }
                                 else
                                 {

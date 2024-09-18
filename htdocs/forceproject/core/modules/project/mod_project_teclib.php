@@ -1,5 +1,6 @@
 <?php
 /* Copyright (C) 2010 Regis Houssin  <regis@dolibarr.fr>
+ * Copyright (C) 2020 Laurent Destailleur  <eldy@users.sourceforge.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,10 +38,12 @@ class mod_project_teclib extends ModeleNumRefProjects
 
 
     /**
-     *  \brief      Renvoi la description du modele de numerotation
-     *  \return     string      Texte descripif
-     */
-	function info()
+	 *  Return description of numbering module
+	 *
+	 *	@param	Translate	$langs      Lang object to use for output
+	 *  @return string      			Descriptive text
+	 */
+	public function info($langs)
     {
     	global $langs;
 
@@ -50,12 +53,13 @@ class mod_project_teclib extends ModeleNumRefProjects
     }
 
     /**
-     *  \brief      Renvoi un exemple de numerotation
-     *  \return     string      Example
+     *  Return an example of ref
+     *
+     *  @param	string      Example
      */
     function getExample()
     {
-		return "CCCC-001";
+		return "CCCCCC-001";
     }
 
    /**
@@ -77,13 +81,27 @@ class mod_project_teclib extends ModeleNumRefProjects
 
 			$filteronentity = false;
 
-			$oldmask='{cccc}-{00}';
+			$oldmask='{cccccc}-{00}';
 			//$customercode=$objsoc->code_client;
-			$numFinalOld=get_next_value($db,$oldmask,'projet','ref'," AND fk_soc = ".$objsoc->id,$objsoc,'', 'next', $filteronentity);
+			$numFinalOld = get_next_value($db, $oldmask, 'projet', 'ref', " AND (fk_soc = ".$objsoc->id." OR ref LIKE '".$objsoc->code_client."-__')", $objsoc, '', 'next', $filteronentity);
 
-			$mask='{cccc}-{000}';
+			$mask='{cccccc}-{000}';
 			//$customercode=$objsoc->code_client;
-			$numFinalNew=get_next_value($db,$mask,'projet','ref'," AND fk_soc = ".$objsoc->id,$objsoc,'', 'next', $filteronentity);
+			$numFinalNew = get_next_value($db, $mask, 'projet', 'ref', " AND (fk_soc = ".$objsoc->id." OR ref LIKE '".$objsoc->code_client."-___')", $objsoc, '', 'next', $filteronentity);
+
+			// Check num is not used
+			/*
+			$sql = "SELECT ref FROM '.MAIN_DB_PREFIX.'projet WHERE ref = '".$this->db->escape($numFinalNew)."'";
+			$nbrecord = 0;
+			$resql = $this->db->query($sql);
+			if ($resql) {
+				$nbrecord = $this->db->num_rows($resql);
+			}
+			if ($nbrecord > 0) {
+				// Pb: the project ref is already used, surely by another fk_soc that had named one of his project with the same customer code.
+				$numFinalNew = get_next_value($db, $mask, 'projet', 'ref', " AND ref LIKE  = '".$objsoc->code_client."-%", $objsoc, '', 'next', $filteronentity);
+			}
+			*/
 		}
 
 		//$numFinalNew="0210-100";

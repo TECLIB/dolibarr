@@ -80,7 +80,7 @@ class JustificativeType extends CommonObject
 	 *  'help' is a string visible as a tooltip on field
 	 *  'showoncombobox' if value of the field must be visible into the label of the combobox that list record
 	 *  'disabled' is 1 if we want to have the field locked by a 'disabled' attribute. In most cases, this is never set into the definition of $fields into class, but is set dynamically by some part of code.
-	 *  'arraykeyval' to set list of value if type is a list of predefined values. For example: array("0"=>"Draft","1"=>"Active","-1"=>"Cancel")
+	 *  'arrayofkeyval' to set list of value if type is a list of predefined values. For example: array("0"=>"Draft","1"=>"Active","-1"=>"Cancel")
 	 *  'comment' is not used. You can store here any text of your choice. It is not used by application.
 	 */
 
@@ -92,7 +92,6 @@ class JustificativeType extends CommonObject
 	    'rowid' =>array('type'=>'integer', 'label'=>'ID', 'enabled'=>1, 'visible'=>-1, 'notnull'=>1, 'position'=>10),
 	    'code' =>array('type'=>'varchar(32)', 'label'=>'Code', 'enabled'=>1, 'visible'=>-1, 'notnull'=>1, 'position'=>15),
 	    'label' =>array('type'=>'varchar(50)', 'label'=>'Label', 'enabled'=>1, 'visible'=>-1, 'position'=>20, 'showoncombobox'=>1),
-	    //'reimbursed' =>array('type'=>'varchar(64)', 'Reimbursed'=>'Label', 'enabled'=>1, 'visible'=>-1, 'position'=>20, 'showoncombobox'=>1),
 	    'active' =>array('type'=>'tinyint(4)', 'label'=>'Active', 'enabled'=>1, 'visible'=>-1, 'notnull'=>1, 'position'=>25),
 	    'module' =>array('type'=>'varchar(32)', 'label'=>'Module', 'enabled'=>1, 'visible'=>-1, 'position'=>30),
 	);
@@ -164,7 +163,7 @@ class JustificativeType extends CommonObject
 		// Translate some data of arrayofkeyval
 		foreach($this->fields as $key => $val)
 		{
-			if (is_array($val['arrayofkeyval']))
+			if (!empty($val['arrayofkeyval']) && is_array($val['arrayofkeyval']))
 			{
 				foreach($val['arrayofkeyval'] as $key2 => $val2)
 				{
@@ -309,18 +308,16 @@ class JustificativeType extends CommonObject
 	/**
 	 * Load list of objects in memory from the database.
 	 *
-	 * @param  string      $sortorder    Sort Order
-	 * @param  string      $sortfield    Sort field
-	 * @param  int         $limit        limit
-	 * @param  int         $offset       Offset
-	 * @param  array       $filter       Filter array. Example array('field'=>'valueforlike', 'customurl'=>...)
-	 * @param  string      $filtermode   Filter mode (AND or OR)
-	 * @return array|int                 int <0 if KO, array of pages if OK
+	 * @param  string      	$sortorder    	Sort Order
+	 * @param  string      	$sortfield    	Sort field
+	 * @param  int         	$limit        	Limit
+	 * @param  int         	$offset       	Offset
+	 * @param  string|array $filter       	Filter USF.
+	 * @param  string      	$filtermode   	Filter mode (AND or OR)
+	 * @return array|int                 	int <0 if KO, array of pages if OK
 	 */
-	public function fetchAll($sortorder = '', $sortfield = '', $limit = 0, $offset = 0, array $filter = array(), $filtermode = 'AND')
+	public function fetchAll($sortorder = '', $sortfield = '', $limit = 0, $offset = 0, $filter = '', $filtermode = 'AND')
 	{
-		global $conf;
-
 		dol_syslog(__METHOD__, LOG_DEBUG);
 
 		$records=array();
@@ -330,26 +327,37 @@ class JustificativeType extends CommonObject
 		$sql .= ' FROM ' . MAIN_DB_PREFIX . $this->table_element. ' as t';
 		if (isset($this->ismultientitymanaged) && $this->ismultientitymanaged == 1) $sql .= ' WHERE t.entity IN ('.getEntity($this->table_element).')';
 		else $sql .= ' WHERE 1 = 1';
+
 		// Manage filter
-		$sqlwhere = array();
-		if (count($filter) > 0) {
-			foreach ($filter as $key => $value) {
-				if ($key=='t.rowid') {
-					$sqlwhere[] = $key . '='. $value;
-				}
-				elseif (strpos($key, 'date') !== false) {
-					$sqlwhere[] = $key.' = \''.$this->db->idate($value).'\'';
-				}
-				elseif ($key=='customsql') {
-					$sqlwhere[] = $value;
-				}
-				else {
-					$sqlwhere[] = $key . ' LIKE \'%' . $this->db->escape($value) . '%\'';
+		if (is_array($filter)) {
+			$sqlwhere = array();
+			if (count($filter) > 0) {
+				foreach ($filter as $key => $value) {
+					if ($key=='t.rowid') {
+						$sqlwhere[] = $this->db->sanitize($key) . ' = '. (int) $value;
+					}
+					elseif (strpos($key, 'date') !== false) {
+						$sqlwhere[] = $this->db->sanitize($key).' = \''.$this->db->idate($value).'\'';
+					}
+					else {
+						$sqlwhere[] = $this->db->sanitize($key) . ' LIKE \'%' . $this->db->escape($value) . '%\'';
+					}
 				}
 			}
+			if (count($sqlwhere) > 0) {
+				$sql .= ' AND (' . implode(' '.$filtermode.' ', $sqlwhere).')';
+			}
+
+			$filter = '';
 		}
-		if (count($sqlwhere) > 0) {
-			$sql .= ' AND (' . implode(' '.$filtermode.' ', $sqlwhere).')';
+
+		// Manage filter
+		$errormessage = '';
+		$sql .= forgeSQLFromUniversalSearchCriteria($filter, $errormessage);
+		if ($errormessage) {
+			$this->errors[] = $errormessage;
+			dol_syslog(__METHOD__.' '.implode(',', $this->errors), LOG_ERR);
+			return -1;
 		}
 
 		if (!empty($sortfield)) {
@@ -533,7 +541,7 @@ class JustificativeType extends CommonObject
         {
             // Add param to save lastsearch_values or not
             $add_save_lastsearch_values=($save_lastsearch_value == 1 ? 1 : 0);
-            if ($save_lastsearch_value == -1 && preg_match('/list\.php/', $_SERVER["PHP_SELF"])) $add_save_lastsearch_values=1;
+            if ($save_lastsearch_value == -1 && isset($_SERVER["PHP_SELF"]) && preg_match('/list\.php/', $_SERVER["PHP_SELF"])) $add_save_lastsearch_values=1;
             if ($add_save_lastsearch_values) $url.='&save_lastsearch_values=1';
         }
 
@@ -624,38 +632,21 @@ class JustificativeType extends CommonObject
 		$sql = 'SELECT rowid, date_creation as datec, tms as datem,';
 		$sql.= ' fk_user_creat, fk_user_modif';
 		$sql.= ' FROM '.MAIN_DB_PREFIX.$this->table_element.' as t';
-		$sql.= ' WHERE t.rowid = '.$id;
+		$sql.= ' WHERE t.rowid = '.((int) $id);
 		$result=$this->db->query($sql);
 		if ($result)
 		{
 			if ($this->db->num_rows($result))
 			{
 				$obj = $this->db->fetch_object($result);
+
 				$this->id = $obj->rowid;
-				if ($obj->fk_user_author)
-				{
-					$cuser = new User($this->db);
-					$cuser->fetch($obj->fk_user_author);
-					$this->user_creation   = $cuser;
-				}
 
-				if ($obj->fk_user_valid)
-				{
-					$vuser = new User($this->db);
-					$vuser->fetch($obj->fk_user_valid);
-					$this->user_validation = $vuser;
-				}
-
-				if ($obj->fk_user_cloture)
-				{
-					$cluser = new User($this->db);
-					$cluser->fetch($obj->fk_user_cloture);
-					$this->user_cloture   = $cluser;
-				}
+				$this->user_creation_id = $obj->fk_user_author;
+				$this->user_modification_id   = $obj->fk_user_modif;
 
 				$this->date_creation     = $this->db->jdate($obj->datec);
 				$this->date_modification = $this->db->jdate($obj->datem);
-				$this->date_validation   = $this->db->jdate($obj->datev);
 			}
 
 			$this->db->free($result);
@@ -709,8 +700,8 @@ class JustificativeType extends CommonObject
 		if (! dol_strlen($modele)) {
 			$modele = 'standard';
 
-			if ($this->modelpdf) {
-				$modele = $this->modelpdf;
+			if ($this->model_pdf) {
+				$modele = $this->model_pdf;
 			} elseif (! empty($conf->global->JUSTIFICATIVETYPE_ADDON_PDF)) {
 				$modele = $conf->global->JUSTIFICATIVETYPE_ADDON_PDF;
 			}
@@ -727,7 +718,6 @@ class JustificativeType extends CommonObject
 	 *
 	 * @return	int			0 if OK, <>0 if KO (this function is used also by cron so only 0 is OK)
 	 */
-	//public function doScheduledJob($param1, $param2, ...)
 	public function doScheduledJob()
 	{
 		global $conf, $langs;

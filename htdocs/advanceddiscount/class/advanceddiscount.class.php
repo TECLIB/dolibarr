@@ -53,6 +53,13 @@ class AdvancedDiscount extends CommonObject
 	 */
 	public $picto = 'advanceddiscount@advanceddiscount';
 
+	/**
+	 * @var array    List of child tables. To know object to delete on cascade.
+	 *               If name matches '@ClassNAme:FilePathClass;ParentFkFieldName' it will
+	 *               call method deleteByParentField(parentId, ParentFkFieldName) to fetch and delete child object
+	 */
+	//protected $childtablesoncascade = array('advanceddiscount_actions');
+
 
 	/**
 	 *  'type' if the field format.
@@ -70,7 +77,7 @@ class AdvancedDiscount extends CommonObject
 	 *  'help' is a string visible as a tooltip on field
 	 *  'comment' is not used. You can store here any text of your choice. It is not used by application.
 	 *  'showoncombobox' if value of the field must be visible into the label of the combobox that list record
-	 *  'arraykeyval' to set list of value if type is a list of predefined values. For example: array("0"=>"Draft","1"=>"Active","-1"=>"Cancel")
+	 *  'arrayofkeyval' to set list of value if type is a list of predefined values. For example: array("0"=>"Draft","1"=>"Active","-1"=>"Cancel")
 	 */
 
 	// BEGIN MODULEBUILDER PROPERTIES
@@ -314,6 +321,18 @@ class AdvancedDiscount extends CommonObject
 	 */
 	public function delete(User $user, $notrigger = false)
 	{
+		$sql = "DELETE FROM ".MAIN_DB_PREFIX."advanceddiscount_actions WHERE fk_advanceddiscount = ".((int) $this->id);
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			dol_print_error($this->db);
+		}
+
+		$sql = "DELETE FROM ".MAIN_DB_PREFIX."advanceddiscount_rules WHERE fk_advanceddiscount = ".((int) $this->id);
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			dol_print_error($this->db);
+		}
+
 		return $this->deleteCommon($user, $notrigger);
 	}
 
@@ -459,38 +478,21 @@ class AdvancedDiscount extends CommonObject
 		$sql = 'SELECT rowid, date_creation as datec, tms as datem,';
 		$sql.= ' fk_user_creat, fk_user_modif';
 		$sql.= ' FROM '.MAIN_DB_PREFIX.$this->table_element.' as t';
-		$sql.= ' WHERE t.rowid = '.$id;
+		$sql.= ' WHERE t.rowid = '.((int) $id);
 		$result=$this->db->query($sql);
 		if ($result)
 		{
 			if ($this->db->num_rows($result))
 			{
 				$obj = $this->db->fetch_object($result);
+
 				$this->id = $obj->rowid;
-				if ($obj->fk_user_author)
-				{
-					$cuser = new User($this->db);
-					$cuser->fetch($obj->fk_user_author);
-					$this->user_creation   = $cuser;
-				}
 
-				if ($obj->fk_user_valid)
-				{
-					$vuser = new User($this->db);
-					$vuser->fetch($obj->fk_user_valid);
-					$this->user_validation = $vuser;
-				}
-
-				if ($obj->fk_user_cloture)
-				{
-					$cluser = new User($this->db);
-					$cluser->fetch($obj->fk_user_cloture);
-					$this->user_cloture   = $cluser;
-				}
+				$this->user_creation_id = $obj->fk_user_author;
+				$this->user_modification_id = $obj->fk_user_modif;
 
 				$this->date_creation     = $this->db->jdate($obj->datec);
 				$this->date_modification = $this->db->jdate($obj->datem);
-				$this->date_validation   = $this->db->jdate($obj->datev);
 			}
 
 			$this->db->free($result);

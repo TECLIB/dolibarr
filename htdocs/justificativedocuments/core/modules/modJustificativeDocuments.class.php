@@ -64,7 +64,7 @@ class modJustificativeDocuments extends DolibarrModules
         $this->editor_name = 'TecLib';
         $this->editor_url = 'https://www.teclib.com';
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.0';
+        $this->version = '2.0';
         // Url to the file with your last numberversion of this module
         //$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -125,7 +125,7 @@ class modJustificativeDocuments extends DolibarrModules
         $this->conflictwith = array();	// List of module class names as string this module is in conflict with. Example: array('modModuleToDisable1', ...)
         $this->langfiles = array("justificativedocuments@justificativedocuments");
         $this->phpmin = array(5,5);					    // Minimum version of PHP required by module
-        $this->need_dolibarr_version = array(8,0);		// Minimum version of Dolibarr required by module
+        $this->need_dolibarr_version = array(11,0,-3);		// Minimum version of Dolibarr required by module
         $this->warnings_activation = array();			// Warning to show when we activate module. array('always'='text') or array('FR'='textfr','ES'='textes'...)
         $this->warnings_activation_ext = array();		// Warning to show when we activate an external module. array('always'='text') or array('FR'='textfr','ES'='textes'...)
         //$this->automatic_activation = array('FR'=>'JustificativeDocumentsWasAutomaticallyActivatedBecauseOfYourCountryChoice');
@@ -294,6 +294,7 @@ class modJustificativeDocuments extends DolibarrModules
             'fk_menu'=>'fk_mainmenu=hrm',	        // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
             'type'=>'left',			                // This is a Left menu entry
             'titre'=>'JustificativeDocuments',
+        	'prefix'=>img_picto('', $this->picto, 'class="pictofixedwidth"'),
             'mainmenu'=>'hrm',
             'leftmenu'=>'justificativedocuments',
             'url'=>'/justificativedocuments/justificativedocument_list.php',
@@ -385,6 +386,7 @@ class modJustificativeDocuments extends DolibarrModules
         $this->export_sql_end[$r] = ' FROM '.MAIN_DB_PREFIX.'justificativedocuments_justificativedocument as t';
         $this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'c_justificative_type as jt ON jt.rowid = t.fk_type';
         $this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'user as u ON u.rowid = t.fk_user';
+        $this->export_sql_end[$r] .= ' LEFT JOIN '.MAIN_DB_PREFIX.'justificativedocuments_justificativedocument_extrafields as extra ON t.rowid = extra.fk_object';
         $this->export_sql_end[$r] .=' WHERE 1 = 1';
         $this->export_sql_end[$r] .=' AND t.entity IN ('.getEntity('justificativedocument').')';
         $r++;

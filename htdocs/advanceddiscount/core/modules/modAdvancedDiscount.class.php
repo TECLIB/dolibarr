@@ -72,13 +72,13 @@ class modAdvancedDiscount extends DolibarrModules
 		$this->editor_url = 'https://www.teclib.com';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.1';
+		$this->version = '1.3.1';
 		// Key used in llx_const table to save module status enabled/disabled (where ADVANCEDDISCOUNTS is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Name of image file used for this module.
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
-		$this->picto='generic';
+		$this->picto='advanceddiscount@advanceddiscount';
 
 		// Defined all module parts (triggers, login, substitutions, menus, css, etc...)
 		// for default path (eg: /advanceddiscount/core/xxxxx) (0=disable, 1=enable)
@@ -112,8 +112,8 @@ class modAdvancedDiscount extends DolibarrModules
 		$this->requiredby = array();	// List of module ids to disable if this one is disabled
 		$this->conflictwith = array();	// List of module class names as string this module is in conflict with
 		$this->langfiles = array("advanceddiscount@advanceddiscount");
-		$this->phpmin = array(5,3);					// Minimum version of PHP required by module
-		$this->need_dolibarr_version = array(4,0);	// Minimum version of Dolibarr required by module
+		$this->phpmin = array(7,1);					// Minimum version of PHP required by module
+		$this->need_dolibarr_version = array(16,0,-3);	// Minimum version of Dolibarr required by module
 		$this->warnings_activation = array();                     // Warning to show when we activate module. array('always'='text') or array('FR'='textfr','ES'='textes'...)
 		$this->warnings_activation_ext = array();                 // Warning to show when we activate an external module. array('always'='text') or array('FR'='textfr','ES'='textes'...)
 		//$this->automatic_activation = array('FR'=>'AdvancedDiscountWasAutomaticallyActivatedBecauseOfYourCountryChoice');
@@ -205,7 +205,7 @@ class modAdvancedDiscount extends DolibarrModules
 		// Permissions
 		$this->rights = array();		// Permission array used by this module
 
-		$r=0;
+		$r=1;
 		$this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
 		$this->rights[$r][1] = 'Read discounts';	// Permission label
 		$this->rights[$r][3] = 0; 					// Permission by default for new user (0/1)
@@ -254,6 +254,7 @@ class modAdvancedDiscount extends DolibarrModules
 		$this->menu[$r++]=array(	'fk_menu'=>'fk_mainmenu=tools',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
 								'type'=>'left',			                // This is a Left menu entry
 								'titre'=>'DiscountsOrPromotions',
+								'prefix' => img_picto('', $this->picto, 'class="pictofixedwidth valignmiddle paddingright"'),
 								'mainmenu'=>'tools',
 								'leftmenu'=>'advanceddiscount',
 								'url'=>'/advanceddiscount/advanceddiscount_list.php',
@@ -266,6 +267,7 @@ class modAdvancedDiscount extends DolibarrModules
 		$this->menu[$r++]=array(	'fk_menu'=>'fk_mainmenu=tools,fk_leftmenu=advanceddiscount',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
 								'type'=>'left',			                // This is a Left menu entry
 								'titre'=>'List',
+								'prefix' => img_picto('', $this->picto, 'class="pictofixedwidth valignmiddle paddingright"'),
 								'mainmenu'=>'tools',
 								'leftmenu'=>'advanceddiscount_list',
 								'url'=>'/advanceddiscount/advanceddiscount_list.php',

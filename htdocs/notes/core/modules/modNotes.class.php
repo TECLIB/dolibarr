@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2014 Laurent Destailleur         <eldy@users.sourceforge.net>
+/* Copyright (C) 2014-2023 Laurent Destailleur         <eldy@users.sourceforge.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,11 +50,9 @@ class modNotes extends DolibarrModules
         $this->editor_name = 'TecLib';
         $this->editor_url = 'http://www.teclib.com';
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '1.0.0';
+		$this->version = '1.0.1';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
-		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
-		$this->special = 2;
 		// Name of image file used for this module.
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
@@ -84,7 +82,7 @@ class modNotes extends DolibarrModules
 		$this->depends = array();		// List of modules id that must be enabled if this module is enabled
 		$this->requiredby = array();	// List of modules id to disable if this one is disabled
 		$this->phpmin = array(4,3);					// Minimum version of PHP required by module
-		$this->need_dolibarr_version = array(3,0);	// Minimum version of Dolibarr required by module
+		$this->need_dolibarr_version = array(16,0);	// Minimum version of Dolibarr required by module
 		$this->langfiles = array("notes@notes");
 
 		// Constants
@@ -115,11 +113,16 @@ class modNotes extends DolibarrModules
 			$this->tabs[]='propal:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=propal&id=__ID__';	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
 			$this->tabs[]='propal:-note:NU:1';
 		}
-                if (empty($conf->global->TECLIB_NOTES_NOT_ON_PROJET))
-                {
-                        $this->tabs[]='project:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=projet&id=__ID__';        // With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
-                        $this->tabs[]='project:-notes:NU:1';
-                }
+		if (empty($conf->global->TECLIB_NOTES_NOT_ON_PROJET))
+		{
+				$this->tabs[]='project:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=projet&id=__ID__';        // With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
+				$this->tabs[]='project:-notes:NU:1';
+		}
+		if (empty($conf->global->TECLIB_NOTES_NOT_ON_FICHINTER))
+		{
+			$this->tabs[]='intervention:+noteteclib:SUBSTITUTION_NotesNbTeclib:notes@notes::/notes/note_object.php?mode=fichinter&id=__ID__';	// With 3.6 we can use a substitution into label so we can set "note (x)" with dynamic x
+			$this->tabs[]='intervention:-note:NU:1';
+		}
 
 		// where entity can be
 		// 'thirdparty'       to add a tab in third party view
@@ -152,10 +155,22 @@ class modNotes extends DolibarrModules
 
 		// Permissions
 		$this->rights = array();		// Permission array used by this module
-		$r=1;
+		$r = 1;
+		$this->rights[$r][0] = $this->numero.$r; // id de la permission
+		$this->rights[$r][1] = 'Créer/Modifier les notes'; // libelle de la permission
+		$this->rights[$r][2] = 'c'; // type de la permission (deprecie a ce jour)
+		$this->rights[$r][3] = 0; // La permission est-elle une permission par defaut
+		$this->rights[$r][4] = 'creer';
+
+		$r++;
+		$this->rights[$r][0] = $this->numero.$r; // id de la permission
+		$this->rights[$r][1] = 'Supprimer les notes'; // libelle de la permission
+		$this->rights[$r][2] = 'd'; // type de la permission (deprecie a ce jour)
+		$this->rights[$r][3] = 0; // La permission est-elle une permission par defaut
+		$this->rights[$r][4] = 'supprimer';
 
 		// Main menu entries
-		$this->menus = array();			// List of menus to add
+		$this->menu = array();			// List of menus to add
 		$r=0;
 
 
@@ -187,7 +202,7 @@ class modNotes extends DolibarrModules
 	 *					It also creates data directories.
 	 *      \return     int             1 if OK, 0 if KO
 	 */
-	function init()
+	function init($options = '')
 	{
 		$sql = array();
 
@@ -202,7 +217,7 @@ class modNotes extends DolibarrModules
 	 *					Data directories are not deleted.
 	 *      \return     int             1 if OK, 0 if KO
 	 */
-	function remove()
+	function remove($options = '')
 	{
 		$sql = array();
 

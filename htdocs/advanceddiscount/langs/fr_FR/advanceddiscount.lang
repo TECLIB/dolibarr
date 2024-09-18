@@ -27,6 +27,7 @@ CloneAdvancedDiscount=Cloner réduction/promotion
 ConfirmCloneAdvancedDiscount=Etes vous sur de vouloir cloner cette réduction/promotion ?
 CustomerCountryIs=Le pays du client est (La valeur est le code pays)
 CustomerHasTag=Le client a le tag/catégorie (La valeur est la ref du tag/categorie)
+ProductHasTag=Le produit a le tag/categorie (La valeur est la ref du tag/categorie)
 ContainsProduct=L'objet contient le produit (La valeur est la ref du produit)
 TotalGreaterThanOrEqualTo=Total hors taxe >= (La valeur est le montant)
 ObjectFixedDiscount=Remise fixe (La valeur est le montant)

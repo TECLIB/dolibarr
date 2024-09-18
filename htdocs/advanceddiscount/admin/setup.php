@@ -50,7 +50,7 @@ $langs->loadLangs(array("admin", "advanceddiscount@advanceddiscount"));
 if (! $user->admin) accessforbidden();
 
 // Parameters
-$action = GETPOST('action', 'alpha');
+$action = GETPOST('action', 'aZ09');
 $backtopage = GETPOST('backtopage', 'alpha');
 
 $arrayofparameters=array(
@@ -89,7 +89,7 @@ dol_fiche_head($head, 'settings', '', -1, "advanceddiscount@advanceddiscount");
 if ($action == 'edit')
 {
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="update">';
 
 	print '<table class="noborder" width="100%">';
@@ -99,7 +99,7 @@ if ($action == 'edit')
 	{
 		print '<tr class="oddeven"><td>';
 		print $form->textwithpicto($langs->trans($key),$langs->trans($key.'Tooltip'));
-		print '</td><td><input name="'.$key.'"  class="flat '.(empty($val['css'])?'minwidth200':$val['css']).'" value="' . $conf->global->$key . '"></td></tr>';
+		print '</td><td><input name="'.$key.'"  class="flat '.(empty($val['css'])?'minwidth200':$val['css']).'" value="' . getDolGlobalString($key) . '"></td></tr>';
 	}
 	print '</table>';
 
@@ -121,7 +121,7 @@ else
 		{
 			print '<tr class="oddeven"><td>';
 			print $form->textwithpicto($langs->trans($key),$langs->trans($key.'Tooltip'));
-			print '</td><td>' . $conf->global->$key . '</td></tr>';
+			print '</td><td>' . getDolGlobalString($key) . '</td></tr>';
 		}
 
 		print '</table>';

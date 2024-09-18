@@ -4,7 +4,7 @@
 if (empty($conf) || ! is_object($conf))
 {
 	print "Error, template page can't be called as URL";
-	exit;
+	exit(1);
 }
 
 $form = new Form($db);

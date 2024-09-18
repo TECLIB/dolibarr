@@ -16,10 +16,10 @@
 
 -- BEGIN MODULEBUILDER INDEXES
 ALTER TABLE llx_justificativedocuments_justificativedocument ADD INDEX idx_justificativedocuments_justificativedocument_rowid (rowid);
+ALTER TABLE llx_justificativedocuments_justificativedocument ADD INDEX idx_justificativedocuments_justificativedocument_entity (entity);
 ALTER TABLE llx_justificativedocuments_justificativedocument ADD INDEX idx_justificativedocuments_justificativedocument_ref (ref);
-ALTER TABLE llx_justificativedocuments_justificativedocument ADD INDEX idx_justificativedocuments_justificativedocument_fk_project (fk_project);
-ALTER TABLE llx_justificativedocuments_justificativedocument ADD CONSTRAINT llx_justificativedocuments_justificativedocument_fk_user FOREIGN KEY (fk_user) REFERENCES user(rowid);
-ALTER TABLE llx_justificativedocuments_justificativedocument ADD CONSTRAINT llx_justificativedocuments_justificativedocument_fk_user_creat FOREIGN KEY (fk_user_creat) REFERENCES user(rowid);
+ALTER TABLE llx_justificativedocuments_justificativedocument ADD CONSTRAINT llx_justificativedocuments_justificativedocument_fk_user FOREIGN KEY (fk_user) REFERENCES llx_user(rowid);
+ALTER TABLE llx_justificativedocuments_justificativedocument ADD CONSTRAINT llx_justificativedocuments_justificativedocument_fk_user_creat FOREIGN KEY (fk_user_creat) REFERENCES llx_user(rowid);
 ALTER TABLE llx_justificativedocuments_justificativedocument ADD INDEX idx_justificativedocuments_justificativedocument_status (status);
 -- END MODULEBUILDER INDEXES
 

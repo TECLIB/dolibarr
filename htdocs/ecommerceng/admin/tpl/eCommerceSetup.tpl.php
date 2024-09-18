@@ -22,7 +22,7 @@
 if (empty($conf) || ! is_object($conf))
 {
 	print "Error, template page can't be called as URL";
-	exit;
+	exit(1);
 }
 
 include_once DOL_DOCUMENT_ROOT.'/product/class/html.formproduct.class.php';
@@ -60,7 +60,7 @@ if (count($sites))
 	?>
 
 	<form name="site_form_detail" id="site_form_detail" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
-			<input type="hidden" name="token" value="<?php print $_SESSION['newtoken'] ?>">
+			<input type="hidden" name="token" value="<?php print newToken(); ?>">
 			<input id="site_form_detail_action" type="hidden" name="site_form_detail_action" value="save">
 			<input type="hidden" name="ecommerce_id" value="<?php print $ecommerceId ?>">
 			<input type="hidden" name="ecommerce_last_update" value="<?php print $ecommerceLastUpdate ?>">
@@ -308,7 +308,11 @@ if ($conf->stock->enabled)
 								print $formproduct->selectWarehouses($ecommerceFkWarehouse, 'ecommerce_fk_warehouse', 0, 1);
 							?>
 					</td>
-					<td><?php print $langs->trans('ECommerceStockProductDescription', $langs->transnoentitiesnoconv('ECommerceStockSyncDirection')) ?></td>
+					<td><?php
+					print $langs->trans('ECommerceStockProductDescription', $langs->transnoentitiesnoconv('ECommerceStockSyncDirection'));
+					print '<br>';
+					print $langs->trans('ECommerceStockProductDescription2', $langs->transnoentitiesnoconv('ECommerceStockSyncDirection'));
+					?></td>
 				</tr>
 <?php
 }

@@ -78,8 +78,8 @@ $extrafields->fetch_name_optionals_label($object->table_element);
 $search_array_options=$extrafields->getOptionalsFromPost($object->table_element,'','search_');
 
 // Initialize array of search criterias
-$search_all=trim(GETPOST("search_all",'alpha'));
-$search=array();
+$search_all = GETPOST("search_all",'alpha');
+$search = array();
 foreach($object->fields as $key => $val)
 {
     if (GETPOST('search_'.$key,'alpha')) $search[$key]=GETPOST('search_'.$key,'alpha');
@@ -111,24 +111,29 @@ if (empty($reshook))
 {
 	$error=0;
 
-	if (empty($backtopage)) $backtopage = dol_buildpath('/advanceddiscount/advanceddiscount_card.php',1).'?id='.($id?$id:'__ID__');
 	$backurlforlist = dol_buildpath('/advanceddiscount/advanceddiscount_list.php',1);
+
+	if (empty($backtopage) || ($cancel && empty($id))) {
+		if (empty($backtopage) || ($cancel && strpos($backtopage, '__ID__'))) {
+			if (empty($id) && (($action != 'add' && $action != 'create') || $cancel)) $backtopage = $backurlforlist;
+			else $backtopage = dol_buildpath('/advanceddiscount/advanceddiscount_list.php', 1).'?id='.($id > 0 ? $id : '__ID__');
+		}
+	}
+
 	$triggermodname = 'ADVANCEDDISCOUNT_ADVANCEDDISCOUNT_MODIFY';	// Name of trigger action code to execute when we modify record
 
-	// Actions cancel, add, update or delete
-	//include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';	// v7 is not working
-	include_once './core/actions_addupdatedelete.inc.php';
+	// Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
+	include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
 
 	// Actions when printing a doc from card
 	include DOL_DOCUMENT_ROOT.'/core/actions_printing.inc.php';
 
-	// Actions to send emails
-	$trigger_name='ADVANCEDDISCOUNT_SENTBYMAIL';
+	$trigger_name = 'ADVANCEDDISCOUNT_SENTBYMAIL';
 	$autocopy='MAIN_MAIL_AUTOCOPY_ADVANCEDDISCOUNT_TO';
 	$trackid='advanceddiscount'.$object->id;
 	include DOL_DOCUMENT_ROOT.'/core/actions_sendmails.inc.php';
 
-	if ($action == 'addrule' && ! empty($user->rights->advanceddiscount->write))
+	if ($action == 'addrule' && $user->hasRight('advanceddiscount', 'write'))
 	{
 		if (! GETPOST('type_rule','alpha') || GETPOST('type_rule','alpha') == '-1')
 		{
@@ -159,7 +164,7 @@ if (empty($reshook))
 		}
 	}
 
-	if ($action == 'addaction' && ! empty($user->rights->advanceddiscount->write))
+	if ($action == 'addaction' && $user->hasRight('advanceddiscount', 'write'))
 	{
 		if (! GETPOST('type_action','alpha') || GETPOST('type_action','alpha') == '-1')
 		{
@@ -176,7 +181,7 @@ if (empty($reshook))
 			$rulenotfound=1;
 			foreach($object->arrayofrules as $rule)
 			{
-				if (in_array($rule['type'], array('containsproduct')))
+				if (in_array($rule['type'], array('containsproduct', 'productcategory')))
 				{
 					$rulenotfound=0;
 					break;
@@ -212,7 +217,7 @@ if (empty($reshook))
 	}
 
 
-	if ($action == 'deleterule' && ! empty($user->rights->advanceddiscount->write))
+	if ($action == 'deleterule' && $user->hasRight('advanceddiscount', 'write'))
 	{
 		$sqldelete = 'DELETE FROM '.MAIN_DB_PREFIX.'advanceddiscount_rules WHERE rowid = '.GETPOST('ruleid','int');
 		$resql = $db->query($sqldelete);
@@ -227,7 +232,7 @@ if (empty($reshook))
 		}
 	}
 
-	if ($action == 'deleteaction' && ! empty($user->rights->advanceddiscount->write))
+	if ($action == 'deleteaction' && $user->hasRight('advanceddiscount', 'write'))
 	{
 		$sqldelete = 'DELETE FROM '.MAIN_DB_PREFIX.'advanceddiscount_actions WHERE rowid = '.GETPOST('actionid','int');
 		$resql = $db->query($sqldelete);
@@ -275,10 +280,10 @@ jQuery(document).ready(function() {
 // Part to create
 if ($action == 'create')
 {
-	print load_fiche_titre($langs->trans("NewObject", $langs->transnoentitiesnoconv("AdvancedDiscount")));
+	print load_fiche_titre($langs->trans("NewObject", $langs->transnoentitiesnoconv("AdvancedDiscount")), '', $object->picto);
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="add">';
 	print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 
@@ -308,10 +313,10 @@ if ($action == 'create')
 // Part to edit record
 if (($id || $ref) && $action == 'edit')
 {
-	print load_fiche_titre($langs->trans("AdvancedDiscount"));
+	print load_fiche_titre($langs->trans("AdvancedDiscount"), '', $object->picto);
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-    print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="update">';
 	print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 	print '<input type="hidden" name="id" value="'.$object->id.'">';
@@ -378,7 +383,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	}
 
 	if (! $formconfirm) {
-	    $parameters = array('lineid' => $lineid);
+	    $parameters = array();
 	    $reshook = $hookmanager->executeHooks('formConfirm', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 	    if (empty($reshook)) $formconfirm.=$hookmanager->resPrint;
 	    elseif ($reshook > 0) $formconfirm=$hookmanager->resPrint;
@@ -400,7 +405,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	// Thirdparty
 	$morehtmlref.='<br>'.$langs->trans('ThirdParty') . ' : ' . $soc->getNomUrl(1);
 	// Project
-	if (! empty($conf->projet->enabled))
+	if (! empty($conf->project->enabled))
 	{
 	    $langs->load("projects");
 	    $morehtmlref.='<br>'.$langs->trans('Project') . ' ';
@@ -408,12 +413,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	    {
 	        if ($action != 'classify')
 	        {
-	            $morehtmlref.='<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=classify&amp;id=' . $object->id . '">' . img_edit($langs->transnoentitiesnoconv('SetProject')) . '</a> : ';
+	            $morehtmlref.='<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=classify&token='.newToken().'&id=' . $object->id . '">' . img_edit($langs->transnoentitiesnoconv('SetProject')) . '</a> : ';
 	            if ($action == 'classify') {
 	                //$morehtmlref.=$form->form_project($_SERVER['PHP_SELF'] . '?id=' . $object->id, $object->socid, $object->fk_project, 'projectid', 0, 0, 1, 1);
 	                $morehtmlref.='<form method="post" action="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'">';
 	                $morehtmlref.='<input type="hidden" name="action" value="classin">';
-	                $morehtmlref.='<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	                $morehtmlref.='<input type="hidden" name="token" value="'.newToken().'">';
 	                $morehtmlref.=$formproject->select_projects($object->socid, $object->fk_project, 'projectid', $maxlength, 0, 1, 0, 1, 0, 0, '', 1);
 	                $morehtmlref.='<input type="submit" class="button valignmiddle" value="'.$langs->trans("Modify").'">';
 	                $morehtmlref.='</form>';
@@ -473,7 +478,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	    // Send
             //print '<a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&action=presend&mode=init#formmailbeforetitle">' . $langs->trans('SendMail') . '</a>'."\n";
 
-    		if ($user->rights->advanceddiscount->write)
+    		if ($user->hasRight('advanceddiscount', 'write'))
     		{
     			print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=edit">'.$langs->trans("Modify").'</a>'."\n";
     		}
@@ -483,9 +488,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		}
 
     		// Clone
-    		if ($user->rights->advanceddiscount->write)
-    		{
-    			print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=clone&amp;object=order">' . $langs->trans("ToClone") . '</a></div>';
+    		if ($permissiontoadd) {
+    			print dolGetButtonAction($langs->trans("ToClone"), '', 'default', $_SERVER['PHP_SELF'].'?id='.$object->id.'&action=clone&object=advanced_discount', 'clone', $permissiontoadd);
     		}
 
     		/*
@@ -502,15 +506,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		}
     		*/
 
-    		// Delete (need delete permission, or if draft, just need create/modify permission)
-    		if ($permissiontodelete)
-    		{
-    			print '<a class="butActionDelete" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=delete">'.$langs->trans('Delete').'</a>'."\n";
-    		}
-    		else
-    		{
-    			print '<a class="butActionRefused classfortooltip" href="#" title="'.dol_escape_htmltag($langs->trans("NotEnoughPermissions")).'">'.$langs->trans('Delete').'</a>'."\n";
-    		}
+    		// Delete
+    		print dolGetButtonAction($langs->trans("Delete"), '', 'delete', $_SERVER["PHP_SELF"].'?id='.$object->id.'&action=delete&token='.newToken(), 'delete', $permissiontodelete);
     	}
     	print '</div>'."\n";
 	}
@@ -541,12 +538,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	    //$somethingshown = $form->showLinkedObjectBlock($object, $linktoelem);
 
 
-	    //$buttontoadd = '<a href="'.$_SERVER["PHP_SELF"].'?action=addrule&id='.$id.'">'.$langs->trans("Add").'</a>';
+	    //$buttontoadd = '<a href="'.$_SERVER["PHP_SELF"].'?action=addrule&token='.newToken().'&id='.$id.'">'.$langs->trans("Add").'</a>';
 	    $buttontoadd = '';
 
 	    print '<!-- rules -->'."\n";
 	    print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-	    print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	    print '<input type="hidden" name="token" value="'.newToken().'">';
 	    print '<input type="hidden" name="action" value="addrule">';
 	    print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 	    print '<input type="hidden" name="id" value="'.$object->id.'">';
@@ -569,6 +566,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	    //'productis'=>'ProductIs',
     	    //'productisnot'=>'ProductIsNot',
     	    'containsproduct'=>'ContainsProduct',
+    		'productcategory'=>'ProductHasTag',
     		'totalgreaterorequal'=>'TotalGreaterThanOrEqualTo'
     	);
     	if (! empty($conf->commande->enabled))
@@ -581,7 +579,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	print '<input type="text" class="maxwidth100" name="value_rule" value="'.GETPOST('value_rule','alpha').'">';
     	print '</td>';
     	print '<td>';
-    	print '<input type="submit" class="button" name="addrule"'.(empty($user->rights->advanceddiscount->write)?' disabled':'').' value="'.$langs->trans("Add").'">';
+    	print '<input type="submit" class="button" name="addrule"'.(!$user->hasRight('advanceddiscount', 'write')?' disabled':'').' value="'.$langs->trans("Add").'">';
     	print '</td>';
     	print '</tr>';
 
@@ -595,7 +593,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			print $objrule['value'];
 			print '</td>';
 			print '<td class="right">';
-			print '<a href="'.$_SERVER["PHP_SELF"].'?action=deleterule&ruleid='.$objrule['id'].'&id='.$object->id.'">'.img_delete().'</a>';
+			print '<a href="'.$_SERVER["PHP_SELF"].'?action=deleterule&token='.newToken().'&ruleid='.$objrule['id'].'&id='.$object->id.'">'.img_delete().'</a>';
 			print '</td>';
 			print '</tr>';
 		}
@@ -618,12 +616,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	    //$somethingshown = $formactions->showactions($object, 'advanceddiscount', $socid, 1, '', $MAXEVENT, '', $morehtmlright);
 		*/
 
-	    //$buttontoadd = '<a href="'.$_SERVER["PHP_SELF"].'?action=addaction&id='.$id.'">'.$langs->trans("Add").'</a>';
+	    //$buttontoadd = '<a href="'.$_SERVER["PHP_SELF"].'?action=addaction&token='.newToken().'&id='.$id.'">'.$langs->trans("Add").'</a>';
 	    $buttontoadd = '';
 
 	    print '<!-- actions -->'."\n";
 	    print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-	    print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	    print '<input type="hidden" name="token" value="'.newToken().'">';
 	    print '<input type="hidden" name="action" value="addaction">';
 	    print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 	    print '<input type="hidden" name="id" value="'.$object->id.'">';
@@ -654,7 +652,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	print '<input type="text" class="maxwidth100" name="value_action" value="'.GETPOST('value_action','alpha').'">';
     	print '</td>';
     	print '<td>';
-    	print '<input type="submit" class="button" name="addaction"'.(empty($user->rights->advanceddiscount->write)?' disabled':'').' value="'.$langs->trans("Add").'">';
+    	print '<input type="submit" class="button" name="addaction"'.(!$user->hasRight('advanceddiscount', 'write')?' disabled':'').' value="'.$langs->trans("Add").'">';
     	print '</td>';
     	print '</tr>';
 
@@ -668,7 +666,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	    	print $objaction['value'];
 	    	print '</td>';
 	    	print '<td class="right">';
-	    	print '<a href="'.$_SERVER["PHP_SELF"].'?action=deleteaction&actionid='.$objaction['id'].'&id='.$object->id.'">'.img_delete().'</a>';
+	    	print '<a href="'.$_SERVER["PHP_SELF"].'?action=deleteaction&token='.newToken().'&actionid='.$objaction['id'].'&id='.$object->id.'">'.img_delete().'</a>';
 	    	print '</td>';
 	    	print '</tr>';
 	    }

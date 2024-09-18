@@ -53,8 +53,6 @@ $confirm=GETPOST('confirm', 'alpha');
 $actionsave=GETPOST('save', 'alpha');
 
 $modules = array();
-//if ($conf->fournisseur->enabled) $modules['supplier_orders']='SuppliersOrders';
-//if ($conf->fournisseur->enabled) $modules['supplier_invoices']='SuppliersInvoices';
 
 
 /*
@@ -97,7 +95,9 @@ if (preg_match('/del_(.*)/',$action,$reg))
 $form=new Form($db);
 $formfile=new FormFile($db);
 
-llxHeader('','ForceProject',$linktohelp);
+$help = '';
+
+llxHeader('', 'ForceProject', $help);
 
 $linkback='<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
 print_fiche_titre($langs->trans("NotesSetup"),$linkback,'setup');

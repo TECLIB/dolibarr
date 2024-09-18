@@ -56,11 +56,9 @@ class modAutoAttachFile extends DolibarrModules
         $this->editor_name = 'TecLib';
         $this->editor_url = 'http://www.teclib.com';
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '7.0.1';
+		$this->version = '7.1';
 		// Key used in llx_const table to save module status enabled/disabled (XXX is id value)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
-		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
-		$this->special = 2;
 		// Name of image file used for this module.
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
@@ -117,7 +115,7 @@ class modAutoAttachFile extends DolibarrModules
 
 		// Menus
 		//------
-		$this->menus = array();			// List of menus to add
+		$this->menu = array();			// List of menus to add
 		$r=0;
 
 		// Top menu

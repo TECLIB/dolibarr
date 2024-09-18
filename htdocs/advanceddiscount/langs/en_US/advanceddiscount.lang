@@ -28,6 +28,7 @@ CloneAdvancedDiscount=Clone discount/promotion
 ConfirmCloneAdvancedDiscount=Are you sure you want to clone this discount/promotion ?
 CustomerCountryIs=Customer country is (value is country code)
 CustomerHasTag=Customer has tag/category (value is ref of tag/category)
+ProductHasTag=Product has tag/category (value is ref of tag/category)
 ProductIs=Product of line is (value is product ref)
 ProductIsNot=Product of line is not (value is product ref)
 ContainsProduct=Object contains product (value is product ref)

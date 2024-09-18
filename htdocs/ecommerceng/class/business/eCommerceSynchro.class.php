@@ -1719,7 +1719,7 @@ class eCommerceSynchro
                             // If eCommerce setup has changed and now prices are switch TI/TE (Tax Include / Tax Excluded)
                             if ($dBProduct->price_base_type != $this->eCommerceSite->magento_price_type && empty($conf->global->ECOMMERCENG_DISABLE_MAGENTO_PRICE_TYPE))
                             {
-                                dol_syslog("Setup price for eCommerce are switched from TE toTI or TI to TE, we update price of product");
+                                dol_syslog("Setup price for eCommerce are switched from TE to TI or TI to TE, we update price of product");
                                 if (empty($conf->global->PRODUIT_MULTIPRICES)) {
                                     $dBProduct->updatePrice($dBProduct->price, $this->eCommerceSite->magento_price_type, $this->user);
                                 } else {
@@ -1728,9 +1728,15 @@ class eCommerceSynchro
                                 }
                             }
                         }
+                        else
+                        {
+                        	$error++;
+                        	$this->error=$this->langs->trans('ECommerceSynchProductUpdateError').' '.$dBProduct->error;
+                        	$this->errors = array_merge($this->errors, $dBProduct->errors);
+                        }
 
                         // We must set the initial stock
-                        if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
+                        if (! $error && $this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
                         {
                             dol_syslog("Stock for product updated is ".$productArray['stock_qty']," in ecommerce, but ".$dBProduct->stock_reel." in Dolibarr, we must update it");
                             if (empty($this->eCommerceSite->fk_warehouse))
@@ -1764,6 +1770,7 @@ class eCommerceSynchro
                         $dBProduct->ref = dol_string_nospecial(trim($productArray['ref']));
                         $dBProduct->canvas = $productArray['canvas'];
                         $dBProduct->note = 'Initialy created from '.$this->eCommerceSite->name;
+                        $dBProduct->note_private = 'Initialy created from '.$this->eCommerceSite->name;
 
                         $result = $dBProduct->create($this->user);
                         if ($result >= 0)// rajouter constante TTC/HT
@@ -2086,8 +2093,7 @@ class eCommerceSynchro
                                         if ($dBCommande->statut == Commande::STATUS_DRAFT)
                                         {
                                             $idWareHouse = 0;
-                                            // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
-                                            //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                            if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') $idWareHouse=$this->eCommerceSite->fk_warehouse;
                                             $dBCommande->valid($this->user, $idWareHouse);
                                         }
                                     }
@@ -2126,9 +2132,8 @@ class eCommerceSynchro
                                         if ($dBCommande->statut != Commande::STATUS_CANCELED)
                                         {
                                             $idWareHouse = 0;
-                                            // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
-                                            //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
-                                            $dBCommande->cancel(0, $idWareHouse);
+                                            if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                            $dBCommande->cancel($idWareHouse);
                                         }
                                     }
                                     if ($commandeArray['status'] == Commande::STATUS_CLOSED)
@@ -2159,7 +2164,8 @@ class eCommerceSynchro
                                 $dBCommande->statut=Commande::STATUS_DRAFT;             // STATUS_DRAFT by default at creation
                                 $dBCommande->ref_client = $commandeArray['ref_client'];
                                 $dBCommande->ref_ext = $this->eCommerceSite->name.'-'.$commandeArray['ref_client'];
-                                $dBCommande->date_commande = strtotime($commandeArray['date_commande'])+$dateoffset;
+                                $dBCommande->date_commande = strtotime($commandeArray['date_commande'])+$dateoffset;		// deprecated. For backward compatibility
+                                $dBCommande->date = strtotime($commandeArray['date_commande'])+$dateoffset;
                                 $dBCommande->date_livraison = strtotime($commandeArray['date_livraison'])+$dateoffset;
                                 $dBCommande->socid = $this->eCommerceSociete->fk_societe;
                                 $input_method_id = dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');  // Order mode. Not visible with some Dolibarr versions
@@ -2296,6 +2302,9 @@ class eCommerceSynchro
                             // Now update status
                             if (! $error)
                             {
+                            	// Reload the lines after having created the order because we need them later, fox exemple to decrease stock.
+                           		$dBCommande->fetch_lines();
+
                                 //if ($dBCommande->statut != $commandeArray['status'])      // Always when creating
                                 //{
                                     dol_syslog("synchCommande Status of order must be now set: we update order id=".$dBCommande->id." ref_client=".$dBCommande->ref_client." from status ".$dBCommande->statut." to status ".$commandeArray['status']);
@@ -2312,8 +2321,7 @@ class eCommerceSynchro
                                         if ($dBCommande->statut == Commande::STATUS_DRAFT)
                                         {
                                             $idWareHouse = 0;
-                                            // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
-                                            //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                            if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') $idWareHouse=$this->eCommerceSite->fk_warehouse;
                                             $resultvalidorder = $dBCommande->valid($this->user, $idWareHouse);
                                             if ($resultvalidorder < 0)
                                             {
@@ -2343,8 +2351,7 @@ class eCommerceSynchro
                                         if ($dBCommande->statut != Commande::STATUS_CANCELED)
                                         {
                                             $idWareHouse = 0;
-                                            // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
-                                            //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                            if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') $idWareHouse=$this->eCommerceSite->fk_warehouse;
                                             $dBCommande->cancel(0, $idWareHouse);
                                         }
                                     }
@@ -2608,8 +2615,7 @@ class eCommerceSynchro
                                         if ($dBFacture->statut == Facture::STATUS_DRAFT)
                                         {
                                             $idWareHouse = 0;
-                                            // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
-                                            //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                            if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') $idWareHouse=$this->eCommerceSite->fk_warehouse;
                                             $resultvalidinvoice = $dBFacture->validate($this->user, '', $idWareHouse);
                                             if ($resultvalidinvoice < 0)
                                             {
@@ -2740,8 +2746,7 @@ class eCommerceSynchro
                             if ($refCommandeExists > 0 && $dBCommande->statut == Commande::STATUS_DRAFT)
                             {
                                 $idWareHouse = 0;
-                                // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
-                                //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') $idWareHouse=$this->eCommerceSite->fk_warehouse;
                                 $dBCommande->valid($this->user, $idWareHouse);
                             }
                             if ($refCommandeExists > 0 && $dBCommande->statut == Commande::STATUS_VALIDATED)
@@ -2824,7 +2829,7 @@ class eCommerceSynchro
                                             0,
                                             0,
                                             $this->eCommerceProduct->fk_product,
-                                            0,
+                                        	$item['remise_percent'], //remise_percent
                                             '', //date_start
                                             '', //date_end
                                             0, //ventil
@@ -2892,8 +2897,7 @@ class eCommerceSynchro
                                     if ($dBFacture->statut == Facture::STATUS_DRAFT)
                                     {
                                         $idWareHouse = 0;
-                                        // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
-                                        //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+                                        if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') $idWareHouse=$this->eCommerceSite->fk_warehouse;
                                         $result = $dBFacture->validate($this->user, '', $idWareHouse);
                                         if ($result < 0)
                                         {
@@ -2963,55 +2967,59 @@ class eCommerceSynchro
                                         	$error++;
                                         }
 
-                                        if (! $error)
+                                        if (price2num($factureArray['remote_invoice']['grand_total']) != 0)
                                         {
-	                                        $chqbankname = $factureArray['remote_order']["payment"]['echeck_bank_name'];
-	                                        $chqsendername = $factureArray['remote_order']["payment"]['echeck_account_name'];
-	                                        if (empty($chqsendername)) $chqsendername = $factureArray['remote_order']["payment"]['cc_owner'];
-	                                        $paymentnote = 'Payment recorded when creating invoice from remote payment';
-	                                        if (! empty($factureArray['remote_order']["payment"]['cc_type'])) $paymentnote .= ' - CC type '.$factureArray['remote_order']["payment"]['cc_type'];
-	                                        if (! empty($factureArray['remote_order']["payment"]['cc_last4'])) $paymentnote .= ' - CC last4 '.$factureArray['remote_order']["payment"]['cc_last4'];
-
-	                                        $payment = new Paiement($this->db);
-
-	                                        $payment->datepaye = $dBFacture->date;
-	                                        $payment->paiementid = $paymenttypeid;
-	                                        $payment->num_paiement = $factureArray['remote_order']["payment"]['echeck_routing_number'];
-
-											//$factureArray['remote_order']["payment"] is one record with sum of different payments/invoices.
-											//$factureArray['remote_invoice']["payment"] is one record the payment of invoices (Magento seems to do one payment for one invoice, but have several invoices if several payments).
-											$payment->amounts=array($dBFacture->id => $factureArray['remote_invoice']['grand_total']);
-
-	                                        $payment->note=$paymentnote;
-
-	                                        $resultpayment = $payment->create($this->user, 1);
-
-	                                        if ($resultpayment < 0)
+                                        	// If amount of invoice to pay of not null
+	                                        if (! $error)
 	                                        {
-	                                            $error++;
-	                                            $this->errors[] = "Failed to create payment on invoice ".$dBFacture->ref.' resultpayment='.$resultpayment;
-	                                            $this->errors = array_merge($this->errors, $payment->errors);
+		                                        $chqbankname = $factureArray['remote_order']["payment"]['echeck_bank_name'];
+		                                        $chqsendername = $factureArray['remote_order']["payment"]['echeck_account_name'];
+		                                        if (empty($chqsendername)) $chqsendername = $factureArray['remote_order']["payment"]['cc_owner'];
+		                                        $paymentnote = 'Payment recorded when creating invoice from remote payment';
+		                                        if (! empty($factureArray['remote_order']["payment"]['cc_type'])) $paymentnote .= ' - CC type '.$factureArray['remote_order']["payment"]['cc_type'];
+		                                        if (! empty($factureArray['remote_order']["payment"]['cc_last4'])) $paymentnote .= ' - CC last4 '.$factureArray['remote_order']["payment"]['cc_last4'];
+
+		                                        $payment = new Paiement($this->db);
+
+		                                        $payment->datepaye = $dBFacture->date;
+		                                        $payment->paiementid = $paymenttypeid;
+		                                        $payment->num_paiement = $factureArray['remote_order']["payment"]['echeck_routing_number'];
+
+												//$factureArray['remote_order']["payment"] is one record with sum of different payments/invoices.
+												//$factureArray['remote_invoice']["payment"] is one record the payment of invoices (Magento seems to do one payment for one invoice, but have several invoices if several payments).
+												$payment->amounts=array($dBFacture->id => $factureArray['remote_invoice']['grand_total']);
+
+		                                        $payment->note=$paymentnote;
+
+		                                        // Because amount of payment is same than amount of invoice, this will also close the invoice automatically
+		                                        $resultpayment = $payment->create($this->user, 1);
+
+		                                        if ($resultpayment < 0)
+		                                        {
+		                                            $error++;
+		                                            $this->errors[] = "Failed to create payment on invoice ".$dBFacture->ref.' resultpayment='.$resultpayment;
+		                                            $this->errors = array_merge($this->errors, $payment->errors);
+		                                        }
 	                                        }
-                                        }
 
-                                        if (! $error)
-                                        {
-                                        	$label='(CustomerInvoicePayment)';
-                                        	if ($dBFacture->type == Facture::TYPE_CREDIT_NOTE) $label='(CustomerInvoicePaymentBack)';  // Refund of a credit note
-                                        	$result=$payment->addPaymentToBank($this->user,'payment',$label,$accountid,$chqsendername,$chqbankname);
-                                        	if ($result < 0)
-                                        	{
-                                        	    setEventMessages($payment->error, $payment->errors, 'errors');
-                                        		$error++;
-                                        	}
+	                                        if (! $error)
+	                                        {
+	                                        	$label='(CustomerInvoicePayment)';
+	                                        	if ($dBFacture->type == Facture::TYPE_CREDIT_NOTE) $label='(CustomerInvoicePaymentBack)';  // Refund of a credit note
+	                                        	$result=$payment->addPaymentToBank($this->user,'payment',$label,$accountid,$chqsendername,$chqbankname);
+	                                        	if ($result < 0)
+	                                        	{
+	                                        	    setEventMessages($payment->error, $payment->errors, 'errors');
+	                                        		$error++;
+	                                        	}
+	                                        }
+                                        } else {
+                                        	// If amount of invoice to pay is null
+											if (! $error)
+											{
+        	                                	$dBFacture->set_paid($this->user, '', '');
+											}
                                         }
-
-                                        //exit;
-										/* done into payment->create
-										if (! $error)
-										{
-                                        	$dBFacture->set_paid($this->user, '', '');
-										}*/
                                     }
                                 }
 

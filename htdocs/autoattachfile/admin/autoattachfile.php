@@ -57,8 +57,10 @@ $modules = array();
 if ($conf->propal->enabled) $modules['proposals']='Proposals';
 if ($conf->commande->enabled) $modules['orders']='Orders';
 if ($conf->facture->enabled) $modules['invoices']='Invoices';
-//if ($conf->fournisseur->enabled) $modules['supplier_orders']='SuppliersOrders';
-//if ($conf->fournisseur->enabled) $modules['supplier_invoices']='SuppliersInvoices';
+if ($conf->ficheinter->enabled) $modules['interventions']='Interventions';
+if ($conf->supplier_proposal->enabled) $modules['supplier_proposals']='SuppliersProposals';
+if ($conf->fournisseur->enabled) $modules['supplier_orders']='SuppliersOrders';
+if ($conf->fournisseur->enabled) $modules['supplier_invoices']='SuppliersInvoices';
 
 
 /*
@@ -184,11 +186,11 @@ if ($action == 'confirm_deletefile' && $confirm == 'yes')
 $form=new Form($db);
 $formfile=new FormFile($db);
 
-llxHeader('','AutoAttachFile',$linktohelp);
+$help_url = '';
+llxHeader('','AutoAttachFile', $help_url);
 
 $linkback='<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
 print_fiche_titre($langs->trans("AutoAttachFileSetup"),$linkback,'setup');
-print '<br>';
 
 clearstatcache();
 
@@ -207,13 +209,10 @@ $h++;
 dol_fiche_head($head, 'tabsetup', '');
 
 
-/*
- * Confirmation suppression fichier
- */
+// Confirm deletion of file
 if ($action == 'remove_file')
 {
-	$ret=$form->form_confirm($_SERVER["PHP_SELF"].'?&urlfile='.urlencode(GETPOST("file")), $langs->trans('DeleteFile'), $langs->trans('ConfirmDeleteFile'), 'confirm_deletefile', '', 0, 1);
-	if ($ret == 'html') print '<br>';
+	print $form->formconfirm($_SERVER["PHP_SELF"].'?&urlfile='.urlencode(GETPOST("file")), $langs->trans('DeleteFile'), $langs->trans('ConfirmDeleteFile'), 'confirm_deletefile', '', 0, 1);
 }
 
 // Show dir for each module
@@ -222,60 +221,57 @@ $langs->load("propal"); $langs->load("orders"); $langs->load("bills");
 foreach ($modules as $module => $moduletranskey)
 {
 	$outputdir=$conf->autoattachfile->dir_output.'/'.$module;
-	print '* '.$langs->trans("AutoAttachFileTakeFileFrom2",$langs->transnoentitiesnoconv($moduletranskey),$outputdir).'<br><br>';
+	print '* '.$langs->trans("AutoAttachFileTakeFileFrom2",$langs->transnoentitiesnoconv($moduletranskey),$outputdir).'<br>';
 }
-print '<br><br>';
 
-if (! empty($conf->global->MAIN_USE_JQUERY_MULTISELECT))
+dol_fiche_end();
+
+print '<br>';
+
+print '<div class="div-table-responsive-no-min">';
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre">';
+print '<td>'.$langs->trans("Parameters").'</td>'."\n";
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="center" width="100">'.$langs->trans("Value").'</td>'."\n";
+print '</tr>';
+
+/*
+ * Parameters form
+ */
+
+// Use multiple concatenation
+print '<tr class="oddeven">';
+print '<td>'.$langs->trans("EnableMultipleConcatenation").'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+
+print '<td align="center" width="100">';
+if (! empty($conf->use_javascript_ajax))
 {
-	$form=new Form($db);
-	$var=true;
-	print '<table class="noborder" width="100%">';
-	print '<tr class="liste_titre">';
-	print '<td>'.$langs->trans("Parameters").'</td>'."\n";
-	print '<td align="center" width="20">&nbsp;</td>';
-	print '<td align="center" width="100">'.$langs->trans("Value").'</td>'."\n";
-	print '</tr>';
-
-	/*
-	 * Parameters form
-	 */
-
-	// Use multiple concatenation
-	$var=!$var;
-	print '<tr '.$bc[$var].'>';
-	print '<td>'.$langs->trans("EnableMultipleConcatenation").'</td>';
-	print '<td align="center" width="20">&nbsp;</td>';
-
-	print '<td align="center" width="100">';
-	if (! empty($conf->use_javascript_ajax))
+	print ajax_constantonoff('CONCATPDF_MULTIPLE_CONCATENATION_ENABLED','',0);
+}
+else
+{
+	if (empty($conf->global->CONCATPDF_MULTIPLE_CONCATENATION_ENABLED))
 	{
-		print ajax_constantonoff('CONCATPDF_MULTIPLE_CONCATENATION_ENABLED','',0);
+		print '<a href="'.$_SERVER['PHP_SELF'].'?action=set_CONCATPDF_MULTIPLE_CONCATENATION_ENABLED">'.img_picto($langs->trans("Disabled"),'off').'</a>';
 	}
 	else
 	{
-		if (empty($conf->global->CONCATPDF_MULTIPLE_CONCATENATION_ENABLED))
-		{
-			print '<a href="'.$_SERVER['PHP_SELF'].'?action=set_CONCATPDF_MULTIPLE_CONCATENATION_ENABLED">'.img_picto($langs->trans("Disabled"),'off').'</a>';
-		}
-		else
-		{
-			print '<a href="'.$_SERVER['PHP_SELF'].'?action=del_CONCATPDF_MULTIPLE_CONCATENATION_ENABLED">'.img_picto($langs->trans("Enabled"),'on').'</a>';
-		}
+		print '<a href="'.$_SERVER['PHP_SELF'].'?action=del_CONCATPDF_MULTIPLE_CONCATENATION_ENABLED">'.img_picto($langs->trans("Enabled"),'on').'</a>';
 	}
-	print '</td></tr>';
-
-	print '</table>';
-
-	print '<br><br>';
 }
+print '</td></tr>';
 
+print '</table>';
+print '</div>';
+
+
+print '<br><br>';
 
 
 $select_module=$form->selectarray('module', $modules, GETPOST('module'), 1, 0, 0, '', 1);
 $formfile->form_attach_new_file($_SERVER['PHP_SELF'], '', 0, 0, 1, 50, '', $select_module, false, '', 0);
-
-dol_fiche_end();
 
 
 print '<br><br>';

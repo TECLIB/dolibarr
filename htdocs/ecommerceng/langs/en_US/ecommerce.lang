@@ -107,6 +107,7 @@ ECommerceClickUrlToTestUrl=Click here to test URL (an XML file must appear)
 ECommerceCategoriesProducts=Product categories
 ECommerceStockProduct=Warehouse for stock initialization
 ECommerceStockProductDescription=When previous option <strong>%s</strong> is set to <strong>eCommerce to Dolibarr</strong>, this is warehouse to use for stock change/init when a product is created/modified into Dolibarr by an eCommerce synchronization. Note that stock change on Dolibarr occurs during step of synchronization of products and not during synchronization of orders/invoices.
+ECommerceStockProductDescription2=When previous option <strong>%s</strong> is set to <strong>Dolibarr to eCommerce</strong>, this is warehouse to use for stock change when automatic stock change is set to order or invoice validation and an order or invoice is retreived from the eCommerce platform. It is not used if there is no automatic increase set in module Stock on order or invoice.
 
 ECommerceErrorGetSocieteToUpdate=Error failed to retrieving companies list. Please retry.
 ECommerceErrorGetProduitsToUpdate=Error failed while retrieving products list. Please retry.

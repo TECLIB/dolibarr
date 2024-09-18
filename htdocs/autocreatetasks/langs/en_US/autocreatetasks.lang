@@ -1,0 +1,40 @@
+# Copyright (C) 2020 Adminson Alicealalalamdskfldmjgdfgdfhfghgfh <testldr9@dolicloud.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#
+# Generic
+#
+
+# Module label 'ModuleAutoCreateTasksName'
+ModuleAutoCreateTasksName = Auto-Create Tasks
+# Module description 'ModuleAutoCreateTasksDesc'
+ModuleAutoCreateTasksDesc = Create some tasks automatically after validating a project
+
+#
+# Admin page
+#
+AutoCreateTasksSetup = Auto-Create Tasks setup
+Settings = Settings
+AutoCreateTasksSetupPage = Auto-Create Tasks setup page
+AUTOCREATE_TASK_LABELS=List of labels of tasks to create
+AUTOCREATE_TASK_LABELSTooltip=Use a comma to separate different labels.<br>Example: Project management, Deployment, Support
+
+#
+# About page
+#
+About = About
+AutoCreateTasksAbout = About Auto-Create Tasks
+AutoCreateTasksAboutPage = Auto-Create Tasks about page
+

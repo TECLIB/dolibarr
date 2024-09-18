@@ -83,7 +83,7 @@ class eCommerceFacture // extends CommonObject
 
 		$this->db->begin();
 
-	   	dol_syslog(get_class($this)."::create sql=".$sql, LOG_DEBUG);
+	   	dol_syslog(get_class($this)."::create", LOG_DEBUG);
         $resql=$this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
 
@@ -127,9 +127,9 @@ class eCommerceFacture // extends CommonObject
 		$sql.= " t.remote_id,";
 		$sql.= " t.last_update";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_facture as t";
-        $sql.= " WHERE t.rowid = ".$id;
+        $sql.= " WHERE t.rowid = ".((int) $id);
 
-    	dol_syslog(get_class($this)."::fetch sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::fetch", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -184,11 +184,11 @@ class eCommerceFacture // extends CommonObject
 		$sql.= " remote_id=".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
 		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
 
-        $sql.= " WHERE rowid=".$this->id;
+        $sql.= " WHERE rowid=".((int) $this->id);
 
 		$this->db->begin();
 
-		dol_syslog(get_class($this)."::update sql=".$sql, LOG_DEBUG);
+		dol_syslog(get_class($this)."::update", LOG_DEBUG);
         $resql = $this->db->query($sql);
     	if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
 
@@ -224,7 +224,7 @@ class eCommerceFacture // extends CommonObject
 		$error=0;
 
 		$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_facture";
-		$sql.= " WHERE rowid=".$this->id;
+		$sql.= " WHERE rowid=".((int) $this->id);
 
 		$this->db->begin();
 
@@ -260,7 +260,7 @@ class eCommerceFacture // extends CommonObject
             global $langs;
             $sql = "SELECT MAX(t.last_update) as lastdate FROM ".MAIN_DB_PREFIX."ecommerce_facture as t";
             $sql.= " WHERE t.fk_site = ".$siteId;
-            dol_syslog(get_class($this)."::getLastUpdate sql=".$sql, LOG_DEBUG);
+            dol_syslog(get_class($this)."::getLastUpdate", LOG_DEBUG);
 
             $lastdate = null;
 
@@ -302,7 +302,7 @@ class eCommerceFacture // extends CommonObject
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_facture as t";
         $sql.= " WHERE t.fk_site = ".$siteId;
         $sql.= " AND t.remote_id = ".$remoteId;
-    	dol_syslog(get_class($this)."::fetchByRemoteId sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::fetchByRemoteId", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -346,7 +346,7 @@ class eCommerceFacture // extends CommonObject
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_facture as t";
         $sql.= " WHERE t.fk_site = ".$siteId;
         $sql.= " AND t.fk_facture = ".$factureId;
-        dol_syslog(get_class($this)."::fetchByFactureId sql=".$sql, LOG_DEBUG);
+        dol_syslog(get_class($this)."::fetchByFactureId", LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -382,7 +382,7 @@ class eCommerceFacture // extends CommonObject
    		global $langs;
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."ecommerce_facture";
         $sql.= " WHERE fk_site = ".$siteId;
-    	dol_syslog(get_class($this)."::getAllECommerceFactureIds sql=".$sql, LOG_DEBUG);
+    	dol_syslog(get_class($this)."::getAllECommerceFactureIds", LOG_DEBUG);
         $resql=$this->db->query($sql);
 
         if ($resql)

@@ -33,7 +33,7 @@ class eCommerceRemoteAccess
      * Class for access remote sites
      * Creates an instance of the appropriate class according to type of site
      *
-     * @param   Database            $db         Databse handler
+     * @param   DoliDB              $db         Databse handler
      * @param   eCommerceSite       $site       eCommerceSite
      */
     function eCommerceRemoteAccess($db, $site)

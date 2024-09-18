@@ -20,7 +20,7 @@
 
 /**
  * 		\defgroup   mymodule     Module AutoAddLine
- *      \brief      Module AutoAddLine      
+ *      \brief      Module AutoAddLine
  *      \file       htdocs/includes/modules/modStockManager.class.php
  *      \ingroup    mymodule
  *      \brief      Description and activation file for module MyModule
@@ -54,7 +54,6 @@ class modAutoAddLine extends DolibarrModules
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
         $this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
-        $this->special = 2;
 
         // Name of image file used for this module.
         // If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
@@ -71,7 +70,7 @@ class modAutoAddLine extends DolibarrModules
         							'css' => array(),
         							'hooks' => array()
         );
-        
+
         // Data directories to create when module is enabled.
         $this->dirs = array();
         $r = 0;
@@ -91,7 +90,7 @@ class modAutoAddLine extends DolibarrModules
         $this->description = 'Calcul et ajout automatique de lignes finales aux facture en fonction de services définis pour les produits associés (taxe carbone, réduction...)';
         $this->editor_name = 'TecLib';
         $this->editor_url = 'http://www.teclib.com';
-        
+
         // Constants
         // List of particular constants to add when module is enabled (key, 'chaine', value, desc, visible, 'current' or 'allentities', deleteonunactive)
         // Example: $this->const=array(0=>array('MYMODULE_MYNEWCONST1','chaine','myvalue','This is a constant to add',1),
@@ -174,19 +173,19 @@ class modAutoAddLine extends DolibarrModules
         // $this->rights[$r][5] = 'level2';				// In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
         // $r++;
         // Setting rights
-        // Rights for receptions 
+        // Rights for receptions
 //        $r = 0;
 //        $this->rights [$r] = array(// Read
 //                0 => 21101, // Permission id
-//                1 => 'Consulter les réceptions', // Permission label                          
-//                3 => 0, // Default for new user                        
-//                4 => 'reception', // Generic attribute name in module (level one)                        
-//                5 => 'read'                                    // Specific attribute name in module (level one)                        
+//                1 => 'Consulter les réceptions', // Permission label
+//                3 => 0, // Default for new user
+//                4 => 'reception', // Generic attribute name in module (level one)
+//                5 => 'read'                                    // Specific attribute name in module (level one)
 //        );
 
 
         // Create documentsDirs
-    
+
         // Exports
 //        $r = 1;
 
@@ -210,7 +209,7 @@ class modAutoAddLine extends DolibarrModules
      * 		It also creates data directories.
      *      @return     int             1 if OK, 0 if KO
      */
-    function init()
+    function init($options = '')
     {
         $sql = array();
 
@@ -225,7 +224,7 @@ class modAutoAddLine extends DolibarrModules
      * 		Data directories are not deleted.
      *      @return     int             1 if OK, 0 if KO
      */
-    function remove()
+    function remove($options = '')
     {
         $sql = array();
 
@@ -242,6 +241,6 @@ class modAutoAddLine extends DolibarrModules
 	function load_tables()
 	{
 		return $this->_load_tables('/autoaddline/sql/');
-	}  
+	}
 }
 

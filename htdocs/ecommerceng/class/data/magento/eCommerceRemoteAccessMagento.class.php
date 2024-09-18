@@ -79,6 +79,12 @@ class eCommerceRemoteAccessMagento
             //dol_syslog("eCommerceRemoteAccessMagento Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".preg_replace('/./','*',$this->site->user_password));
             dol_syslog("eCommerceRemoteAccessMagento Connect to API webservice_address=".$this->site->webservice_address." user_name=".$this->site->user_name." user_password=".$this->site->user_password);
 
+            if (! class_exists('SoapClient')) {
+            	dol_syslog("eCommerceRemoteAccessMagento Class Soapclient not found.");
+            	$this->errors[] = 'Class SoapClient not found.';
+            	return false;
+            }
+
             // TODO Add option to manage mode "non WSDL". location and uri should be set on $params.
             $this->client = new SoapClient($this->site->webservice_address, $params);
 

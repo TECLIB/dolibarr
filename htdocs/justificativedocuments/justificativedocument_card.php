@@ -171,7 +171,7 @@ if (empty($reshook))
                     $outputlangs = new Translate("", $conf);
                     $outputlangs->setDefaultLang($newlang);
                 }
-                $model = $object->modelpdf;
+                $model = $object->model_pdf;
                 $ret = $object->fetch($id); // Reload to get new records
 
                 $object->generateDocument($model, $outputlangs, 0, 0, 0);
@@ -226,7 +226,7 @@ if ($action == 'create')
 	print '<span class="opacitymedium">'.$langs->trans("EnterHereOnlyJustificativeDocument").'</span><br><br>';
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="add">';
 	print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 
@@ -264,7 +264,7 @@ if ($action == 'create')
 	        print '</td><td>';
 	        //$array = array('ee'=>'rr');
 	        $include = 'hierarchyme';
-	        if (! empty($user->rights->justificativedocuments->justificativedocument->write_all)) $include = '';
+	        if ($user->hasRight('justificativedocuments', 'justificativedocument', 'write_all')) $include = '';
 	        print $form->select_dolusers($user->id, 'fk_user', 0, null, 0, $include);
 	        print '</td>';
 	        print '</tr>';
@@ -281,7 +281,7 @@ if ($action == 'create')
     	    print '</td>';
     	    print '<td>';
     	    if (in_array($val['type'], array('int', 'integer'))) $value = GETPOST($key, 'int');
-    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOST($key, 'none');
+    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOST($key, 'restricthtml');
     	    else $value = GETPOST($key, 'alpha');
     	    print $object->showInputField($val, $key, $value, '', '', '', 0);
     	    print '</td>';
@@ -316,7 +316,7 @@ if (($id || $ref) && $action == 'edit')
 	print load_fiche_titre($langs->trans("JustificativeDocument"));
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-    print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+    print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="update">';
 	print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 	print '<input type="hidden" name="id" value="'.$object->id.'">';
@@ -355,7 +355,7 @@ if (($id || $ref) && $action == 'edit')
 	        print '</td><td>';
 	        //$array = array('ee'=>'rr');
 	        $include = 'hierarchyme';
-	        if (! empty($user->rights->justificativedocuments->justificativedocument->write_all)) $include = '';
+	        if ($user->hasRight('justificativedocuments', 'justificativedocument', 'write_all')) $include = '';
 	        print $form->select_dolusers($object->fk_user, 'fk_user', 0, null, 0, $include);
 	        print '</td>';
 	        print '</tr>';
@@ -370,7 +370,7 @@ if (($id || $ref) && $action == 'edit')
     	    print '</td>';
     	    print '<td>';
     	    if (in_array($val['type'], array('int', 'integer'))) $value = GETPOSTISSET($key)?GETPOST($key, 'int'):$object->$key;
-    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOSTISSET($key)?GETPOST($key, 'none'):$object->$key;
+    	    elseif ($val['type'] == 'text' || $val['type'] == 'html') $value = GETPOSTISSET($key)?GETPOST($key, 'restricthtml'):$object->$key;
     	    else $value = GETPOSTISSET($key)?GETPOST($key, 'alpha'):$object->$key;
     	    //var_dump($val.' '.$key.' '.$value);
     	    if ($val['noteditable']) print $object->showOutputField($val, $key, $value, '', '', '', 0);
@@ -463,19 +463,19 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	// Thirdparty
 	$morehtmlref.='<br>'.$langs->trans('ThirdParty') . ' : ' . $object->thirdparty->getNomUrl(1);
 	// Project
-	if (! empty($conf->projet->enabled))
+	if (! empty($conf->project->enabled))
 	{
 	    $langs->load("projects");
 	    $morehtmlref.='<br>'.$langs->trans('Project') . ' ';
 	    if ($user->rights->justificativedocuments->justificativedocument->write)
 	    {
 	        if ($action != 'classify')
-	            $morehtmlref.='<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=classify&amp;id=' . $object->id . '">' . img_edit($langs->transnoentitiesnoconv('SetProject')) . '</a> : ';
+	            $morehtmlref.='<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=classify&token='.newToken().'&id=' . $object->id . '">' . img_edit($langs->transnoentitiesnoconv('SetProject')) . '</a> : ';
             if ($action == 'classify') {
                 //$morehtmlref.=$form->form_project($_SERVER['PHP_SELF'] . '?id=' . $object->id, $object->socid, $object->fk_project, 'projectid', 0, 0, 1, 1);
                 $morehtmlref.='<form method="post" action="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'">';
                 $morehtmlref.='<input type="hidden" name="action" value="classin">';
-                $morehtmlref.='<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+                $morehtmlref.='<input type="hidden" name="token" value="'.newToken().'">';
                 $morehtmlref.=$formproject->select_projects($object->socid, $object->fk_project, 'projectid', 0, 0, 1, 0, 1, 0, 0, '', 1);
                 $morehtmlref.='<input type="submit" class="button valignmiddle" value="'.$langs->trans("Modify").'">';
                 $morehtmlref.='</form>';
@@ -587,30 +587,30 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	if (empty($reshook))
     	{
     	    // Send
-            //print '<a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&action=presend&mode=init#formmailbeforetitle">' . $langs->trans('SendMail') . '</a>'."\n";
+    		//print '<a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&action=presend&token='.newToken().'&mode=init#formmailbeforetitle">' . $langs->trans('SendMail') . '</a>'."\n";
 
     	    // Back to draft
     	    if ($object->status == $object::STATUS_VALIDATED)
     	    {
     	        if ($permissiontoadd)
     	        {
-    	            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_setdraft&confirm=yes">'.$langs->trans("SetToDraft").'</a>';
+    	            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_setdraft&token='.newToken().'&confirm=yes">'.$langs->trans("SetToDraft").'</a>';
     	        }
     	    }
     	    if ($object->status == $object::STATUS_APPROVED)
     	    {
    	            if ($permissiontoapprove)
     	        {
-    	            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_setdraft&confirm=yes">'.$langs->trans("SetToDraft").'</a>';
+    	            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_setdraft&token='.newToken().'&confirm=yes">'.$langs->trans("SetToDraft").'</a>';
     	        }
     	    }
 
             // Modify
-    	    if ($object->status == $object::STATUS_DRAFT || $user->rights->justificativedocuments->justificativedocument->approve)    // User with permission to approve must be able to edit/fix and set reimbursed amount.
+    	    if ($object->status == $object::STATUS_DRAFT || $user->hasRight('justificativedocuments', 'justificativedocument', 'approve'))    // User with permission to approve must be able to edit/fix and set reimbursed amount.
     	    {
     	        if ($permissiontoadd)
         		{
-        			print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=edit">'.$langs->trans("Modify").'</a>'."\n";
+        			print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&action=edit">'.$langs->trans("Modify").'</a>'."\n";
         		}
         		else
         		{
@@ -632,7 +632,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
     		        if (($nbFiles + $nbLinks) > 0)
     		        {
-    		            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_validate&confirm=yes">'.$langs->trans("Validate").'</a>';
+    		            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_validate&token='.newToken().'&confirm=yes">'.$langs->trans("Validate").'</a>';
     		        }
     		        else
     		        {
@@ -655,7 +655,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
     		        if (($nbFiles + $nbLinks) > 0)
     		        {
-    		            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_approve&confirm=yes">'.$langs->trans("Approve").'</a>';
+    		            print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=confirm_approve&token='.newToken().'&confirm=yes">'.$langs->trans("Approve").'</a>';
     		        }
     		        else
     		        {
@@ -667,9 +667,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		}
 
     		// Clone
-    		if ($permissiontoadd)
-    		{
-    			//print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=clone&amp;object=order">' . $langs->trans("ToClone") . '</a>'."\n";
+    		if ($permissiontoadd) {
+    			//print dolGetButtonAction($langs->trans("ToClone"), '', 'default', $_SERVER['PHP_SELF'].'?id='.$object->id.'&socid='.$object->socid.'&action=clone&token='.newToken().'&object=bom', 'justificativedocument', $permissiontoadd);
     		}
 
     		/*
@@ -677,24 +676,17 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     		{
     			if ($object->status == 1)
     		 	{
-    		 		print '<a class="butActionDelete" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=disable">'.$langs->trans("Disable").'</a>'."\n";
+    		 		print '<a class="butActionDelete" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&action=disable&token='.newToken().'">'.$langs->trans("Disable").'</a>'."\n";
     		 	}
     		 	else
     		 	{
-    		 		print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=enable">'.$langs->trans("Enable").'</a>'."\n";
+    		 		print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&action=enable&token='.newToken().'">'.$langs->trans("Enable").'</a>'."\n";
     		 	}
     		}
     		*/
 
-    		// Delete (need delete permission, or if draft, just need create/modify permission)
-    		if (! empty($user->rights->justificativedocuments->justificativedocument->delete) || (! empty($object->fields['status']) && $object->status == $object::STATUS_DRAFT && ! empty($user->rights->justificativedocuments->justificativedocument->write)))
-    		{
-    			print '<a class="butActionDelete" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=delete">'.$langs->trans('Delete').'</a>'."\n";
-    		}
-    		else
-    		{
-    			print '<a class="butActionRefused classfortooltip" href="#" title="'.dol_escape_htmltag($langs->trans("NotEnoughPermissions")).'">'.$langs->trans('Delete').'</a>'."\n";
-    		}
+    		// Delete
+    		print dolGetButtonAction($langs->trans("Delete"), '', 'delete', $_SERVER["PHP_SELF"].'?id='.$object->id.'&action=delete&token='.newToken(), 'delete', $permissiontodelete);
     	}
     	print '</div>'."\n";
 	}
@@ -717,7 +709,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	    $urlsource = $_SERVER["PHP_SELF"] . "?id=" . $object->id;
 	    $genallowed = $user->rights->justificativedocuments->justificativedocument->read;	// If you can read, you can build the PDF to read content
 	    $delallowed = $user->rights->justificativedocuments->justificativedocument->create;	// If you can create/edit, you can remove a file on card
-	    print $formfile->showdocuments('justificativedocuments', $objref, $filedir, $urlsource, $genallowed, $delallowed, $object->modelpdf, 1, 0, 0, 28, 0, '', '', '', $soc->default_lang);
+	    print $formfile->showdocuments('justificativedocuments', $objref, $filedir, $urlsource, $genallowed, $delallowed, $object->model_pdf, 1, 0, 0, 28, 0, '', '', '', $soc->default_lang);
 		*/
 
 	    // Show links to link elements

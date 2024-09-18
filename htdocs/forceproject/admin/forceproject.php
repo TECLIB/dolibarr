@@ -41,9 +41,6 @@ require_once(DOL_DOCUMENT_ROOT."/core/lib/files.lib.php");
 require_once(DOL_DOCUMENT_ROOT.'/core/class/html.formadmin.class.php');
 require_once(DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php');
 
-
-if (!$user->admin) accessforbidden();
-
 $langs->load("admin");
 $langs->load("other");
 $langs->load("forceproject@forceproject");
@@ -57,11 +54,16 @@ $modules = array();
 //if ($conf->fournisseur->enabled) $modules['supplier_orders']='SuppliersOrders';
 //if ($conf->fournisseur->enabled) $modules['supplier_invoices']='SuppliersInvoices';
 
+if (!$user->admin) {
+	accessforbidden();
+}
+
 
 /*
  * Actions
  */
 
+$reg = array();
 if (preg_match('/set_(.*)/',$action,$reg))
 {
 	$code=$reg[1];
@@ -98,7 +100,9 @@ if (preg_match('/del_(.*)/',$action,$reg))
 $form=new Form($db);
 $formfile=new FormFile($db);
 
-llxHeader('','ForceProject',$linktohelp);
+$help = '';
+
+llxHeader('','ForceProject',$help);
 
 $linkback='<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
 print_fiche_titre($langs->trans("ForceProjectSetup"),$linkback,'setup');
@@ -118,10 +122,9 @@ $head[$h][1] = $langs->trans("About");
 $head[$h][2] = 'tababout';
 $h++;
 
-dol_fiche_head($head, 'tabsetup', '');
+dol_fiche_head($head, 'tabsetup', '', -1);
 
-print_titre($langs->trans("Options"));
-print '<table class="noborder" width="100%">';
+print '<table class="noborder centpercent">';
 print '<tr class="liste_titre">';
 print '<td>'.$langs->trans("Parameter").'</td>';
 print "<td>&nbsp;</td>\n";

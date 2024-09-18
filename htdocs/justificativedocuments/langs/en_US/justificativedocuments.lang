@@ -31,7 +31,7 @@ TypeOfJustificative=Type of supporting documents
 JustificativeDocumentsSetup = Supporting Documents setup
 Settings = Settings
 JustificativeDocumentsSetupPage = Supporting Documents setup page
-AboutInfoTecLib=This module is developped and distributed by Laurent Destailleur for TecLib, <a href="http://www.teclib.com">www.teclib.com</a> (A Dolibarr Preferred Partner company).
+AboutInfoTecLib=This module is developped and distributed by Laurent Destailleur for TecLib, <a href="http://www.teclib.com">www.teclib.com</a>
 
 #
 # About page
