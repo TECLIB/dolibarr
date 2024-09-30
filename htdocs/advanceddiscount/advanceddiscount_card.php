@@ -602,7 +602,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 		print '</form>';
 
-	    print '</div><div class="fichehalfright"><div class="ficheaddleft">';
+	    print '</div><div class="fichehalfright">';
 
 	    /*$MAXEVENT = 10;
 
@@ -677,7 +677,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 		print '</form>';
 
-	    print '</div></div></div>';
+	    print '</div></div>';
 	}
 
 	//Select mail models is same action as presend
