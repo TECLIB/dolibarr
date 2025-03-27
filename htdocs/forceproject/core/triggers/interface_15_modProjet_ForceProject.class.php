@@ -116,11 +116,12 @@ class InterfaceForceProject extends DolibarrTriggers
     {
 		$ok=0;
 
-		if (empty($conf->forceproject->enabled)) return 0;     // If module is not enabled, we do nothing
+		if (!isModEnabled('forceproject')) {
+			return 0;     // If module is not enabled, we do nothing
+		}
 
 		// Actions
-        if ($action == 'PROPAL_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_PROPOSAL) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
-        {
+        if ($action == 'PROPAL_VALIDATE' && (getDolGlobalString('FORCEPROJECT_ON_PROPOSAL') || getDolGlobalString('FORCEPROJECT_ON_ALL'))) {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
             if (empty($object->fk_project))
