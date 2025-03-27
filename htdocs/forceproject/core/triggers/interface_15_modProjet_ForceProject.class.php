@@ -52,7 +52,7 @@ class InterfaceForceProject extends DolibarrTriggers
 
         $this->name = preg_replace('/^Interface/i','',get_class($this));
         $this->family = "system";
-        $this->description = "Triggers of this module will check a project is linked to validated element. It may also replace _projectref_ with ref of linked project.";
+        $this->description = "Triggers of this module will check a project is linked to validated element. It may also replace {PROJECTREF-X} with the reference (the first X characters) of the linked project.";
         $this->picto = 'project';
     }
 
@@ -147,22 +147,21 @@ class InterfaceForceProject extends DolibarrTriggers
 
 	            	// If this is the first time we set the counter and we want the counter to start to 1 for each project
 	            	// The tag {PROJECTREF\-[0-9]+\} must be present into ref numbering mask to have this working.
-	            	if (preg_match('/\(PROV/', $object->ref))
-	            	{
-	            		if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT)) {
+	            	if (preg_match('/\(PROV/', $object->ref)) {
+	            		if (getDolGlobalString('FORCEPROJECT_COUNTER_FOREACH_PROJECT')) {
 		            		// Clean current ref of propal, so we can make again later a getNextNumRef and get same value for invoice number
 		            		$sql="UPDATE ".MAIN_DB_PREFIX."propal SET ref = '(TMP".$this->db->escape($newref).")' WHERE rowid=".$object->id;
 		            		$resql=$this->db->query($sql);
 
 			            	$savmask=$conf->global->PROPALE_SAPHIR_MASK;
-			            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/projectref/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);	// For proposal, counter is started to 1 for each project
-			            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/\{PROJECTREF\-[0-9]+\}/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);
-			            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/%%+/',$projectref,$conf->global->PROPALE_SAPHIR_MASK);
+			            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/projectref/',$projectref, getDolGlobalString('PROPALE_SAPHIR_MASK'));	// For proposal, counter is started to 1 for each project
+			            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/\{PROJECTREF\-[0-9]+\}/',$projectref, getDolGlobalString('PROPALE_SAPHIR_MASK'));
+			            	$conf->global->PROPALE_SAPHIR_MASK=preg_replace('/%%+/',$projectref, getDolGlobalString('PROPALE_SAPHIR_MASK'));
 			            	//var_dump($conf->global->PROPALE_SAPHIR_MASK);
 			            	$newref=$object->getNextNumRef($object->thirdparty);
 			            	//var_dump($newref);
 			            	//$newref=$projectref.substr($newref,7);
-			            	$conf->global->PROPALE_SAPHIR_MASK=$savmask;
+			            	$conf->global->PROPALE_SAPHIR_MASK = $savmask;
 					       	//var_dump($newref); exit;
 	            		}
 	            	}
@@ -233,8 +232,7 @@ class InterfaceForceProject extends DolibarrTriggers
         // $conf->global->FORCEPROJECT_PROPAL_CLOSE_REFUSED_REASON_REQUIRED =
         // 1 => Reason is mandatory and probability is autoset on closing.
         // 2 => Probability is autoset on closing (but no mandatory field)
-        if ($action == 'PROPAL_CLOSE_REFUSED' && (! empty($conf->global->FORCEPROJECT_PROPAL_CLOSE_REFUSED_REASON_REQUIRED)))
-        {
+        if ($action == 'PROPAL_CLOSE_REFUSED' && getDolGlobalString('FORCEPROJECT_PROPAL_CLOSE_REFUSED_REASON_REQUIRED')) {
         	if (empty($object->array_options['options_reasonnotsigned']) && getDolGlobalInt('FORCEPROJECT_PROPAL_CLOSE_REFUSED_REASON_REQUIRED') == 1)
         	{
         		$langs->load("forceproject@forceproject");
@@ -252,8 +250,7 @@ class InterfaceForceProject extends DolibarrTriggers
         		$ok=1;
         	}
         }
-        if ($action == 'PROPAL_CLOSE_SIGNED' && (! empty($conf->global->FORCEPROJECT_PROPAL_CLOSE_REFUSED_REASON_REQUIRED)))
-        {
+        if ($action == 'PROPAL_CLOSE_SIGNED' && getDolGlobalString('FORCEPROJECT_PROPAL_CLOSE_REFUSED_REASON_REQUIRED')) {
         	if (isset($object->array_options['options_probasigna']))
         	{
         		$object->array_options['options_probasigna'] = 100;
@@ -265,8 +262,7 @@ class InterfaceForceProject extends DolibarrTriggers
         }
 
     	// Actions
-        if ($action == 'ORDER_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_ORDER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
-        {
+        if ($action == 'ORDER_VALIDATE' && (getDolGlobalString('FORCEPROJECT_ON_ORDER') || getDolGlobalString('FORCEPROJECT_ON_ALL'))) {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
             if (empty($object->fk_project))
@@ -374,8 +370,7 @@ class InterfaceForceProject extends DolibarrTriggers
 			}
         }
 
-        if ($action == 'BILL_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_INVOICE) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
-        {
+        if ($action == 'BILL_VALIDATE' && (getDolGlobalString('FORCEPROJECT_ON_INVOICE') || getDolGlobalString('FORCEPROJECT_ON_ALL'))) {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
             if (empty($object->fk_project) || $object->fk_project < 0)
@@ -405,7 +400,7 @@ class InterfaceForceProject extends DolibarrTriggers
                     // The tag {PROJECTREF\-[0-9]+\} must be present into ref numbering mask to have this working.
                     if (preg_match('/\(PROV/', $object->ref))
                     {
-                    	if (! empty($conf->global->FORCEPROJECT_COUNTER_FOREACH_PROJECT)) {
+                    	if (getDolGlobalString('FORCEPROJECT_COUNTER_FOREACH_PROJECT')) {
 	                        if ($object->type == 1)
 	                        {
 	                        	// Clean current ref of invoice, so we can make again later a getNextNumRef and get same value for invoice number
@@ -535,8 +530,7 @@ class InterfaceForceProject extends DolibarrTriggers
         // Suppliers
 
 
-        if (($action == 'SUPPLIER_PROPOSAL_VALIDATE' || $action == 'PROPOSAL_SUPPLIER_VALIDATE') && (! empty($conf->global->FORCEPROJECT_ON_PROPOSAL_SUPPLIER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
-        {
+        if (($action == 'SUPPLIER_PROPOSAL_VALIDATE' || $action == 'PROPOSAL_SUPPLIER_VALIDATE') && (getDolGlobalString('FORCEPROJECT_ON_PROPOSAL_SUPPLIER') || getDolGlobalString('FORCEPROJECT_ON_ALL'))) {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
             if (empty($object->fk_project))
@@ -547,8 +541,7 @@ class InterfaceForceProject extends DolibarrTriggers
             }
         }
 
-        if ($action == 'ORDER_SUPPLIER_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_ORDER_SUPPLIER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
-        {
+        if ($action == 'ORDER_SUPPLIER_VALIDATE' && (getDolGlobalString('FORCEPROJECT_ON_ORDER_SUPPLIER') || getDolGlobalString('FORCEPROJECT_ON_ALL'))) {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
             if (empty($object->fk_project))
@@ -559,8 +552,7 @@ class InterfaceForceProject extends DolibarrTriggers
             }
         }
 
-        if ($action == 'BILL_SUPPLIER_VALIDATE' && (! empty($conf->global->FORCEPROJECT_ON_INVOICE_SUPPLIER) || ! empty($conf->global->FORCEPROJECT_ON_ALL)))
-        {
+        if ($action == 'BILL_SUPPLIER_VALIDATE' && (getDolGlobalString('FORCEPROJECT_ON_INVOICE_SUPPLIER') || getDolGlobalString('FORCEPROJECT_ON_ALL'))) {
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
             if (empty($object->fk_project))
@@ -571,8 +563,7 @@ class InterfaceForceProject extends DolibarrTriggers
             }
         }
 
-        if ($action == 'PROJECT_MODIFY' && ! empty($conf->global->FORCEPROJECT_NEW_PROJECT_REF_ON_NEW_THIRDPARTY))
-        {
+        if ($action == 'PROJECT_MODIFY' && getDolGlobalString('FORCEPROJECT_NEW_PROJECT_REF_ON_NEW_THIRDPARTY')) {
             if ($object->oldcopy->socid && $object->socid && $object->socid != $object->oldcopy->socid)
             {
                 $thirdparty = new Societe($this->db);
