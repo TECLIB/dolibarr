@@ -577,7 +577,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	{
     		//$arrayforselect['HasAlreadyNOrder']='norder';
     	}
-    	print $form->selectarray('type_rule', $arrayforselectrule, GETPOST('type_rule'), 1, 0, 0, '', 1);
+    	print $form->selectarray('type_rule', $arrayforselectrule, GETPOST('type_rule'), 1, 0, 0, '', 1, 0, 0, '', 'minwidth75 maxwidth400');
     	print '</td>';
     	print '<td>';
     	print '<input type="text" class="maxwidth100" name="value_rule" value="'.GETPOST('value_rule','alpha').'">';
@@ -650,7 +650,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     	{
     		//$arrayforselect['HasAlreadyNOrder']='norder';
     	}
-    	print $form->selectarray('type_action', $arrayforselectaction, GETPOST('type_action'), 1, 0, 0, '', 1);
+    	print $form->selectarray('type_action', $arrayforselectaction, GETPOST('type_action'), 1, 0, 0, '', 1, 0, 0, '', 'minwidth75 maxwidth400');
     	print '</td>';
     	print '<td>';
     	print '<input type="text" class="maxwidth100" name="value_action" value="'.GETPOST('value_action','alpha').'">';
