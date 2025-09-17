@@ -78,7 +78,7 @@ for (0..@ARGV-1) {
     }
 }
 $SOURCE="$DIR/..";
-$DESTI="$SOURCE/build";
+$DESTI="$SOURCE/dev/build";
 if ($ENV{"DESTIMODULES"}) { $DESTI = $ENV{"DESTIMODULES"}; }		# Force output dir if env DESTIMODULES is defined
 $NEWDESTI=$DESTI;
 
