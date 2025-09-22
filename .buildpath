@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <buildpath>
-	<buildpathentry combineaccessrules="false" kind="prj" path="/dolibarr_dev"/>
-	<buildpathentry kind="src" path="htdocs"/>
+	<buildpathentry kind="src" path="dev"/>
 	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
+	<buildpathentry kind="src" path="doc"/>
+	<buildpathentry kind="src" path="scripts"/>
+	<buildpathentry kind="src" path="test"/>
+	<buildpathentry excluding="custom/" kind="src" path="htdocs"/>
 </buildpath>
