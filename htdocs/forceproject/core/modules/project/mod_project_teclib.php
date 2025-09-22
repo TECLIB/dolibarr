@@ -81,6 +81,11 @@ class mod_project_teclib extends ModeleNumRefProjects
 
 			$filteronentity = false;
 
+			if (empty($objsoc->code_client)) {
+				$this->error = "ErrorThirdPartyCustomerCodeIsEmpty";
+				return 0;
+			}
+
 			$oldmask='{cccccc}-{00}';
 			//$customercode=$objsoc->code_client;
 			$numFinalOld = get_next_value($db, $oldmask, 'projet', 'ref', " AND (fk_soc = ".$objsoc->id." OR ref LIKE '".$objsoc->code_client."-__')", $objsoc, '', 'next', $filteronentity);
