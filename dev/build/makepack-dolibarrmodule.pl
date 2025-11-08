@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #----------------------------------------------------------------------------
-# \file         build/makepack-dolibarrmodule.pl
+# \file         dev/build/makepack-dolibarrmodule.pl
 # \brief        Package builder (tgz, zip, rpm, deb, exe)
 # \author       (c)2005-2014 Laurent Destailleur  <eldy@users.sourceforge.net>
 #----------------------------------------------------------------------------
@@ -77,13 +77,13 @@ for (0..@ARGV-1) {
     	$FILENAMESNAPSHOT.="-".$PREFIX; 
     }
 }
-$SOURCE="$DIR/..";
+$SOURCE="$DIR/../..";
 $DESTI="$SOURCE/dev/build";
 if ($ENV{"DESTIMODULES"}) { $DESTI = $ENV{"DESTIMODULES"}; }		# Force output dir if env DESTIMODULES is defined
 $NEWDESTI=$DESTI;
 
 
-print "Makepack for modules version $VERSION\n";
+print "***** Makepack for modules version $VERSION\n";
 print "Source directory: $SOURCE\n";
 print "Target directory: $NEWDESTI\n";
 
@@ -274,10 +274,10 @@ foreach my $PROJECT (@PROJECTLIST) {
 				
 				@timearray=localtime(time());
 				$fulldate=($timearray[5]+1900).'-'.($timearray[4]+1).'-'.$timearray[3].' '.$timearray[2].':'.$timearray[1];
-				open(VF,">$BUILDROOT/$PROJECTLC/build/version-".$PROJECTLC.".txt");
+				open(VF,">$BUILDROOT/$PROJECTLC/dev/build/version-".$PROJECTLC.".txt");
 		
-				print "Create version file $BUILDROOT/$PROJECTLC/build/version-".$PROJECTLC.".txt with date ".$fulldate."\n";
-				$ret=`mkdir -p "$BUILDROOT/$PROJECTLC/build"`;
+				print "Create version file $BUILDROOT/$PROJECTLC/dev/build/version-".$PROJECTLC.".txt with date ".$fulldate."\n";
+				$ret=`mkdir -p "$BUILDROOT/$PROJECTLC/dev/build"`;
 				print VF "Version: ".$MAJOR.".".$MINOR.($BUILD ne ''?".$BUILD":"")."\n";
 				print VF "Build  : ".$fulldate."\n";
 				close VF;
@@ -287,7 +287,7 @@ foreach my $PROJECT (@PROJECTLIST) {
 		    $ret=`rm -fr $BUILDROOT/$PROJECTLC/.project`;
 		    $ret=`rm -fr $BUILDROOT/$PROJECTLC/.settings`;
 		    $ret=`rm -fr $BUILDROOT/$PROJECTLC/index.php`;
-		    $ret=`rm -fr $BUILDROOT/$PROJECTLC/build/html`;
+		    $ret=`rm -fr $BUILDROOT/$PROJECTLC/dev/build/html`;
 		    $ret=`rm -fr $BUILDROOT/$PROJECTLC/documents`;
 		    $ret=`rm -fr $BUILDROOT/$PROJECTLC/document`;
 		    $ret=`rm -fr $BUILDROOT/$PROJECTLC/htdocs/conf/conf.php.mysql`;
@@ -357,11 +357,11 @@ foreach my $PROJECT (@PROJECTLIST) {
 	    		print "Remove target $FILENAMEEXE.exe...\n";
 	    		unlink "$NEWDESTI/$FILENAMEEXE.exe";
 	    		print "Compress into $FILENAMEEXE.exe by $FILENAMEEXE.nsi...\n";
-	    		$command="\"$REQUIREMENTTARGET{$target}\" /DMUI_VERSION_DOT=$MAJOR.$MINOR.$BUILD /X\"SetCompressor bzip2\" \"$SOURCE\\build\\exe\\$FILENAME.nsi\"";
+	    		$command="\"$REQUIREMENTTARGET{$target}\" /DMUI_VERSION_DOT=$MAJOR.$MINOR.$BUILD /X\"SetCompressor bzip2\" \"$SOURCE\\dev\\build\\exe\\$FILENAME.nsi\"";
 	            print "$command\n";
 	    		$ret=`$command`;
 	    		print "Move $FILENAMEEXE.exe to $NEWDESTI\n";
-	    		rename("$SOURCE\\build\\exe\\$FILENAMEEXE.exe","$NEWDESTI/$FILENAMEEXE.exe");
+	    		rename("$SOURCE\\dev\\build\\exe\\$FILENAMEEXE.exe","$NEWDESTI/$FILENAMEEXE.exe");
 	    		next;
 	    	}
 	    
